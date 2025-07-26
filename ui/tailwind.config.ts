@@ -6,7 +6,7 @@ const config: Config = {
 		'./app/**/*.{js,ts,jsx,tsx}',
 	],
 
-	theme: {		},
+	theme: {},
 	plugins: [],
 }
 

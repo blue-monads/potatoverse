@@ -173,7 +173,7 @@ const Sidebar = () => {
             </a>
           </div>
           <div className="flex-1 flex flex-col h-full">
-            <ul className="px-4 text-sm font-medium flex-1">
+            <ul className="px-4 text-sm font-medium flex-1 flex flex-col gap-2">
               {navigation.map((item, idx) => (
                 <li key={idx}>
                   <a
@@ -181,7 +181,7 @@ const Sidebar = () => {
                     className="relative flex items-center justify-center gap-x-2 text-gray-600 p-2 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
                   >
                     <div className="text-gray-500">{item.icon}</div>
-                    <span className="absolute left-14 p-1 px-1.5 rounded-md whitespace-nowrap text-xs text-white bg-gray-800 hidden group-hover:inline-block group-focus:hidden duration-150">
+                    <span className="absolute left-14 py-2 px-1.5 rounded-md whitespace-nowrap text-xs text-white bg-gray-800 hidden group-hover:inline-block group-focus:hidden duration-150">
                       {item.name}
                     </span>
                   </a>
