@@ -103,8 +103,7 @@ const Page = () => {
 
                 {/* LOGIN form card */}
 
-                <div className="flex gap-2">
-                <div className="tx-card tx-card-bordered p-4 bg-accent-hover-token w-full max-w-md">
+                 <div className="tx-card tx-card-bordered p-4 bg-accent-hover-token w-full max-w-md">
                     <div className="tx-card-title">Login Form</div>
                     <div className="tx-card-body flex flex-col gap-4">
                         <input type="text" placeholder="Username" className="tx-input" />
@@ -117,8 +116,22 @@ const Page = () => {
                     </div>
                 </div>
 
+                <div className="flex gap-2">
+                    <div className="tx-badge tx-badge-primary">Primary</div>
+                    <div className="tx-badge tx-badge-secondary">Secondary</div>
+                    <div className="tx-badge tx-badge-accent">Accent</div>
+                    <div className="tx-badge tx-badge-danger">Danger</div>
+                    <div className="tx-badge tx-badge-success">Success</div>
+                    <div className="tx-badge tx-badge-warning">Warning</div>
+                    <div className="tx-badge tx-badge-info">Info</div>
+                    <div className="tx-badge tx-badge-outline">Outline</div>
+                    <div className="tx-badge tx-badge-ghost">Ghost</div>
+                    <div className="tx-badge tx-badge-link">Link</div>
+                    <div className="tx-badge tx-badge-close">Close</div>
+                </div>
+
                 {/* Table showcase */}
-                <div className="tx-card tx-card-bordered p-4 bg-secondary-hover-token w-full max-w-md text-xs">
+                <div className="tx-card tx-card-bordered p-4 bg-secondary-hover-token w-full max-w-2xl text-xs">
                     <div className="tx-card-title">Data Table</div>
                     <div className="tx-card-body">
                         <table className="tx-table w-full">
@@ -144,13 +157,25 @@ const Page = () => {
                                         </select>
                                     </td>
                                 </tr>
+                                <tr className="tx-table-row">
+                                    <td className="tx-table-cell">2</td>
+                                    <td className="tx-table-cell">Jane Smith</td>
+                                    <td className="tx-table-cell">
+                                        <input type="email" className="tx-input" placeholder="Email" />
+                                    </td>
+                                    <td className="tx-table-cell">
+                                        <select className="tx-select">
+                                            <option value="admin">Admin</option>
+                                            <option value="user">User</option>
+                                        </select>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                </div>
-
+                
 
             </div>
         </div>
