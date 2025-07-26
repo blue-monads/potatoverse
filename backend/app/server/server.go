@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/aurowora/compress"
@@ -16,7 +15,6 @@ import (
 	"github.com/blue-monads/turnix/backend/controller/project"
 	"github.com/blue-monads/turnix/backend/controller/self"
 	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/extras/gojaEngine/pool"
 	"github.com/blue-monads/turnix/backend/services/database"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes/xproject"
@@ -48,7 +46,6 @@ type Server struct {
 
 	// injector
 
-	injector Injector
 }
 
 type Options struct {
@@ -78,24 +75,10 @@ func New(opts Options) *Server {
 		devMode:     opts.DevMode,
 	}
 
-	s.injector = Injector{
-		server:           s,
-		hashooksIndex:    make(map[string]bool),
-		hasHookIndexLock: sync.RWMutex{},
-		pool:             pool.New(s.rootLogger),
-		hLock:            sync.RWMutex{},
-		handles:          make(map[int64]HookHandle),
-	}
-
 	return s
 }
 
 func (a *Server) Start(port string) error {
-
-	err := a.injector.loadHooks()
-	if err != nil {
-		return err
-	}
 
 	a.listenUnixSocket(port)
 
@@ -109,7 +92,7 @@ func (a *Server) Start(port string) error {
 
 	a.bindRoutes(r)
 
-	err = a.engine.Start()
+	err := a.engine.Start()
 	if err != nil {
 		return err
 	}
