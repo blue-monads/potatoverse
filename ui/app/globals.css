@@ -1,26 +1,144 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+
+
+@theme {
+  --color-background: #e0e0e0;
+  --color-primary: #0170f3;
+  --color-secondary: #FBBF24;
+  --color-accent: #111111;
+  --color-text: #111827;
+  --color-text2: #353638;
+  --color-text3: #6B7280;
+  --color-text4: #9CA3AF;
+  --color-danger: #EF4444;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
+  
+  --font-family-sans: 'Inter', sans-serif;
+  --font-family-serif: 'Merriweather', serif;
+  --font-family-mono: 'Fira Code', monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer components {
+  /* 
+  
+  
+  
+  
+  tx-btn
+tx-btn-sm
+tx-btn-lg
+tx-btn-primary
+tx-btn-secondary
+tx-btn-accent
+tx-btn-ghost
+tx-btn-link
+tx-btn-close
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+tx-card
+tx-card-body
+tx-card-title
+
+tx-grid # mobile-1, desktop-4, md-3
+
+
+tx-input
+tx-textarea
+tx-select
+tx-checkbox
+tx-radio
+tx-switch
+
+tx-modal
+tx-modal-header
+tx-modal-body
+tx-modal-footer
+
+tx-tab
+tx-tab-list
+tx-tab-panel
+tx-tab-content
+
+tx-table
+tx-table-header
+tx-table-row
+tx-table-cell
+tx-table-footer
+  
+  
+  */
+
+
+  .tx-btn {
+    @apply text-xs py-2 px-2 rounded-md font-normal transition-colors text-[var(--color-text)] cursor-pointer hover:opacity-55 ;
   }
+
+  .tx-btn-sm {
+    @apply text-xs px-2 py-1 transition-colors text-white bg-[var(--color-primary)];
+  }
+
+  .tx-btn-lg {
+    @apply text-base px-4 py-2 transition-colors text-white bg-[var(--color-primary)];
+  }
+
+  .tx-btn-outlined {
+    @apply border border-[var(--color-text)] text-[var(--color-text)] hover:bg-[var(--color-text)]/10;
+  }
+
+  .tx-btn-primary {
+    @apply bg-[var(--color-primary)] text-white;
+  }
+
+  .tx-btn-secondary {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-btn-accent {
+    @apply bg-[var(--color-accent)] text-white;
+  }
+
+  .tx-btn-ghost {
+    @apply bg-transparent text-[var(--color-text)] hover:bg-[var(--color-text)]/10;
+  }
+
+  .tx-btn-link {
+    @apply text-[var(--color-primary)] hover:underline;
+  }
+
+  .tx-btn-close {
+    @apply text-[var(--color-text)] hover:text-[var(--color-danger)];
+  }
+
+  .tx-card {
+    @apply bg-white shadow-md rounded-lg overflow-hidden flex flex-col border border-[var(--color-text)]/10;
+  }
+
+  .tx-card-body {
+    @apply p-4 flex;
+  }
+  .tx-card-title {
+    @apply text-lg font-semibold mb-2;
+  }
+
+  .tx-grid {
+    @apply grid gap-4 
+      grid-cols-1 
+      sm:grid-cols-2 
+      md:grid-cols-3 
+      lg:grid-cols-4;
+  }
+
+  .tx-input, .tx-textarea, .tx-select {
+    @apply w-full px-3 py-2 border border-[var(--color-text)]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors;
+  }
+  
+
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  font-family: var(--font-sans);
 }
