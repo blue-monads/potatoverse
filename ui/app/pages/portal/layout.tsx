@@ -3,12 +3,6 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 
-const navs = [
-  {
-    name: "Spaces",
-    href: "/portal/pages/spaces",
-  },
-];
 
 export default function PortalLayout({
   children,
