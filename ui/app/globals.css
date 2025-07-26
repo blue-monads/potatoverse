@@ -7,8 +7,8 @@
   --color-primary: #0170f3;
   --color-secondary: #FBBF24;
   --color-accent: #111111;
-  --color-text: #111827;
-  --color-text2: #353638;
+  --color-text: #0f9299;
+  --color-text2: #111111;
   --color-text3: #6B7280;
   --color-text4: #9CA3AF;
   --color-danger: #EF4444;
@@ -119,7 +119,7 @@ tx-table-footer
     @apply p-4 flex;
   }
   .tx-card-title {
-    @apply text-lg font-semibold mb-2;
+    @apply text-lg font-semibold mb-2 text-[var(--color-text)];
   }
 
   .tx-grid {
@@ -143,7 +143,7 @@ tx-table-footer
   }
 
   .tx-nav-item {
-    @apply text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer transition-colors;
+    @apply text-[var(--color-text2)] hover:text-[var(--color-primary)] cursor-pointer transition-colors;
   }
 
   .tx-modal {

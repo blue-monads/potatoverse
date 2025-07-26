@@ -88,7 +88,7 @@ const Page = () => {
 
                 <div className="tx-nav">
 
-                    <div className="tx-nav-item">Logo</div>
+                    <div className="tx-nav-item !text-[var(--color-text)]">Logo</div>
 
                     <div className="tx-nav-items">
                         <div className="tx-nav-item">Home</div>
