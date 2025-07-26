@@ -59,13 +59,9 @@ const Page = () => {
                 <p className="text-lg text-gray-700">Explore the custom components and styles</p>
 
                 <div className="flex gap-2">
-
-
-                    {/* make a card and inside card add other component */}
-
                     <div className="tx-card tx-card-bordered p-4 bg-primary-hover-token">
                         <div className="tx-card-title">Button</div>
-                        <div className="tx-card-body flex gap-2 items-start">                            
+                        <div className="tx-card-body flex gap-2 items-start">
                             <button className="tx-btn tx-btn-primary">Primary Button</button>
                             <button className="tx-btn tx-btn-secondary">Secondary Button</button>
                             <button className="tx-btn tx-btn-accent">Accent Button</button>
@@ -90,10 +86,73 @@ const Page = () => {
 
                 </div>
 
+                <div className="tx-nav">
+
+                    <div className="tx-nav-item">Logo</div>
+
+                    <div className="tx-nav-items">
+                        <div className="tx-nav-item">Home</div>
+                        <div className="tx-nav-item">About</div>
+                        <div className="tx-nav-item">Services</div>
+                        <div className="tx-nav-item">Contact</div>
+
+                    </div>
+
+
+                </div>
+
+                {/* LOGIN form card */}
+
+                <div className="flex gap-2">
+                <div className="tx-card tx-card-bordered p-4 bg-accent-hover-token w-full max-w-md">
+                    <div className="tx-card-title">Login Form</div>
+                    <div className="tx-card-body flex flex-col gap-4">
+                        <input type="text" placeholder="Username" className="tx-input" />
+                        <input type="password" placeholder="Password" className="tx-input" />
+                        <button className="tx-btn tx-btn-primary">Login</button>
+                    </div>
+                    <div className="tx-card-footer flex flex-col items-center">
+                        <button className="tx-btn tx-btn-secondary">Forgot Password?</button>
+                        <button className="tx-btn tx-btn-link">Sign Up</button>
+                    </div>
+                </div>
+
+                {/* Table showcase */}
+                <div className="tx-card tx-card-bordered p-4 bg-secondary-hover-token w-full max-w-md text-xs">
+                    <div className="tx-card-title">Data Table</div>
+                    <div className="tx-card-body">
+                        <table className="tx-table w-full">
+                            <thead>
+                                <tr className="tx-table-header">
+                                    <th className="tx-table-cell">ID</th>
+                                    <th className="tx-table-cell">Name</th>
+                                    <th className="tx-table-cell">Email</th>
+                                    <th className="tx-table-cell">Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="tx-table-row">
+                                    <td className="tx-table-cell">1</td>
+                                    <td className="tx-table-cell">John Doe</td>
+                                    <td className="tx-table-cell">
+                                        <input type="email" className="tx-input" placeholder="Email" />
+                                    </td>
+                                    <td className="tx-table-cell">
+                                        <select className="tx-select">
+                                            <option value="admin">Admin</option>
+                                            <option value="user">User</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                </div>
+
+
             </div>
-           
-
-
         </div>
     );
 }

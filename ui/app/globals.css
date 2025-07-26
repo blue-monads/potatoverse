@@ -133,6 +133,164 @@ tx-table-footer
   .tx-input, .tx-textarea, .tx-select {
     @apply w-full px-3 py-2 border border-[var(--color-text)]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors;
   }
+
+  .tx-nav {
+    @apply flex items-center justify-between bg-white shadow border border-[var(--color-accent)]/10 p-4 rounded-lg w-full;
+  }
+
+  .tx-nav-items {
+    @apply flex items-center justify-between gap-2;
+  }
+
+  .tx-nav-item {
+    @apply text-[var(--color-text)] hover:text-[var(--color-primary)] cursor-pointer transition-colors;
+  }
+
+  .tx-modal {
+    @apply fixed inset-0 flex items-center justify-center bg-black/50 z-50;
+  }
+
+  .tx-modal-header {
+    @apply text-lg font-semibold mb-4;
+  }
+
+  .tx-modal-body {
+    @apply p-4 bg-white rounded-lg shadow-lg w-full max-w-md;
+  }
+
+  .tx-modal-footer {
+    @apply flex justify-end gap-2 mt-4;
+  }
+
+  .tx-tab {
+    @apply flex flex-col w-full;
+  }
+
+  .tx-tab-list {
+    @apply flex border-b border-[var(--color-text)]/20;
+  }
+
+  .tx-tab-item {
+    @apply px-4 py-2 cursor-pointer text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors;
+  }
+
+  .tx-tab-panel {
+    @apply p-4 bg-white rounded-lg shadow-lg mt-2;
+  }
+
+  .tx-table {
+    @apply w-full border-collapse;
+  }
+
+  .tx-table-header {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-table-row {
+    @apply border-b border-[var(--color-text)]/10;
+  }
+
+  .tx-table-cell {
+    @apply px-4 py-2 text-[var(--color-text)];
+  }
+
+  .tx-table-footer {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-switch {
+    @apply relative inline-flex items-center cursor-pointer;
+  }
+
+  .tx-switch input {
+    @apply sr-only;
+  }
+
+  .tx-switch .tx-switch-thumb {
+    @apply block w-6 h-6 bg-white rounded-full shadow transform transition-transform;
+  }
+
+  .tx-switch input:checked + .tx-switch-thumb {
+    @apply translate-x-6;
+  }
+
+  .tx-switch input:checked {
+    @apply bg-[var(--color-primary)];
+  }
+
+  .tx-checkbox, .tx-radio {
+    @apply w-4 h-4 text-[var(--color-primary)] border border-[var(--color-text)]/20 rounded focus:ring-2 focus:ring-[var(--color-primary)] transition-colors;
+  }
+
+  .tx-checkbox:checked, .tx-radio:checked {
+    @apply bg-[var(--color-primary)] border-transparent;
+  }
+
+  .tx-checkbox:checked::before, .tx-radio:checked::before {
+    @apply content-[''] block w-full h-full bg-[var(--color-primary)] rounded;
+  }
+
+  .tx-textarea {
+    @apply h-24 resize-none;
+  }
+
+  .tx-textarea:focus, .tx-input:focus, .tx-select:focus {
+    @apply border-[var(--color-primary)] focus:ring-2;
+  }
+
+  .tx-badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-[var(--color-secondary)] text-white;
+  }
+
+
+  .tx-badge-primary {
+    @apply bg-[var(--color-primary)] text-white;
+  }
+
+  .tx-badge-secondary {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-badge-accent {
+    @apply bg-[var(--color-accent)] text-white;
+  }
+
+  .tx-badge-danger {
+    @apply bg-[var(--color-danger)] text-white;
+  }
+
+  .tx-badge-success {
+    @apply bg-[var(--color-success)] text-white;
+  }
+
+  .tx-badge-warning {
+    @apply bg-[var(--color-warning)] text-white;
+  }
+
+  .tx-badge-info {
+    @apply bg-[var(--color-info)] text-white;
+  }
+
+  .tx-badge-outline {
+    @apply border border-[var(--color-text)] text-[var(--color-text)] bg-transparent;
+  }
+
+  .tx-badge-ghost {
+    @apply bg-transparent text-[var(--color-text)] hover:bg-[var(--color-text)]/10;
+  }
+
+  .tx-badge-link {
+    @apply text-[var(--color-primary)] hover:underline;
+  }
+
+  .tx-badge-close {
+    @apply text-[var(--color-text)] hover:text-[var(--color-danger)] cursor-pointer;
+  }
+
+  
+
+
+
   
 
 }
