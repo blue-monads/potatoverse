@@ -58,33 +58,35 @@ const Page = () => {
                 <h1 className="text-3xl font-bold">Theme Showcase</h1>
                 <p className="text-lg text-gray-700">Explore the custom components and styles</p>
 
-                <div className="flex gap-2">
-                    <div className="tx-card tx-card-bordered p-4 bg-primary-hover-token">
-                        <div className="tx-card-title">Button</div>
-                        <div className="tx-card-body flex gap-2 items-start">
-                            <button className="tx-btn tx-btn-primary">Primary Button</button>
-                            <button className="tx-btn tx-btn-secondary">Secondary Button</button>
-                            <button className="tx-btn tx-btn-accent">Accent Button</button>
-                        </div>
-                    </div>
 
-                    <div className="tx-card tx-card-bordered p-4 bg-secondary-hover-token">
-                        <div className="tx-card-title">Input</div>
-                        <div className="tx-card-body flex flex-col gap-2">
-                            <input type="text" placeholder="Text Input" className="tx-input" />
-                            <textarea placeholder="Textarea" className="tx-textarea"></textarea>
-                            <select className="tx-select">
-                                <option>Select Option</option>
-                                <option>Option 1</option>
-                                <option>Option 2</option>
-                            </select>
-                        </div>
-                        <div className="tx-card-footer">
-                            <button className="tx-btn tx-btn-primary">Submit</button>
-                        </div>
+                <div className="tx-card tx-card-bordered p-4 bg-primary-hover-token w-full max-w-lg">
+                    <div className="tx-card-title">Button</div>
+                    <div className="tx-card-body flex gap-2 items-start">
+                        <button className="tx-btn tx-btn-primary">Primary Button</button>
+                        <button className="tx-btn tx-btn-secondary">Secondary Button</button>
+                        <button className="tx-btn tx-btn-accent">Accent Button</button>
                     </div>
-
+                    <div className="tx-card-title">Input</div>
+                    <div className="tx-card-body flex flex-col gap-2">
+                        <input type="text" placeholder="Text Input" className="tx-input" />
+                        <textarea placeholder="Textarea" className="tx-textarea"></textarea>
+                        <select className="tx-select">
+                            <option>Select Option</option>
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                        </select>
+                    </div>
+                    <div className="tx-card-footer">
+                        <button className="tx-btn tx-btn-primary">Submit</button>
+                    </div>
                 </div>
+
+            </div>
+
+            <div className="tx-card p-4">
+
+
+
 
                 <div className="tx-nav">
 
@@ -103,7 +105,7 @@ const Page = () => {
 
                 {/* LOGIN form card */}
 
-                 <div className="tx-card tx-card-bordered p-4 bg-accent-hover-token w-full max-w-md">
+                <div className="tx-card tx-card-bordered p-4 bg-accent-hover-token w-full max-w-md">
                     <div className="tx-card-title">Login Form</div>
                     <div className="tx-card-body flex flex-col gap-4">
                         <input type="text" placeholder="Username" className="tx-input" />
@@ -175,7 +177,7 @@ const Page = () => {
                     </div>
                 </div>
 
-                
+
 
             </div>
         </div>
