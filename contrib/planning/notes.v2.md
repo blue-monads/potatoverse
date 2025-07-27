@@ -24,6 +24,8 @@
  turnix app [start|stop|restart]
  turnix space [create|delete|list|info|start|stop|restart|logs|exec|run]
  turnix p2pProxy [start|stop|restart]
+ turnix buddy
+ 
 
 
 
