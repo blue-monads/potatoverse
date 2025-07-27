@@ -21,7 +21,7 @@
  zLogXXX
 ### WORKING_DIR:
  /working_space/<space_type>
-### CLI:
+### CLI: (lip gloss)
  turnix app [start|stop|restart]
  turnix space [create|delete|list|info|start|stop|restart|logs|exec|run]
  turnix p2pProxy [start|stop|restart]
