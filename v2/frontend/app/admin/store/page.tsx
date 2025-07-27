@@ -213,7 +213,7 @@ const StoreDirectory = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {storeItems.map((item) => (
                             <StoreItemCard key={item.id} item={item} />
                         ))}
@@ -264,14 +264,12 @@ const StoreItemCard = ({ item }: { item: any }) => {
                     </div>
 
                     <div className="flex gap-2">
-                        {/* Run Action and other action drop down */}
 
                         <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600">
                             <CloudDownload className="w-4 h-4" />
                             <span>Install</span>
                         </button>
 
-                        <ActionDropdown />
                     </div>
 
 
@@ -280,93 +278,4 @@ const StoreItemCard = ({ item }: { item: any }) => {
             </div>
         </div>
     )
-};
-
-const actionsOptions = [
-    {label: "About", icon: <InfoIcon className="w-4 h-4" />},
-]
-
-
-
-const ActionDropdown = () => {
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
-    const buttonRef = useRef<HTMLButtonElement>(null);
-
-    const handleToggleDropdown = () => {
-        if (!isDropdownOpen && buttonRef.current) {
-            const rect = buttonRef.current.getBoundingClientRect();
-            setButtonRect(rect);
-        }
-        setIsDropdownOpen(!isDropdownOpen);
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (isDropdownOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-                setIsDropdownOpen(false);
-            }
-        };
-
-        const handleScroll = () => {
-            if (isDropdownOpen && buttonRef.current) {
-                const rect = buttonRef.current.getBoundingClientRect();
-                setButtonRect(rect);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        window.addEventListener('scroll', handleScroll, true);
-        window.addEventListener('resize', handleScroll);
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            window.removeEventListener('scroll', handleScroll, true);
-            window.removeEventListener('resize', handleScroll);
-        };
-    }, [isDropdownOpen]);
-
-    return (
-        <>
-            <div className="flex items-center gap-4">
-                <div className="relative">
-                    <button
-                        ref={buttonRef}
-                        onClick={handleToggleDropdown}
-                        className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors hover:text-blue-600 cursor-pointer"
-                    >
-                        <Bolt className="w-4 h-4" />
-                        <span>Actions</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Render dropdown in a portal */}
-            {isDropdownOpen && buttonRect && createPortal(
-                <div
-                    className="fixed w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]"
-                    style={{
-                        top: buttonRect.bottom + 4,
-                        left: buttonRect.right - 192,
-                    }}
-                >
-                    {actionsOptions.map((option) => (
-                        <button
-                            key={option.label}
-                            onClick={() => {
-                                setIsDropdownOpen(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
-                        >
-                            <div className="inline-flex items-center gap-2">
-                                {option.icon}
-                                {option.label}
-                            </div>
-                        </button>
-                    ))}
-                </div>,
-                document.body
-            )}
-        </>
-    );
 };
