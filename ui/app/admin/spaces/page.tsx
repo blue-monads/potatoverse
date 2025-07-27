@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 
 
@@ -17,16 +18,6 @@ export default function Page() {
 const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
-
-    const categories = [
-        { name: 'Personal', icon: BookHeart },
-        { name: 'AI', icon: Octagon },
-        { name: 'Productivity', icon: BriefcaseBusiness },
-        { name: 'Entertainment', icon: Drama },
-        { name: 'Finance', icon: BadgeDollarSign },
-        { name: 'Education', icon: BookOpenText },
-        { name: 'Social', icon: SquareUserRound },
-    ];
 
     const spaces = [
         {
@@ -162,25 +153,6 @@ const SpacesDirectory = () => {
                 </div>
             </div>
 
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center gap-4 scrollbar-hide flex-wrap overflow-x-hidden">
-                        {categories.map((category, index) => {
-                            const IconComponent = category.icon as React.ElementType;
-                            return (
-                                <button
-                                    key={index}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors whitespace-nowrap"
-                                >
-                                    <IconComponent className="w-4 h-4" />
-                                    <span>{category.name}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-
             <div className="max-w-7xl mx-auto px-6 py-8">
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-6">
@@ -191,10 +163,7 @@ const SpacesDirectory = () => {
 
                         <div className="flex items-center gap-4">
 
-                            <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-                                <Filter className="w-4 h-4" />
-                                <span>Filters (0)</span>
-                            </button>
+
 
                             <div className="relative">
                                 <button
@@ -226,7 +195,7 @@ const SpacesDirectory = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {spaces.map((space) => (
                             <SpaceCard key={space.id} space={space} />
                         ))}
@@ -242,7 +211,7 @@ const SpaceCard = ({ space }: { space: any }) => {
 
     return (
 
-        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${space.gradient} p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 cursor-pointer`}>
+        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${space.gradient} p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 `}>
             <div className="flex flex-col h-full justify-between">
                 <div>
 
@@ -280,11 +249,112 @@ const SpaceCard = ({ space }: { space: any }) => {
                                 <span>{space.timeAgo}</span>
                             </div>
                         </div>
-
-
                     </div>
+
+                    <div className="flex gap-2">
+                        {/* Run Action and other action drop down */}
+
+                        <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+                            <CloudLightning className="w-4 h-4" />
+                            <span>Run</span>
+                        </button>
+
+                        <ActionDropdown />
+                    </div>
+
+
+
                 </div>
             </div>
         </div>
     )
+};
+
+
+const actionsOptions = [
+    "Run in dev mode",
+    "Logs",
+    "Files",
+    "KV State"
+]
+
+
+const ActionDropdown = () => {
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const handleToggleDropdown = () => {
+        if (!isDropdownOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setButtonRect(rect);
+        }
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isDropdownOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        const handleScroll = () => {
+            if (isDropdownOpen && buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setButtonRect(rect);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [isDropdownOpen]);
+
+    return (
+        <>
+            <div className="flex items-center gap-4">
+                <div className="relative">
+                    <button
+                        ref={buttonRef}
+                        onClick={handleToggleDropdown}
+                        className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                    >
+                        <Bolt className="w-4 h-4" />
+                        <span>Actions</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Render dropdown in a portal */}
+            {isDropdownOpen && buttonRect && createPortal(
+                <div
+                    className="fixed w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]"
+                    style={{
+                        top: buttonRect.bottom + 4,
+                        left: buttonRect.right - 192,
+                    }}
+                >
+                    {actionsOptions.map((option) => (
+                        <button
+                            key={option}
+                            onClick={() => {
+                                setIsDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer"
+                        >
+                            {option}
+                        </button>
+                    ))}
+                </div>,
+                document.body
+            )}
+        </>
+    );
 };
