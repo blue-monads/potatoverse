@@ -187,7 +187,7 @@ const Sidebar = () => {
           <div className="h-20 flex items-center justify-center px-8">
             <a href="javascript:void(0)" className="flex-none">
               <Image
-                src="/logo.png"
+                src="/z/pages/logo.png"
                 alt="Turnix Logo"
                 width={48}
                 height={48}
