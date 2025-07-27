@@ -179,7 +179,7 @@ const SpacesDirectory = () => {
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
                             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                            <h2 className="text-xl font-bold">Favorites</h2>
+                            <h2 className="text-xl font-bold">Installed Spaces</h2>
                         </div>
 
                         <div className="flex items-center gap-4">

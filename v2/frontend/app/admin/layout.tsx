@@ -163,7 +163,7 @@ export default function PortalLayout({
       <div className="flex">
         <Sidebar />
 
-        <div className="container p-4 ml-20">
+        <div className="ml-16 w-full">
           {children}
         </div>
 
