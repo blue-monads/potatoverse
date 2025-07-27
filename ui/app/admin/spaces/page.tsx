@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 
@@ -254,7 +254,7 @@ const SpaceCard = ({ space }: { space: any }) => {
                     <div className="flex gap-2">
                         {/* Run Action and other action drop down */}
 
-                        <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/30 transition-colors cursor-pointer">
+                        <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600">
                             <CloudLightning className="w-4 h-4" />
                             <span>Run</span>
                         </button>
@@ -272,11 +272,12 @@ const SpaceCard = ({ space }: { space: any }) => {
 
 
 const actionsOptions = [
-    "Run in dev mode",
-    "Logs",
-    "Files",
-    "KV State"
+    {label: "Run in dev mode", icon: <Bolt className="w-4 h-4" />},
+    {label: "Logs", icon: <ScrollText className="w-4 h-4" />},
+    {label: "Files", icon: <Files className="w-4 h-4" />},
+    {label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" />},
 ]
+
 
 
 const ActionDropdown = () => {
@@ -324,7 +325,7 @@ const ActionDropdown = () => {
                     <button
                         ref={buttonRef}
                         onClick={handleToggleDropdown}
-                        className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors hover:text-blue-600 cursor-pointer"
                     >
                         <Bolt className="w-4 h-4" />
                         <span>Actions</span>
@@ -343,13 +344,16 @@ const ActionDropdown = () => {
                 >
                     {actionsOptions.map((option) => (
                         <button
-                            key={option}
+                            key={option.label}
                             onClick={() => {
                                 setIsDropdownOpen(false);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
                         >
-                            {option}
+                            <div className="inline-flex items-center gap-2">
+                                {option.icon}
+                                {option.label}
+                            </div>
                         </button>
                     ))}
                 </div>,
