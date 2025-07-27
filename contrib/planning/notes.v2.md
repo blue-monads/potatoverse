@@ -29,3 +29,12 @@
 
 app.toml
 space.toml
+
+## TOOODOOO
+
+1. generate llm.txt docs
+    - introduction
+    - core and arch docs
+    - api docs
+    - lua bindings docs
+    - cli docs
