@@ -97,9 +97,7 @@ const StoreDirectory = () => {
 
     const sortOptions = [
         'Relevance',
-        'Recently Created',
         'Recently Updated',
-        'Installed Date',
         'By Usage'
     ];
 
