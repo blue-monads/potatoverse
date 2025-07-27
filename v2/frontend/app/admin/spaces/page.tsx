@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 
@@ -10,6 +10,19 @@ export default function Page() {
         <SpacesDirectory />
     </>)
 }
+
+
+
+const staticGradients = [
+    'from-pink-500 to-orange-500',
+    'from-blue-500 to-purple-600',
+    'from-gray-600 to-blue-800',
+    'from-red-500 to-pink-600',
+    'from-purple-600 to-indigo-600',
+    'from-purple-500 to-pink-500',
+    'from-teal-500 to-blue-600',
+    'from-green-500 to-blue-600'
+]
 
 
 
@@ -28,7 +41,7 @@ const SpacesDirectory = () => {
             timeAgo: '2 days ago',
             from: 'ZERO',
             mcp: true,
-            gradient: 'from-pink-500 to-orange-500'
+            gradient: 'bg-gray-600'
         },
         {
             id: 2,
@@ -47,7 +60,7 @@ const SpacesDirectory = () => {
             author: 'nvidia',
             timeAgo: '12 days ago',
             from: 'A100',
-            gradient: 'from-gray-600 to-blue-800'
+                gradient: 'from-gray-600 to-blue-800'
         },
         {
             id: 4,
@@ -111,6 +124,14 @@ const SpacesDirectory = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
+
+            <div className="hidden">
+                {staticGradients.map((gradient, index) => (
+                    <div key={index} className={`bg-gradient-to-br ${gradient} h-0 w-0 absolute`} />
+                ))}
+            </div>
+
+
             {/* Header */}
             <header className="bg-white border-b border-gray-200 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -217,6 +238,9 @@ const SpaceCard = ({ space }: { space: any }) => {
 
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 text-sm">
+                            <span className="font-semibold">
+                                #{space.id}
+                            </span>
                             <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm">
                                 {space.from}
                             </span>
@@ -276,6 +300,9 @@ const actionsOptions = [
     {label: "Logs", icon: <ScrollText className="w-4 h-4" />},
     {label: "Files", icon: <Files className="w-4 h-4" />},
     {label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" />},
+    {label: "Tools", icon: <Box className="w-4 h-4" />},
+    {label: "Users", icon: <SquareUserRound className="w-4 h-4" />},
+    {label: "Settings", icon: <Cog className="w-4 h-4" />}
 ]
 
 
