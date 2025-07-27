@@ -56,6 +56,29 @@ const navigation = [
     ),
   },
   
+  {
+    href: "/z/pages/admin/users",
+    name: "Users",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+        className="w-6 h-6"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M16.5 7.5a3 3 0 11-6 0 3 3 0 016 0zm-6 3a6.75 6.75 0 00-6.75 6.75v1.5A2.25 2.25 0 006.75 21h10.5a2.25 2.25 0 002.25-2.25v-1.5A6.75 6.75 0 0010.5 10.5zM12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9z"
+        />
+
+      </svg>
+    ),
+
+  }
+  
 ];
 
 
