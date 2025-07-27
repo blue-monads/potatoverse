@@ -8,6 +8,7 @@
  /z/pages/portal/spaces/<space_type>/
  /z/spaces/<space_type>/
  /z/api/spaces/<space_type>/
+ /z/api/space_static/<space_type> ??
  /z/auth/portal_redirrect -> if spaces should be authed then it should redirrect with /z/auth/portal_redirrect?redirect_url=""&space=mnop
 
 ### TABLE:
