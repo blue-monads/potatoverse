@@ -1,5 +1,8 @@
 name: CI Test - Go Test
 
+
+runs-on: self-hosted
+
 on:
   push:
     branches:
