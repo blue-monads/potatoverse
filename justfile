@@ -33,8 +33,5 @@ run_http_server:
 start_test_server:
 	FRONTEND_DEV_SERVER="http://localhost:5173" TURNIX_DEV_MODE="true" TURNIX_DEV_ABC_SERVER="http://localhost:8080" go run -v cmd/dev/main.go
 
-test:
-	go test -timeout 30s -v -run ^TestBinds$ github.com/blue-monads/turnix/backend/engine/luaz/binds
-
 citest:
 	./ci.sh

@@ -1,0 +1,20 @@
+name = "Half Sword"
+signup_mode = "invite_only" # Options: open, invite_only, closed
+master_secret = "xxyymn444"
+
+
+base_file_path = "~/.local/share/half_sword"
+space_working_path = "~/.local/share/half_sword/spaces"
+
+
+[superuser]
+
+token = "supersecrettoken123"
+
+[lpweb]
+port = 8080
+p2pPeers= [
+    "peer1@localhost:8080", 
+    "peer2@localhost:8080"
+]
+

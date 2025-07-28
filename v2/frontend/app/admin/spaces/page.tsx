@@ -1,0 +1,391 @@
+"use client";
+import React, { useEffect, useRef, useState } from 'react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog } from 'lucide-react';
+import { createPortal } from 'react-dom';
+
+
+
+export default function Page() {
+    return (<>
+        <SpacesDirectory />
+    </>)
+}
+
+
+
+const staticGradients = [
+    'from-pink-500 to-orange-500',
+    'from-blue-500 to-purple-600',
+    'from-gray-600 to-blue-800',
+    'from-red-500 to-pink-600',
+    'from-purple-600 to-indigo-600',
+    'from-purple-500 to-pink-500',
+    'from-teal-500 to-blue-600',
+    'from-green-500 to-blue-600'
+]
+
+
+
+
+
+const SpacesDirectory = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedFilter, setSelectedFilter] = useState('Relevance');
+
+    const spaces = [
+        {
+            id: 1,
+            title: 'Addit ⚡',
+            description: 'Add objects to images using text prompts',
+            author: 'nvidia',
+            timeAgo: '2 days ago',
+            from: 'ZERO',
+            mcp: true,
+            gradient: 'bg-gray-600'
+        },
+        {
+            id: 2,
+            title: 'PartCrafter 🧩',
+            description: '3D Mesh Generation via Compositional Latent Diffusion',
+            author: 'alexnasa',
+            timeAgo: 'about 24 hours ago',
+            from: 'ZERO',
+            mcp: true,
+            gradient: 'from-blue-500 to-purple-600'
+        },
+        {
+            id: 3,
+            title: 'Audio Flamingo 3 Chat 🔥',
+            description: 'Audio Flamingo 3 demo for multi-turn multi-audio chat',
+            author: 'nvidia',
+            timeAgo: '12 days ago',
+            from: 'A100',
+                gradient: 'from-gray-600 to-blue-800'
+        },
+        {
+            id: 4,
+            title: 'Voxtral 🧠',
+            description: 'Demo space for Mistral latest speech models',
+            author: 'MohamedRashad',
+            timeAgo: '5 days ago',
+            from: 'ZERO',
+            mcp: true,
+            gradient: 'from-red-500 to-pink-600'
+        },
+        {
+            id: 5,
+            title: 'Calligrapher: Freestyle Text Image Customization',
+            description: 'Customize text in images using a reference style',
+            author: 'Calligrapher2025',
+            timeAgo: '11 days ago',
+            from: 'ZERO',
+            gradient: 'from-purple-600 to-indigo-600'
+        },
+        {
+            id: 6,
+            title: 'ZenCtrl Inpaint 🎭',
+            description: 'Create scenes with your subject in it with ZenCtrl Inpaint',
+            author: 'fotographerai',
+            timeAgo: '5 days ago',
+            from: 'Running',
+            gradient: 'from-purple-500 to-pink-500'
+        },
+        {
+            id: 7,
+            title: 'AudioRag Demo 🎵',
+            description: 'Search audio files for specific queries',
+            author: 'fdaudens',
+            timeAgo: '8 days ago',
+            from: 'ZERO',
+            gradient: 'from-teal-500 to-blue-600'
+        },
+        {
+            id: 8,
+            title: 'Owen TTS Demo 📢',
+            description: 'Generate speech from text with different voices',
+            author: 'Owen',
+            timeAgo: '12 days ago',
+            from: 'Running',
+            gradient: 'from-green-500 to-blue-600'
+        }
+    ];
+
+    const sortOptions = [
+        'Relevance',
+        'Recently Created',
+        'Recently Updated',
+        'Installed Date',
+        'By Usage'
+    ];
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+
+            <div className="hidden">
+                {staticGradients.map((gradient, index) => (
+                    <div key={index} className={`bg-gradient-to-br ${gradient} h-0 w-0 absolute`} />
+                ))}
+            </div>
+
+
+            {/* Header */}
+            <header className="bg-white border-b border-gray-200 px-6 py-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                <Box className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold">Spaces</h1>
+                                <p className="text-sm text-gray-600">Your App Directory</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                            + New Space
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Search Bar */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4">
+                <div className="max-w-7xl mx-auto">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder="Search spaces..."
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors">
+                            <Zap className="w-5 h-5 text-gray-400" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-6 py-8">
+                <div className="mb-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                            <h2 className="text-xl font-bold">Installed Spaces</h2>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+
+
+
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                                >
+                                    <ArrowUpDown className="w-4 h-4" />
+                                    <span>Sort: {selectedFilter}</span>
+                                </button>
+
+                                {isDropdownOpen && (
+                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                                        {sortOptions.map((option) => (
+                                            <button
+                                                key={option}
+                                                onClick={() => {
+                                                    setSelectedFilter(option);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${selectedFilter === option ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                                                    }`}
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {spaces.map((space) => (
+                            <SpaceCard key={space.id} space={space} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const SpaceCard = ({ space }: { space: any }) => {
+
+
+    return (
+
+        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${space.gradient} p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 `}>
+            <div className="flex flex-col h-full justify-between">
+                <div>
+
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 text-sm">
+                            <span className="font-semibold">
+                                #{space.id}
+                            </span>
+                            <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm">
+                                {space.from}
+                            </span>
+                            {space.mcp && (
+                                <span className="bg-pink-500/80 px-2 py-1 rounded text-xs">🔥 MCP</span>
+                            )}
+                        </div>
+
+                        <div className='flex justify-end'>
+                            <div className="flex items-center gap-1 text-xs">
+                                <Heart className="w-4 h-4" />
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-2">{space.title}</h3>
+                    <p className="text-sm text-white/90 mb-4 line-clamp-2">{space.description}</p>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                            <Users className="w-3 h-3" />
+                        </div>
+
+                        <div className="flex flex-col">
+                            <span className="font-medium">{space.author}</span>
+                            <div className="flex items-center gap-1 text-xs">
+                                <span>{space.timeAgo}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                        {/* Run Action and other action drop down */}
+
+                        <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600">
+                            <CloudLightning className="w-4 h-4" />
+                            <span>Run</span>
+                        </button>
+
+                        <ActionDropdown />
+                    </div>
+
+
+
+                </div>
+            </div>
+        </div>
+    )
+};
+
+
+const actionsOptions = [
+    {label: "Run in dev mode", icon: <Bolt className="w-4 h-4" />},
+    {label: "Logs", icon: <ScrollText className="w-4 h-4" />},
+    {label: "Files", icon: <Files className="w-4 h-4" />},
+    {label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" />},
+    {label: "Tools", icon: <Box className="w-4 h-4" />},
+    {label: "Users", icon: <SquareUserRound className="w-4 h-4" />},
+    {label: "Settings", icon: <Cog className="w-4 h-4" />}
+]
+
+
+
+const ActionDropdown = () => {
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const handleToggleDropdown = () => {
+        if (!isDropdownOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setButtonRect(rect);
+        }
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isDropdownOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        const handleScroll = () => {
+            if (isDropdownOpen && buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setButtonRect(rect);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [isDropdownOpen]);
+
+    return (
+        <>
+            <div className="flex items-center gap-4">
+                <div className="relative">
+                    <button
+                        ref={buttonRef}
+                        onClick={handleToggleDropdown}
+                        className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors hover:text-blue-600 cursor-pointer"
+                    >
+                        <Bolt className="w-4 h-4" />
+                        <span>Actions</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Render dropdown in a portal */}
+            {isDropdownOpen && buttonRect && createPortal(
+                <div
+                    className="fixed w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]"
+                    style={{
+                        top: buttonRect.bottom + 4,
+                        left: buttonRect.right - 192,
+                    }}
+                >
+                    {actionsOptions.map((option) => (
+                        <button
+                            key={option.label}
+                            onClick={() => {
+                                setIsDropdownOpen(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
+                        >
+                            <div className="inline-flex items-center gap-2">
+                                {option.icon}
+                                {option.label}
+                            </div>
+                        </button>
+                    ))}
+                </div>,
+                document.body
+            )}
+        </>
+    );
+};

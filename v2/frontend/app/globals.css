@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+
+
+@theme {
+  --color-background: #e0e0e0;
+  --color-primary: #0170f3;
+  --color-secondary: #FBBF24;
+  --color-accent: #111111;
+  --color-text: #0f9299;
+  --color-text2: #111111;
+  --color-text3: #6B7280;
+  --color-text4: #9CA3AF;
+  --color-danger: #EF4444;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
+  
+  --font-family-sans: 'Inter', sans-serif;
+  --font-family-serif: 'Merriweather', serif;
+  --font-family-mono: 'Fira Code', monospace;
+}
+
+@layer components {
+  /* 
+  
+  
+  
+  
+  tx-btn
+tx-btn-sm
+tx-btn-lg
+tx-btn-primary
+tx-btn-secondary
+tx-btn-accent
+tx-btn-ghost
+tx-btn-link
+tx-btn-close
+
+tx-card
+tx-card-body
+tx-card-title
+
+tx-grid # mobile-1, desktop-4, md-3
+
+
+tx-input
+tx-textarea
+tx-select
+tx-checkbox
+tx-radio
+tx-switch
+
+tx-modal
+tx-modal-header
+tx-modal-body
+tx-modal-footer
+
+tx-tab
+tx-tab-list
+tx-tab-panel
+tx-tab-content
+
+tx-table
+tx-table-header
+tx-table-row
+tx-table-cell
+tx-table-footer
+  
+  
+  */
+
+
+  .tx-btn {
+    @apply text-xs py-2 px-2 rounded-md font-normal transition-colors text-[var(--color-text)] cursor-pointer hover:opacity-55 ;
+  }
+
+  .tx-btn-sm {
+    @apply text-xs px-2 py-1 transition-colors text-white bg-[var(--color-primary)];
+  }
+
+  .tx-btn-lg {
+    @apply text-base px-4 py-2 transition-colors text-white bg-[var(--color-primary)];
+  }
+
+  .tx-btn-outlined {
+    @apply border border-[var(--color-text)] text-[var(--color-text)] hover:bg-[var(--color-text)]/10;
+  }
+
+  .tx-btn-primary {
+    @apply bg-[var(--color-primary)] text-white;
+  }
+
+  .tx-btn-secondary {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-btn-accent {
+    @apply bg-[var(--color-accent)] text-white;
+  }
+
+  .tx-btn-ghost {
+    @apply bg-transparent text-[var(--color-text)] hover:bg-[var(--color-text)]/10;
+  }
+
+  .tx-btn-link {
+    @apply text-[var(--color-primary)] hover:underline;
+  }
+
+  .tx-btn-close {
+    @apply text-[var(--color-text)] hover:text-[var(--color-danger)];
+  }
+
+  .tx-card {
+    @apply bg-white shadow-md rounded-lg overflow-hidden flex flex-col border border-[var(--color-text)]/10;
+  }
+
+  .tx-card-body {
+    @apply p-4 flex;
+  }
+  .tx-card-title {
+    @apply text-lg font-semibold mb-2 text-[var(--color-text)];
+  }
+
+  .tx-grid {
+    @apply grid gap-4 
+      grid-cols-1 
+      sm:grid-cols-2 
+      md:grid-cols-3 
+      lg:grid-cols-4;
+  }
+
+  .tx-input, .tx-textarea, .tx-select {
+    @apply w-full px-3 py-2 border border-[var(--color-text)]/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-colors;
+  }
+
+  .tx-nav {
+    @apply flex items-center justify-between bg-white shadow border border-[var(--color-accent)]/10 p-4 rounded-lg w-full;
+  }
+
+  .tx-nav-items {
+    @apply flex items-center justify-between gap-2;
+  }
+
+  .tx-nav-item {
+    @apply text-[var(--color-text2)] hover:text-[var(--color-primary)] cursor-pointer transition-colors;
+  }
+
+  .tx-modal {
+    @apply fixed inset-0 flex items-center justify-center bg-black/50 z-50;
+  }
+
+  .tx-modal-header {
+    @apply text-lg font-semibold mb-4;
+  }
+
+  .tx-modal-body {
+    @apply p-4 bg-white rounded-lg shadow-lg w-full max-w-md;
+  }
+
+  .tx-modal-footer {
+    @apply flex justify-end gap-2 mt-4;
+  }
+
+  .tx-tab {
+    @apply flex flex-col w-full;
+  }
+
+  .tx-tab-list {
+    @apply flex border-b border-[var(--color-text)]/20;
+  }
+
+  .tx-tab-item {
+    @apply px-4 py-2 cursor-pointer text-[var(--color-text)] hover:text-[var(--color-primary)] transition-colors;
+  }
+
+  .tx-tab-panel {
+    @apply p-4 bg-white rounded-lg shadow-lg mt-2;
+  }
+
+  .tx-table {
+    @apply w-full border-collapse;
+  }
+
+  .tx-table-header {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-table-row {
+    @apply border-b border-[var(--color-text)]/10;
+  }
+
+  .tx-table-cell {
+    @apply px-4 py-2 text-[var(--color-text)];
+  }
+
+  .tx-table-footer {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-switch {
+    @apply relative inline-flex items-center cursor-pointer;
+  }
+
+  .tx-switch input {
+    @apply sr-only;
+  }
+
+  .tx-switch .tx-switch-thumb {
+    @apply block w-6 h-6 bg-white rounded-full shadow transform transition-transform;
+  }
+
+  .tx-switch input:checked + .tx-switch-thumb {
+    @apply translate-x-6;
+  }
+
+  .tx-switch input:checked {
+    @apply bg-[var(--color-primary)];
+  }
+
+  .tx-checkbox, .tx-radio {
+    @apply w-4 h-4 text-[var(--color-primary)] border border-[var(--color-text)]/20 rounded focus:ring-2 focus:ring-[var(--color-primary)] transition-colors;
+  }
+
+  .tx-checkbox:checked, .tx-radio:checked {
+    @apply bg-[var(--color-primary)] border-transparent;
+  }
+
+  .tx-checkbox:checked::before, .tx-radio:checked::before {
+    @apply content-[''] block w-full h-full bg-[var(--color-primary)] rounded;
+  }
+
+  .tx-textarea {
+    @apply h-24 resize-none;
+  }
+
+  .tx-textarea:focus, .tx-input:focus, .tx-select:focus {
+    @apply border-[var(--color-primary)] focus:ring-2;
+  }
+
+  .tx-badge {
+    @apply inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-[var(--color-secondary)] text-white;
+  }
+
+
+  .tx-badge-primary {
+    @apply bg-[var(--color-primary)] text-white;
+  }
+
+  .tx-badge-secondary {
+    @apply bg-[var(--color-secondary)] text-white;
+  }
+
+  .tx-badge-accent {
+    @apply bg-[var(--color-accent)] text-white;
+  }
+
+  .tx-badge-danger {
+    @apply bg-[var(--color-danger)] text-white;
+  }
+
+  .tx-badge-success {
+    @apply bg-[var(--color-success)] text-white;
+  }
+
+  .tx-badge-warning {
+    @apply bg-[var(--color-warning)] text-white;
+  }
+
+  .tx-badge-info {
+    @apply bg-[var(--color-info)] text-white;
+  }
+
+  .tx-badge-outline {
+    @apply border border-[var(--color-text)] text-[var(--color-text)] bg-transparent;
+  }
+
+  .tx-badge-ghost {
+    @apply bg-transparent text-[var(--color-text)] hover:bg-[var(--color-text)]/10;
+  }
+
+  .tx-badge-link {
+    @apply text-[var(--color-primary)] hover:underline;
+  }
+
+  .tx-badge-close {
+    @apply text-[var(--color-text)] hover:text-[var(--color-danger)] cursor-pointer;
+  }
+
+  
+
+
+
+  
+
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
