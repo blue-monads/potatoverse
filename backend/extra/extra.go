@@ -1,4 +1,4 @@
-package backend
+package extra
 
 type DomainInfo struct {
 	Domain string // example.com
