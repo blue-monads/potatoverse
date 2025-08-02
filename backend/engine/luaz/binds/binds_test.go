@@ -2,45 +2,20 @@ package binds
 
 import (
 	"database/sql"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/k0kubun/pp"
-	"github.com/upper/db/v4/adapter/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 	lua "github.com/yuin/gopher-lua"
 )
-
-func TestMain(m *testing.M) {
-	// remmove test.db file if it exists
-	if _, err := os.Stat("test.db"); err == nil {
-		os.Remove("test.db")
-	}
-
-	code := m.Run()
-
-	os.Exit(code)
-
-	if _, err := os.Stat("test.db"); err == nil {
-		os.Remove("test.db")
-	}
-
-	os.Exit(code)
-}
 
 func TestBinds(t *testing.T) {
 	pp.Println("test")
 
-	var settings = sqlite.ConnectionURL{
-		Database: "test.db",
-	}
-
-	sess, err := sqlite.Open(settings)
+	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
-		log.Fatalf("db.Open(): %q\n", err)
+		t.Fatal("Failed to open database:", err)
 	}
-
-	db := sess.Driver().(*sql.DB)
 
 	bindDb := BluaDb{
 		db: db,

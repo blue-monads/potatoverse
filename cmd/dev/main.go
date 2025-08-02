@@ -5,7 +5,7 @@ import (
 
 	// modules
 
-	"github.com/blue-monads/turnix/backend/distro/devmode"
+	"github.com/blue-monads/turnix/v2/backend"
 
 	_ "github.com/blue-monads/turnix/backend/modules/books"
 	_ "github.com/blue-monads/turnix/backend/modules/zblog"
@@ -31,6 +31,8 @@ func main() {
 	// 	}, nil
 	// })
 
-	devmode.Run()
+	// devmode.Run()
+
+	backend.NewMain()
 
 }

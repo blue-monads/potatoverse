@@ -1,5 +1,7 @@
 name: CI Test - Go Test
 
+
+
 on:
   push:
     branches:
@@ -7,7 +9,7 @@ on:
       - main
 jobs:
   citest:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout repository
@@ -20,5 +22,5 @@ jobs:
 
     - name: Run CI Test (citest)
       run: |
-        echo "Running citest"
-        go test -timeout 30s -v  ./cmd/citest/*.go
+        ./ci.sh
+        
