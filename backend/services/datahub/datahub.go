@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/blue-monads/turnix/v2/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	"github.com/upper/db/v4"
 )
 
@@ -39,14 +39,14 @@ type UserOps interface {
 }
 
 type FileDataOps interface {
-	AddFileShare(fileId int64, userId int64, pid int64) (string, error)
+	AddFileShare(fileId int64, userId int64, spaceId int64) (string, error)
 	AddFileStreaming(file *models.File, stream io.Reader) (id int64, err error)
-	AddFolder(pid int64, uid int64, path string, name string) (int64, error)
+	AddFolder(spaceId int64, uid int64, path string, name string) (int64, error)
 	GetFileBlobStreaming(id int64, w http.ResponseWriter) error
 	GetFileMeta(id int64) (*models.File, error)
 	GetSharedFile(id string, w http.ResponseWriter) error
 	ListFileShares(fileId int64) ([]models.FileShare, error)
-	ListFilesByProject(pid int64, path string) ([]models.File, error)
+	ListFilesBySpace(spaceId int64, path string) ([]models.File, error)
 	ListFilesByUser(uid int64, path string) ([]models.File, error)
 	RemoveFileShare(userId int64, id string) error
 	RemoveFile(id int64) error
