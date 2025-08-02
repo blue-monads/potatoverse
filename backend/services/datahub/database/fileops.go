@@ -9,12 +9,15 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	"github.com/jaevor/go-nanoid"
 	"github.com/k0kubun/pp"
 
 	"github.com/upper/db/v4"
 )
+
+var _ datahub.FileDataOps = (*DB)(nil)
 
 func (d *DB) AddFolder(spaceId int64, uid int64, path string, name string) (int64, error) {
 	t := time.Now()
