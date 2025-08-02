@@ -15,7 +15,7 @@ type User struct {
 	ExtraMeta       string     `json:"extrameta" db:"extrameta,omitempty"`
 	CreatedAt       *time.Time `json:"createdAt" db:"created_at,omitempty"`
 	OwnerUserId     int64      `json:"owner_user_id" db:"owner_user_id,omitempty"`
-	OwnerProjectId  int64      `json:"owner_project_id" db:"owner_project_id,omitempty"`
+	OwnerSpaceId    int64      `json:"owner_space_id" db:"owner_space_id,omitempty"`
 	MessageReadHead int64      `json:"msg_read_head" db:"msg_read_head,omitempty"`
 	Disabled        bool       `json:"disabled" db:"disabled,omitempty"`
 	IsDeleted       bool       `json:"is_deleted" db:"is_deleted,omitempty"`
