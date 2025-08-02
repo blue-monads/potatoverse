@@ -32,10 +32,11 @@ type UserOps interface {
 	ListUserByOwner(owner int64) ([]models.User, error)
 	UpdateUser(id int64, data map[string]any) error
 	DeleteUser(id int64) error
+
 	ListUserDevice(userId int64) ([]models.UserDevice, error)
-	GetDevice(id int64) (*models.UserDevice, error)
-	DeleteDevice(id int64) error
-	UpdateDevice(id int64, data map[string]any) error
+	GetUserDevice(id int64) (*models.UserDevice, error)
+	DeleteUserDevice(id int64) error
+	UpdateUserDevice(id int64, data map[string]any) error
 }
 
 type FileDataOps interface {
