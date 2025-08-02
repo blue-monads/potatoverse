@@ -17,7 +17,7 @@ type SpaceUser struct {
 	ID        int64  `json:"id" db:"id,omitempty"`
 	UserID    int64  `json:"user_id" db:"userId"`
 	SpaceID   int64  `json:"space_id" db:"spaceId"`
-	Scope     int64  `json:"scope" db:"scope,omitempty"`
+	Scope     string `json:"scope" db:"scope,omitempty"`
 	Token     string `json:"token" db:"token"`
 	ExtraMeta string `json:"extrameta" db:"extrameta,omitempty"`
 }
