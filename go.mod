@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/jaevor/go-nanoid v1.4.0
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/upper/db/v4 v4.7.0
