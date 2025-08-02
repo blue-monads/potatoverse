@@ -5,7 +5,21 @@ set -e
 
 echo "Running citest"
 
-go test -v -timeout 30s -run ^TestAutoCapture$ ./backend/extras/autocdc
+RUNUNITTESTS=0
+RUNINTEGRATIONTESTS=1
 
 
-go test -v -timeout 30s -run ^TestBinds$ ./backend/engine/luaz/binds
+if [ "$RUNUNITTESTS" -eq 1 ]; then
+  echo "Running unit tests"
+  go test -v -timeout 30s -run ^TestAutoCapture$ ./backend/extras/autocdc
+  go test -v -timeout 30s -run ^TestBinds$ ./backend/engine/luaz/binds
+else
+  echo "Skipping unit tests"
+fi
+
+if [ "$RUNINTEGRATIONTESTS" -eq 1 ]; then
+  echo "Running integration tests"
+  go run ./tests/*.go
+else
+  echo "Skipping integration tests"
+fi
