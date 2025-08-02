@@ -1,2 +1,0 @@
-
-<div>Edit Stock</div>

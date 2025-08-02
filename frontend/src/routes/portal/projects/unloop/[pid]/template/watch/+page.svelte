@@ -1,3 +1,0 @@
-
-<div>WATCH QUEUE</div>
-

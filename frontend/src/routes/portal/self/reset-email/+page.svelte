@@ -1,1 +1,0 @@
-<div>Reset Email</div>
