@@ -60,20 +60,22 @@ type SpaceOps interface {
 	ListSpaces() ([]models.Space, error)
 	UpdateSpace(id int64, data map[string]any) error
 	RemoveSpace(id int64) error
+
 	ListSpaceUsers(spaceId int64) ([]models.SpaceUser, error)
 	AddUserToSpace(ownerId int64, userId int64, spaceId int64) error
 	RemoveUserFromSpace(ownerId int64, userId int64, spaceId int64) error
 	GetSpaceUserScope(userId int64, spaceId int64) (string, error)
 	ListOwnSpaces(ownerId int64, spaceType string) ([]models.Space, error)
 	ListThirdPartySpaces(userId int64, spaceType string) ([]models.Space, error)
-	ListSpaceTables(spaceId int64) ([]string, error)
-	ListSpaceTableColumns(spaceId int64, table string) ([]models.SpaceTableColumn, error)
+
 	AddSpaceConfig(spaceId int64, uid int64, data *models.SpaceConfig) (int64, error)
 	ListSpaceConfigs(spaceId int64) ([]models.SpaceConfig, error)
 	GetSpaceConfig(spaceId int64, uid int64, id int64) (*models.SpaceConfig, error)
 	UpdateSpaceConfig(spaceId int64, uid int64, id int64, data map[string]any) error
 	RemoveSpaceConfig(spaceId int64, uid int64, id int64) error
 
+	ListSpaceTables(spaceId int64) ([]string, error)
+	ListSpaceTableColumns(spaceId int64, table string) ([]models.SpaceTableColumn, error)
 	RunSpaceSQLQuery(spaceId int64, query string, data []any) ([]map[string]any, error)
 	RunSpaceDDL(spaceId int64, ddl string) error
 }
