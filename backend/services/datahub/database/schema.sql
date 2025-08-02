@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS UserMessages(
   FOREIGN KEY (from_project_id) REFERENCES Projects(id)
 );
 
+
+-- spaces
+
 CREATE TABLE IF NOT EXISTS Spaces (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
   name TEXT NOT NULL DEFAULT '', 
@@ -112,6 +115,8 @@ CREATE TABLE IF NOT EXISTS SpaceUsers (
   FOREIGN KEY (user_id) REFERENCES Users(id), 
   unique(space_id, user_id)
 );
+
+-- files
 
 CREATE TABLE IF NOT EXISTS Files (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
