@@ -16,7 +16,7 @@ export default function Home() {
         </li>
 
         <li>
-          <a className="hover:underline" href="/z/pages/theme">Theme</a>
+          <a className="hover:underline" href="/z/pages/play">Play</a>
         </li>
 
 
