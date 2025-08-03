@@ -114,6 +114,20 @@ func (db *DB) GetSession() db.Session {
 	return db.sess
 }
 
+func (db *DB) HasTable(name string) (bool, error) {
+	table := db.Table(name)
+	if table == nil {
+		return false, nil
+	}
+
+	exists, err := table.Exists()
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
 func (db *DB) Table(name string) db.Collection {
 	return db.sess.Collection(name)
 }

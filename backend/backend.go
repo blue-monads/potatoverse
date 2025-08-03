@@ -22,10 +22,13 @@ func NewNoHead(options Options) *app.HeadLess {
 		return nil
 	}
 
+	masterSecret := "default-master-secret"
+
 	app := app.NewHeadLess(app.Option{
-		Database: db,
-		Logger:   logger,
-		Signer:   signer.New([]byte("default-signer-key")),
+		Database:     db,
+		Logger:       logger,
+		Signer:       signer.New([]byte(masterSecret)),
+		MasterSecret: masterSecret,
 	})
 
 	return app

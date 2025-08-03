@@ -10,6 +10,7 @@ import (
 
 type Database interface {
 	Core
+	GlobalOps
 	UserOps
 	FileDataOps
 	SpaceOps
@@ -22,6 +23,7 @@ type Core interface {
 	Init() error
 	Close() error
 	Vender() string
+	HasTable(name string) (bool, error)
 }
 
 type GlobalOps interface {
