@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Search, Filter, MoreHorizontal, User, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/BigSearchBar';
+import { AddButton } from '@/contain/AddButton';
 
 export default function Page() {
   return (<>
@@ -128,7 +129,13 @@ const UserTable = () => {
         Icon={User}
         name='Users'
         description="Manage your users, roles, and permissions."
-        rightContent={<></>}
+        rightContent={<>
+        <AddButton
+                            name="+ User"
+                            onClick={() => { }}
+                        />
+        
+        </>}
 
       >
 
