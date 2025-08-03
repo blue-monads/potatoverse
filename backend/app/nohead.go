@@ -101,7 +101,8 @@ func (h *HeadLess) Controller() *controller.Controller {
 	return h.ctrl
 }
 
-// calculate sha256 hash of the master secret
+// private
+
 func hashMasterSecret(masterSecret string) string {
 	h := sha256.New()
 	h.Write([]byte("SALT_FINGERPRINT"))
