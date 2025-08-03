@@ -24,6 +24,15 @@ type Core interface {
 	Vender() string
 }
 
+type GlobalOps interface {
+	GetGlobalConfig(key, group string) (*models.GlobalConfig, error)
+	ListGlobalConfigs(group string, offset int, limit int) ([]models.GlobalConfig, error)
+	AddGlobalConfig(data *models.GlobalConfig) (int64, error)
+	UpdateGlobalConfig(id int64, data map[string]any) error
+	UpdateGlobalConfigByKey(key, group string, data map[string]any) error
+	DeleteGlobalConfig(id int64) error
+}
+
 type UserOps interface {
 	AddUser(data *models.User) (int64, error)
 	GetUser(id int64) (*models.User, error)
