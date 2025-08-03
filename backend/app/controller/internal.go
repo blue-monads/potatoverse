@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 )
@@ -48,6 +49,10 @@ func (c *Controller) HasFingerprint() (bool, error) {
 
 	config, err := c.database.GetGlobalConfig("fingerprint", "CORE")
 	if err != nil {
+		if errorMessage := err.Error(); strings.Contains(errorMessage, "upper: no more rows in this result set") {
+			return false, nil
+		}
+
 		return false, err
 	}
 

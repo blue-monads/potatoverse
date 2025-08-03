@@ -56,5 +56,5 @@ func (d *DB) DeleteGlobalConfig(id int64) error {
 // private
 
 func (d *DB) globalConfigTable() db.Collection {
-	return d.Table("global_config")
+	return d.Table("GlobalConfig")
 }

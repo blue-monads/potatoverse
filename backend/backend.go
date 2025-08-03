@@ -13,14 +13,14 @@ type Options struct {
 	DBFile string
 }
 
-func NewNoHead(options Options) *app.HeadLess {
+func NewNoHead(options Options) (*app.HeadLess, error) {
 
 	logger := slog.Default()
 
 	db, err := database.NewDB(options.DBFile, logger)
 	if err != nil {
 		logger.Error("Failed to initialize database", "err", err)
-		return nil
+		return nil, err
 	}
 
 	masterSecret := "default-master-secret"
@@ -39,5 +39,5 @@ func NewNoHead(options Options) *app.HeadLess {
 		},
 	})
 
-	return app
+	return app, nil
 }
