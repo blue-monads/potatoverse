@@ -27,5 +27,6 @@ func New(opt Option) *Controller {
 		database: opt.Database,
 		logger:   opt.Logger,
 		signer:   opt.Signer,
+		AppOpts:  opt.AppOpts,
 	}
 }
