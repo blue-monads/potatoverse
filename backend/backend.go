@@ -6,6 +6,7 @@ import (
 	"github.com/blue-monads/turnix/backend/app"
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
 type Options struct {
@@ -25,10 +26,17 @@ func NewNoHead(options Options) *app.HeadLess {
 	masterSecret := "default-master-secret"
 
 	app := app.NewHeadLess(app.Option{
-		Database:     db,
-		Logger:       logger,
-		Signer:       signer.New([]byte(masterSecret)),
-		MasterSecret: masterSecret,
+		Database: db,
+		Logger:   logger,
+		Signer:   signer.New([]byte(masterSecret)),
+		AppOpts: &xtypes.AppOptions{
+			Name:         "Turnix",
+			Port:         8080,
+			Host:         "localhost",
+			MasterSecret: masterSecret,
+			Debug:        true,
+			WorkingDir:   "./tmp",
+		},
 	})
 
 	return app

@@ -1,6 +1,6 @@
-package app
+package xtypes
 
-type Options struct {
+type AppOptions struct {
 	Name         string `json:"name"`
 	Port         int    `json:"port"`
 	Host         string `json:"host"`
