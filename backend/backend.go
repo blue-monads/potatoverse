@@ -5,6 +5,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/app"
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
+	"github.com/blue-monads/turnix/backend/services/signer"
 )
 
 type Options struct {
@@ -21,9 +22,10 @@ func NewNoHead(options Options) *app.HeadLess {
 		return nil
 	}
 
-	app := app.NewHeadLess(app.HeadLessOptions{
+	app := app.NewHeadLess(app.Option{
 		Database: db,
 		Logger:   logger,
+		Signer:   signer.New([]byte("default-signer-key")),
 	})
 
 	return app
