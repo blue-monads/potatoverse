@@ -27,7 +27,7 @@ var (
 	ErrUserNoScope = errors.New("err: user doesnot have required scope")
 )
 
-func NewDB(file string, logger slog.Logger) (*DB, error) {
+func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
 	var settings = sqlite.ConnectionURL{
 		Database: file,
