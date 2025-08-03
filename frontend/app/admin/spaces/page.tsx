@@ -4,6 +4,7 @@ import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, Sq
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/BigSearchBar';
+import { AddButton } from '@/contain/AddButton';
 
 
 
@@ -122,9 +123,10 @@ const SpacesDirectory = () => {
             name="Spaces"
             description="Your App Directory"
             rightContent={
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                    + New Space
-                </button>
+                <AddButton
+                    name="+ Space"
+                    onClick={() => { }}
+                />
             }
         >
 

@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Store, CloudDownload, InfoIcon, Bolt } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
+import AddButton from '@/contain/AddButton';
 
 
 export default function Page() {
@@ -107,30 +109,20 @@ const StoreDirectory = () => {
 
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <Store className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold">Store</h1>
-                                <p className="text-sm text-gray-600">Your App spaces</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors cursor-pointer">
-                            + Import
-                        </button>
-                    </div>
-                </div>
-            </header>
+        <WithAdminBodyLayout
+            Icon={Store}
+            name='Store'
+            description="Your App spaces."
+            rightContent={<>
+                <AddButton
+                    name="+ Import"
+                    onClick={() => { }}
+                />
+            </>}
 
+
+        >
             <div className="bg-white border-b border-gray-200 px-6 py-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="relative">
@@ -220,7 +212,8 @@ const StoreDirectory = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </WithAdminBodyLayout>
+
     );
 };
 
@@ -235,13 +228,13 @@ const StoreItemCard = ({ item }: { item: any }) => {
 
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 text-sm">
-                            
+
                             {item.mcp && (
                                 <span className="bg-pink-500/80 px-2 py-1 rounded text-xs">🔥 MCP</span>
                             )}
                         </div>
 
-                        
+
 
                     </div>
 
@@ -249,7 +242,7 @@ const StoreItemCard = ({ item }: { item: any }) => {
                     <p className="text-sm text-white/90 mb-4 line-clamp-2">{item.description}</p>
                 </div>
 
-                 <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
                             <Users className="w-3 h-3" />
