@@ -341,7 +341,7 @@ const ActionDropdown = () => {
                             onClick={() => {
                                 setIsDropdownOpen(false);
                             }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
+                            className="w-full text-left px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
                         >
                             <div className="inline-flex items-center gap-2">
                                 {option.icon}
