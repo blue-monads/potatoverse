@@ -3,6 +3,7 @@ import { Search, Zap } from "lucide-react";
 interface PropsType {
     searchText?: string;
     setSearchText: (text: string) => void;
+    onSearchButtonClick?: () => void;
 }
 
 const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
@@ -19,7 +20,10 @@ const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
                         value={props.searchText}
                         onChange={(e) => props.setSearchText(e.target.value)}
                     />
-                    <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors">
+                    <button 
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors"
+                    onClick={props.onSearchButtonClick}
+                    >
                         <Zap className="w-5 h-5 text-gray-400" />
                     </button>
                 </div>
