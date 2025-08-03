@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
+import BigSearchBar from '@/contain/BigSearchBar';
 
 
 
@@ -13,16 +15,7 @@ export default function Page() {
 
 
 
-const staticGradients = [
-    'from-pink-500 to-orange-500',
-    'from-blue-500 to-purple-600',
-    'from-gray-600 to-blue-800',
-    'from-red-500 to-pink-600',
-    'from-purple-600 to-indigo-600',
-    'from-purple-500 to-pink-500',
-    'from-teal-500 to-blue-600',
-    'from-green-500 to-blue-600'
-]
+
 
 
 
@@ -60,7 +53,7 @@ const SpacesDirectory = () => {
             author: 'nvidia',
             timeAgo: '12 days ago',
             from: 'A100',
-                gradient: 'from-gray-600 to-blue-800'
+            gradient: 'from-gray-600 to-blue-800'
         },
         {
             id: 4,
@@ -123,56 +116,28 @@ const SpacesDirectory = () => {
 
 
     return (
-        <div className="min-h-screen bg-gray-50">
 
-            <div className="hidden">
-                {staticGradients.map((gradient, index) => (
-                    <div key={index} className={`bg-gradient-to-br ${gradient} h-0 w-0 absolute`} />
-                ))}
-            </div>
+        <WithAdminBodyLayout
+            Icon={Box}
+            name="Spaces"
+            description="Your App Directory"
+            rightContent={
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    + New Space
+                </button>
+            }
+        >
 
 
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <Box className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold">Spaces</h1>
-                                <p className="text-sm text-gray-600">Your App Directory</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                            + New Space
-                        </button>
-                    </div>
-                </div>
-            </header>
 
-            {/* Search Bar */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Search spaces..."
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <button className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors">
-                            <Zap className="w-5 h-5 text-gray-400" />
-                        </button>
-                    </div>
-                </div>
-            </div>
+
+
+            <BigSearchBar
+                searchText={searchTerm}
+                setSearchText={setSearchTerm}
+            />
+
 
             <div className="max-w-7xl mx-auto px-6 py-8">
                 <div className="mb-8">
@@ -223,7 +188,8 @@ const SpacesDirectory = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </WithAdminBodyLayout>
+
     );
 };
 
@@ -296,13 +262,13 @@ const SpaceCard = ({ space }: { space: any }) => {
 
 
 const actionsOptions = [
-    {label: "Run in dev mode", icon: <Bolt className="w-4 h-4" />},
-    {label: "Logs", icon: <ScrollText className="w-4 h-4" />},
-    {label: "Files", icon: <Files className="w-4 h-4" />},
-    {label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" />},
-    {label: "Tools", icon: <Box className="w-4 h-4" />},
-    {label: "Users", icon: <SquareUserRound className="w-4 h-4" />},
-    {label: "Settings", icon: <Cog className="w-4 h-4" />}
+    { label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
+    { label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
+    { label: "Files", icon: <Files className="w-4 h-4" /> },
+    { label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
+    { label: "Tools", icon: <Box className="w-4 h-4" /> },
+    { label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
+    { label: "Settings", icon: <Cog className="w-4 h-4" /> }
 ]
 
 
