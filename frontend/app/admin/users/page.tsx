@@ -1,12 +1,14 @@
 "use client";
 import React, { useState } from 'react';
 import { Search, Filter, MoreHorizontal, User, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
+import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
+import BigSearchBar from '@/contain/BigSearchBar';
 
 export default function Page() {
-    return (<>
+  return (<>
     <UserTable />
 
-    </>)
+  </>)
 }
 
 
@@ -90,8 +92,8 @@ const UserTable = () => {
   ];
 
   const handleSelectUser = (userId: number) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
+    setSelectedUsers(prev =>
+      prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
@@ -120,187 +122,121 @@ const UserTable = () => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Users</h2>
-              <p className="text-sm text-gray-500">{users.length} total users</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-              + Add User
-            </button>
-            <button className="border border-gray-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-              Export
-            </button>
-          </div>
-        </div>
-        
-        {/* Search and Filters */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-            <Filter className="w-4 h-4" />
-            <span>Filters</span>
-          </button>
-        </div>
-        
-        {/* Bulk Actions */}
-        {selectedUsers.length > 0 && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-blue-700 font-medium">
-              {selectedUsers.length} user{selectedUsers.length > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex items-center gap-2">
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                Activate
-              </button>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                Deactivate
-              </button>
-              <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+    <>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  checked={selectedUsers.length === users.length}
-                  onChange={handleSelectAll}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                User
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Apps Created
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Last Active
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
+      <WithAdminBodyLayout
+        Icon={User}
+        name='Users'
+        description="Manage your users, roles, and permissions."
+        rightContent={<></>}
+
+      >
+
+        <BigSearchBar
+          setSearchText={setSearchTerm}
+          searchText={searchTerm}
+        />
+
+
+
+
+        {/* Table */}
+        <div className="overflow-x-auto max-w-7xl mx-auto w-full">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedUsers.includes(user.id)}
-                    onChange={() => handleSelectUser(user.id)}
+                    checked={selectedUsers.length === users.length}
+                    onChange={handleSelectAll}
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 bg-gradient-to-br ${user.gradient} rounded-full flex items-center justify-center text-white font-semibold`}>
-                      {user.avatar}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-500 flex items-center gap-1">
-                        <Mail className="w-3 h-3" />
-                        {user.email}
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Active
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {users.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => handleSelectUser(user.id)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 bg-gradient-to-br ${user.gradient} rounded-full flex items-center justify-center text-white font-semibold`}>
+                        {user.avatar}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-900">{user.name}</div>
+                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {user.email}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 font-medium">{user.appsCreated}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {user.lastActive}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="View">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Edit">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 text-gray-400 hover:text-red-600 transition-colors" title="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors" title="More">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Footer */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>Showing 1-{users.length} of {users.length} users</span>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1 border border-gray-300 rounded hover:bg-white transition-colors">
-              Previous
-            </button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 rounded hover:bg-white transition-colors">
-              Next
-            </button>
-          </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {user.lastActive}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title="View">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button className="p-1 text-gray-400 hover:text-green-600 transition-colors" title="Edit">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button className="p-1 text-gray-400 hover:text-red-600 transition-colors" title="Delete">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors" title="More">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
+
+
+      </WithAdminBodyLayout>
+
+    </>
   );
 };
 
