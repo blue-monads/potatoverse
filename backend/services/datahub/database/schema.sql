@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS Users (
   phone TEXT,
 
   name TEXT NOT NULL, 
-  utype TEXT NOT NULL DEFAULT 'real',  -- super, real, device
+  utype TEXT NOT NULL DEFAULT 'real',  -- admin, normal, bot
   bio TEXT NOT NULL DEFAULT '', 
   password TEXT NOT NULL, 
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
