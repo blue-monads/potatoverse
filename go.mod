@@ -4,10 +4,12 @@ go 1.24
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/hako/branca v0.0.0-20200807062402-6052ac720505
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/upper/db/v4 v4.7.0
+	golang.org/x/crypto v0.25.0
 )
 
 require (
@@ -15,6 +17,7 @@ require (
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
+	github.com/eknkc/basex v1.0.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -37,7 +40,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
