@@ -26,7 +26,7 @@ Resources:
         - /z/pages/ 
     - APP
         - (internal) /z/spaces/<blueprint_key>/ 
-        - (external) /z/pages/portal/spaces/<blueprint_key>/
+        - (external) /z/pages/spaces/<blueprint_key>/
 2. DB Table space
     - CORE
         - core_<table_name>
