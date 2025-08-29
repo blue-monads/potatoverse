@@ -6,8 +6,8 @@ import { useState } from "react";
 
 export default function Page() {
 
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
+    const [email, setEmail] = useState<string>("demo@example.com");
+    const [password, setPassword] = useState<string>("demogodTheGreat_123");
 
     const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -72,9 +72,12 @@ export default function Page() {
                     <p className="">Need account ? <a href="/z/pages/auth/signup/open" className="font-medium text-primary-contrast-200-800">Sign up</a></p>
 
                     <div>
-                        <button className="w-full px-2 py-1 text-xs text-white font-medium bg-secondary-700-300 rounded duration-150 btn">
+                        <a className="w-full text-xs text-white font-medium bg-secondary-700-300 duration-150 btn font-sans"
+                            href="/z/pages/auth/forgot-password"
+
+                        >
                             Forgot password
-                        </button>
+                        </a>
                     </div>
 
 
