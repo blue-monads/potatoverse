@@ -12,8 +12,10 @@ func (a *Server) bindRoutes() {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
-	a.authRoutes(root)
-	a.pages(root)
+	apig := root.Group("/api")
+
+	a.authRoutes(apig)
+	a.pages(apig)
 
 }
 

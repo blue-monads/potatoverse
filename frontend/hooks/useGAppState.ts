@@ -1,4 +1,4 @@
-import { getAccessToken } from "@/lib/api";
+import { getAccessToken } from "@/lib";
 import { useEffect, useState } from "react";
 
 

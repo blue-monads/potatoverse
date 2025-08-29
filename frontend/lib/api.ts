@@ -1,18 +1,30 @@
+import axios from "axios";
+import { getAccessToken } from "./utils";
 
 
-const KEY = "_tnx_atoken_";
+let axiosInstance = null;
 
+const initAxios = () => {
 
-export const saveAccessToken = (accessToken: string) => {
-    localStorage.setItem(KEY, accessToken);
-}
+    const baseURL = window.location.origin + "/z/api";
+    const token = getAccessToken();
 
-export const getAccessToken = () => {
-    return localStorage.getItem(KEY);
-}
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "X-Overhead": "Aaron Swartz",
+    }
 
-export const removeAccessToken = () => {
-    localStorage.removeItem(KEY);
+    if (token) {
+        headers["Authorization"] = `TokenV1 ${token}`;
+    }
+    
+
+    axiosInstance = axios.create({
+        baseURL,
+        headers,
+    });
+    
+
 }
 
 
