@@ -62,7 +62,7 @@ export default function Page() {
                     </div>
                     <button
                         onClick={handleSubmit}
-                        className="w-full px-4 py-2 text-white font-medium bg-primary-700-300  rounded-lg duration-150"
+                        className="w-full px-4 py-2 text-white font-medium bg-primary-700-300  rounded-lg duration-150 hover:opacity-80"
                     >
                         Create account
                     </button>
@@ -72,7 +72,7 @@ export default function Page() {
                     <p className="">Need account ? <a href="/z/pages/auth/signup/open" className="font-medium text-primary-contrast-200-800">Sign up</a></p>
 
                     <div>
-                        <a className="w-full text-xs text-white font-medium bg-secondary-700-300 duration-150 btn font-sans"
+                        <a className="w-full text-xs text-white font-medium bg-secondary-700-300 duration-150 btn font-sans hover:opacity-80"
                             href="/z/pages/auth/forgot-password"
 
                         >
