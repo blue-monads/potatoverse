@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/k0kubun/pp"
 )
 
 // user
@@ -49,6 +50,7 @@ func (c *Controller) HasFingerprint() (bool, error) {
 
 	config, err := c.database.GetGlobalConfig("fingerprint", "CORE")
 	if err != nil {
+		pp.Println(err)
 		if errorMessage := err.Error(); strings.Contains(errorMessage, "upper: no more rows in this result set") {
 			return false, nil
 		}
@@ -75,6 +77,7 @@ func (c *Controller) HasFingerprint() (bool, error) {
 func (c *Controller) GetAppFingerPrint() (*AppFingerPrint, error) {
 	config, err := c.database.GetGlobalConfig("fingerprint", "CORE")
 	if err != nil {
+
 		return nil, err
 	}
 

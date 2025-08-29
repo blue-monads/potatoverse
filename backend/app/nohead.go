@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/k0kubun/pp"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -38,6 +39,7 @@ func NewHeadLess(opt Option) *HeadLess {
 			Signer:   opt.Signer,
 			AppOpts:  opt.AppOpts,
 		}),
+		AppOpts: opt.AppOpts,
 	}
 }
 
@@ -55,6 +57,8 @@ func (h *HeadLess) Start() error {
 	if err != nil {
 		return err
 	}
+
+	pp.Println(h.AppOpts)
 
 	// sha256 hash of the master secret
 	shash := hashMasterSecret(h.AppOpts.MasterSecret)
