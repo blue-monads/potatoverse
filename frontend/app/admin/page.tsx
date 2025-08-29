@@ -1,12 +1,19 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Link2Icon } from 'lucide-react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
+import { Search, Heart, Users, Zap, SquareUserRound, Cog, Link2Icon } from 'lucide-react';
+import { Clock, ArrowRight, Sparkles, Code } from 'lucide-react';
+import HomePage from '@/contain/HomePage/HomePage';
 
-import { Clock, TrendingUp, Star, ArrowRight, Sparkles, Code, Mic, Globe, Eye, Type } from 'lucide-react';
+export default function AdminPage() {
 
 
-export default function Page() {
+    return (<>
+        <HomePage />
+
+    </>)
+}
+
+function Page() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const favs = [
@@ -31,7 +38,7 @@ export default function Page() {
 
     ];
 
-   // favs.length = 0; // For testing empty state
+    // favs.length = 0; // For testing empty state
 
 
     return (<>
