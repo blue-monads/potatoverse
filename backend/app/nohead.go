@@ -41,6 +41,13 @@ func NewHeadLess(opt Option) *HeadLess {
 	}
 }
 
+func (h *HeadLess) Init() error {
+
+	h.logger.Info("Initializing HeadLess application")
+
+	return nil
+}
+
 func (h *HeadLess) Start() error {
 	h.logger.Info("HeadLess application started")
 
