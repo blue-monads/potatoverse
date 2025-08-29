@@ -19,4 +19,6 @@ func (a *Server) bindRoutes() {
 
 func (a *Server) authRoutes(g *gin.RouterGroup) {
 
+	g.POST("/login", a.login)
+
 }

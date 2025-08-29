@@ -12,7 +12,7 @@ type App struct {
 func NewApp(happ *HeadLess) *App {
 	return &App{
 		happ:   happ,
-		server: server.NewServer(happ.Controller()),
+		server: server.NewServer(happ.Controller(), happ.Signer()),
 	}
 }
 

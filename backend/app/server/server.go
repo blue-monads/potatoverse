@@ -2,17 +2,20 @@ package server
 
 import (
 	"github.com/blue-monads/turnix/backend/app/controller"
+	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
 	ctrl   *controller.Controller
 	router *gin.Engine
+	signer *signer.Signer
 }
 
-func NewServer(ctrl *controller.Controller) *Server {
+func NewServer(ctrl *controller.Controller, signer *signer.Signer) *Server {
 	return &Server{
-		ctrl: ctrl,
+		ctrl:   ctrl,
+		signer: signer,
 	}
 }
 
