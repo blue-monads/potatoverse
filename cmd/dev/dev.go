@@ -4,7 +4,7 @@ import "github.com/blue-monads/turnix/backend"
 
 func main() {
 
-	app, err := backend.NewNoHead(backend.Options{
+	app, err := backend.NewApp(backend.Options{
 		DBFile: "data.db",
 	})
 	if err != nil {

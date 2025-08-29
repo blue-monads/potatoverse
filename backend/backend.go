@@ -41,3 +41,13 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 
 	return app, nil
 }
+
+func NewApp(options Options) (*app.App, error) {
+
+	happ, err := NewNoHead(options)
+	if err != nil {
+		return nil, err
+	}
+
+	return app.NewApp(happ), nil
+}

@@ -1,7 +1,12 @@
 package app
 
 import (
+	"log/slog"
+
+	controller "github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/app/server"
+	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/signer"
 )
 
 type App struct {
@@ -28,4 +33,20 @@ func (a *App) Start() error {
 	}
 
 	return a.server.Start()
+}
+
+func (a *App) Database() datahub.Database {
+	return a.happ.db
+}
+
+func (a *App) Signer() *signer.Signer {
+	return a.happ.signer
+}
+
+func (a *App) Logger() *slog.Logger {
+	return a.happ.logger
+}
+
+func (a *App) Controller() *controller.Controller {
+	return a.happ.ctrl
 }
