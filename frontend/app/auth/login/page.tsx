@@ -2,16 +2,27 @@
 import Image from "next/image";
 import WithLoginLayout from "./WithLoginLayout";
 import { useState } from "react";
+import { login } from "@/lib/api";
 
 
 export default function Page() {
 
     const [email, setEmail] = useState<string>("demo@example.com");
     const [password, setPassword] = useState<string>("demogodTheGreat_123");
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string>("");
 
-    const handleSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        console.log(email, password);
+        setLoading(true);
+        try {
+            const res = await login(email, password);
+            console.log(res);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An unknown error occurred"   );
+        } finally {
+            setLoading(false);
+        }
     }
 
 
@@ -60,11 +71,17 @@ export default function Page() {
                             onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
+
+                    {error && <p className="text-red-500">{error}</p>}
+
+
+
                     <button
                         onClick={handleSubmit}
+                        disabled={loading}
                         className="w-full px-4 py-2 text-white font-medium bg-primary-700-300  rounded-lg duration-150 hover:opacity-80"
                     >
-                        Create account
+                        {loading ? "Loading..." : "Login"}
                     </button>
                 </form>
 
