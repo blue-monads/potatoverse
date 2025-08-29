@@ -16,8 +16,12 @@ type App struct {
 
 func NewApp(happ *HeadLess) *App {
 	return &App{
-		happ:   happ,
-		server: server.NewServer(happ.Controller(), happ.Signer()),
+		happ: happ,
+		server: server.NewServer(server.Option{
+			Port:   happ.AppOpts.Port,
+			Ctrl:   happ.Controller(),
+			Signer: happ.Signer(),
+		}),
 	}
 }
 

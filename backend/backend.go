@@ -11,6 +11,7 @@ import (
 
 type Options struct {
 	DBFile string
+	PORT   int
 }
 
 func NewNoHead(options Options) (*app.HeadLess, error) {
@@ -31,7 +32,7 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 		Signer:   signer.New([]byte(masterSecret)),
 		AppOpts: &xtypes.AppOptions{
 			Name:         "Turnix",
-			Port:         8080,
+			Port:         options.PORT,
 			Host:         "localhost",
 			MasterSecret: masterSecret,
 			Debug:        true,

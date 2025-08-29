@@ -12,10 +12,16 @@ type Server struct {
 	signer *signer.Signer
 }
 
-func NewServer(ctrl *controller.Controller, signer *signer.Signer) *Server {
+type Option struct {
+	Port   int
+	Ctrl   *controller.Controller
+	Signer *signer.Signer
+}
+
+func NewServer(opt Option) *Server {
 	return &Server{
-		ctrl:   ctrl,
-		signer: signer,
+		ctrl:   opt.Ctrl,
+		signer: opt.Signer,
 	}
 }
 
