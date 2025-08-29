@@ -24,9 +24,16 @@ Resources:
 1. HTTP routes
     - CORE
         - /z/pages/ 
+        - /z/api/core
     - APP
         - (internal) /z/spaces/<blueprint_key>/ 
         - (external) /z/pages/spaces/<blueprint_key>/
+        - (api)     /z/api/space/<space_id>/<blueprint_key>/     
+        - (api)     /z/api/space_extra/<space_id>/<blueprint_key> (extra stuff provided by runtime)
+        - (api)     /z/api/blueprint/<blueprint_key>/
+
+
+
 2. DB Table space
     - CORE
         - core_<table_name>
@@ -36,6 +43,24 @@ Resources:
     - CORE
     - APP
         
+
+## Extra 
+
+Websocket
+- /ws/broadcast?ws_join_token=xyz
+- /ws/p2p/<target_p2pId>?ws_join_token=xyz
+- /ws/room/<room_id>?room_join_token=xyz
+
+- /kv/set
+- /kv/query
+- /kv/
+
+- /file/upload
+- /file/upload-presigned?presigned-key\
+- /file
+
+
+KitchenSinkTest
 
 
 ## Terminology
