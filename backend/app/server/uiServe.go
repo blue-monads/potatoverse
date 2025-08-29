@@ -59,6 +59,8 @@ func (s *Server) externalAssets() gin.HandlerFunc {
 
 	if DEV_MODE {
 
+		pp.Println("@ext/0")
+
 		devSpacesEnv := os.Getenv("TURNIX_DEV_SPACES")
 		devSpaces := strings.Split(devSpacesEnv, ",")
 

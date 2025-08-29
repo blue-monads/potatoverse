@@ -2,10 +2,8 @@ import axios, { AxiosInstance } from "axios";
 import { getAccessToken } from "./utils";
 
 
-const baseURL = window.location.origin + "/z/api";
-
-let axiosInstance: AxiosInstance = axios.create({
-    baseURL,
+let iaxios: AxiosInstance = axios.create({
+    baseURL: "/z/api",
 });
 
 export const initAxios = () => {
@@ -22,8 +20,8 @@ export const initAxios = () => {
     }
 
 
-    axiosInstance = axios.create({
-        baseURL,
+    iaxios = axios.create({
+        baseURL: "/z/api",
         headers,
     });
 
@@ -33,7 +31,7 @@ export const initAxios = () => {
 
 
 export const login = async (email: string, password: string) => {
-    return axiosInstance.post<{ access_token: string }>("/login", {
+    return iaxios.post<{ access_token: string }>("/login", {
         email,
         password,
     });

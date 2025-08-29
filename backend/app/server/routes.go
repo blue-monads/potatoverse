@@ -15,7 +15,7 @@ func (a *Server) bindRoutes() {
 	apig := root.Group("/api")
 
 	a.authRoutes(apig)
-	a.pages(apig)
+	a.pages(root)
 
 }
 

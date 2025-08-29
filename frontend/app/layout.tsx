@@ -1,10 +1,6 @@
-import type { Metadata } from "next";
+"use client"
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Turnix",
-  description: "Ultimate thing maker",
-};
 
 
 const staticGradients = [
