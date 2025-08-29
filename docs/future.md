@@ -50,7 +50,7 @@ Resources:
 ## Extra 
 
 - /ws/broadcast?ws_join_token=xyz
-- /ws/p2p/<target_p2pId>?ws_join_token=xyz
+- /ws/p2p/<target_p2p_id>?ws_join_token=xyz
 - /ws/room/<room_id>?room_join_token=xyz
 
 - /kv/set
