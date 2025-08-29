@@ -6,7 +6,7 @@ let iaxios: AxiosInstance = axios.create({
     baseURL: "/z/api",
 });
 
-export const initAxios = () => {
+export const initHttpClient = () => {
 
     const token = getAccessToken();
 

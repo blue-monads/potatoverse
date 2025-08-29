@@ -2,7 +2,9 @@
 import Image from "next/image";
 import WithLoginLayout from "./WithLoginLayout";
 import { useState } from "react";
-import { login } from "@/lib/api";
+import { initHttpClient, login } from "@/lib/api";
+import { saveAccessToken } from "@/lib";
+import { useRouter } from "next/navigation";
 
 
 export default function Page() {
@@ -12,12 +14,26 @@ export default function Page() {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
 
+    const router = useRouter();
+
     const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         setLoading(true);
         try {
             const res = await login(email, password);
-            console.log(res);
+            if (res.status !== 200) {
+                setError("An unknown error occurred");
+                return;
+            }
+
+            const token = res.data.access_token;
+            saveAccessToken(token);
+            initHttpClient();
+
+            router.push("/z/pages/admin");
+
+
+
         } catch (err) {
             setError(err instanceof Error ? err.message : "An unknown error occurred"   );
         } finally {
