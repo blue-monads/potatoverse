@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"log/slog"
 
-	"github.com/blue-monads/turnix/backend/app/controller"
+	controller "github.com/blue-monads/turnix/backend/app/actions"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"

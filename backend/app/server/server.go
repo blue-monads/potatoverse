@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/blue-monads/turnix/backend/app/controller"
+	controller "github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
