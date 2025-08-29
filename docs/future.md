@@ -26,11 +26,14 @@ Resources:
         - /z/pages/ 
         - /z/api/core
     - APP
-        - (internal) /z/spaces/<blueprint_key>/ 
-        - (external) /z/pages/spaces/<blueprint_key>/
-        - (api)     /z/api/space/<space_id>/<blueprint_key>/     
-        - (api)     /z/api/space_extra/<space_id>/<blueprint_key> (extra stuff provided by runtime)
+        - (asset serve) /z/blueprint/<blueprint_key>/ (internal) 
+        - (asset serve) /z/pages/spaces/<blueprint_key>/<space_id> (external)
+        - (asset serve)     /z/pages/blueprint/<blueprint_key>/
+
+        - (api)     /z/api/space/<blueprint_key>/<space_id>     
         - (api)     /z/api/blueprint/<blueprint_key>/
+
+        - (extra)     /z/api/space_extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
 
 
 
@@ -46,7 +49,6 @@ Resources:
 
 ## Extra 
 
-Websocket
 - /ws/broadcast?ws_join_token=xyz
 - /ws/p2p/<target_p2pId>?ws_join_token=xyz
 - /ws/room/<room_id>?room_join_token=xyz
@@ -56,7 +58,7 @@ Websocket
 - /kv/
 
 - /file/upload
-- /file/upload-presigned?presigned-key\
+- /file/upload-presigned?presigned-key=xyz
 - /file
 
 
