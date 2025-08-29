@@ -1,4 +1,4 @@
-package controller
+package actions
 
 import (
 	"encoding/json"
