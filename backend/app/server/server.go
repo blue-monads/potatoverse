@@ -20,9 +20,7 @@ func (s *Server) Start() error {
 
 	s.router = gin.Default()
 
-	s.router.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "pong"})
-	})
+	s.bindRoutes()
 
 	s.router.Run(":8080")
 
