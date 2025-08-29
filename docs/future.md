@@ -33,7 +33,7 @@ Resources:
         - (api)     /z/api/space/<blueprint_key>/<space_id>     
         - (api)     /z/api/blueprint/<blueprint_key>/
 
-        - (extra)     /z/api/space_extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
+        - (extra)     /z/api/extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
 
 
 
