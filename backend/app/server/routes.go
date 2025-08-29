@@ -9,6 +9,7 @@ func (a *Server) bindRoutes() {
 	root := a.router.Group("/z")
 
 	a.authRoutes(root)
+	a.pages(root)
 
 }
 

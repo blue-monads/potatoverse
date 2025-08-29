@@ -16,10 +16,8 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-// frontend/frontend.go
-
 var (
-	DEV_MODE = false
+	DEV_MODE = true
 )
 
 // during dev we just proxy to dev vite server running otherwise serve files from build folder
@@ -29,8 +27,8 @@ func (s *Server) pages(z *gin.RouterGroup) {
 
 	z.GET("/pages", rfunc)
 	z.GET("/pages/*files", rfunc)
-	z.GET("/x/:pname/*files", extFunc)
-	z.GET("/x/:pname", extFunc)
+	z.GET("/spaces/:pname/*files", extFunc)
+	z.GET("/spaces/:pname", extFunc)
 	z.GET("/lib/*file", func(ctx *gin.Context) {
 
 		pp.Println("@lib/1")
