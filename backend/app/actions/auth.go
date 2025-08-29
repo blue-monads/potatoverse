@@ -11,7 +11,7 @@ import (
 )
 
 type LoginOpts struct {
-	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -27,13 +27,13 @@ func (c *Controller) Login(opts *LoginOpts) (*LoginResponse, error) {
 
 	var user *models.User
 
-	if strings.Contains(opts.Email, "@") {
-		_user, err := c.database.GetUserByEmail(opts.Email)
+	if strings.Contains(opts.Username, "@") {
+		_user, err := c.database.GetUserByEmail(opts.Username)
 		if err != nil {
 			return nil, err
 		}
 		user = _user
-	} else if phoneRegex.MatchString(opts.Email) {
+	} else if phoneRegex.MatchString(opts.Username) {
 		return nil, errors.New("implement login by phone")
 	} else {
 		return nil, errors.New("implement login by username")

@@ -24,6 +24,8 @@ type Core interface {
 	Close() error
 	Vender() string
 	HasTable(name string) (bool, error)
+
+	IsEmptyRowsError(err error) bool
 }
 
 type GlobalOps interface {

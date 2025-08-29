@@ -12,6 +12,7 @@ import (
 type Options struct {
 	DBFile string
 	PORT   int
+	SeedDB bool
 }
 
 func NewNoHead(options Options) (*app.HeadLess, error) {
@@ -48,6 +49,12 @@ func NewApp(options Options) (*app.App, error) {
 	happ, err := NewNoHead(options)
 	if err != nil {
 		return nil, err
+	}
+
+	if options.SeedDB {
+
+		happ.Controller().AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
+
 	}
 
 	return app.NewApp(happ), nil

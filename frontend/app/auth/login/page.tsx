@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 export default function Page() {
 
-    const [email, setEmail] = useState<string>("demo@example.com");
+    const [username, setUsername] = useState<string>("demo@example.com");
     const [password, setPassword] = useState<string>("demogodTheGreat_123");
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
@@ -20,7 +20,7 @@ export default function Page() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await login(email, password);
+            const res = await login(username, password);
             if (res.status !== 200) {
                 setError("An unknown error occurred");
                 return;
@@ -30,7 +30,7 @@ export default function Page() {
             saveAccessToken(token);
             initHttpClient();
 
-            router.push("/z/pages/admin");
+            router.push("/admin");
 
 
 
@@ -65,14 +65,14 @@ export default function Page() {
 
                     <div>
                         <label className="font-medium">
-                            Email
+                            Username
                         </label>
                         <input
-                            type="email"
+                            type="text"
                             required
                             className="w-full mt-2 px-3 py-2 text-gray-500 bg-transparent outline-none border focus:border-primary-100 shadow-sm rounded-lg"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                         />
                     </div>
                     <div>

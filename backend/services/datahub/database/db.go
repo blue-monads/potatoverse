@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/upper/db/v4"
+	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
@@ -14,7 +15,7 @@ import (
 var schema string
 
 type DB struct {
-	sess                 db.Session
+	sess                 upperdb.Session
 	externalFileMode     bool
 	minFileMultiPartSize int64
 }
@@ -51,7 +52,7 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 	}, nil
 }
 
-func AutoMigrate(sess db.Session) error {
+func AutoMigrate(sess upperdb.Session) error {
 
 	exists, _ := sess.Collection("Users").Exists()
 
@@ -110,7 +111,7 @@ func (db *DB) RunDDL(ddl string) error {
 	return nil
 }
 
-func (db *DB) GetSession() db.Session {
+func (db *DB) GetSession() upperdb.Session {
 	return db.sess
 }
 
@@ -130,4 +131,10 @@ func (db *DB) HasTable(name string) (bool, error) {
 
 func (db *DB) Table(name string) db.Collection {
 	return db.sess.Collection(name)
+}
+
+const ErrText = "upper: no more rows in this result set"
+
+func (db *DB) IsEmptyRowsError(err error) bool {
+	return err.Error() == ErrText
 }

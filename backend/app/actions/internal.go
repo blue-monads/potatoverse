@@ -11,15 +11,15 @@ import (
 
 // user
 
-func (c *Controller) AddAdminUserDirect(name, password string) (*models.User, error) {
-	return c.AddUserDirect(name, password, "admin")
+func (c *Controller) AddAdminUserDirect(name, password, email string) (*models.User, error) {
+	return c.AddUserDirect(name, password, email, "admin")
 }
 
-func (c *Controller) AddNormalUserDirect(name, password string) (*models.User, error) {
-	return c.AddUserDirect(name, password, "normal")
+func (c *Controller) AddNormalUserDirect(name, password, email string) (*models.User, error) {
+	return c.AddUserDirect(name, password, email, "normal")
 }
 
-func (c *Controller) AddUserDirect(name, password, utype string) (*models.User, error) {
+func (c *Controller) AddUserDirect(name, password, email, utype string) (*models.User, error) {
 
 	uid, err := c.database.AddUser(&models.User{
 		ID:         0,
@@ -27,6 +27,7 @@ func (c *Controller) AddUserDirect(name, password, utype string) (*models.User, 
 		Bio:        "This is a normal user.",
 		Utype:      utype,
 		Username:   &name,
+		Email:      email,
 		IsVerified: true,
 		Password:   password,
 	})

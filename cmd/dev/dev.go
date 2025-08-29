@@ -7,6 +7,7 @@ func main() {
 	app, err := backend.NewApp(backend.Options{
 		DBFile: "data.db",
 		PORT:   7777,
+		SeedDB: true,
 	})
 	if err != nil {
 		panic("Failed to create HeadLess app: " + err.Error())
