@@ -1,12 +1,15 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 import { getAccessToken } from "./utils";
 
 
-let axiosInstance = null;
+const baseURL = window.location.origin + "/z/api";
 
-const initAxios = () => {
+let axiosInstance: AxiosInstance = axios.create({
+    baseURL,
+});
 
-    const baseURL = window.location.origin + "/z/api";
+export const initAxios = () => {
+
     const token = getAccessToken();
 
     const headers: Record<string, string> = {
@@ -17,14 +20,22 @@ const initAxios = () => {
     if (token) {
         headers["Authorization"] = `TokenV1 ${token}`;
     }
-    
+
 
     axiosInstance = axios.create({
         baseURL,
         headers,
     });
-    
+
 
 }
 
+
+
+export const login = async (email: string, password: string) => {
+    return axiosInstance.post<{ access_token: string }>("/login", {
+        email,
+        password,
+    });
+}
 

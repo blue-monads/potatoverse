@@ -11,21 +11,18 @@ import (
 func (a *Server) login(ctx *gin.Context) {
 	data := &actions.LoginOpts{}
 
-	// LoginOpts
 	err := ctx.Bind(data)
 	if err != nil {
 		httpx.WriteAuthErr(ctx, err)
 		return
 	}
 
-	token, err := a.ctrl.Login(*data)
+	resp, err := a.ctrl.Login(data)
 	if err != nil {
 		httpx.WriteAuthErr(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"access_token": token,
-	})
+	ctx.JSON(http.StatusOK, resp)
 
 }
