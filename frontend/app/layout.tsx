@@ -1,6 +1,7 @@
 "use client"
 import "./globals.css";
 import { GAppStateContext } from "@/hooks/contexts/GAppStateContext";
+import GModalWrapper from "@/hooks/modal/GModalWrapper";
 
 
 const staticGradients = [
@@ -36,6 +37,7 @@ export default function RootLayout({
 
         <GAppStateContext>
           {children}
+          <GModalWrapper />
         </GAppStateContext>
       </body>
     </html>

@@ -1,6 +1,6 @@
 import { getLoginData, initHttpClient, removeLoginData } from "@/lib";
 import { useEffect, useState } from "react";
-
+import { useGModal, ModalHandle } from "./modal/useGModal";
 
 export interface UserInfo {
     id: number;
@@ -13,6 +13,7 @@ export const useGAppState = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+    const modal = useGModal();
 
     console.log("userInfo", userInfo);
 
@@ -36,11 +37,9 @@ export const useGAppState = () => {
         setIsAuthenticated(false);
     }
 
-
     useEffect(() => {
         checkToken();
     }, []);
-
 
     return {
         isLoading,
@@ -48,6 +47,7 @@ export const useGAppState = () => {
         checkToken,
         logOut,
         userInfo,
+        modal,
     }
 }
 

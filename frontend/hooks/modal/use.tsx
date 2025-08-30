@@ -1,7 +1,7 @@
 "use client"
 import { useGApp } from "@/hooks";
 
-export default function PlayPage() {
+export default function ModalDemo() {
   const { modal } = useGApp();
 
   const showSimpleModal = () => {
