@@ -12,7 +12,7 @@ export default function Home() {
           <a className="hover:underline" href="/z/pages/portal">Portal</a>
         </li>
         <li>
-          <a className="hover:underline" href="/z/pages/auth">Login</a>
+          <a className="hover:underline" href="/z/pages/auth/login">Login</a>
         </li>
 
         <li>
