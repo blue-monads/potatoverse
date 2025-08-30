@@ -1,5 +1,5 @@
 "use client"
-import { useGApp } from "@/hooks";
+import { ModalHandle, useGApp } from "@/hooks";
 
 export default function ModalDemo() {
   const { modal } = useGApp();
@@ -61,34 +61,7 @@ export default function ModalDemo() {
   const showFullScreenModal = () => {
     modal.openModal({
       title: "Full Screen Modal",
-      content: (
-        <div className="h-full flex flex-col">
-          <div className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold mb-4">Full Screen Content</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              This modal takes up the full screen and is perfect for complex forms or dashboards.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Section 1</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Content for section 1</p>
-              </div>
-              <div className="bg-white dark:bg-gray-700 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Section 2</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Content for section 2</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={() => modal.closeModal()}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      ),
+      content: <BigOne modal={modal} />,
       size: "full"
     });
   };
@@ -166,4 +139,38 @@ modal.closeModal();`}</code>
       </div>
     </div>
   );
+}
+
+
+const BigOne = ({ modal }: { modal: ModalHandle }) => {
+  return (<>(
+        <div className="h-full flex flex-col">
+          <div className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg">
+            <h3 className="text-xl font-semibold mb-4">Full Screen Content</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              This modal takes up the full screen and is perfect for complex forms or dashboards.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-gray-700 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Section 1</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Content for section 1</p>
+              </div>
+              <div className="bg-white dark:bg-gray-700 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Section 2</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Content for section 2</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => modal.closeModal()}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )
+  
+  </>)
 }
