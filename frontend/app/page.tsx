@@ -6,10 +6,10 @@ export default function Home() {
 
       <ul className="list-disc list-inside">
         <li>
-          <a className="hover:underline" href="/z/pages/admin">Admin</a>
+          <a className="hover:underline" href="/z/pages/portal/admin">Admin</a>
         </li>
         <li>
-          <a className="hover:underline" href="/z/pages/portal">Portal</a>
+          <a className="hover:underline" href="/z/pages/portal/main">Portal</a>
         </li>
         <li>
           <a className="hover:underline" href="/z/pages/auth/login">Login</a>
