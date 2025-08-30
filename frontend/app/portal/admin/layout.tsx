@@ -40,19 +40,20 @@ const Sidebar = () => {
   const gapp = useGApp();
   const router = useRouter();
     
-  const { isAuthenticated, userInfo } = gapp;
 
   useEffect(() => {
 
-    if (!isAuthenticated) {
+    if (!gapp.isAuthenticated) {
       router.push("/auth/login");
     }
 
-  }, [isAuthenticated]);
+  }, [gapp.isAuthenticated, gapp.loaded]);
 
 
-  console.log("userInfo", userInfo);
-  console.log("isAuthenticated", isAuthenticated);
+  console.log("@gapp", gapp);
+  console.log("isAuthenticated", gapp.isAuthenticated);
+  console.log("loaded", gapp.loaded);
+  console.log("userInfo", gapp.userInfo);
 
   return (
     <>
@@ -91,7 +92,7 @@ const Sidebar = () => {
 
               <ul className="px-4 pb-4 text-sm font-medium gap-4 flex flex-col">
 
-                {isAuthenticated && userInfo && (
+                {gapp.isAuthenticated && gapp.userInfo && (
 
                   <li>
 
@@ -99,7 +100,7 @@ const Sidebar = () => {
                       href={`/z/pages/portal/admin/profile`}
                       className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
                     >
-                      <img src={`/z/profileImage/11/${(userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
+                      <img src={`/z/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
                     </a>
 
 

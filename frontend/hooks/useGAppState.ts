@@ -10,7 +10,7 @@ export interface UserInfo {
 }
 
 export const useGAppState = () => {    
-    const [isLoading, setIsLoading] = useState(false);
+    const [loaded, setLoaded] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const modal = useGModal();
@@ -28,7 +28,7 @@ export const useGAppState = () => {
         } else {
             setIsAuthenticated(false);
         }        
-        setIsLoading(false);        
+        setLoaded(true);        
     }
 
     const logOut = () => {
@@ -47,7 +47,7 @@ export const useGAppState = () => {
     }, []);
 
     return {
-        isLoading,
+        loaded,
         isAuthenticated,
         checkToken,
         logOut,
