@@ -1,4 +1,4 @@
-import { getLoginData, initHttpClient, removeLoginData } from "@/lib";
+import { getLoginData, initHttpClient, removeLoginData, saveLoginData } from "@/lib";
 import { useEffect, useState } from "react";
 import { useGModal, ModalHandle } from "./modal/useGModal";
 
@@ -37,6 +37,11 @@ export const useGAppState = () => {
         setIsAuthenticated(false);
     }
 
+    const logIn = (token: string, userInfo: UserInfo) => {
+        saveLoginData(token, userInfo);
+        checkToken();
+    }
+
     useEffect(() => {
         checkToken();
     }, []);
@@ -46,6 +51,7 @@ export const useGAppState = () => {
         isAuthenticated,
         checkToken,
         logOut,
+        logIn,
         userInfo,
         modal,
     }

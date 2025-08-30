@@ -3,11 +3,13 @@ import Image from "next/image";
 import WithLoginLayout from "./WithLoginLayout";
 import { useState } from "react";
 import { initHttpClient, login } from "@/lib/api";
-import { saveLoginData } from "@/lib";
 import { useRouter } from "next/navigation";
+import { useGApp } from "@/hooks";
 
 
 export default function Page() {
+
+    const gapp = useGApp();
 
     const [username, setUsername] = useState<string>("demo@example.com");
     const [password, setPassword] = useState<string>("demogodTheGreat_123");
@@ -27,7 +29,7 @@ export default function Page() {
             }
 
             const token = res.data.access_token;
-            saveLoginData(token, res.data.user_info);
+            gapp.logIn(token, res.data.user_info);
             console.log("@saveLoginData", res.data.user_info);
             initHttpClient();
 

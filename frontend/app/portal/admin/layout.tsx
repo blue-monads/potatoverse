@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGApp } from "@/hooks";
@@ -39,8 +39,16 @@ const Sidebar = () => {
   const pathname = usePathname();
   const gapp = useGApp();
   const router = useRouter();
- 
+    
   const { isAuthenticated, userInfo } = gapp;
+
+  useEffect(() => {
+
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    }
+
+  }, [isAuthenticated]);
 
 
   console.log("userInfo", userInfo);
