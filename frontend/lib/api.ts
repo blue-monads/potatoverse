@@ -56,6 +56,8 @@ export interface User {
 }
 
 
+// /z/api/core/user/
+
 export const getUsers = async () => {
-    return iaxios.get<{ users: User[] }>("/core/users");
+    return iaxios.get<User[]>("/core/user");
 }

@@ -93,11 +93,12 @@ CREATE TABLE IF NOT EXISTS Spaces (
 );
 
 CREATE TABLE IF NOT EXISTS SpaceConfig (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, 
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  -- bprint_id TEXT NOT NULL DEFAULT '',
   key TEXT NOT NULL DEFAULT '', 
   group_name TEXT NOT NULL DEFAULT '',
   value TEXT NOT NULL DEFAULT '',
-  space_id INTEGER NOT NULL, 
+  space_id INTEGER NOT NULL, -- DEFAULT 0, 
   unique(space_id, group_name, key),
   FOREIGN KEY (space_id) REFERENCES Spaces(id)
 );
