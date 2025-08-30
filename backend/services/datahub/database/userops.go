@@ -45,11 +45,11 @@ func (d *DB) GetUserByEmail(email string) (*models.User, error) {
 	return data, nil
 }
 
-func (d *DB) ListUser() ([]models.User, error) {
+func (d *DB) ListUser(offset int, limit int) ([]models.User, error) {
 
 	users := make([]models.User, 0)
 
-	err := d.userTable().Find().All(&users)
+	err := d.userTable().Find(db.Cond{"id >": offset}).Limit(limit).All(&users)
 	if err != nil {
 		return nil, err
 	}
