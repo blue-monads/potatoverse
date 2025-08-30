@@ -24,7 +24,10 @@ Resources:
 1. HTTP routes
     - CORE
         - /z/pages/ 
+        - /z/pages/doc
+        - /z/pages/doc/llm.txt
         - /z/api/core
+        
     - APP
         - (asset serve) /z/blueprint/<blueprint_key>/ (internal) 
         - (asset serve) /z/pages/space/<blueprint_key>/<space_id> (external)
@@ -33,6 +36,7 @@ Resources:
         - (api)     /z/api/space/<blueprint_key>/<space_id>     
         - (api)     /z/api/blueprint/<blueprint_key>/
 
+        - (extra)     /z/api/extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
         - (extra)     /z/api/extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
 
 
@@ -47,7 +51,7 @@ Resources:
 3. Working directory
     - CORE
     - APP
-        - space_wd/<space_id>
+        - space_wd/<blueprint_key>/<space_id>
         - logs/<blueprint_key>/<space_id>
         
 
@@ -65,8 +69,23 @@ Resources:
 - /file/upload-presigned?presigned-key=xyz
 - /file
 
+- /doc (serve blueprint docs)
 
-KitchenSinkTest
+- /plugin/<plugin_id>
 
+
+
+
+
+
+## Documentation types
+- api/routes doc
+- overall terminology
+- bindings docs
+- tutorial
 
 ## Terminology
+
+
+## Ideas
+KitchenSinkTest
