@@ -30,7 +30,7 @@ export default function Page() {
             saveAccessToken(token);
             initHttpClient();
 
-            router.push("/admin");
+            router.push("/portal/admin");
 
 
 
