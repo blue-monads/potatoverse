@@ -20,7 +20,7 @@ var (
 	DEV_MODE = true
 )
 
-// during dev we just proxy to dev vite server running otherwise serve files from build folder
+// during dev we just proxy to dev server running otherwise serve files from build folder
 func (s *Server) pages(z *gin.RouterGroup) {
 	rfunc := assets.PagesRoutesServer()
 	extFunc := s.externalAssets()
