@@ -6,7 +6,7 @@ import Image from "next/image";
 
 const navigation = [
   {
-    href: "/z/pages/admin",
+    href: "/z/pages/portal/admin",
     name: "Home",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" strokeWidth="1.5" viewBox="0 0 24 24" stroke="currentColor" fill="none" name="home" className="w-6 h-6">
@@ -16,7 +16,7 @@ const navigation = [
   },
 
   {
-    href: "/z/pages/admin/spaces",
+    href: "/z/pages/portal/admin/spaces",
     name: "Spaces",
     icon: (
       <svg
@@ -36,7 +36,7 @@ const navigation = [
     ),
   },
   {
-    href: "/z/pages/admin/store",
+    href: "/z/pages/portal/admin/store",
     name: "Store",
     icon: (
       <svg
@@ -57,7 +57,7 @@ const navigation = [
   },
   
   {
-    href: "/z/pages/admin/users",
+    href: "/z/pages/portal/admin/users",
     name: "Users",
     icon: (
       <svg
