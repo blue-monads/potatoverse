@@ -42,6 +42,9 @@ const Sidebar = () => {
     
 
   useEffect(() => {
+    if (!gapp.loaded) {
+      return;
+    }
 
     if (!gapp.isAuthenticated) {
       router.push("/auth/login");
