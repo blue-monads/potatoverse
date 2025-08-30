@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { getAccessToken } from "./utils";
+import { getLoginData } from "./utils";
 
 
 let iaxios: AxiosInstance = axios.create({
@@ -8,15 +8,15 @@ let iaxios: AxiosInstance = axios.create({
 
 export const initHttpClient = () => {
 
-    const token = getAccessToken();
+    const data = getLoginData();
 
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         "X-Overhead": "Aaron Swartz",
     }
 
-    if (token) {
-        headers["Authorization"] = `TokenV1 ${token}`;
+    if (data?.accessToken) {
+        headers["Authorization"] = `TokenV1 ${data.accessToken}`;
     }
 
 
@@ -30,7 +30,7 @@ export const initHttpClient = () => {
 
 
 export const login = async (username: string, password: string) => {
-    return iaxios.post<{ access_token: string }>("/core/auth/login", {
+    return iaxios.post<{ access_token: string, user_info: User }>("/core/auth/login", {
         username,
         password,
     });

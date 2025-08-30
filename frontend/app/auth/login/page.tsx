@@ -3,7 +3,7 @@ import Image from "next/image";
 import WithLoginLayout from "./WithLoginLayout";
 import { useState } from "react";
 import { initHttpClient, login } from "@/lib/api";
-import { saveAccessToken } from "@/lib";
+import { saveLoginData } from "@/lib";
 import { useRouter } from "next/navigation";
 
 
@@ -27,7 +27,7 @@ export default function Page() {
             }
 
             const token = res.data.access_token;
-            saveAccessToken(token);
+            saveLoginData(token, res.data.user_info);
             initHttpClient();
 
             router.push("/portal/admin");

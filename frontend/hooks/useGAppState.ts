@@ -1,14 +1,23 @@
-import { getAccessToken, initHttpClient } from "@/lib";
+import { getLoginData, initHttpClient } from "@/lib";
 import { useEffect, useState } from "react";
 
+
+export interface UserInfo {
+    id: number;
+    name: string;
+    username: string;
+    email: string;
+}
 
 export const useGAppState = () => {    
     const [isLoading, setIsLoading] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
     const checkToken = () => {
-        const accessToken = getAccessToken();
-        if (accessToken) {
+        const data = getLoginData();
+        if (data?.accessToken) {
+            setUserInfo(data.userInfo);
             setIsAuthenticated(true);
             initHttpClient();
         } else {
@@ -27,6 +36,7 @@ export const useGAppState = () => {
         isLoading,
         isAuthenticated,
         checkToken,
+        userInfo,
     }
 }
 

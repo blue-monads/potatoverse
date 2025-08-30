@@ -41,4 +41,5 @@ func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
 
 func (a *Server) extraRoutes(g *gin.RouterGroup) {
 	g.GET("/profileImage/:id/:name", a.userSvgProfileIcon)
+	g.GET("/profileImage/:id", a.userSvgProfileIconById)
 }

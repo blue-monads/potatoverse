@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -31,8 +32,28 @@ var gradients = []Gradient{
 	{"#43e97b", "#38f9d7"}, // Mint to turquoise
 }
 
+func (a *Server) userSvgProfileIconById(ctx *gin.Context) {
+	id := ctx.Param("id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	// fixme => reterive only name not all user fields
+	user, err := a.ctrl.GetUser(int64(idInt))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+	a.userSvgProfileIconWithName(ctx, user.Name)
+}
+
 func (a *Server) userSvgProfileIcon(ctx *gin.Context) {
 	name := ctx.Param("name")
+	a.userSvgProfileIconWithName(ctx, name)
+}
+
+func (a *Server) userSvgProfileIconWithName(ctx *gin.Context, name string) {
 
 	splits := strings.Fields(name)
 	initials := ""
