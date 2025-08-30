@@ -1,6 +1,6 @@
 "use client"
 import "./globals.css";
-
+import { GAppStateContext } from "@/hooks/contexts/GAppStateContext";
 
 
 const staticGradients = [
@@ -34,8 +34,9 @@ export default function RootLayout({
           ))}
         </div>
 
-
-        {children}
+        <GAppStateContext>
+          {children}
+        </GAppStateContext>
       </body>
     </html>
   );
