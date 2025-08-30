@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {  MoreHorizontal, User, Mail, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import BigSearchBar from '@/contain/BigSearchBar';
+import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 
 

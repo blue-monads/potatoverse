@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import BigSearchBar from '@/contain/BigSearchBar';
+import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 
 

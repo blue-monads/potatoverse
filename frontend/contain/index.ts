@@ -1,2 +1,2 @@
-export { default as FantasticTable } from './FantasticTable/FantasticTable';
-export { default as DropdownActions } from './FantasticTable/DropdownActions';
+export { default as FantasticTable } from './compo/FantasticTable/FantasticTable';
+export { default as DropdownActions } from './compo/FantasticTable/DropdownActions';
