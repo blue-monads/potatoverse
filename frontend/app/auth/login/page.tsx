@@ -28,6 +28,7 @@ export default function Page() {
 
             const token = res.data.access_token;
             saveLoginData(token, res.data.user_info);
+            console.log("@saveLoginData", res.data.user_info);
             initHttpClient();
 
             router.push("/portal/admin");

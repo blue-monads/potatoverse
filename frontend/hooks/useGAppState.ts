@@ -1,4 +1,4 @@
-import { getLoginData, initHttpClient } from "@/lib";
+import { getLoginData, initHttpClient, removeLoginData } from "@/lib";
 import { useEffect, useState } from "react";
 
 
@@ -30,6 +30,12 @@ export const useGAppState = () => {
         setIsLoading(false);        
     }
 
+    const logOut = () => {
+        removeLoginData();
+        setUserInfo(null);
+        setIsAuthenticated(false);
+    }
+
 
     useEffect(() => {
         checkToken();
@@ -40,6 +46,7 @@ export const useGAppState = () => {
         isLoading,
         isAuthenticated,
         checkToken,
+        logOut,
         userInfo,
     }
 }
