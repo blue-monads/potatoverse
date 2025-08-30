@@ -37,3 +37,26 @@ export const login = async (username: string, password: string) => {
     });
 }
 
+export interface User {
+    id: number;
+    name: string;
+    utype: string;
+    email: string;
+    phone: string;
+    username: string;
+    bio: string;
+    password: string;
+    is_verified: boolean;
+    extrameta: string;
+    createdAt: string;
+    owner_user_id: number;
+    owner_space_id: number;
+    msg_read_head: number;
+    disabled: boolean;
+    is_deleted: boolean;
+}
+
+
+export const getUsers = async () => {
+    return iaxios.get<{ users: User[] }>("/core/users");
+}

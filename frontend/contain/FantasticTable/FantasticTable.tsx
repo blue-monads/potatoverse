@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DotSquare, Search, Zap, EllipsisVertical } from "lucide-react";
+import { EllipsisVertical } from "lucide-react";
 
 interface PropsType {
   columns: ColumnDef[];
@@ -10,6 +10,14 @@ interface PropsType {
   onRowClick?: (rowData: any) => void;
   captionText?: string;
   actions?: Actions[];
+  classNamesContainer?: string;
+  classNamesTable?: string;
+  classNamesTableCaption?: string;
+  classNamesTableHead?: string;
+  classNamesTableBody?: string;
+  classNamesTableRow?: string;
+  classNamesTableCell?: string;
+
 }
 
 interface ColumnDef {
@@ -38,9 +46,9 @@ const FantasticTable = (props: PropsType) => {
 
   return (
     <div className="table-wrap">
-      <table className="table caption-bottom">
-        <caption className="pt-4">{props.captionText}</caption>
-        <thead>
+      <table className={`table caption-bottom ${props.classNamesTable}`}>
+        <caption className={`pt-4 ${props.classNamesTableCaption}`}>{props.captionText}</caption>
+        <thead className={`${props.classNamesTableHead}`}>
           <tr>
             {props.columns.map((col) => (
               <th key={col.key}>
@@ -66,15 +74,15 @@ const FantasticTable = (props: PropsType) => {
           </tr>
         </thead>
 
-        <tbody className="[&>tr]:hover:preset-tonal-primary">
+        <tbody className={`[&>tr]:hover:preset-tonal-primary ${props.classNamesTableBody}`}>
           {props.isLoading ? (
-            <tr>
+            <tr className={`${props.classNamesTableRow}`}>
               <td colSpan={props.columns.length} className="text-center py-4">
                 Loading...
               </td>
             </tr>
           ) : props.error ? (
-            <tr>
+            <tr className={`${props.classNamesTableRow}`}>
               <td
                 colSpan={props.columns.length}
                 className="text-center py-4 text-red-500"
@@ -83,7 +91,7 @@ const FantasticTable = (props: PropsType) => {
               </td>
             </tr>
           ) : props.data.length === 0 ? (
-            <tr>
+            <tr className={`${props.classNamesTableRow}`}>
               <td colSpan={props.columns.length} className="text-center py-4">
                 {props.noDataMessage || "No data available."}
               </td>
@@ -140,13 +148,13 @@ const FantasticTable = (props: PropsType) => {
                   className={props.onRowClick ? "cursor-pointer" : ""}
                 >
                   {props.columns.map((col) => (
-                    <td key={col.key}>
+                    <td key={col.key} className={`${props.classNamesTableCell}`}>
                       {col.render ? col.render(row[col.key]) : row[col.key]}
                     </td>
                   ))}
 
                   {props.actions && (
-                    <td className="text-right">
+                    <td className={`text-right ${props.classNamesTableCell}`}>
                       {notDropDownActions.map((action, actionIndex) => (
                         <button
                           key={actionIndex}

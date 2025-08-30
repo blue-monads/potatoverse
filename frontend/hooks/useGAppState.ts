@@ -1,4 +1,4 @@
-import { getAccessToken } from "@/lib";
+import { getAccessToken, initHttpClient } from "@/lib";
 import { useEffect, useState } from "react";
 
 
@@ -10,6 +10,7 @@ export const useGAppState = () => {
         const accessToken = getAccessToken();
         if (accessToken) {
             setIsAuthenticated(true);
+            initHttpClient();
         } else {
             setIsAuthenticated(false);
         }        
