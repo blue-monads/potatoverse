@@ -15,6 +15,7 @@ func (a *Server) bindRoutes() {
 	coreApi := root.Group("/api/core")
 
 	a.pages(root)
+	a.extraRoutes(root)
 
 	a.userRoutes(coreApi.Group("/user"))
 	a.authRoutes(coreApi.Group("/auth"))
@@ -28,5 +29,11 @@ func (a *Server) authRoutes(g *gin.RouterGroup) {
 }
 
 func (a *Server) userRoutes(g *gin.RouterGroup) {
+	g.GET("/", a.withAccessTokenFn(a.listUsers))
+	g.GET("/:id", a.withAccessTokenFn(a.getUser))
+
+}
+
+func (a *Server) extraRoutes(g *gin.RouterGroup) {
 	g.GET("/profileImage/:id/:name", a.userSvgProfileIcon)
 }

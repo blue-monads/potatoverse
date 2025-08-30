@@ -13,6 +13,24 @@ func (c *Controller) AddUser(user *models.User) (int64, error) {
 	return c.database.AddUser(user)
 }
 
+func (c *Controller) GetUser(id int64) (*models.User, error) {
+	usr, err := c.database.GetUser(id)
+	if err != nil {
+		return nil, err
+	}
+
+	usr.Password = ""
+	usr.ExtraMeta = ""
+	usr.CreatedAt = nil
+	usr.OwnerUserId = 0
+	usr.OwnerSpaceId = 0
+	usr.MessageReadHead = 0
+	usr.Disabled = false
+	usr.IsDeleted = false
+
+	return usr, nil
+}
+
 func (c *Controller) ResetUserPassword(id int64) (string, error) {
 
 	user, err := c.database.GetUser(id)

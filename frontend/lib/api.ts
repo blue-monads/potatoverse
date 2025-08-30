@@ -29,9 +29,8 @@ export const initHttpClient = () => {
 }
 
 
-
 export const login = async (username: string, password: string) => {
-    return iaxios.post<{ access_token: string }>("/core/login", {
+    return iaxios.post<{ access_token: string }>("/core/auth/login", {
         username,
         password,
     });
