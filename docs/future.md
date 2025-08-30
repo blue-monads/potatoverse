@@ -73,6 +73,8 @@ Resources:
 
 - /plugin/<plugin_id>
 
+- db
+
 
 
 
