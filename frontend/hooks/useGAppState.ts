@@ -14,9 +14,13 @@ export const useGAppState = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
+    console.log("userInfo", userInfo);
+
     const checkToken = () => {
         const data = getLoginData();
+        console.log("@getLoginData", data);
         if (data?.accessToken) {
+
             setUserInfo(data.userInfo);
             setIsAuthenticated(true);
             initHttpClient();
