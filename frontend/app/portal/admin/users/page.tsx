@@ -49,11 +49,6 @@ const columns = [
     key: 'createdAt',
   },
 
-  {
-    title: 'Actions',
-    key: 'actions',
-  },
-
 
 ] as ColumnDef[];
 
