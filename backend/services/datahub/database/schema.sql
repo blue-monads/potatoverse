@@ -169,3 +169,46 @@ CREATE TABLE IF NOT EXISTS FileShares (
   space_id INTEGER NOT NULL default 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+
+CREATE TABLE IF NOT EXISTS BprintInstalls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT NOT NULL, 
+  type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
+  reference TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL DEFAULT '',
+  info TEXT NOT NULL DEFAULT '',
+  tags TEXT NOT NULL DEFAULT '',
+  
+  installed_by INTEGER NOT NULL DEFAULT 0,
+  installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (slug)
+);
+
+
+CREATE TABLE IF NOT EXISTS BprintInstalls (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  bprint_slug TEXT NOT NULL,
+  name TEXT NOT NULL DEFAULT '', 
+  is_folder BOOLEAN NOT NULL DEFAULT FALSE,
+  path TEXT NOT NULL DEFAULT '', 
+  size INTEGER NOT NULL DEFAULT 0, 
+  mime TEXT NOT NULL DEFAULT '', 
+  hash TEXT NOT NULL DEFAULT '',
+  storeType INTEGER NOT NULL DEFAULT 0, -- 0: inline_blob, 1: external_blob, 2: mulit_part_blob
+  preview BLOB, 
+  blob BLOB,
+  external BOOLEAN NOT NULL DEFAULT FALSE,
+  created_by INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (bprint_slug, path, name)
+);
+
+
+CREATE TABLE IF NOT EXISTS BprintInstallFileBlobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  file_id INTEGER NOT NULL,
+  size INTEGER NOT NULL,
+  part_id INTEGER NOT NULL,
+  blob BLOB NOT NULL
+);

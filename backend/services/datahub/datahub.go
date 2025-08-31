@@ -52,6 +52,18 @@ type UserOps interface {
 	UpdateUserDevice(id int64, data map[string]any) error
 }
 
+type BprintOps interface {
+	CreateBprintInstall(file string) (int64, error)
+
+	ListBprintInstalls() ([]models.BprintInstall, error)
+	GetBprintInstall(id int64) (*models.BprintInstall, error)
+	DeleteBprintInstall(id int64) error
+
+	ListBprintRootFiles(bprintSlug string) ([]models.BprintInstallFile, error)
+	ListBprintFolderFiles(bprintSlug string, path string) ([]models.BprintInstallFile, error)
+	GetBprintFileMeta(bprintSlug string, path string) (*models.BprintInstallFile, error)
+}
+
 type FileDataOps interface {
 	AddFileShare(fileId int64, userId int64, spaceId int64) (string, error)
 	AddFileStreaming(file *models.File, stream io.Reader) (id int64, err error)
