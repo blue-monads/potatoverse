@@ -32,6 +32,19 @@ CREATE TABLE IF NOT EXISTS Users (
   unique(phone)
 );
 
+
+CREATE TABLE IF NOT EXISTS UserInvites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, 
+  email TEXT NOT NULL DEFAULT '', 
+  role TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending', -- pending, accepted, rejected
+  invited_by INTEGER NOT NULL DEFAULT 0,
+  invited_as_type TEXT NOT NULL DEFAULT 'normal', -- user, admin, moderator, developer
+  expires_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  unique(email)
+);
+
 CREATE TABLE IF NOT EXISTS UserConfig (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
   key TEXT NOT NULL DEFAULT '', 
