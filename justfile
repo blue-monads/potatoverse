@@ -1,8 +1,8 @@
 default:
 	just --list
-start_dev_frontend:
+frontend_start_dev:
 	cd frontend && npm run dev
-start_dev_backend:
+backend_start_dev:
 	FRONTEND_DEV_SERVER="http://localhost:7779" go run -v cmd/dev/*.go
 run_tests:
 	cd tmp && rm -rf data.db && go run ../tests/*.go
