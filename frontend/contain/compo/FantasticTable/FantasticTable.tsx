@@ -20,12 +20,13 @@ interface PropsType {
   classNamesTableCell?: string;
 }
 
-interface ColumnDef {
+export interface ColumnDef {
   title: string;
   key: string;
   icon?: React.ReactNode | string;
-  render?: (data: any) => React.ReactNode;
+  render?: ((data: any, row?: any) => React.ReactNode) | "boolean" | "date"
   searchable?: boolean;
+
 }
 
 
@@ -39,7 +40,7 @@ const FantasticTable = (props: PropsType) => {
     : [];
 
   return (
-    <div className="table-wrap">
+    <div className={`table-wrap ${props.classNamesContainer}`}>
       <table className={`table caption-bottom ${props.classNamesTable}`}>
         <caption className={`pt-4 ${props.classNamesTableCaption}`}>{props.captionText}</caption>
         <thead className={`${props.classNamesTableHead}`}>
@@ -99,7 +100,20 @@ const FantasticTable = (props: PropsType) => {
               >
                 {props.columns.map((col) => (
                   <td key={col.key} className={`${props.classNamesTableCell}`}>
-                    {col.render ? col.render(row[col.key]) : row[col.key]}
+
+                    {col.render === "boolean" ? (
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" checked={row[col.key]} />
+                      </div>
+                    ) : col.render === "date" ? (
+                      <div className="flex items-center gap-2">
+                        {new Date(row[col.key]).toString()}
+                      </div>
+                    ) : (
+                      <>
+                        {col.render ? col.render(row[col.key], row) : row[col.key]}
+                      </>
+                    )}
                   </td>
                 ))}
 
@@ -112,9 +126,8 @@ const FantasticTable = (props: PropsType) => {
                           e.stopPropagation();
                           action.onClick(row);
                         }}
-                        className={`btn btn-sm  preset-filled ${
-                          action.className || ""
-                        }`}
+                        className={`btn btn-sm  preset-filled ${action.className || ""
+                          }`}
                       >
                         {action.icon && (
                           <span className="mr-1">{action.icon}</span>

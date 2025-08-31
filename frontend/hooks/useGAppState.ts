@@ -14,6 +14,7 @@ export const useGAppState = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const modal = useGModal();
+    const [isInitialized, setIsInitialized] = useState(false);
 
     console.log("userInfo", userInfo);
 
@@ -21,15 +22,23 @@ export const useGAppState = () => {
         const data = getLoginData();
         console.log("@getLoginData", data);
         if (data?.accessToken) {
-
             setUserInfo(data.userInfo);
             setIsAuthenticated(true);
-            initHttpClient();
+
         } else {
             setIsAuthenticated(false);
         }        
         setLoaded(true);        
     }
+
+    useEffect(() => {
+        if (!loaded) return;
+        if (!isAuthenticated) return;
+        if (isInitialized) return;
+
+        initHttpClient();
+        setIsInitialized(true);
+    }, [loaded, isAuthenticated]);
 
     const logOut = () => {
         removeLoginData();
@@ -54,6 +63,7 @@ export const useGAppState = () => {
         logIn,
         userInfo,
         modal,
+        isInitialized,
     }
 }
 
