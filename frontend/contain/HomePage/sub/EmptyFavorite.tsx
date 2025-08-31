@@ -1,4 +1,7 @@
+import { useRouter } from "next/navigation";
+
 const EmptyFavorite = () => {
+    const router = useRouter();
     return (
         <div className="flex flex-col items-center justify-center max-w-7xl mx-auto px-6 py-4">
             <div className="mb-8">
@@ -58,10 +61,16 @@ const EmptyFavorite = () => {
 
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg">
+                    <button className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
+                    onClick={() => router.push("/portal/admin/spaces")}
+                    >
                         Explore Apps
                     </button>
-                    <button className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                    <button className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                        router.push("/portal/admin/store");
+                    }}
+                    >
                         Store
                     </button>
                 </div>

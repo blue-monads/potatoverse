@@ -9,10 +9,11 @@ import HeroSection from './sub/HeroSection';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { AdminPortalData, getAdminPortalData } from '@/lib/api';
 import { useGApp } from '@/hooks';
-import router from 'next/router';
+import { useRouter } from 'next/navigation';
 
 
 export default function HomePage() {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const gapp = useGApp();
 
@@ -88,7 +89,7 @@ export default function HomePage() {
 
 
                     <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
-                    onClick={() => router.push("/z/pages/portal/admin/users")}
+                    onClick={() => router.push("/portal/admin/users")}
 
                     >
                         <Users className="w-8 h-8 text-blue-600" />
@@ -99,7 +100,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
-                    onClick={() => router.push("/z/pages/portal/admin/profile")}                    
+                    onClick={() => router.push("/portal/admin/profile")}                    
                     >
                         <SquareUserRound className="w-8 h-8 text-green-600" />
                         <div>
@@ -109,23 +110,13 @@ export default function HomePage() {
                     </div>
 
                     <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
-                    onClick={() => router.push("/z/pages/portal/admin/settings")}
+                    onClick={() => router.push("/portal/admin/setting")}
                     >
 
                         <Cog className="w-8 h-8 text-yellow-600" />
                         <div>
                             <h3 className="text-lg font-semibold">Settings</h3>
                             <p className="text-sm text-gray-600">Configure application settings</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
-                    onClick={() => router.push("/z/pages/portal/admin/dev-console")}                    
-                    >
-                        <Code className="w-8 h-8 text-purple-600" />
-                        <div>
-                            <h3 className="text-lg font-semibold">Dev Console</h3>
-                            <p className="text-sm text-gray-600">Access developer tools</p>
                         </div>
                     </div>
 
