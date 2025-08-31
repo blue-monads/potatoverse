@@ -4,6 +4,7 @@ interface PropsType {
     searchText?: string;
     setSearchText: (text: string) => void;
     onSearchButtonClick?: () => void;
+    placeholder?: string;
 }
 
 const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
@@ -15,7 +16,7 @@ const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
-                        placeholder="Search spaces..."
+                        placeholder={props.placeholder || "Search spaces..."}
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         value={props.searchText}
                         onChange={(e) => props.setSearchText(e.target.value)}

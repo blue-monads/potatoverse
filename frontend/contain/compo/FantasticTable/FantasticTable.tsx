@@ -103,7 +103,7 @@ const FantasticTable = (props: PropsType) => {
 
                     {col.render === "boolean" ? (
                       <div className="flex items-center gap-2">
-                        <input type="checkbox" checked={row[col.key]} />
+                        <input type="checkbox" defaultChecked={row[col.key]} />
                       </div>
                     ) : col.render === "date" ? (
                       <div className="flex items-center gap-2">
