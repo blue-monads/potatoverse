@@ -52,7 +52,7 @@ const DropdownActions = ({ actions, rowData, classNamesTableCell }: DropdownActi
   }, [isDropdownOpen]);
 
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative inline-block text-left pt-1">
       <div>
         <button
           type="button"
@@ -72,10 +72,10 @@ const DropdownActions = ({ actions, rowData, classNamesTableCell }: DropdownActi
 
       {isDropdownOpen && buttonRect && (
         <div
-          className="origin-top-right fixed right-0 mt-2 w-32 bg-white shadow-lg"
+          className="origin-top-right fixed right-0 mt-2 w-48 bg-white shadow-lg transition-all duration-300"
           style={{
             top: buttonRect.bottom + 4,
-            left: buttonRect.right - 130,
+            left: buttonRect.right - 112,
           }}
           role="menu"
           aria-orientation="vertical"
@@ -90,7 +90,7 @@ const DropdownActions = ({ actions, rowData, classNamesTableCell }: DropdownActi
                 action.onClick(rowData);
                 setIsDropdownOpen(false);
               }}
-              className={`w-full text-left px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer ${
+              className={`w-full text-left px-3 py-2 text-sm text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer ${
                 action.className || ""
               }`}
               role="menuitem"

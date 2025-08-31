@@ -118,7 +118,7 @@ const FantasticTable = (props: PropsType) => {
                 ))}
 
                 {props.actions && (
-                  <td className={`text-right ${props.classNamesTableCell}`}>
+                  <td className={`text-right flex gap-2 ${props.classNamesTableCell}`}>
                     {notDropDownActions.map((action, actionIndex) => (
                       <button
                         key={actionIndex}

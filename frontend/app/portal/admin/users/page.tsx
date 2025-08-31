@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal,  UserIcon, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
+import { Search, Filter, MoreHorizontal,  UserIcon, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX, LockIcon } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
@@ -97,6 +97,54 @@ export default function Page() {
         classNamesTableHead='uppercase'
         columns={columns}
         data={loader.data || []}
+        actions={[
+          {
+            label: "View",
+            className: "bg-primary-500",
+            onClick: (rowData: User) => {
+              console.log("rowData", rowData);
+            },
+            icon: <Eye className="w-4 h-4" />,
+          },
+          
+          {
+            label: "Edit",
+            onClick: (rowData: User) => {
+              console.log("rowData", rowData);
+            },
+            className: "bg-secondary-500",
+            icon: <Edit className="w-4 h-4" />,
+          },
+
+          {
+            label: "Change Password",
+            dropdown: true,
+            onClick: (rowData: User) => {
+              console.log("rowData", rowData);
+            },
+            icon: <LockIcon className="w-4 h-4" />,
+          },
+
+          {
+            label: "Change Status",
+            dropdown: true,
+            onClick: (rowData: User) => {
+              console.log("rowData", rowData);
+            },
+            icon: <UserX className="w-4 h-4" />,
+          },
+
+          
+          {
+            label: "Delete",
+            dropdown: true,
+            onClick: (rowData: User) => {
+              console.log("rowData", rowData);
+            },
+            icon: <Trash2 className="w-4 h-4" />,
+          },
+          
+        ]}
 
       />
 
