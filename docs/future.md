@@ -75,7 +75,7 @@ Resources:
 
 - db
 
-
+- sync
 
 
 
