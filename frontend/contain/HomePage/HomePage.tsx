@@ -6,32 +6,22 @@ import { Heart, Users, SquareUserRound, Cog, Link2Icon } from 'lucide-react';
 import { Clock, ArrowRight, Code } from 'lucide-react';
 import EmptyFavorite from './sub/EmptyFavorite';
 import HeroSection from './sub/HeroSection';
+import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
+import { AdminPortalData, getAdminPortalData } from '@/lib/api';
+import { useGApp } from '@/hooks';
+import router from 'next/router';
 
 
 export default function HomePage() {
     const [searchTerm, setSearchTerm] = useState('');
+    const gapp = useGApp();
 
-    const favs = [
-        {
-            id: 1,
-            title: 'Addit ⚡',
-            description: 'Add objects to images using text prompts',
-            author: 'nvidia',
-            lastUsed: '2 hours ago',
-            gradient: 'from-pink-500 to-orange-500',
-            category: 'Image Generation'
-        },
-        {
-            id: 2,
-            title: 'ChatGPT Clone 💬',
-            description: 'A powerful conversational AI interface',
-            author: 'openai-community',
-            lastUsed: '1 day ago',
-            gradient: 'from-green-500 to-teal-500',
-            category: 'Text Generation'
-        },
+    const loader = useSimpleDataLoader<AdminPortalData>({
+        loader: () => getAdminPortalData("admin"),
+        ready: gapp.isInitialized,
+    });
 
-    ];
+
 
     // favs.length = 0; // For testing empty state
 
@@ -43,28 +33,31 @@ export default function HomePage() {
             <HeroSection
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
+                popularSearches={loader.data?.popular_keywords || []}
             />
 
 
 
             {/* Favorites Section */}
-            {favs.length === 0 ? (<>
-                <EmptyFavorite />
-            </>) : (<>
-                <div className="max-w-7xl mx-auto px-6 py-12">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <Heart className="w-6 h-6 text-pink-600" />
-                            <h2 className="text-2xl font-bold text-gray-900">Favorites</h2>
-                        </div>
+
+            <div className="max-w-7xl mx-auto px-6 py-12">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <Heart className="w-6 h-6 text-pink-600" />
+                        <h2 className="text-2xl font-bold text-gray-900">Favorites</h2>
                     </div>
+                </div>
+
+                {!loader.data?.favorite_projects || loader.data?.favorite_projects?.length === 0 ? (<>
+                    <EmptyFavorite />
+                </>) : (<>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
                         <div className="lg:col-span-2">
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
 
-                                {favs.map((app) => (
+                                {loader.data?.favorite_projects.map((app) => (
                                     <FavCard key={app.id} app={app} />
                                 ))}
 
@@ -75,10 +68,11 @@ export default function HomePage() {
 
 
                     </div>
-                </div>
+
+                </>)}
+            </div>
 
 
-            </>)}
 
 
             {/* Quick Links (users, profile, setting, dev console) */}
@@ -93,7 +87,10 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
 
-                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200">
+                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
+                    onClick={() => router.push("/z/pages/portal/admin/users")}
+
+                    >
                         <Users className="w-8 h-8 text-blue-600" />
                         <div>
                             <h3 className="text-lg font-semibold">Users</h3>
@@ -101,7 +98,9 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200">
+                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
+                    onClick={() => router.push("/z/pages/portal/admin/profile")}                    
+                    >
                         <SquareUserRound className="w-8 h-8 text-green-600" />
                         <div>
                             <h3 className="text-lg font-semibold">Profile</h3>
@@ -109,7 +108,10 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200">
+                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
+                    onClick={() => router.push("/z/pages/portal/admin/settings")}
+                    >
+
                         <Cog className="w-8 h-8 text-yellow-600" />
                         <div>
                             <h3 className="text-lg font-semibold">Settings</h3>
@@ -117,7 +119,9 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200">
+                    <div className="bg-white rounded-lg shadow-lg p-6 flex items-center gap-4 hover:shadow-xl transition-shadow border border-gray-200"
+                    onClick={() => router.push("/z/pages/portal/admin/dev-console")}                    
+                    >
                         <Code className="w-8 h-8 text-purple-600" />
                         <div>
                             <h3 className="text-lg font-semibold">Dev Console</h3>
@@ -127,14 +131,15 @@ export default function HomePage() {
 
                 </div>
             </div>
-
-
-
-
-
-
-
         </div>
+
+
+
+
+
+
+
+
     </>)
 }
 

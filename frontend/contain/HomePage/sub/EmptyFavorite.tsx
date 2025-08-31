@@ -1,6 +1,6 @@
 const EmptyFavorite = () => {
     return (
-        <div className="flex flex-col items-center justify-center max-w-7xl mx-auto px-6 py-16">
+        <div className="flex flex-col items-center justify-center max-w-7xl mx-auto px-6 py-4">
             <div className="mb-8">
                 <svg
                     width="200"
@@ -17,7 +17,7 @@ const EmptyFavorite = () => {
 
                     <path
                         d="M100 130c-2-1.5-45-35-45-65 0-20 15-35 35-35 10 0 18 5 23 12 5-7 13-12 23-12 20 0 35 15 35 35 0 30-43 63.5-45 65z"
-                        fill="url(#heartGradient)"
+
                         className="animate-pulse"
                     />
 

@@ -61,3 +61,15 @@ export interface User {
 export const getUsers = async () => {
     return iaxios.get<User[]>("/core/user");
 }
+
+
+export interface AdminPortalData {
+    popular_keywords: string[] 
+    favorite_projects: any[]    
+}
+
+
+export const getAdminPortalData = async (portal_type: string) => {
+    return iaxios.get<AdminPortalData>(`/core/self/portalData/${portal_type}`);
+}
+

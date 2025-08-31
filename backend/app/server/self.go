@@ -6,14 +6,20 @@ import (
 )
 
 // selfUserPortalData
+
+type AdminPortalData struct {
+	PopularKeywords  []string `json:"popular_keywords"`
+	FavoriteProjects []any    `json:"favorite_projects"`
+}
+
 func (s *Server) selfUserPortalData(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 
-	return map[string]any{
-		"popular_keywords": []string{
+	return AdminPortalData{
+		PopularKeywords: []string{
 			"game",
 			"agent",
 		},
-		"featured_projects": []any{},
+		FavoriteProjects: []any{},
 	}, nil
 
 }
