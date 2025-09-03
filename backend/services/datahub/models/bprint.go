@@ -7,6 +7,7 @@ import (
 type BprintInstall struct {
 	Slug        string     `json:"slug" db:"slug"`
 	Type        string     `json:"type" db:"type"`
+	StorageType string     `json:"storage_type" db:"storage_type"`
 	Reference   string     `json:"reference" db:"reference"`
 	Name        string     `json:"name" db:"name"`
 	Info        string     `json:"info" db:"info"`
@@ -31,6 +32,14 @@ type BprintInstallFile struct {
 }
 
 type BprintInstallFileBlob struct {
+	ID     int64  `db:"id" json:"id"`
+	FileId int64  `db:"file_id" json:"file_id"`
+	Size   int64  `db:"size" json:"size"`
+	PartId int64  `db:"part_id" json:"part_id"`
+	Blob   []byte `db:"blob" json:"blob"`
+}
+
+type BprintInstallFileBlobLite struct {
 	ID     int64 `db:"id" json:"id"`
 	FileId int64 `db:"file_id" json:"file_id"`
 	Size   int64 `db:"size" json:"size"`

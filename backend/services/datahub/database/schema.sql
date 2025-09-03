@@ -174,7 +174,8 @@ CREATE TABLE IF NOT EXISTS FileShares (
 CREATE TABLE IF NOT EXISTS BprintInstalls (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   slug TEXT NOT NULL, 
-  type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
+  type TEXT NOT NULL DEFAULT 'space',
+  storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
   reference TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL DEFAULT '',
   info TEXT NOT NULL DEFAULT '',

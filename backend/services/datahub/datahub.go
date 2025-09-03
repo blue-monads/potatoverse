@@ -54,14 +54,19 @@ type UserOps interface {
 
 type BprintOps interface {
 	CreateBprintInstall(file string) (int64, error)
-
+	AddBprintFileStreaming(slug, name, path string, stream io.Reader) (int64, error)
+	AddBprintFile(slug, name, path string, data []byte) (int64, error)
 	ListBprintInstalls() ([]models.BprintInstall, error)
 	GetBprintInstall(id int64) (*models.BprintInstall, error)
 	DeleteBprintInstall(id int64) error
-
-	ListBprintRootFiles(bprintSlug string) ([]models.BprintInstallFile, error)
-	ListBprintFolderFiles(bprintSlug string, path string) ([]models.BprintInstallFile, error)
-	GetBprintFileMeta(bprintSlug string, path string) (*models.BprintInstallFile, error)
+	UpdateBprintFile(slug, name, path string, data []byte) error
+	UpdateBprintFileStreaming(slug, path string, stream io.Reader) error
+	ListBprintRootFiles(slug string) ([]models.BprintInstallFile, error)
+	ListBprintFolderFiles(slug string, path string) ([]models.BprintInstallFile, error)
+	GetBprintFileMeta(slug string, path string) (*models.BprintInstallFile, error)
+	GetBprintFileBlobStreaming(slug string, path string, w io.Writer) error
+	GetBprintFile(slug string, path string) ([]byte, error)
+	RemoveBprintFile(slug string, path string) error
 }
 
 type FileDataOps interface {
