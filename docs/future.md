@@ -29,15 +29,15 @@ Resources:
         - /z/api/core
         
     - APP
-        - (asset serve) /z/blueprint/<blueprint_key>/ (internal) 
-        - (asset serve) /z/pages/space/<blueprint_key>/<space_id> (external)
-        - (asset serve)     /z/pages/blueprint/<blueprint_key>/
+        - (asset serve) /z/pages/space/<space_id>/ (internal) 
+        - (asset serve) /z/space/<space_id>/ (external)
+        - (asset serve) /z/plugin/<space_id>/<plugin_id>/
 
-        - (api)     /z/api/space/<blueprint_key>/<space_id>     
-        - (api)     /z/api/blueprint/<blueprint_key>/
+        - (api)     /z/api/space/<space_id>/
+        - (api)     /z/api/plugin/<space_id>/<plugin_id>
 
-        - (extra)     /z/api/extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
-        - (extra)     /z/api/extra/<blueprint_key>/<space_id> (extra stuff provided by runtime)
+        - (extra)     /z/api/extra/<space_id> (extra stuff provided by runtime)
+        - (extra)     /z/api/extra/<space_id> (extra stuff provided by runtime)
 
 
 
@@ -51,8 +51,8 @@ Resources:
 3. Working directory
     - CORE
     - APP
-        - space_wd/<blueprint_key>/<space_id>
-        - logs/<blueprint_key>/<space_id>
+        - space_wd/<space_id>
+        - logs/<space_id>
         
 
 ## Extra 
