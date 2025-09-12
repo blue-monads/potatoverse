@@ -29,7 +29,6 @@ Resources:
         - /z/api/core
         
     - APP
-        - (asset serve) /z/pages/space/<space_id>/ (internal) 
         - (asset serve) /z/space/<space_id>/ (external)
         - (asset serve) /z/plugin/<space_id>/<plugin_id>/
 
@@ -37,8 +36,6 @@ Resources:
         - (api)     /z/api/plugin/<space_id>/<plugin_id>
 
         - (extra)     /z/api/extra/<space_id> (extra stuff provided by runtime)
-        - (extra)     /z/api/extra/<space_id> (extra stuff provided by runtime)
-
 
 
 2. DB Table space
