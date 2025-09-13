@@ -22,7 +22,7 @@ func (a *Server) InstallPackage(ctx *gin.Context) {
 		return
 	}
 
-	packageId, err := a.engine.InstallPackage(req.URL)
+	packageId, err := a.engine.InstallPackageByUrl(req.URL)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
