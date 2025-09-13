@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/gin-gonic/gin"
 )
 
 type indexItem struct {
@@ -47,4 +48,32 @@ func (e *Engine) LoadRoutingIndex() error {
 	e.riLock.Unlock()
 
 	return nil
+}
+
+func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
+
+	spaceKey := ctx.Param("space_key")
+
+	e.riLock.RLock()
+	ri, ok := e.RoutingIndex[spaceKey]
+	e.riLock.RUnlock()
+	if !ok {
+		ctx.JSON(404, gin.H{"error": "space not found"})
+		return
+	}
+
+	e.db.GetPackageFileStreaming(ri.packageId, ri.spaceId, ctx.Writer)
+
+}
+
+func (e *Engine) ServePluginFile(ctx *gin.Context) {
+
+}
+
+func (e *Engine) SpaceApi(ctx *gin.Context) {
+
+}
+
+func (e *Engine) PluginApi(ctx *gin.Context) {
+
 }

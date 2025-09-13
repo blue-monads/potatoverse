@@ -46,8 +46,13 @@ func (a *Server) extraRoutes(g *gin.RouterGroup) {
 
 func (a *Server) engineRoutes(zg *gin.RouterGroup) {
 
-	zg.GET("/space/:space_key", a.handleSpaceFile)
-	zg.GET("/plugin/:space_key/:plugin_id", a.handlePluginFile)
+	spaceFile := a.handleSpaceFile()
+	pluginFile := a.handlePluginFile()
+
+	zg.GET("/space/:space_key/*files", spaceFile)
+
+	zg.GET("/plugin/:space_key/:plugin_id/*files", pluginFile)
+
 	zg.GET("/api/space/:space_key", a.handleSpaceApi)
 	zg.GET("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
 
