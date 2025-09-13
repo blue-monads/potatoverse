@@ -4,13 +4,13 @@ import "time"
 
 type Package struct {
 	ID          int64      `json:"id" db:"id,omitempty"`
+	Name        string     `json:"name" db:"name"`
+	Info        string     `json:"info" db:"info"`
+	Tags        string     `json:"tags" db:"tags"`
 	Slug        string     `json:"slug" db:"slug"`
 	Type        string     `json:"type" db:"type"`
 	StorageType string     `json:"storage_type" db:"storage_type"`
 	Reference   string     `json:"reference" db:"reference"`
-	Name        string     `json:"name" db:"name"`
-	Info        string     `json:"info" db:"info"`
-	Tags        string     `json:"tags" db:"tags"`
 	InstalledBy int64      `json:"installed_by" db:"installed_by"`
 	InstalledAt *time.Time `json:"installed_at" db:"installed_at"`
 }

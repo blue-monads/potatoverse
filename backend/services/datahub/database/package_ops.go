@@ -21,7 +21,7 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 
 	packageJson := []byte{}
 	for _, file := range zipFile.File {
-		if file.Name == "package.json" {
+		if file.Name == "turnix.json" {
 			jsonFile, err := file.Open()
 			if err != nil {
 				return 0, err

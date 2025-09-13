@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"io"
+	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -88,5 +91,35 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 }
 
 func (e *Engine) PluginApi(ctx *gin.Context) {
+
+}
+
+func (e *Engine) InstallPackage(url string) (int64, error) {
+
+	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	if err != nil {
+		return 0, err
+	}
+	defer os.Remove(tmpFile.Name())
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(tmpFile, resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	file := tmpFile.Name()
+
+	packageId, err := e.db.InstallPackage(file)
+	if err != nil {
+		return 0, err
+	}
+
+	return packageId, nil
 
 }

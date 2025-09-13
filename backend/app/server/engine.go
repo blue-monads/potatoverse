@@ -11,11 +11,25 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-type Engine interface {
-	ServeSpaceFile(ctx *gin.Context)
-	ServePluginFile(ctx *gin.Context)
-	SpaceApi(ctx *gin.Context)
-	PluginApi(ctx *gin.Context)
+type InstallPackageRequest struct {
+	URL string `json:"url"`
+}
+
+func (a *Server) InstallPackage(ctx *gin.Context) {
+	var req InstallPackageRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	packageId, err := a.engine.InstallPackage(req.URL)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"package_id": packageId})
+
 }
 
 func (a *Server) handleSpaceFile() func(ctx *gin.Context) {

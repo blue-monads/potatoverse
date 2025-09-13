@@ -20,7 +20,7 @@ func (a *Server) bindRoutes() {
 	a.userRoutes(coreApi.Group("/user"))
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
-	a.engineRoutes(root)
+	a.engineRoutes(root, coreApi)
 
 }
 
@@ -45,7 +45,7 @@ func (a *Server) extraRoutes(g *gin.RouterGroup) {
 	g.GET("/profileImage/:id", a.userSvgProfileIconById)
 }
 
-func (a *Server) engineRoutes(zg *gin.RouterGroup) {
+func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	spaceFile := a.handleSpaceFile()
 	pluginFile := a.handlePluginFile()
@@ -60,5 +60,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup) {
 	// internal file serve
 
 	zg.GET("/pages/space/:space_key")
+
+	coreApi.POST("/package/install", a.InstallPackage)
 
 }
