@@ -63,6 +63,7 @@ type PackageOps interface {
 
 	ListPackageFiles(packageId int64) ([]models.PackageFile, error)
 	GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error)
+	GetPackageFileMetaByPath(packageId int64, path, name string) (*models.PackageFile, error)
 
 	GetPackageFileStreaming(packageId, id int64, w io.Writer) error
 	GetPackageFile(packageId, id int64) ([]byte, error)

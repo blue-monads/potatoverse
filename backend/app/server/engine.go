@@ -51,6 +51,8 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 			return
 		}
 
+		a.engine.ServeSpaceFile(ctx)
+
 	}
 }
 

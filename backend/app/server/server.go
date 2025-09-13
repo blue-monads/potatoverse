@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,8 @@ type Server struct {
 	router *gin.Engine
 	signer *signer.Signer
 	port   int
+
+	engine *engine.Engine
 }
 
 type Option struct {

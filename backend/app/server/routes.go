@@ -20,6 +20,7 @@ func (a *Server) bindRoutes() {
 	a.userRoutes(coreApi.Group("/user"))
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
+	a.engineRoutes(root)
 
 }
 

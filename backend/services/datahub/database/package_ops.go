@@ -91,6 +91,20 @@ func (d *DB) GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error
 	return &item, nil
 }
 
+func (d *DB) GetPackageFileMetaByPath(packageId int64, path, name string) (*models.PackageFile, error) {
+	item := models.PackageFile{}
+	err := d.packageFilesTable().Find(db.Cond{
+		"package_id": packageId,
+		"path":       path,
+		"name":       name,
+	}).One(&item)
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
 func (d *DB) GetPackageFileStreaming(packageId, id int64, w io.Writer) error {
 	item := models.PackageFile{}
 	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId, "id": id}).One(&item)

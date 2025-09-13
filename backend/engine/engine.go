@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
@@ -62,7 +63,19 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 		return
 	}
 
-	e.db.GetPackageFileStreaming(ri.packageId, ri.spaceId, ctx.Writer)
+	filePath := ctx.Param("files")
+
+	nameParts := strings.Split(filePath, "/")
+	name := nameParts[len(nameParts)-1]
+	path := strings.Join(nameParts[:len(nameParts)-1], "/")
+
+	fmeta, err := e.db.GetPackageFileMetaByPath(ri.packageId, path, name)
+	if err != nil {
+		ctx.JSON(404, gin.H{"error": "file not found"})
+		return
+	}
+
+	e.db.GetPackageFileStreaming(ri.packageId, fmeta.ID, ctx.Writer)
 
 }
 
