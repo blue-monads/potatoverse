@@ -198,10 +198,8 @@ CREATE TABLE IF NOT EXISTS PackageFiles (
   size INTEGER NOT NULL DEFAULT 0, 
   mime TEXT NOT NULL DEFAULT '', 
   hash TEXT NOT NULL DEFAULT '',
-  storeType INTEGER NOT NULL DEFAULT 0, -- 0: inline_blob, 1: external_blob, 2: mulit_part_blob
-  preview BLOB, 
+  store_type INTEGER NOT NULL DEFAULT 0, -- 0: inline_blob, 1: external_blob, 2: mulit_part_blob
   blob BLOB,
-  external BOOLEAN NOT NULL DEFAULT FALSE,
   created_by INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (package_id, path, name)
