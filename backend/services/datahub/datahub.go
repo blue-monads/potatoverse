@@ -52,21 +52,25 @@ type UserOps interface {
 	UpdateUserDevice(id int64, data map[string]any) error
 }
 
-type BprintOps interface {
-	CreateBprintInstall(file string) (int64, error)
-	AddBprintFileStreaming(slug, name, path string, stream io.Reader) (int64, error)
-	AddBprintFile(slug, name, path string, data []byte) (int64, error)
-	ListBprintInstalls() ([]models.BprintInstall, error)
-	GetBprintInstall(id int64) (*models.BprintInstall, error)
-	DeleteBprintInstall(id int64) error
-	UpdateBprintFile(slug, name, path string, data []byte) error
-	UpdateBprintFileStreaming(slug, path string, stream io.Reader) error
-	ListBprintRootFiles(slug string) ([]models.BprintInstallFile, error)
-	ListBprintFolderFiles(slug string, path string) ([]models.BprintInstallFile, error)
-	GetBprintFileMeta(slug string, path string) (*models.BprintInstallFile, error)
-	GetBprintFileBlobStreaming(slug string, path string, w io.Writer) error
-	GetBprintFile(slug string, path string) ([]byte, error)
-	RemoveBprintFile(slug string, path string) error
+type PackageOps interface {
+	InstallPackage(file string) (int64, error)
+	GetPackage(id int64) (*models.Package, error)
+	DeletePackage(id int64) error
+	UpdatePackage(id int64, data map[string]any) error
+
+	ListPackages() ([]models.Package, error)
+
+	ListPackageFiles(packageId int64) ([]models.PackageFile, error)
+	GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error)
+
+	GetPackageFileStreaming(packageId, id int64, w io.Writer) error
+	GetPackageFile(packageId, id int64) ([]byte, error)
+	AddPackageFile(packageId int64, name string, path string, data []byte) (int64, error)
+	AddPackageFileStreaming(packageId int64, name string, path string, stream io.Reader) (int64, error)
+	UpdatePackageFile(packageId, id int64, data []byte) error
+	UpdatePackageFileStreaming(packageId, id int64, stream io.Reader) error
+
+	DeletePackageFile(packageId, id int64) error
 }
 
 type FileDataOps interface {
