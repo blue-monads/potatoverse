@@ -3,14 +3,17 @@ package models
 import "time"
 
 type Space struct {
-	ID           int64  `json:"id" db:"id,omitempty"`
-	Name         string `json:"name" db:"name"`
-	Info         string `json:"info" db:"info"`
-	Stype        string `json:"stype" db:"stype,omitempty"`
-	OwnerID      int64  `json:"owned_by" db:"owned_by"`
-	ExtraMeta    string `json:"extrameta" db:"extrameta,omitempty"`
-	IsInitilized bool   `json:"is_initilized" db:"is_initilized,omitempty"`
-	IsPublic     bool   `json:"is_public" db:"is_public,omitempty"`
+	ID            int64  `json:"id" db:"id,omitempty"`
+	Name          string `json:"name" db:"name"`
+	Info          string `json:"info" db:"info"`
+	NamespaceKey  string `json:"namespace_key" db:"namespace_key,omitempty"`
+	OwnsNamespace bool   `json:"owns_namespace" db:"owns_namespace,omitempty"`
+	PackageID     int64  `json:"package_id" db:"package_id,omitempty"`
+	Stype         string `json:"stype" db:"stype,omitempty"`
+	OwnerID       int64  `json:"owned_by" db:"owned_by"`
+	ExtraMeta     string `json:"extrameta" db:"extrameta,omitempty"`
+	IsInitilized  bool   `json:"is_initilized" db:"is_initilized,omitempty"`
+	IsPublic      bool   `json:"is_public" db:"is_public,omitempty"`
 }
 
 type SpaceUser struct {

@@ -14,6 +14,7 @@ type Database interface {
 	UserOps
 	FileDataOps
 	SpaceOps
+	PackageOps
 }
 
 type Core interface {
