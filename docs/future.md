@@ -29,27 +29,27 @@ Resources:
         - /z/api/core
         
     - APP
-        - (asset serve) /z/space/<space_id>/ (external)
-        - (asset serve) /z/plugin/<space_id>/<plugin_id>/
+        - (asset serve) /z/space/<space_key>/ (external)
+        - (asset serve) /z/plugin/<space_key>/<plugin_id>/
 
-        - (api)     /z/api/space/<space_id>/
-        - (api)     /z/api/plugin/<space_id>/<plugin_id>
+        - (api)     /z/api/space/<space_key>/
+        - (api)     /z/api/plugin/<space_key>/<plugin_id>
 
-        - (extra)     /z/api/extra/<space_id> (extra stuff provided by runtime)
+        - (extra)     /z/api/extra/<space_key> (extra stuff provided by runtime)
 
 
 2. DB Table space
     - CORE
         - core_<table_name>
     - APP
-        - z_space_<space_id>_<table_name>
+        - z_space_<space_key>_<table_name>
         - z_buddy_<buddy_id>_<table_hash>
         - z_cdc_<table_hash>
 3. Working directory
     - CORE
     - APP
-        - space_wd/<space_id>
-        - logs/<space_id>
+        - space_wd/<space_key>
+        - logs/<space_key>
         
 
 ## Extra 

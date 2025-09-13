@@ -43,3 +43,16 @@ func (a *Server) extraRoutes(g *gin.RouterGroup) {
 	g.GET("/profileImage/:id/:name", a.userSvgProfileIcon)
 	g.GET("/profileImage/:id", a.userSvgProfileIconById)
 }
+
+func (a *Server) engineRoutes(zg *gin.RouterGroup) {
+
+	zg.GET("/space/:space_key", a.handleSpaceFile)
+	zg.GET("/plugin/:space_key/:plugin_id", a.handlePluginFile)
+	zg.GET("/api/space/:space_key", a.handleSpaceApi)
+	zg.GET("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
+
+	// internal file serve
+
+	zg.GET("/pages/space/:space_key")
+
+}
