@@ -8,7 +8,9 @@ import (
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	"github.com/gin-gonic/gin"
+	"github.com/k0kubun/pp"
 )
 
 type indexItem struct {
@@ -124,5 +126,32 @@ func (e *Engine) InstallPackageByFile(file string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	pkg, err := e.db.GetPackage(packageId)
+	if err != nil {
+		return 0, err
+	}
+
+	spaceId, err := e.db.AddSpace(&models.Space{
+		PackageID:     packageId,
+		Name:          pkg.Name,
+		Info:          pkg.Info,
+		NamespaceKey:  pkg.Slug,
+		OwnsNamespace: true,
+		Stype:         pkg.Type,
+		OwnerID:       pkg.InstalledBy,
+		ExtraMeta:     pkg.Info,
+		IsInitilized:  true,
+		IsPublic:      true,
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	e.LoadRoutingIndex()
+
+	pp.Println("@spaceId", spaceId)
+
 	return packageId, nil
 }
