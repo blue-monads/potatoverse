@@ -85,3 +85,16 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
         },
     });
 }
+
+export interface EPackage {
+    name: string;
+    description: string;
+    slug: string;
+    type: string;
+    tags: string;
+    version: string;
+}
+
+export const listEPackages = async () => {
+    return iaxios.get<EPackage[]>(`/core/package/list`);
+}

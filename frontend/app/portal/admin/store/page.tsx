@@ -4,6 +4,10 @@ import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, Sq
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import AddButton from '@/contain/AddButton';
+import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
+import { Tabs } from '@skeletonlabs/skeleton-react';
+import { installPackage, installPackageZip, listEPackages } from '@/lib';
+
 
 
 export default function Page() {
@@ -17,6 +21,7 @@ export default function Page() {
 const StoreDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
+    const gapp = useGApp();
 
     const categories = [
         { name: 'Personal', icon: BookHeart },
@@ -27,6 +32,14 @@ const StoreDirectory = () => {
         { name: 'Education', icon: BookOpenText },
         { name: 'Social', icon: SquareUserRound },
     ];
+
+    useEffect(() => {
+        const fetchPackages = async () => {
+            const resp = await listEPackages();
+            console.log(resp);
+        }
+        fetchPackages();
+    }, []);
 
     const storeItems = [
         {
@@ -117,7 +130,18 @@ const StoreDirectory = () => {
             rightContent={<>
                 <AddButton
                     name="+ Import"
-                    onClick={() => { }}
+                    onClick={() => { 
+
+                        gapp.modal.openModal({
+                            title: "Import Package",
+                            content: (
+                                <ImportSpaceModal gapp={gapp} />
+                            ),
+                            size: "lg"
+                        });
+
+
+                    }}
                 />
             </>}
 
@@ -271,4 +295,152 @@ const StoreItemCard = ({ item }: { item: any }) => {
             </div>
         </div>
     )
+};
+
+
+interface ImportSpaceModalProps {
+    gapp: GAppStateHandle;
+}
+
+const tabs = [
+    { label: "URL", value: "url" },
+    { label: "Zip", value: "zip" }
+]
+
+const ImportSpaceModal = (props: ImportSpaceModalProps) => {
+    const [activeTab, setActiveTab] = useState('url');
+    const [mode, setMode] = useState<'enter_input' | 'importing' | 'success' | 'error'>('enter_input');
+    const inputRef = useRef<HTMLInputElement>(null);
+    const gapp = props.gapp;
+
+
+
+    return (<>
+
+        {mode === 'enter_input' && (<>
+
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Directly import packages from a URL or upload a zip file.
+                </p>
+
+                <div className='flex gap-2 my-2 min-h-[100px]'>
+                    <Tabs value={activeTab}
+                        onValueChange={(e) => {
+                            const currentTab = tabs.find((tab) => tab.value === e.value);
+                            if (currentTab) {
+                                setActiveTab(currentTab.value);
+                            }
+
+                        }}>
+                        <Tabs.List>
+                            {tabs.map((tab) => (
+                                <Tabs.Control key={tab.value} value={tab.value}>{tab.label}</Tabs.Control>
+                            ))}
+                        </Tabs.List>
+                        <Tabs.Content>
+                            {activeTab === 'url' && <div>
+                                <input ref={inputRef} type="text" placeholder="Enter URL" className="w-full p-2 border border-gray-300 rounded-lg" />
+                            </div>}
+                            {activeTab === 'zip' && <div>
+                                <input
+                                    ref={inputRef}
+                                    type="file"
+                                    accept=".zip"
+                                    placeholder="Upload ZIP file"
+                                    className="w-full p-2 border border-gray-300 rounded-lg"
+                                />
+                            </div>}
+                        </Tabs.Content>
+                    </Tabs>
+
+
+                </div>
+
+
+                <div className="flex gap-2 justify-end">
+                    <button
+                        onClick={() => gapp.modal.closeModal()}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setMode('importing');
+                            if (activeTab === 'url') {
+                                const url = inputRef.current?.value;
+                                if (!url) {
+                                    setMode('error');
+                                    return;
+                                }
+                                const response = await installPackage(url);
+                                if (response.status !== 200) {
+                                    setMode('error');
+                                    return;
+                                }
+
+                                setMode('success');
+
+                            } else {
+                                const file = inputRef.current?.files?.[0];
+                                if (!file) {
+                                    setMode('error');
+                                    return;
+                                }
+                                const zip = await file.arrayBuffer();
+                                if (!zip) {
+                                    setMode('error');
+                                    return;
+                                }
+
+                                const response = await installPackageZip(zip);
+                                if (response.status !== 200) {
+                                    setMode('error');
+                                    return;
+                                }
+
+                                setMode('success');
+                            }
+
+                        }}
+                        className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Import
+                    </button>
+                </div>
+            </div>
+
+        </>)}
+
+        {mode === 'importing' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Importing space...
+                </p>
+            </div>
+        </>)}
+
+        {mode === 'success' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Space imported successfully
+                </p>
+            </div>
+        </>)}
+
+        {mode === 'error' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Error importing space
+                </p>
+            </div>
+        </>)}
+
+
+
+
+    </>);
+
+
 };
