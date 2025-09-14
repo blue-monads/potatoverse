@@ -54,7 +54,6 @@ func ListEPackages() ([]EPackage, error) {
 
 		epackage.Author = "Demo"
 		epackage.TimeAgo = "Just now"
-		epackage.MCp = false
 
 		epackages = append(epackages, epackage)
 

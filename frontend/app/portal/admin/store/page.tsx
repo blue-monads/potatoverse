@@ -7,6 +7,7 @@ import AddButton from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
 import { installPackage, installPackageZip, listEPackages } from '@/lib';
+import { staticGradients } from '@/app/utils';
 
 
 
@@ -22,6 +23,7 @@ const StoreDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const gapp = useGApp();
+    const [storeItems, setStoreItems] = useState<any[]>([]);
 
     const categories = [
         { name: 'Personal', icon: BookHeart },
@@ -36,80 +38,13 @@ const StoreDirectory = () => {
     useEffect(() => {
         const fetchPackages = async () => {
             const resp = await listEPackages();
-            console.log(resp);
+            console.log("@resp", resp.data);
+            setStoreItems(resp.data);
         }
         fetchPackages();
     }, []);
 
-    const storeItems = [
-        {
-            id: 1,
-            title: 'Addit ⚡',
-            description: 'Add objects to images using text prompts',
-            author: 'nvidia',
-            timeAgo: '2 days ago',
-            mcp: true,
-            gradient: 'from-pink-500 to-orange-500'
-        },
-        {
-            id: 2,
-            title: 'PartCrafter 🧩',
-            description: '3D Mesh Generation via Compositional Latent Diffusion',
-            author: 'alexnasa',
-            timeAgo: 'about 24 hours ago',
-            mcp: true,
-            gradient: 'from-blue-500 to-purple-600'
-        },
-        {
-            id: 3,
-            title: 'Audio Flamingo 3 Chat 🔥',
-            description: 'Audio Flamingo 3 demo for multi-turn multi-audio chat',
-            author: 'nvidia',
-            timeAgo: '12 days ago',
-            gradient: 'from-gray-600 to-blue-800'
-        },
-        {
-            id: 4,
-            title: 'Voxtral 🧠',
-            description: 'Demo space for Mistral latest speech models',
-            author: 'MohamedRashad',
-            timeAgo: '5 days ago',
-            mcp: true,
-            gradient: 'from-red-500 to-pink-600'
-        },
-        {
-            id: 5,
-            title: 'Calligrapher: Freestyle Text Image Customization',
-            description: 'Customize text in images using a reference style',
-            author: 'Calligrapher2025',
-            timeAgo: '11 days ago',
-            gradient: 'from-purple-600 to-indigo-600'
-        },
-        {
-            id: 6,
-            title: 'ZenCtrl Inpaint 🎭',
-            description: 'Create scenes with your subject in it with ZenCtrl Inpaint',
-            author: 'fotographerai',
-            timeAgo: '5 days ago',
-            gradient: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 7,
-            title: 'AudioRag Demo 🎵',
-            description: 'Search audio files for specific queries',
-            author: 'fdaudens',
-            timeAgo: '8 days ago',
-            gradient: 'from-teal-500 to-blue-600'
-        },
-        {
-            id: 8,
-            title: 'Owen TTS Demo 📢',
-            description: 'Generate speech from text with different voices',
-            author: 'Owen',
-            timeAgo: '12 days ago',
-            gradient: 'from-green-500 to-blue-600'
-        }
-    ];
+
 
     const sortOptions = [
         'Relevance',
@@ -230,8 +165,8 @@ const StoreDirectory = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {storeItems.map((item) => (
-                            <StoreItemCard key={item.id} item={item} />
+                        {storeItems.map((item, index) => (
+                            <StoreItemCard key={item.name} item={item} index={index} />
                         ))}
                     </div>
                 </div>
@@ -241,12 +176,16 @@ const StoreDirectory = () => {
     );
 };
 
-const StoreItemCard = ({ item }: { item: any }) => {
+const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
+
+    const gradient = staticGradients[index % staticGradients.length];
+    item.gradient = item.gradient || gradient;
+
 
 
     return (
 
-        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient} p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 cursor-pointer`}>
+        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient || " " } p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 cursor-pointer`}>
             <div className="flex flex-col h-full justify-between">
                 <div>
 
@@ -262,7 +201,7 @@ const StoreItemCard = ({ item }: { item: any }) => {
 
                     </div>
 
-                    <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                    <h3 className="text-xl font-bold mb-2">{item.name}</h3>
                     <p className="text-sm text-white/90 mb-4 line-clamp-2">{item.description}</p>
                 </div>
 

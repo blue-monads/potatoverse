@@ -1,6 +1,6 @@
 {
     "name": "Simple Notes",
-    "description": "Simple Notes",
+    "description": "Really simple notes app to take notes.",
     "slug": "simple-notes",
     "type": "space",
     "tags": "notes",

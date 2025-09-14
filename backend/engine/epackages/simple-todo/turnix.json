@@ -1,8 +1,9 @@
 {
     "name": "Simple Todo",
-    "description": "Simple Todo",
+    "description": "Todo list app to manage your tasks.",
     "slug": "simple-todo",
     "type": "space",
     "tags": "todo",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "mcp": true
 }
