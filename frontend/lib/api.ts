@@ -73,3 +73,11 @@ export const getAdminPortalData = async (portal_type: string) => {
     return iaxios.get<AdminPortalData>(`/core/self/portalData/${portal_type}`);
 }
 
+
+export const installPackage = async (url: string) => {
+    return iaxios.post<{ package_id: number }>(`/core/package/install`, { url });
+}
+
+export const installPackageZip = async (zip: string) => {
+    return iaxios.post<{ package_id: number }>(`/core/package/install/zip`, { zip });
+}
