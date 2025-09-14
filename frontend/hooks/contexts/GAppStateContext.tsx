@@ -1,8 +1,8 @@
 "use client"
 import { createContext, useContext, ReactNode } from "react";
-import { useGAppState, Handle } from "@/hooks";
+import { useGAppState, GAppStateHandle } from "@/hooks";
 
-const AppContext = createContext<Handle | null>(null);
+const AppContext = createContext<GAppStateHandle | null>(null);
 
 export const useGApp = () => {
   const context = useContext(AppContext);

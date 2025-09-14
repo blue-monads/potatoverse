@@ -47,7 +47,7 @@ export default function ModalDemo() {
             </button>
             <button
               onClick={() => modal.closeModal()}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+              className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Confirm
             </button>
@@ -94,7 +94,7 @@ export default function ModalDemo() {
             </p>
             <button
               onClick={showLargeModal}
-              className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+              className="w-full bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
               Open Large Modal
             </button>

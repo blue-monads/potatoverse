@@ -7,7 +7,7 @@ import { AddButton } from '@/contain/AddButton';
 import { getUsers, User } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { FantasticTable } from '@/contain';
-import { useGApp } from '@/hooks';
+import { ModalHandle, useGApp } from '@/hooks';
 import { ColumnDef } from '@/contain/compo/FantasticTable/FantasticTable';
 import WithTabbedUserLayout from './WithTabbedUserLayout';
 
@@ -74,7 +74,7 @@ export default function Page() {
       rightContent={<>
         <AddButton
           name="+ User"
-          onClick={() => { }}
+          onClick={() => { showLargeModal(gapp.modal) }}
         />
 
       </>}
@@ -154,3 +154,39 @@ export default function Page() {
 }
 
 
+const showLargeModal = (modal: ModalHandle) => {
+
+  modal.openModal({
+    title: "Large Modal",
+    content: (
+      <div className="space-y-4">
+        <p className="text-gray-600 dark:text-gray-300">
+          This is a large modal that can contain more content.
+        </p>
+        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+          <h3 className="font-semibold mb-2">Sample Content</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You can put any React components here, including forms, tables, or other complex UI elements.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => modal.closeModal()}
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => modal.closeModal()}
+            className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    ),
+    size: "lg"
+  });
+
+
+};

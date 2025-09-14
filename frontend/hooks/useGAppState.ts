@@ -67,4 +67,4 @@ export const useGAppState = () => {
     }
 }
 
-export type Handle = ReturnType<typeof useGAppState>;
+export type GAppStateHandle = ReturnType<typeof useGAppState>;

@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
+import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
+import { Tabs } from '@skeletonlabs/skeleton-react';
 
 
 
@@ -25,6 +27,7 @@ export default function Page() {
 const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
+    const gapp = useGApp();
 
     const spaces = [
         {
@@ -125,7 +128,20 @@ const SpacesDirectory = () => {
             rightContent={
                 <AddButton
                     name="+ Space"
-                    onClick={() => { }}
+                    onClick={() => {
+
+                        gapp.modal.openModal({
+                            title: "Import Space",
+                            content: (
+                                <ImportSpaceModal gapp={gapp} />
+                            ),
+                            size: "lg"
+                        });
+
+
+
+
+                    }}
                 />
             }
         >
@@ -356,4 +372,76 @@ const ActionDropdown = () => {
             )}
         </>
     );
+};
+
+
+
+interface ImportSpaceModalProps {
+    gapp: GAppStateHandle;
+}
+
+const ImportSpaceModal = (props: ImportSpaceModalProps) => {
+    const tabs = [
+        { label: "URL", value: "url" },
+        { label: "Zip", value: "zip" }
+    ]
+    const [activeTab, setActiveTab] = useState('url');
+    const gapp = props.gapp;
+
+
+    return (<>
+
+        <div className="space-y-1">
+            <p className="text-gray-600 dark:text-gray-300">
+                Directly import spaces from a URL or upload a zip file.
+            </p>
+
+            <div className='flex gap-2 my-2 min-h-[200px]'>
+                <Tabs value={activeTab}
+                    onValueChange={(e) => {
+                        const currentTab = tabs.find((tab) => tab.value === e.value);
+                        if (currentTab) {
+                            setActiveTab(currentTab.value);
+                        }
+
+                    }}>
+                    <Tabs.List>
+                        {tabs.map((tab) => (
+                            <Tabs.Control key={tab.value} value={tab.value}>{tab.label}</Tabs.Control>
+                        ))}
+                    </Tabs.List>
+                    <Tabs.Content>
+                        {activeTab === 'url' && <div>
+                            <input type="text" placeholder="Enter URL" className="w-full p-2 border border-gray-300 rounded-lg" />
+                        </div>}
+                        {activeTab === 'zip' && <div>
+                            <input type="file" placeholder="Upload ZIP file" className="w-full p-2 border border-gray-300 rounded-lg" />
+                        </div>}
+                    </Tabs.Content>
+                </Tabs>
+
+
+            </div>
+
+
+            <div className="flex gap-2 justify-end">
+                <button
+                    onClick={() => gapp.modal.closeModal()}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={() => gapp.modal.closeModal()}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                    Import
+                </button>
+            </div>
+        </div>
+
+
+    </>);
+
+
 };
