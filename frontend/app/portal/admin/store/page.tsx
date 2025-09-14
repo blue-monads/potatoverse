@@ -22,6 +22,12 @@ export default function Page() {
 const StoreDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
+    const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+    const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+
+
+    const [selectedType, setSelectedType] = useState('Embed');
+    
     const gapp = useGApp();
     const [storeItems, setStoreItems] = useState<any[]>([]);
 
@@ -52,7 +58,6 @@ const StoreDirectory = () => {
         'By Usage'
     ];
 
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
 
 
@@ -119,7 +124,7 @@ const StoreDirectory = () => {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="max-w-7xl mx-auto px-6 py-8 w-full">
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -136,21 +141,49 @@ const StoreDirectory = () => {
 
                             <div className="relative">
                                 <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
                                     className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
                                 >
                                     <ArrowUpDown className="w-4 h-4" />
                                     <span>Sort: {selectedFilter}</span>
                                 </button>
 
-                                {isDropdownOpen && (
+                                {isSortDropdownOpen && (
                                     <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
                                         {sortOptions.map((option) => (
                                             <button
                                                 key={option}
                                                 onClick={() => {
                                                     setSelectedFilter(option);
-                                                    setIsDropdownOpen(false);
+                                                    setIsSortDropdownOpen(false);
+                                                }}
+                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${selectedFilter === option ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                                                    }`}
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                                >
+                                    <ArrowUpDown className="w-4 h-4" />
+                                    <span>Source: {selectedType}</span>
+                                </button>
+
+                                {isTypeDropdownOpen && (
+                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                                        {["Embed", "Official", "Community"].map((option) => (
+                                            <button
+                                                key={option}
+                                                onClick={() => {
+                                                    setSelectedType(option);
+                                                    setIsTypeDropdownOpen(false);
                                                 }}
                                                 className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${selectedFilter === option ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
                                                     }`}
