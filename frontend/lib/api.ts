@@ -108,6 +108,7 @@ export interface Package {
     id: number;
     name: string;
     description: string;
+    info: string;
     slug: string;
     type: string;
     tags: string;

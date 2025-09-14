@@ -240,7 +240,7 @@ const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
                     </div>
 
                     <h3 className="text-xl font-bold mb-2">{item.name}</h3>
-                    <p className="text-sm text-white/90 mb-4 line-clamp-2">{item.description}</p>
+                    <p className="text-sm text-white/90 mb-4 line-clamp-2">{item.description || item.info}</p>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">

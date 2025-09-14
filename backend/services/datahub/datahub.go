@@ -54,7 +54,7 @@ type UserOps interface {
 }
 
 type PackageOps interface {
-	InstallPackage(file string) (int64, error)
+	InstallPackage(userId int64, file string) (int64, error)
 	GetPackage(id int64) (*models.Package, error)
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, data map[string]any) error

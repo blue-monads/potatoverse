@@ -114,7 +114,7 @@ func (e *Engine) PluginApi(ctx *gin.Context) {
 
 }
 
-func (e *Engine) InstallPackageByUrl(url string) (int64, error) {
+func (e *Engine) InstallPackageByUrl(userId int64, url string) (int64, error) {
 
 	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
 	if err != nil {
@@ -135,11 +135,11 @@ func (e *Engine) InstallPackageByUrl(url string) (int64, error) {
 
 	file := tmpFile.Name()
 
-	return e.InstallPackageByFile(file)
+	return e.InstallPackageByFile(userId, file)
 
 }
 
-func (e *Engine) InstallPackageEmbed(name string) (int64, error) {
+func (e *Engine) InstallPackageEmbed(userId int64, name string) (int64, error) {
 	file, err := ZipEPackage(name)
 	if err != nil {
 		return 0, err
@@ -147,11 +147,11 @@ func (e *Engine) InstallPackageEmbed(name string) (int64, error) {
 
 	defer os.Remove(file)
 
-	return e.InstallPackageByFile(file)
+	return e.InstallPackageByFile(userId, file)
 }
 
-func (e *Engine) InstallPackageByFile(file string) (int64, error) {
-	packageId, err := e.db.InstallPackage(file)
+func (e *Engine) InstallPackageByFile(userId int64, file string) (int64, error) {
+	packageId, err := e.db.InstallPackage(userId, file)
 	if err != nil {
 		return 0, err
 	}

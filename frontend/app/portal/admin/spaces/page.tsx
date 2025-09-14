@@ -7,8 +7,9 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Space } from '@/lib';
+import { InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
+import { staticGradients } from '@/app/utils';
 
 
 
@@ -31,89 +32,28 @@ const SpacesDirectory = () => {
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const gapp = useGApp();
 
+    const [packageIndex, setPackageIndex] = useState<Record<number, Package>>({});
+
+
+
+
     const loader = useSimpleDataLoader<InstalledSpace>({
         loader: listInstalledSpaces,
         ready: gapp.isInitialized,
     });
 
-    const spaces = [
-        {
-            id: 1,
-            title: 'Addit ⚡',
-            description: 'Add objects to images using text prompts',
-            author: 'nvidia',
-            timeAgo: '2 days ago',
-            from: 'ZERO',
-            mcp: true,
-            gradient: 'bg-gray-600'
-        },
-        {
-            id: 2,
-            title: 'PartCrafter 🧩',
-            description: '3D Mesh Generation via Compositional Latent Diffusion',
-            author: 'alexnasa',
-            timeAgo: 'about 24 hours ago',
-            from: 'ZERO',
-            mcp: true,
-            gradient: 'from-blue-500 to-purple-600'
-        },
-        {
-            id: 3,
-            title: 'Audio Flamingo 3 Chat 🔥',
-            description: 'Audio Flamingo 3 demo for multi-turn multi-audio chat',
-            author: 'nvidia',
-            timeAgo: '12 days ago',
-            from: 'A100',
-            gradient: 'from-gray-600 to-blue-800'
-        },
-        {
-            id: 4,
-            title: 'Voxtral 🧠',
-            description: 'Demo space for Mistral latest speech models',
-            author: 'MohamedRashad',
-            timeAgo: '5 days ago',
-            from: 'ZERO',
-            mcp: true,
-            gradient: 'from-red-500 to-pink-600'
-        },
-        {
-            id: 5,
-            title: 'Calligrapher: Freestyle Text Image Customization',
-            description: 'Customize text in images using a reference style',
-            author: 'Calligrapher2025',
-            timeAgo: '11 days ago',
-            from: 'ZERO',
-            gradient: 'from-purple-600 to-indigo-600'
-        },
-        {
-            id: 6,
-            title: 'ZenCtrl Inpaint 🎭',
-            description: 'Create scenes with your subject in it with ZenCtrl Inpaint',
-            author: 'fotographerai',
-            timeAgo: '5 days ago',
-            from: 'Running',
-            gradient: 'from-purple-500 to-pink-500'
-        },
-        {
-            id: 7,
-            title: 'AudioRag Demo 🎵',
-            description: 'Search audio files for specific queries',
-            author: 'fdaudens',
-            timeAgo: '8 days ago',
-            from: 'ZERO',
-            gradient: 'from-teal-500 to-blue-600'
-        },
-        {
-            id: 8,
-            title: 'Owen TTS Demo 📢',
-            description: 'Generate speech from text with different voices',
-            author: 'Owen',
-            timeAgo: '12 days ago',
-            from: 'Running',
-            gradient: 'from-green-500 to-blue-600'
-        }
-    ];
+    useEffect(() => {
+        if (loader.data && loader.data.packages) {
+            const nextPackageIndex = loader.data.packages.reduce((acc, pkg) => {
+                acc[pkg.id] = pkg;
+                return acc;
+            }, {} as Record<number, Package>);
 
+            setPackageIndex(nextPackageIndex);
+        }
+    }, [loader.data]);
+
+   
     const sortOptions = [
         'Relevance',
         'Recently Created',
@@ -157,7 +97,7 @@ const SpacesDirectory = () => {
             />
 
 
-            <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="max-w-7xl mx-auto px-6 py-8 w-full">
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -200,9 +140,23 @@ const SpacesDirectory = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {spaces.map((space) => (
-                            <SpaceCard key={space.id} space={space} />
-                        ))}
+                        {loader.data?.spaces.map((space) => {
+                            
+                            const pkg = packageIndex[space.package_id] || { name: "Unknown", description: "Unknown" };
+                            const gradient = staticGradients[space.id % staticGradients.length];
+
+                            return <SpaceCard key={space.id} space={{
+                                id: space.id,
+                                title: pkg.name,
+                                description: pkg.description || pkg.info,
+                                author: "",
+                                timeAgo: "",
+                                gradient: gradient,
+                                from: pkg.slug,
+                                mcp: false,
+
+                            }}  />
+                        })}
                     </div>
                 </div>
             </div>

@@ -18,7 +18,7 @@ import (
 // "@file" "public/index.html"
 // "@file" "turnix.json"
 
-func (d *DB) InstallPackage(file string) (int64, error) {
+func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 	zipFile, err := zip.OpenReader(file)
 	if err != nil {
 		return 0, err
@@ -46,6 +46,12 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 		pp.Println("@err/1", err)
 		return 0, err
 	}
+
+	if pkg.Info == "" {
+		pkg.Info = pkg.Description
+	}
+
+	pkg.InstalledBy = userId
 
 	table := d.packagesTable()
 	id, err := table.Insert(pkg)

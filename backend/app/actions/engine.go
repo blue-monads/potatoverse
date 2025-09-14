@@ -16,7 +16,7 @@ type InstalledSpace struct {
 
 func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
 
-	spaces, err := c.database.ListOwnSpaces(0, "")
+	spaces, err := c.database.ListOwnSpaces(userId, "")
 	if err != nil {
 		return nil, err
 	}

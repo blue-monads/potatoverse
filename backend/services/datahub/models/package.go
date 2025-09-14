@@ -5,7 +5,8 @@ import "time"
 type Package struct {
 	ID          int64      `json:"id" db:"id,omitempty"`
 	Name        string     `json:"name" db:"name"`
-	Info        string     `json:"info" db:"info"`
+	Info        string     `json:"info" db:"info,omitempty"`
+	Description string     `json:"description" db:"-"`
 	Tags        string     `json:"tags" db:"tags"`
 	Slug        string     `json:"slug" db:"slug"`
 	Type        string     `json:"type" db:"type"`
