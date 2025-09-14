@@ -20,6 +20,8 @@ type Option struct {
 	AppOpts  *xtypes.AppOptions
 }
 
+var _ xtypes.App = (*HeadLess)(nil)
+
 // headless means it has no http server attached to it
 type HeadLess struct {
 	db      datahub.Database

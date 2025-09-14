@@ -8,7 +8,10 @@ import (
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/xtypes"
 )
+
+var _ xtypes.App = (*App)(nil)
 
 type App struct {
 	happ   *HeadLess
