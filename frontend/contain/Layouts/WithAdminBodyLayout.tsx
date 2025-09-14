@@ -21,7 +21,7 @@ const WithAdminBodyLayout = (props: PropsType) => {
                             </div>
                             <div>
                                 <h4 className="h4">{props.name}</h4>
-                                <p className="p">{props.description}</p>
+                                <p className="p text-wrap">{props.description}</p>
                             </div>
                         </div>
                     </div>
