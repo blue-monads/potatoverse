@@ -47,6 +47,9 @@ func (a *Server) extraRoutes(g *gin.RouterGroup) {
 
 func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
+	coreApi.POST("/package/install", a.InstallPackage)
+	coreApi.POST("/package/install/zip", a.InstallPackageZip)
+
 	spaceFile := a.handleSpaceFile()
 	pluginFile := a.handlePluginFile()
 
@@ -56,10 +59,5 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	zg.GET("/api/space/:space_key", a.handleSpaceApi)
 	zg.GET("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
-
-	// internal file serve
-
-	coreApi.POST("/package/install", a.InstallPackage)
-	coreApi.POST("/package/install/zip", a.InstallPackageZip)
 
 }
