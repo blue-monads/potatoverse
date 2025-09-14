@@ -20,13 +20,13 @@ export default function Page() {
 
 
 const StoreDirectory = () => {
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');    
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+    const [selectedType, setSelectedType] = useState('Embed');
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
 
-    const [selectedType, setSelectedType] = useState('Embed');
     
     const gapp = useGApp();
     const [storeItems, setStoreItems] = useState<any[]>([]);
