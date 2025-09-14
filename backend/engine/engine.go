@@ -15,8 +15,9 @@ import (
 )
 
 type indexItem struct {
-	packageId int64
-	spaceId   int64
+	packageId   int64
+	spaceId     int64
+	serveFolder string
 }
 
 type Engine struct {
@@ -46,8 +47,9 @@ func (e *Engine) LoadRoutingIndex() error {
 	for _, space := range spaces {
 		if space.OwnsNamespace {
 			nextRoutingIndex[space.NamespaceKey] = indexItem{
-				packageId: space.PackageID,
-				spaceId:   space.ID,
+				packageId:   space.PackageID,
+				spaceId:     space.ID,
+				serveFolder: "public",
 			}
 		}
 	}
@@ -59,7 +61,7 @@ func (e *Engine) LoadRoutingIndex() error {
 	return nil
 }
 
-func (e *Engine) Init(app xtypes.App) error {
+func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
 
 	return e.LoadRoutingIndex()
@@ -81,7 +83,14 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
 	nameParts := strings.Split(filePath, "/")
 	name := nameParts[len(nameParts)-1]
-	path := strings.Join(nameParts[:len(nameParts)-1], "/")
+	pathParts := nameParts[:len(nameParts)-1]
+	pathParts = append(pathParts, ri.serveFolder)
+
+	path := strings.Join(pathParts, "/")
+	path = strings.TrimLeft(path, "/")
+
+	pp.Println("@name", name)
+	pp.Println("@path", path)
 
 	fmeta, err := e.db.GetPackageFileMetaByPath(ri.packageId, path, name)
 	if err != nil {

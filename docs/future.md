@@ -71,10 +71,13 @@ Resources:
 - /plugin/<plugin_id>
 
 - db
+    - db presigned operations  (DPO Keys)   
 
 - sync
 
-
+# Example apps
+    - openLChat
+    - 
 
 
 ## Documentation types

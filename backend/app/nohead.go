@@ -58,15 +58,16 @@ func (h *HeadLess) Init() error {
 
 	h.logger.Info("Initializing HeadLess application")
 
-	err := h.engine.Init(h)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (h *HeadLess) Start() error {
+
+	err := h.engine.Start(h)
+	if err != nil {
+		return err
+	}
+
 	h.logger.Info("HeadLess application started")
 
 	has, err := h.ctrl.HasFingerprint()

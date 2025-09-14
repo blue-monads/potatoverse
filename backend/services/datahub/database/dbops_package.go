@@ -146,37 +146,64 @@ func (d *DB) GetPackageFileMetaByPath(packageId int64, path, name string) (*mode
 }
 
 func (d *DB) GetPackageFileStreaming(packageId, id int64, w io.Writer) error {
+	pp.Println("@GetPackageFileStreaming/1")
+
 	item := models.PackageFile{}
 	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId, "id": id}).One(&item)
 	if err != nil {
+		pp.Println("@GetPackageFileStreaming/2", err)
 		return err
 	}
+	pp.Println("@GetPackageFileStreaming/3")
 
-	if item.StoreType != 1 {
+	if item.StoreType != 2 {
+		pp.Println("@GetPackageFileStreaming/4")
 		return fmt.Errorf("only external blobs are implemented for package files")
 	}
+	pp.Println("@GetPackageFileStreaming/5")
 
 	fileBlobs := make([]models.PackageFileBlobLite, 0)
 	err = d.packageFileBlobsTable().Find(db.Cond{"file_id": item.ID}).All(&fileBlobs)
 	if err != nil {
+		pp.Println("@GetPackageFileStreaming/6", err)
 		return err
 	}
+	pp.Println("@GetPackageFileStreaming/7")
+
+	pp.Println("@fileBlobs", len(fileBlobs))
 
 	for _, fileBlob := range fileBlobs {
-		blob, err := d.sess.SQL().Select("blob").From("PackageFileBlobs").Where(db.Cond{"id": fileBlob.ID}).QueryRow()
+		pp.Println("@GetPackageFileStreaming/8", fileBlob.ID)
+		blob, err := d.sess.SQL().Select("blob").From("PackageFileBlobs").Where(db.Cond{"id": fileBlob.ID}).OrderBy("part_id").QueryRow()
 		if err != nil {
+			pp.Println("@GetPackageFileStreaming/9", err)
 			return err
 		}
+
+		pp.Println("@GetPackageFileStreaming/10")
+
 		blobBytes := make([]byte, fileBlob.Size)
+
+		pp.Println("@GetPackageFileStreaming/11")
+
 		err = blob.Scan(&blobBytes)
+		pp.Println("@GetPackageFileStreaming/12", err)
+
 		if err != nil {
+			pp.Println("@GetPackageFileStreaming/13", err)
 			return err
 		}
+		pp.Println("@GetPackageFileStreaming/14")
 		_, err = w.Write(blobBytes)
 		if err != nil {
+			pp.Println("@GetPackageFileStreaming/15", err)
 			return err
 		}
+
+		pp.Println("@GetPackageFileStreaming/16")
 	}
+
+	pp.Println("@GetPackageFileStreaming/17/end")
 
 	return nil
 }
@@ -219,7 +246,7 @@ func (d *DB) AddPackageFileStreaming(packageId int64, name string, path string, 
 
 	file := &models.PackageFile{
 		PackageID: packageId,
-		StoreType: 0,
+		StoreType: 2,
 		Name:      name,
 		Path:      path,
 		CreatedBy: 0,
