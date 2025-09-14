@@ -1,0 +1,8 @@
+{
+    "name": "Simple Todo",
+    "description": "Simple Todo",
+    "slug": "simple-todo",
+    "type": "space",
+    "tags": "todo",
+    "version": "1.0.0"
+}
