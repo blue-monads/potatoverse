@@ -1,6 +1,7 @@
 {
-    "name": "test",
-    "info": "test",
-    "tags": "test",
-    "type": "space"
+  "name": "test",
+  "slug": "test",
+  "info": "test",
+  "tags": "test",
+  "type": "space"
 }

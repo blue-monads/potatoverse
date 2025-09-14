@@ -53,10 +53,13 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 	packageId := id.ID().(int64)
 
 	for _, file := range zipFile.File {
+		nameParts := strings.Split(file.Name, "/")
+		fpath := strings.Join(nameParts[:len(nameParts)-1], "/")
+		fname := nameParts[len(nameParts)-1]
 
 		if strings.HasSuffix(file.Name, "/") {
 
-			fid, err := d.createPackageFolder(packageId, file.Name, file.Name)
+			fid, err := d.createPackageFolder(packageId, fname, fpath)
 			if err != nil {
 				return 0, err
 			}
@@ -71,10 +74,6 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 			return 0, err
 		}
 		defer fileData.Close()
-
-		nameParts := strings.Split(file.Name, "/")
-		fpath := strings.Join(nameParts[:len(nameParts)-1], "/")
-		fname := nameParts[len(nameParts)-1]
 
 		fid, err := d.AddPackageFileStreaming(packageId, fname, fpath, fileData)
 		if err != nil {
