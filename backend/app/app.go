@@ -5,6 +5,7 @@ import (
 
 	controller "github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/app/server"
+	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 )
@@ -19,8 +20,9 @@ func NewApp(happ *HeadLess) *App {
 		happ: happ,
 		server: server.NewServer(server.Option{
 			Port:   happ.AppOpts.Port,
-			Ctrl:   happ.Controller(),
+			Ctrl:   happ.Controller().(*controller.Controller),
 			Signer: happ.Signer(),
+			Engine: happ.Engine(),
 		}),
 	}
 }
@@ -51,6 +53,10 @@ func (a *App) Logger() *slog.Logger {
 	return a.happ.logger
 }
 
-func (a *App) Controller() *controller.Controller {
+func (a *App) Controller() any {
 	return a.happ.ctrl
+}
+
+func (a *App) Engine() *engine.Engine {
+	return a.happ.engine
 }

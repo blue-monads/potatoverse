@@ -22,6 +22,7 @@ type Option struct {
 	Port   int
 	Ctrl   *controller.Controller
 	Signer *signer.Signer
+	Engine *engine.Engine
 }
 
 func NewServer(opt Option) *Server {
@@ -29,6 +30,7 @@ func NewServer(opt Option) *Server {
 		ctrl:   opt.Ctrl,
 		signer: opt.Signer,
 		port:   opt.Port,
+		engine: opt.Engine,
 	}
 }
 

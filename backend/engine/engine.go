@@ -9,6 +9,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 	"github.com/k0kubun/pp"
 )
@@ -22,6 +23,8 @@ type Engine struct {
 	db           datahub.Database
 	RoutingIndex map[string]indexItem
 	riLock       sync.RWMutex
+
+	app xtypes.App
 }
 
 func NewEngine(db datahub.Database) *Engine {
@@ -54,6 +57,12 @@ func (e *Engine) LoadRoutingIndex() error {
 	e.riLock.Unlock()
 
 	return nil
+}
+
+func (e *Engine) Init(app xtypes.App) error {
+	e.app = app
+
+	return e.LoadRoutingIndex()
 }
 
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
@@ -141,7 +150,7 @@ func (e *Engine) InstallPackageByFile(file string) (int64, error) {
 		Stype:         pkg.Type,
 		OwnerID:       pkg.InstalledBy,
 		ExtraMeta:     pkg.Info,
-		IsInitilized:  true,
+		IsInitilized:  false,
 		IsPublic:      true,
 	})
 

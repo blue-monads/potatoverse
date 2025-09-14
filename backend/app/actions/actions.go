@@ -3,6 +3,7 @@ package actions
 import (
 	"log/slog"
 
+	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -13,6 +14,7 @@ type Option struct {
 	Logger   *slog.Logger
 	Signer   *signer.Signer
 	AppOpts  *xtypes.AppOptions
+	Engine   *engine.Engine
 }
 
 type Controller struct {
@@ -20,6 +22,7 @@ type Controller struct {
 	logger   *slog.Logger
 	signer   *signer.Signer
 	AppOpts  *xtypes.AppOptions
+	engine   *engine.Engine
 }
 
 func New(opt Option) *Controller {
@@ -28,5 +31,6 @@ func New(opt Option) *Controller {
 		logger:   opt.Logger,
 		signer:   opt.Signer,
 		AppOpts:  opt.AppOpts,
+		engine:   opt.Engine,
 	}
 }

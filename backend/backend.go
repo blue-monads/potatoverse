@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/blue-monads/turnix/backend/app"
+	controller "github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -53,7 +54,7 @@ func NewApp(options Options) (*app.App, error) {
 
 	if options.SeedDB {
 
-		happ.Controller().AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
+		happ.Controller().(*controller.Controller).AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
 
 	}
 

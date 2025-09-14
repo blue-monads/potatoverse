@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/k0kubun/pp"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
@@ -26,10 +27,14 @@ type HeadLess struct {
 	logger  *slog.Logger
 	ctrl    *controller.Controller
 	AppOpts *xtypes.AppOptions
+	engine  *engine.Engine
 }
 
 func NewHeadLess(opt Option) *HeadLess {
-	return &HeadLess{
+
+	engine := engine.NewEngine(opt.Database)
+
+	happ := &HeadLess{
 		db:     opt.Database,
 		signer: opt.Signer,
 		logger: opt.Logger,
@@ -38,14 +43,23 @@ func NewHeadLess(opt Option) *HeadLess {
 			Logger:   opt.Logger,
 			Signer:   opt.Signer,
 			AppOpts:  opt.AppOpts,
+			Engine:   engine,
 		}),
+		engine:  engine,
 		AppOpts: opt.AppOpts,
 	}
+
+	return happ
 }
 
 func (h *HeadLess) Init() error {
 
 	h.logger.Info("Initializing HeadLess application")
+
+	err := h.engine.Init(h)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -108,8 +122,12 @@ func (h *HeadLess) Logger() *slog.Logger {
 	return h.logger
 }
 
-func (h *HeadLess) Controller() *controller.Controller {
+func (h *HeadLess) Controller() any {
 	return h.ctrl
+}
+
+func (h *HeadLess) Engine() *engine.Engine {
+	return h.engine
 }
 
 // private
