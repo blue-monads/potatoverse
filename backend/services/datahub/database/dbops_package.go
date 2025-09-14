@@ -6,11 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/k0kubun/pp"
 	"github.com/upper/db/v4"
 )
+
+// "@file" "public/"
+// "@file" "public/index.html"
+// "@file" "turnix.json"
 
 func (d *DB) InstallPackage(file string) (int64, error) {
 	zipFile, err := zip.OpenReader(file)
@@ -42,6 +48,41 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 	id, err := table.Insert(pkg)
 	if err != nil {
 		return 0, err
+	}
+
+	packageId := id.ID().(int64)
+
+	for _, file := range zipFile.File {
+
+		if strings.HasSuffix(file.Name, "/") {
+
+			fid, err := d.createPackageFolder(packageId, file.Name, file.Name)
+			if err != nil {
+				return 0, err
+			}
+
+			pp.Println("@fid", fid)
+
+			continue
+		}
+
+		fileData, err := file.Open()
+		if err != nil {
+			return 0, err
+		}
+		defer fileData.Close()
+
+		nameParts := strings.Split(file.Name, "/")
+		fpath := strings.Join(nameParts[:len(nameParts)-1], "/")
+		fname := nameParts[len(nameParts)-1]
+
+		fid, err := d.AddPackageFileStreaming(packageId, fname, fpath, fileData)
+		if err != nil {
+			return 0, err
+		}
+
+		pp.Println("@fid", fid)
+
 	}
 
 	return id.ID().(int64), nil
@@ -148,6 +189,26 @@ func (d *DB) GetPackageFile(packageId, id int64) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func (d *DB) createPackageFolder(packageId int64, path, name string) (int64, error) {
+	t := time.Now()
+	file := &models.PackageFile{
+		PackageID: packageId,
+		StoreType: 0,
+		Name:      name,
+		IsFolder:  true,
+		Path:      path,
+		CreatedBy: 0,
+		CreatedAt: &t,
+		Size:      0,
+	}
+
+	rid, err := d.packageFilesTable().Insert(file)
+	if err != nil {
+		return 0, err
+	}
+	return rid.ID().(int64), nil
 }
 
 func (d *DB) AddPackageFile(packageId int64, name string, path string, data []byte) (int64, error) {
