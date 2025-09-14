@@ -2,13 +2,13 @@ package server
 
 import (
 	"fmt"
+	"io"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 type InstallPackageRequest struct {
@@ -32,6 +32,29 @@ func (a *Server) InstallPackage(ctx *gin.Context) {
 
 }
 
+func (a *Server) InstallPackageZip(ctx *gin.Context) {
+
+	tempFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	defer os.Remove(tempFile.Name())
+
+	_, err = io.Copy(tempFile, ctx.Request.Body)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	packageId, err := a.engine.InstallPackageByFile(tempFile.Name())
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"package_id": packageId})
+}
+
 func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 
 	proxyAddrs := map[string]*httputil.ReverseProxy{}
@@ -39,8 +62,6 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 	if DEV_MODE {
 		devSpacesEnv := os.Getenv("TURNIX_DEV_SPACES")
 		devSpaces := strings.Split(devSpacesEnv, ",")
-
-		pp.Println("@devSpaces", devSpaces)
 
 		for _, pname := range devSpaces {
 			nameParts := strings.Split(pname, ":")
@@ -58,6 +79,7 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 	}
 
 	return func(ctx *gin.Context) {
+
 		spaceKey := ctx.Param("space_key")
 		proxy := proxyAddrs[spaceKey]
 		if proxy != nil {

@@ -59,8 +59,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	// internal file serve
 
-	zg.GET("/pages/space/:space_key")
-
 	coreApi.POST("/package/install", a.InstallPackage)
+	coreApi.POST("/package/install/zip", a.InstallPackageZip)
 
 }
