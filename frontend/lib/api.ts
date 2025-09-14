@@ -78,6 +78,10 @@ export const installPackage = async (url: string) => {
     return iaxios.post<{ package_id: number }>(`/core/package/install`, { url });
 }
 
-export const installPackageZip = async (zip: string) => {
-    return iaxios.post<{ package_id: number }>(`/core/package/install/zip`, { zip });
+export const installPackageZip = async (zip: ArrayBuffer) => {
+    return iaxios.post<{ package_id: number }>(`/core/package/install/zip`, zip, {
+        headers: {
+            "Content-Type": "application/zip",
+        },
+    });
 }
