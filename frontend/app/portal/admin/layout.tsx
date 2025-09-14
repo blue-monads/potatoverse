@@ -21,7 +21,7 @@ export default function PortalLayout({
       <div className="flex">
         <Sidebar />
 
-        <div className="ml-16 w-full">
+        <div className="ml-14 w-full">
           {children}
         </div>
 
@@ -60,15 +60,15 @@ const Sidebar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-16 h-full border-r bg-white space-y-8">
+      <nav className="fixed top-0 left-0 w-14 h-full border-r bg-white space-y-8">
         <div className="flex flex-col h-full">
-          <div className="h-20 flex items-center justify-center px-8">
-            <a href="javascript:void(0)" className="flex-none">
+          <div className="h-16 flex items-center justify-center mx-auto">
+            <a href="/z/pages/portal/admin" className="flex-none">
               <Image
                 src="/z/pages/logo.png"
                 alt="Turnix Logo"
-                width={48}
-                height={48}
+                width={36}
+                height={36}
               />
 
             </a>
