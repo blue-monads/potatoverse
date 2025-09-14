@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,65 +16,80 @@ type InstallPackageRequest struct {
 	URL string `json:"url"`
 }
 
-func (a *Server) InstallPackage(ctx *gin.Context) {
+func (a *Server) InstallPackage(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	var req InstallPackageRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+
+		return nil, err
 	}
 
 	packageId, err := a.engine.InstallPackageByUrl(req.URL)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	ctx.JSON(200, gin.H{"package_id": packageId})
+	return gin.H{"package_id": packageId}, nil
 
 }
 
-func (a *Server) InstallPackageZip(ctx *gin.Context) {
+func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 
 	tempFile, err := os.CreateTemp("", "turnix-package-*.zip")
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 	defer os.Remove(tempFile.Name())
 
 	_, err = io.Copy(tempFile, ctx.Request.Body)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 	packageId, err := a.engine.InstallPackageByFile(tempFile.Name())
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	ctx.JSON(200, gin.H{"package_id": packageId})
+	return gin.H{"package_id": packageId}, nil
 }
 
 type InstallPackageEmbedRequest struct {
 	Name string `json:"name"`
 }
 
-func (a *Server) InstallPackageEmbed(ctx *gin.Context) {
+func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	var req InstallPackageEmbedRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
 	packageId, err := a.engine.InstallPackageEmbed(req.Name)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
 
-	ctx.JSON(200, gin.H{"package_id": packageId})
+	return gin.H{"package_id": packageId}, nil
 }
+
+func (a *Server) ListEPackages(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	epackages, err := a.ctrl.ListEPackages()
+	if err != nil {
+		return nil, err
+	}
+
+	return epackages, nil
+}
+
+func (a *Server) ListInstalledSpaces(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	spaces, err := a.ctrl.ListInstalledSpaces(claim.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaces, nil
+}
+
+// engine core
 
 func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 
@@ -119,13 +135,3 @@ func (a *Server) handlePluginFile() func(ctx *gin.Context) {
 func (a *Server) handleSpaceApi(ctx *gin.Context) {}
 
 func (a *Server) handlePluginApi(ctx *gin.Context) {}
-
-func (a *Server) ListEPackages(ctx *gin.Context) {
-	epackages, err := a.ctrl.ListEPackages()
-	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(200, epackages)
-}

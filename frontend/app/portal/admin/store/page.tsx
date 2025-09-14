@@ -1,13 +1,14 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Store, CloudDownload, InfoIcon, Bolt } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Store, CloudDownload, InfoIcon, Bolt, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import AddButton from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { installPackage, installPackageEmbed, installPackageZip, listEPackages } from '@/lib';
+import { EPackage, getUsers, installPackage, installPackageEmbed, installPackageZip, listEPackages, User } from '@/lib';
 import { staticGradients } from '@/app/utils';
+import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
 
 
@@ -41,14 +42,11 @@ const StoreDirectory = () => {
         { name: 'Social', icon: SquareUserRound },
     ];
 
-    useEffect(() => {
-        const fetchPackages = async () => {
-            const resp = await listEPackages();
-            console.log("@resp", resp.data);
-            setStoreItems(resp.data);
-        }
-        fetchPackages();
-    }, []);
+    const loader = useSimpleDataLoader<EPackage[]>({
+        loader: listEPackages,
+        ready: gapp.isInitialized,
+      });
+
 
 
 
@@ -198,9 +196,17 @@ const StoreDirectory = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {storeItems.map((item, index) => (
+                        {loader.data?.map((item, index) => (
                             <StoreItemCard key={item.name} item={item} index={index} />
                         ))}
+
+                        {loader.loading && (
+                            <div className="col-span-full">
+                                <div className="flex items-center justify-center">
+                                    <Loader2 className="w-20 h-20 animate-spin my-10 text-gray-700" />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
