@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/k0kubun/pp"
 )
@@ -74,16 +76,45 @@ func ZipEPackage(name string) (string, error) {
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	files, err := embedPackages.ReadDir("epackages/" + name)
-	if err != nil {
-		return "", err
-	}
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		zipWriter.Create(file.Name())
-	}
+	err = includeSubFolder(name, "", zipWriter)
 
 	return zipFile.Name(), nil
+}
+
+func includeSubFolder(name, folder string, zipWriter *zip.Writer) error {
+	readPath := path.Join("epackages/", name, folder)
+
+	files, err := embedPackages.ReadDir(readPath)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		targetPath := path.Join(folder, file.Name())
+		targetPath = strings.TrimLeft(targetPath, "/")
+
+		if file.IsDir() {
+			err = includeSubFolder(name, targetPath, zipWriter)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		fileWriter, err := zipWriter.Create(targetPath)
+		if err != nil {
+			return err
+		}
+
+		finalpath := path.Join(readPath, file.Name())
+
+		fileData, err := embedPackages.ReadFile(finalpath)
+		if err != nil {
+			return err
+		}
+		_, err = fileWriter.Write(fileData)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

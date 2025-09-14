@@ -27,7 +27,8 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 
 	packageJson := []byte{}
 	for _, file := range zipFile.File {
-		if file.Name == "turnix.json" {
+		pp.Println("@file", file.Name)
+		if file.Name == "turnix.json" || file.Name == "/turnix.json" {
 			jsonFile, err := file.Open()
 			if err != nil {
 				return 0, err
@@ -41,12 +42,15 @@ func (d *DB) InstallPackage(file string) (int64, error) {
 	pkg := &models.Package{}
 	err = json.Unmarshal(packageJson, pkg)
 	if err != nil {
+		pp.Println("@packageJson", string(packageJson))
+		pp.Println("@err/1", err)
 		return 0, err
 	}
 
 	table := d.packagesTable()
 	id, err := table.Insert(pkg)
 	if err != nil {
+		pp.Println("@err/2", err)
 		return 0, err
 	}
 
