@@ -7,7 +7,8 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { installPackage, installPackageZip } from '@/lib';
+import { InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Space } from '@/lib';
+import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
 
 
@@ -29,6 +30,11 @@ const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const gapp = useGApp();
+
+    const loader = useSimpleDataLoader<InstalledSpace>({
+        loader: listInstalledSpaces,
+        ready: gapp.isInitialized,
+    });
 
     const spaces = [
         {

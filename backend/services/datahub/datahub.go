@@ -60,6 +60,7 @@ type PackageOps interface {
 	UpdatePackage(id int64, data map[string]any) error
 
 	ListPackages() ([]models.Package, error)
+	ListPackagesByIds(ids []int64) ([]models.Package, error)
 
 	ListPackageFiles(packageId int64) ([]models.PackageFile, error)
 	GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error)

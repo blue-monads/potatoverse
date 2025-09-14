@@ -117,6 +117,15 @@ func (d *DB) ListPackages() ([]models.Package, error) {
 	return items, nil
 }
 
+func (d *DB) ListPackagesByIds(ids []int64) ([]models.Package, error) {
+	items := make([]models.Package, 0)
+	err := d.packagesTable().Find(db.Cond{"id": ids}).All(&items)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (d *DB) ListPackageFiles(packageId int64) ([]models.PackageFile, error) {
 	items := make([]models.PackageFile, 0)
 	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId}).All(&items)

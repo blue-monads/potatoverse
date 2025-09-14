@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Store, CloudDownload, InfoIcon, Bolt, Loader2 } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Store, CloudDownload, InfoIcon, Bolt, Loader2, GlobeIcon } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import AddButton from '@/contain/AddButton';
@@ -30,7 +30,6 @@ const StoreDirectory = () => {
 
     
     const gapp = useGApp();
-    const [storeItems, setStoreItems] = useState<any[]>([]);
 
     const categories = [
         { name: 'Personal', icon: BookHeart },
@@ -170,7 +169,7 @@ const StoreDirectory = () => {
                                     onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
                                     className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
                                 >
-                                    <ArrowUpDown className="w-4 h-4" />
+                                    <GlobeIcon className="w-4 h-4" />
                                     <span>Source: {selectedType}</span>
                                 </button>
 

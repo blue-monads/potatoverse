@@ -102,3 +102,37 @@ export interface EPackage {
 export const listEPackages = async () => {
     return iaxios.get<EPackage[]>(`/core/package/list`);
 }
+
+
+export interface Package {
+    id: number;
+    name: string;
+    description: string;
+    slug: string;
+    type: string;
+    tags: string;
+    version: string;
+}
+
+export interface Space {
+    id: number;
+    name: string;
+    namespace_key: string;
+    owns_namespace: boolean;
+    package_id: number;
+    executor_type: string;
+    sub_type: string;
+    owned_by: number;
+    extrameta: string;
+    is_initilized: boolean;
+    is_public: boolean;
+}
+
+export interface InstalledSpace {
+    spaces: Space[]
+    packages: Package[]
+}
+
+export const listInstalledSpaces = async () => {
+    return iaxios.get<InstalledSpace>(`/core/space/installed`);
+}

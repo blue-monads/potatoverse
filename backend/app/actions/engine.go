@@ -9,9 +9,14 @@ func (c *Controller) ListEPackages() ([]engine.EPackage, error) {
 	return engine.ListEPackages()
 }
 
-func (c *Controller) ListInstalledSpaces(userId int64) ([]models.Space, error) {
+type InstalledSpace struct {
+	Spaces   []models.Space   `json:"spaces"`
+	Packages []models.Package `json:"packages"`
+}
 
-	spaces, err := c.database.ListSpaces()
+func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
+
+	spaces, err := c.database.ListOwnSpaces(0, "")
 	if err != nil {
 		return nil, err
 	}
@@ -23,6 +28,19 @@ func (c *Controller) ListInstalledSpaces(userId int64) ([]models.Space, error) {
 
 	spaces = append(spaces, tpSpaces...)
 
-	return spaces, nil
+	packageIds := make([]int64, 0, len(spaces))
+	for _, space := range spaces {
+		packageIds = append(packageIds, space.PackageID)
+	}
+
+	packages, err := c.database.ListPackagesByIds(packageIds)
+	if err != nil {
+		return nil, err
+	}
+
+	return &InstalledSpace{
+		Spaces:   spaces,
+		Packages: packages,
+	}, nil
 
 }
