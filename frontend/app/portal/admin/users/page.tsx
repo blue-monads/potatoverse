@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Search, Filter, MoreHorizontal, UserIcon, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX, LockIcon } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, UserIcon, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX, LockIcon, MailIcon } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
@@ -157,31 +157,36 @@ export default function Page() {
 const showLargeModal = (modal: ModalHandle) => {
 
   modal.openModal({
-    title: "Large Modal",
+    title: "Add User",
     content: (
       <div className="space-y-4">
         <p className="text-gray-600 dark:text-gray-300">
-          This is a large modal that can contain more content.
+          Add a new user to the system.
         </p>
-        <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-          <h3 className="font-semibold mb-2">Sample Content</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            You can put any React components here, including forms, tables, or other complex UI elements.
-          </p>
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg flex flex-col gap-2">
+
+          {/* 1. create user directly.  2. invite user */}
+
+          <div className="flex p-2 border border-gray-300 rounded-lg gap-2 items-center hover:bg-primary-50 cursor-pointer">
+            <UserIcon className='w-4 h-4' />
+            <h4 className='text-md'>Create User Directly</h4>
+          </div>
+
+          <div className="flex p-2 border border-gray-300 rounded-lg gap-2 items-center hover:bg-primary-50 cursor-pointer">
+            <MailIcon className='w-4 h-4' />
+
+            <h4 className='text-md'>Invite User</h4>
+          </div>
+
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex gap-2 justify-end">
           <button
             onClick={() => modal.closeModal()}
             className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
           >
             Cancel
-          </button>
-          <button
-            onClick={() => modal.closeModal()}
-            className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Confirm
-          </button>
+          </button>         
         </div>
       </div>
     ),
