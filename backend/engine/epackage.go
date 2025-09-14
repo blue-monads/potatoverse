@@ -1,9 +1,11 @@
 package engine
 
 import (
+	"archive/zip"
 	"embed"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/k0kubun/pp"
 )
@@ -60,4 +62,28 @@ func ListEPackages() ([]EPackage, error) {
 	}
 
 	return epackages, nil
+}
+
+func ZipEPackage(name string) (string, error) {
+
+	zipFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	if err != nil {
+		return "", err
+	}
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	files, err := embedPackages.ReadDir("epackages/" + name)
+	if err != nil {
+		return "", err
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		zipWriter.Create(file.Name())
+	}
+
+	return zipFile.Name(), nil
 }

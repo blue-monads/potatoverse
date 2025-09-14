@@ -55,6 +55,26 @@ func (a *Server) InstallPackageZip(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"package_id": packageId})
 }
 
+type InstallPackageEmbedRequest struct {
+	Name string `json:"name"`
+}
+
+func (a *Server) InstallPackageEmbed(ctx *gin.Context) {
+	var req InstallPackageEmbedRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	packageId, err := a.engine.InstallPackageEmbed(req.Name)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(200, gin.H{"package_id": packageId})
+}
+
 func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 
 	proxyAddrs := map[string]*httputil.ReverseProxy{}

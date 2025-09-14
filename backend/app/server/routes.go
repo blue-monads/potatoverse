@@ -49,6 +49,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	coreApi.POST("/package/install", a.InstallPackage)
 	coreApi.POST("/package/install/zip", a.InstallPackageZip)
+	coreApi.POST("/package/install/embed", a.InstallPackageEmbed)
 	coreApi.GET("/package/list", a.ListEPackages)
 
 	spaceFile := a.handleSpaceFile()

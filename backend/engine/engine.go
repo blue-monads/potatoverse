@@ -139,6 +139,17 @@ func (e *Engine) InstallPackageByUrl(url string) (int64, error) {
 
 }
 
+func (e *Engine) InstallPackageEmbed(name string) (int64, error) {
+	file, err := ZipEPackage(name)
+	if err != nil {
+		return 0, err
+	}
+
+	defer os.Remove(file)
+
+	return e.InstallPackageByFile(file)
+}
+
 func (e *Engine) InstallPackageByFile(file string) (int64, error) {
 	packageId, err := e.db.InstallPackage(file)
 	if err != nil {

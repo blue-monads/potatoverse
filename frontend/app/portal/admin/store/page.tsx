@@ -6,7 +6,7 @@ import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import AddButton from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { installPackage, installPackageZip, listEPackages } from '@/lib';
+import { installPackage, installPackageEmbed, installPackageZip, listEPackages } from '@/lib';
 import { staticGradients } from '@/app/utils';
 
 
@@ -210,7 +210,7 @@ const StoreDirectory = () => {
 };
 
 const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
-
+    const gapp = useGApp();
     const gradient = staticGradients[index % staticGradients.length];
     item.gradient = item.gradient || gradient;
 
@@ -254,7 +254,19 @@ const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
 
                     <div className="flex gap-2">
 
-                        <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600">
+                        <button 
+                        className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
+                        onClick={() => {
+                            gapp.modal.openModal({
+                                title: "Install Package",
+                                content: <InstallPackageModal slug={item.slug} gapp={gapp} />,
+                                size: "lg"
+                            });
+                             
+
+                        }}
+                        
+                        >
                             <CloudDownload className="w-4 h-4" />
                             <span>Install</span>
                         </button>
@@ -416,3 +428,67 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 
 
 };
+
+
+const InstallPackageModal = ({ slug, gapp }: { slug: string, gapp: GAppStateHandle }) => {
+    const [mode, setMode] = useState<'verify' | 'importing' | 'success' | 'error'>('verify');
+
+
+    return (<>
+        {mode === 'verify' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Are you sure you want to install this package?
+                </p>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+                <button
+                    onClick={async () => {
+                        setMode('importing');
+                        const resp = await installPackageEmbed(slug);
+                        if (resp.status !== 200) {
+                            setMode('error');
+                            return;
+                        }
+                        setMode('success');
+
+                    }}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                    Install
+                </button>
+                <button
+                    onClick={() => gapp.modal.closeModal()}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                    Cancel
+                </button>
+            </div>
+
+
+        </>)}
+        {mode === 'importing' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Importing package...
+                </p>
+            </div>
+        </>)}
+        {mode === 'success' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Package imported successfully
+                </p>
+            </div>
+        </>)}
+        {mode === 'error' && (<>
+            <div className="space-y-1">
+                <p className="text-gray-600 dark:text-gray-300">
+                    Error importing package
+                </p>
+            </div>
+        </>)}
+
+    </>);
+}
