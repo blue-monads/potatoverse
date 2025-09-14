@@ -92,6 +92,10 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	pp.Println("@name", name)
 	pp.Println("@path", path)
 
+	if name == "" {
+		name = "index.html"
+	}
+
 	fmeta, err := e.db.GetPackageFileMetaByPath(ri.packageId, path, name)
 	if err != nil {
 		ctx.JSON(404, gin.H{"error": "file not found"})

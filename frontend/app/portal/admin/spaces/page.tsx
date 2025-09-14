@@ -10,6 +10,7 @@ import { Tabs } from '@skeletonlabs/skeleton-react';
 import { InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
+import { useRouter } from 'next/navigation';
 
 
 
@@ -166,6 +167,7 @@ const SpacesDirectory = () => {
 };
 
 const SpaceCard = ({ space }: { space: any }) => {
+    const router = useRouter();
 
 
     return (
@@ -216,7 +218,14 @@ const SpaceCard = ({ space }: { space: any }) => {
                     <div className="flex gap-2">
                         {/* Run Action and other action drop down */}
 
-                        <button className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600">
+                        <button 
+                            
+                            className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
+                            onClick={() => {
+                                router.push(`/portal/admin/exec?nskey=${space.from}`);
+                            }}
+                            
+                            >
                             <CloudLightning className="w-4 h-4" />
                             <span>Run</span>
                         </button>
