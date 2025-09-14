@@ -143,13 +143,11 @@ func (e *Engine) InstallPackageByFile(file string) (int64, error) {
 
 	spaceId, err := e.db.AddSpace(&models.Space{
 		PackageID:     packageId,
-		Name:          pkg.Name,
-		Info:          pkg.Info,
 		NamespaceKey:  pkg.Slug,
 		OwnsNamespace: true,
-		Stype:         pkg.Type,
+		ExecutorType:  "luaz",
+		SubType:       "space",
 		OwnerID:       pkg.InstalledBy,
-		ExtraMeta:     pkg.Info,
 		IsInitilized:  false,
 		IsPublic:      true,
 	})

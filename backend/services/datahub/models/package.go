@@ -12,7 +12,7 @@ type Package struct {
 	StorageType string     `json:"storage_type" db:"storage_type"`
 	Reference   string     `json:"reference" db:"reference"`
 	InstalledBy int64      `json:"installed_by" db:"installed_by"`
-	InstalledAt *time.Time `json:"installed_at" db:"installed_at"`
+	InstalledAt *time.Time `json:"installed_at" db:"installed_at,omitempty"`
 }
 
 type PackageFile struct {
@@ -26,7 +26,7 @@ type PackageFile struct {
 	Hash      string     `json:"hash" db:"hash"`
 	StoreType int64      `json:"store_type" db:"store_type"`
 	CreatedBy int64      `json:"created_by" db:"created_by"`
-	CreatedAt *time.Time `json:"created_at" db:"created_at"`
+	CreatedAt *time.Time `json:"created_at" db:"created_at,omitempty"`
 }
 
 type PackageFileBlob struct {
