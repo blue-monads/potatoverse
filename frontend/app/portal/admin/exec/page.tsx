@@ -1,11 +1,9 @@
 "use client";
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // /portal/admin/exec?nskey=test
-
-
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -13,36 +11,27 @@ export default function Page() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setTimeout(() => {
+        const timer = setTimeout(() => {
             setIsLoading(false);
         }, 300);
 
+        return () => clearTimeout(timer);
     }, []);
 
-
-
-    return (<>
-
+    return (
         <div className='p-1'>
-
-            <div className='p-1 rounded-md w-full min-h-[99vh] border  border-primary-100'>
-                {isLoading && (
+            <div className='p-1 rounded-md w-full min-h-[99vh] border border-primary-100 flex flex-col'>
+                {isLoading ? (
                     <div className='flex items-center justify-center h-full'>
                         <Loader2 className='w-12 h-12 animate-spin my-20' />
                     </div>
-                )}
-
-                {!isLoading && (
-                    <iframe src={`/z/space/${nskey}`} className='w-full h-full'>
-                    </iframe>
+                ) : (
+                    <iframe
+                        src={`/z/space/${nskey}`}
+                        className='w-full h-full flex-grow'
+                    ></iframe>
                 )}
             </div>
-            
-
         </div>
-
-    </>)
+    );
 }
-
-
-

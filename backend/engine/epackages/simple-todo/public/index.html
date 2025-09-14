@@ -3,9 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Todo</title>
+    <title>Modern Todo App</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styling for completed tasks */
+        .completed span {
+            text-decoration: line-through;
+            color: #9ca3af; /* gray-400 */
+        }
+        /* Simple transition for a smoother experience */
+        li, button {
+            transition: all 0.2s ease-in-out;
+        }
+        /* Custom focus ring for better accessibility */
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #3b82f6; /* blue-500 */
+            border-color: #3b82f6;
+        }
+    </style>
 </head>
-<body>
-    <h1>Simple Todo</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full max-w-lg mx-4">
+
+        <!-- Header -->
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">My Todos</h1>
+            <p class="text-gray-500 mt-1">Simple, clean, and beautiful.</p>
+        </header>
+
+        <!-- Form for adding new todos -->
+        <form id="todo-form" class="flex items-center gap-3 mb-6">
+            <input 
+                type="text" 
+                id="todo-input"
+                placeholder="Add a new task..." 
+                class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                autocomplete="off"
+            >
+            <button 
+                type="submit"
+                class="bg-blue-600 text-white font-semibold px-5 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105"
+            >
+                Add
+            </button>
+        </form>
+
+        <!-- Todo list container -->
+        <ul id="todo-list" class="space-y-3">
+            <!-- Todo items will be dynamically inserted here -->
+        </ul>
+
+    </div>
+
+    <script>
+        // DOM element references
+        const todoForm = document.getElementById('todo-form');
+        const todoInput = document.getElementById('todo-input');
+        const todoList = document.getElementById('todo-list');
+
+        // --- FUNCTIONS ---
+
+        /**
+         * Creates and appends a new todo item to the list.
+         * @param {string} taskText - The text for the new todo item.
+         */
+        function addTodoItem(taskText) {
+            // Prevent adding empty tasks
+            if (taskText.trim() === '') return;
+
+            // Create list item
+            const li = document.createElement('li');
+            li.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg shadow-sm';
+
+            // Create span for the task text
+            const taskSpan = document.createElement('span');
+            taskSpan.textContent = taskText;
+            taskSpan.className = 'text-gray-700';
+
+            // Create a container for the buttons
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'flex items-center gap-3';
+
+            // Create complete button (checkbox-style)
+            const completeButton = document.createElement('button');
+            completeButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500 hover:text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            `;
+            completeButton.title = "Mark as complete";
+
+            // Create delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500 hover:text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            `;
+            deleteButton.title = "Delete task";
+
+            // --- EVENT LISTENERS FOR BUTTONS ---
+
+            // Event listener to toggle completion status
+            completeButton.addEventListener('click', () => {
+                li.classList.toggle('completed');
+            });
+
+            // Event listener to delete the todo item
+            deleteButton.addEventListener('click', () => {
+                li.style.transform = 'translateX(100%)';
+                li.style.opacity = '0';
+                setTimeout(() => {
+                    todoList.removeChild(li);
+                }, 200); // Wait for animation to finish
+            });
+
+            // Assemble the todo item
+            li.appendChild(taskSpan);
+            buttonsDiv.appendChild(completeButton);
+            buttonsDiv.appendChild(deleteButton);
+            li.appendChild(buttonsDiv);
+            
+            // Add the new item to the list
+            todoList.prepend(li); // Add new items to the top
+        }
+
+        // --- MAIN EVENT LISTENER ---
+
+        // Handle form submission
+        todoForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent page refresh
+            addTodoItem(todoInput.value);
+            todoInput.value = ''; // Clear the input field
+            todoInput.focus(); // Keep focus on the input for easy adding
+        });
+
+        // Add a few example tasks on initial load for demonstration
+        document.addEventListener('DOMContentLoaded', () => {
+            addTodoItem('Buy groceries');
+            addTodoItem('Finish the project report');
+            addTodoItem('Go for a run');
+            // Mark one as complete for demo purposes
+            const firstItem = todoList.lastElementChild;
+            if(firstItem) firstItem.classList.add('completed');
+        });
+
+    </script>
 </body>
 </html>
