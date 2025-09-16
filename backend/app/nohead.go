@@ -3,6 +3,7 @@ package app
 import (
 	"crypto/sha256"
 	"log/slog"
+	"path"
 
 	controller "github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
@@ -14,10 +15,11 @@ import (
 )
 
 type Option struct {
-	Database datahub.Database
-	Logger   *slog.Logger
-	Signer   *signer.Signer
-	AppOpts  *xtypes.AppOptions
+	Database          datahub.Database
+	Logger            *slog.Logger
+	Signer            *signer.Signer
+	AppOpts           *xtypes.AppOptions
+	WorkingFolderBase string
 }
 
 var _ xtypes.App = (*HeadLess)(nil)
@@ -34,7 +36,7 @@ type HeadLess struct {
 
 func NewHeadLess(opt Option) *HeadLess {
 
-	engine := engine.NewEngine(opt.Database)
+	engine := engine.NewEngine(opt.Database, path.Join(opt.WorkingFolderBase, "engine"))
 
 	happ := &HeadLess{
 		db:     opt.Database,

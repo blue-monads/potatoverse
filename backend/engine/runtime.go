@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"fmt"
+	"path"
 	"sync"
 	"time"
 
@@ -29,7 +31,7 @@ func (r *Runtime) cleanupExecs() {
 	}
 }
 
-func (r *Runtime) GetExec(packageId int64) *luaz.Luaz {
+func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Luaz {
 	r.execsLock.RLock()
 	e := r.execs[packageId]
 	r.execsLock.RUnlock()
@@ -55,7 +57,7 @@ func (r *Runtime) GetExec(packageId int64) *luaz.Luaz {
 			Logger: r.parent.app.Logger().With("package_id", packageId),
 		},
 		Code:          string(sourceBytes),
-		WorkingFolder: "",
+		WorkingFolder: path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
 	})
 
 	r.execsLock.Lock()
@@ -66,9 +68,9 @@ func (r *Runtime) GetExec(packageId int64) *luaz.Luaz {
 
 }
 
-func (r *Runtime) ExecHttp(packageId, spaceId int64, ctx *gin.Context) {
+func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gin.Context) {
 
-	e := r.GetExec(packageId)
+	e := r.GetExec(packageName, packageId, spaceId)
 	if e == nil {
 		return
 	}

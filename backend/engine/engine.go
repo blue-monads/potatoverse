@@ -22,19 +22,21 @@ type indexItem struct {
 }
 
 type Engine struct {
-	db           datahub.Database
-	RoutingIndex map[string]indexItem
-	riLock       sync.RWMutex
+	db            datahub.Database
+	RoutingIndex  map[string]indexItem
+	riLock        sync.RWMutex
+	workingFolder string
 
 	runtime Runtime
 
 	app xtypes.App
 }
 
-func NewEngine(db datahub.Database) *Engine {
+func NewEngine(db datahub.Database, workingFolder string) *Engine {
 	return &Engine{
-		db:           db,
-		RoutingIndex: make(map[string]indexItem),
+		db:            db,
+		workingFolder: workingFolder,
+		RoutingIndex:  make(map[string]indexItem),
 		runtime: Runtime{
 			execs:     make(map[int64]*luaz.Luaz),
 			execsLock: sync.RWMutex{},
