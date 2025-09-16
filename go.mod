@@ -13,6 +13,7 @@ require (
 	github.com/rs/xid v1.2.1
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/upper/db/v4 v4.7.0
+	github.com/yuin/gopher-lua v1.1.1
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/crypto v0.25.0
 )
