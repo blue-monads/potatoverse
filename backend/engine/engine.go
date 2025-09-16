@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/blue-monads/turnix/backend/engine/luaz"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -25,6 +26,8 @@ type Engine struct {
 	RoutingIndex map[string]indexItem
 	riLock       sync.RWMutex
 
+	runtime Runtime
+
 	app xtypes.App
 }
 
@@ -32,6 +35,10 @@ func NewEngine(db datahub.Database) *Engine {
 	return &Engine{
 		db:           db,
 		RoutingIndex: make(map[string]indexItem),
+		runtime: Runtime{
+			execs:     make(map[int64]*luaz.Luaz),
+			execsLock: sync.RWMutex{},
+		},
 	}
 }
 
@@ -63,6 +70,9 @@ func (e *Engine) LoadRoutingIndex() error {
 
 func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
+	e.runtime.parent = e
+
+	go e.runtime.cleanupExecs()
 
 	return e.LoadRoutingIndex()
 }

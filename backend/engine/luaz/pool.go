@@ -11,6 +11,7 @@ type LuaStatePool struct {
 	m       sync.Mutex
 	saved   []*LuaH
 	maxSize int
+	minSize int
 	ttl     time.Duration
 	timeout map[*LuaH]time.Time
 	closed  bool
@@ -19,24 +20,32 @@ type LuaStatePool struct {
 	initFn func() (*LuaH, error)
 }
 
+// LuaStatePoolOptions defines the configuration for a new LuaStatePool.
 type LuaStatePoolOptions struct {
 	MaxSize int
+	MinSize int
 	Ttl     time.Duration
 	InitFn  func() (*LuaH, error)
 }
 
-// NewLuaStatePool creates a new LuaStatePool with the specified maximum size.
+// NewLuaStatePool creates a new LuaStatePool with the specified options.
 func NewLuaStatePool(opts LuaStatePoolOptions) *LuaStatePool {
 	pool := &LuaStatePool{
 		maxSize: opts.MaxSize,
+		minSize: opts.MinSize,
 		ttl:     opts.Ttl,
 		timeout: make(map[*LuaH]time.Time),
 		initFn:  opts.InitFn,
 	}
 
-	// Start a cleanup goroutine if TTL is enabled
-	if opts.Ttl > 0 {
-		go pool.periodicCleanup()
+	// Initialize the pool with minSize states
+	for i := 0; i < pool.minSize; i++ {
+		L, err := pool.initFn()
+		if err != nil {
+			// Handle error, maybe log it and continue
+			continue
+		}
+		pool.saved = append(pool.saved, L)
 	}
 
 	return pool
@@ -111,18 +120,7 @@ func (p *LuaStatePool) Close() {
 	p.closed = true
 }
 
-// periodicCleanup checks for expired Lua states and removes them.
-func (p *LuaStatePool) periodicCleanup() {
-	ticker := time.NewTicker(p.ttl / 2)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		p.cleanupExpiredStates()
-	}
-}
-
-// cleanupExpiredStates removes expired Lua states from the pool.
-func (p *LuaStatePool) cleanupExpiredStates() {
+func (p *LuaStatePool) CleanupExpiredStates() {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -136,8 +134,8 @@ func (p *LuaStatePool) cleanupExpiredStates() {
 	for _, L := range p.saved {
 		expiry, exists := p.timeout[L]
 
-		// If the state has expired, close it
-		if exists && now.After(expiry) {
+		// If the state has expired and we are above the minSize, close it
+		if exists && now.After(expiry) && len(unexpired) >= p.minSize {
 			L.Close()
 			delete(p.timeout, L)
 		} else {

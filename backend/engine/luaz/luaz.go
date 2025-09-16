@@ -29,7 +29,8 @@ func New(opts Options) *Luaz {
 	}
 
 	pool := NewLuaStatePool(LuaStatePoolOptions{
-		MaxSize: 100,
+		MinSize: 10,
+		MaxSize: 20,
 		Ttl:     time.Hour,
 		InitFn: func() (*LuaH, error) {
 
@@ -61,6 +62,10 @@ func New(opts Options) *Luaz {
 	lz.pool = pool
 
 	return lz
+}
+
+func (l *Luaz) Cleanup() {
+	l.pool.CleanupExpiredStates()
 }
 
 func (l *Luaz) Handle(ctx *gin.Context, handlerName string) {
