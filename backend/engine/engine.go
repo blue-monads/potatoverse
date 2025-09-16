@@ -2,6 +2,7 @@ package engine
 
 import (
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"strings"
@@ -42,6 +43,19 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			execsLock: sync.RWMutex{},
 		},
 	}
+}
+
+func (e *Engine) GetDebugData() map[string]any {
+	indexCopy := make(map[string]indexItem)
+	e.riLock.RLock()
+	maps.Copy(indexCopy, e.RoutingIndex)
+	e.riLock.RUnlock()
+
+	return map[string]any{
+		"runtime_data":  e.runtime.GetDebugData(),
+		"routing_index": indexCopy,
+	}
+
 }
 
 func (e *Engine) LoadRoutingIndex() error {

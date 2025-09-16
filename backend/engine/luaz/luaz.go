@@ -77,4 +77,10 @@ func (l *Luaz) Handle(ctx *gin.Context, handlerName string) {
 
 	lh.Handle(ctx, handlerName, map[string]string{})
 
+	l.pool.Put(lh)
+
+}
+
+func (l *Luaz) GetDebugData() map[string]any {
+	return l.pool.GetDebugData()
 }

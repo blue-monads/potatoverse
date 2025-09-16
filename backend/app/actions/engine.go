@@ -68,6 +68,10 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 
 }
 
+func (c *Controller) GetEngineDebugData() map[string]any {
+	return c.engine.GetDebugData()
+}
+
 func (c *Controller) DeletePackage(userId int64, packageId int64) error {
 	pkg, err := c.database.GetPackage(packageId)
 	if err != nil {

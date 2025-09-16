@@ -54,6 +54,8 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.GET("/package/list", a.withAccessTokenFn(a.ListEPackages))
 	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
 
+	coreApi.GET("/engine/debug", a.handleEngineDebugData)
+
 	spaceFile := a.handleSpaceFile()
 	pluginFile := a.handlePluginFile()
 

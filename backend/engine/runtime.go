@@ -44,6 +44,21 @@ func (r *Runtime) cleanupExecs() {
 	}
 }
 
+func (r *Runtime) GetDebugData() map[int64]any {
+
+	resp := make(map[int64]any)
+
+	r.execsLock.RLock()
+	defer r.execsLock.RUnlock()
+
+	for id, e := range r.execs {
+		resp[id] = e.GetDebugData()
+	}
+
+	return resp
+
+}
+
 func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Luaz {
 	r.execsLock.RLock()
 	e := r.execs[packageId]

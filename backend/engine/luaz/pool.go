@@ -1,7 +1,6 @@
 package luaz
 
 import (
-	"errors"
 	"sync"
 	"time"
 )
@@ -14,7 +13,6 @@ type LuaStatePool struct {
 	minSize int
 	ttl     time.Duration
 	timeout map[*LuaH]time.Time
-	closed  bool
 
 	// Optional initialization function for new states
 	initFn func() (*LuaH, error)
@@ -38,13 +36,8 @@ func NewLuaStatePool(opts LuaStatePoolOptions) *LuaStatePool {
 		initFn:  opts.InitFn,
 	}
 
-	// Initialize the pool with minSize states
-	for i := 0; i < pool.minSize; i++ {
-		L, err := pool.initFn()
-		if err != nil {
-			// Handle error, maybe log it and continue
-			continue
-		}
+	L, err := pool.initFn()
+	if err != nil {
 		pool.saved = append(pool.saved, L)
 	}
 
@@ -55,10 +48,6 @@ func NewLuaStatePool(opts LuaStatePoolOptions) *LuaStatePool {
 func (p *LuaStatePool) Get() (*LuaH, error) {
 	p.m.Lock()
 	defer p.m.Unlock()
-
-	if p.closed {
-		return nil, errors.New("pool is closed")
-	}
 
 	n := len(p.saved)
 	if n == 0 {
@@ -80,11 +69,6 @@ func (p *LuaStatePool) Get() (*LuaH, error) {
 func (p *LuaStatePool) Put(L *LuaH) error {
 	p.m.Lock()
 	defer p.m.Unlock()
-
-	if p.closed {
-		L.Close()
-		return errors.New("pool is closed")
-	}
 
 	// Reset the Lua state to make it clean for the next use
 	L.L.SetTop(0) // Clear the stack
@@ -117,16 +101,12 @@ func (p *LuaStatePool) Close() {
 
 	p.saved = nil
 	p.timeout = make(map[*LuaH]time.Time)
-	p.closed = true
+
 }
 
 func (p *LuaStatePool) CleanupExpiredStates() {
 	p.m.Lock()
 	defer p.m.Unlock()
-
-	if p.closed {
-		return
-	}
 
 	now := time.Now()
 	var unexpired []*LuaH
@@ -144,4 +124,25 @@ func (p *LuaStatePool) CleanupExpiredStates() {
 	}
 
 	p.saved = unexpired
+}
+
+func (p *LuaStatePool) GetDebugData() map[string]any {
+
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	sizes := make([]int, 0, len(p.saved))
+
+	for _, L := range p.saved {
+		stackSize := L.L.GetTop()
+		sizes = append(sizes, stackSize)
+	}
+
+	return map[string]any{
+		"sizes":      sizes,
+		"max_size":   p.maxSize,
+		"saved_size": len(p.saved),
+		"min_size":   p.minSize,
+		"ttl":        p.ttl,
+	}
 }

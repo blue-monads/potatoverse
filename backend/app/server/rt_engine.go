@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -141,6 +142,11 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 		a.engine.ServeSpaceFile(ctx)
 
 	}
+}
+
+func (a *Server) handleEngineDebugData(ctx *gin.Context) {
+	debugData := a.ctrl.GetEngineDebugData()
+	httpx.WriteJSON(ctx, debugData, nil)
 }
 
 func (a *Server) handleSpaceApi(ctx *gin.Context) {
