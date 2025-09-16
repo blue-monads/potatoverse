@@ -16,11 +16,7 @@ type LuaStatePool struct {
 	minSize     int
 	maxOnFlight int
 	onFlight    int
-	ttl         time.Duration
-	timeout     map[*LuaH]time.Time
-
-	// Optional initialization function for new states
-	initFn func() (*LuaH, error)
+	initFn      func() (*LuaH, error)
 }
 
 // LuaStatePoolOptions defines the configuration for a new LuaStatePool.
@@ -39,13 +35,12 @@ func NewLuaStatePool(opts LuaStatePoolOptions) *LuaStatePool {
 		minSize:     opts.MinSize,
 		maxOnFlight: opts.MaxOnFlight,
 		onFlight:    0,
-		ttl:         opts.Ttl,
-		timeout:     make(map[*LuaH]time.Time),
 		initFn:      opts.InitFn,
 	}
 
 	L, err := pool.initFn()
 	if err == nil {
+		pool.onFlight++
 		pool.saved = append(pool.saved, L)
 	}
 
@@ -96,11 +91,13 @@ func (p *LuaStatePool) get(sleepCount int) (*LuaH, error) {
 	// Remove the last saved state from the pool
 	L := p.saved[n-1]
 	p.saved = p.saved[0 : n-1]
-	delete(p.timeout, L)
+	// delete(p.timeout, L)
 
 	p.m.Unlock()
 
 	pp.Println("@get/3", "got state from pool")
+
+	L.L.SetTop(0)
 
 	return L, nil
 }
@@ -111,7 +108,7 @@ func (p *LuaStatePool) Put(L *LuaH) error {
 	defer p.m.Unlock()
 
 	// Reset the Lua state to make it clean for the next use
-	L.L.SetTop(0) // Clear the stack
+	// L.L.SetTop(0) // Clear the stack
 
 	// Only store up to maxSize states
 	if len(p.saved) >= p.maxSize {
@@ -122,11 +119,6 @@ func (p *LuaStatePool) Put(L *LuaH) error {
 	}
 
 	p.saved = append(p.saved, L)
-
-	// Set timeout for this state if TTL is enabled
-	if p.ttl > 0 {
-		p.timeout[L] = time.Now().Add(p.ttl)
-	}
 
 	return nil
 }
@@ -141,7 +133,6 @@ func (p *LuaStatePool) Close() {
 	}
 
 	p.saved = nil
-	p.timeout = make(map[*LuaH]time.Time)
 
 }
 
@@ -149,22 +140,21 @@ func (p *LuaStatePool) CleanupExpiredStates() {
 	p.m.Lock()
 	defer p.m.Unlock()
 
-	now := time.Now()
-	var unexpired []*LuaH
-
-	for _, L := range p.saved {
-		expiry, exists := p.timeout[L]
-
-		// If the state has expired and we are above the minSize, close it
-		if exists && now.After(expiry) && len(unexpired) >= p.minSize {
-			L.Close()
-			delete(p.timeout, L)
-		} else {
-			unexpired = append(unexpired, L)
-		}
+	currTotal := len(p.saved)
+	if currTotal < p.minSize {
+		return
 	}
 
-	p.saved = unexpired
+	if currTotal > p.maxSize {
+		toClose := currTotal - p.maxSize
+		for i := range toClose {
+			p.saved[i].Close()
+			p.onFlight--
+		}
+
+		p.saved = p.saved[toClose:]
+
+	}
 }
 
 func (p *LuaStatePool) GetDebugData() map[string]any {
@@ -184,7 +174,6 @@ func (p *LuaStatePool) GetDebugData() map[string]any {
 		"max_size":      p.maxSize,
 		"saved_size":    len(p.saved),
 		"min_size":      p.minSize,
-		"ttl":           p.ttl,
 		"on_flight":     p.onFlight,
 		"max_on_flight": p.maxOnFlight,
 	}
