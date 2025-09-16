@@ -286,7 +286,7 @@ const ActionDropdown = (props: ActionDropdownProps) => {
     };
 
     useEffect(() => {
-        const dropdownRef = document.getElementById("action-dropdown"); // Add an ID to your dropdown container
+        const dropdownRef = document.getElementById("action-dropdown");
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 isDropdownOpen &&
