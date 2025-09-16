@@ -335,6 +335,7 @@ const ActionDropdown = (props: ActionDropdownProps) => {
             {/* Render dropdown in a portal */}
             {isDropdownOpen && buttonRect && createPortal(
                 <div
+                    id="action-dropdown"
                     className="fixed w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]"
                     style={{
                         top: buttonRect.bottom + 4,
