@@ -26,6 +26,8 @@ github.com/dnaeon/go-vcr v1.2.0/go.mod h1:R4UdLID7HZT3taECzJs4YgbbH6PIGXB6W/sc5O
 github.com/edsrzf/mmap-go v1.1.0/go.mod h1:19H/e8pUPLicwkyNgOykDXkJ9F0MHE+Z52B8EIth78Q=
 github.com/eknkc/basex v1.0.0 h1:R2zGRGJAcqEES03GqHU9leUF5n4Pg6ahazPbSTQWCWc=
 github.com/eknkc/basex v1.0.0/go.mod h1:k/F/exNEHFdbs3ZHuasoP2E7zeWwZblG84Y7Z59vQRo=
+github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506 h1:tN043XK9BV76qc31Z2GACIO5Dsh99q21JtYmR2ltXBg=
+github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506/go.mod h1:pSiPkAThBLWmIzJ2fukUGkcxxWR4HoLT7Bp8/krrl5g=
 github.com/gabriel-vasile/mimetype v1.4.4 h1:QjV6pZ7/XZ7ryI2KuyeEDE8wnh7fHP9YnQy+R0LnH8I=
 github.com/gabriel-vasile/mimetype v1.4.4/go.mod h1:JwLei5XPtWdGiMFB5Pjle1oEeoSeEuJfJE+TtfvdB/s=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=

@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/alecthomas/repr v0.5.1
+	github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506
 	github.com/gin-gonic/gin v1.10.0
 	github.com/hako/branca v0.0.0-20200807062402-6052ac720505
 	github.com/jaevor/go-nanoid v1.4.0
