@@ -1,6 +1,7 @@
 package luaz
 
 import (
+	"errors"
 	"log/slog"
 	"os"
 	"time"
@@ -31,9 +32,10 @@ func New(opts Options) *Luaz {
 	}
 
 	pool := NewLuaStatePool(LuaStatePoolOptions{
-		MinSize: 10,
-		MaxSize: 20,
-		Ttl:     time.Hour,
+		MinSize:     10,
+		MaxSize:     20,
+		MaxOnFlight: 50,
+		Ttl:         time.Hour,
 		InitFn: func() (*LuaH, error) {
 
 			L := lua.NewState()
@@ -79,6 +81,12 @@ func (l *Luaz) Handle(event HttpEvent) {
 	if err != nil {
 		pp.Println("@handle/1.1", err)
 		httpx.WriteErr(event.Request, err)
+		return
+	}
+
+	if lh == nil {
+		pp.Println("@handle/1.2", "lh is nil")
+		httpx.WriteErr(event.Request, errors.New("Could not get lua state"))
 		return
 	}
 
