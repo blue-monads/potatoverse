@@ -11,6 +11,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const code = `
+function on_http(ctx)
+  print("Hello from lua!", ctx.type())
+  local req = ctx.request()
+
+  req.json(200, {
+	message = "Hello from lua! from lua!"
+  })
+
+end
+
+`
+
 type Runtime struct {
 	execs     map[int64]*luaz.Luaz
 	execsLock sync.RWMutex
@@ -39,24 +52,24 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Lu
 		return e
 	}
 
-	file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "main.lua")
-	if err != nil {
-		r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
-		return nil
-	}
+	// file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "main.lua")
+	// if err != nil {
+	// 	r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
+	// 	return nil
+	// }
 
-	sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
-	if err != nil {
-		r.parent.app.Logger().Error("error getting package file", "error", err)
-		return nil
-	}
+	// sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
+	// if err != nil {
+	// 	r.parent.app.Logger().Error("error getting package file", "error", err)
+	// 	return nil
+	// }
 
 	e = luaz.New(luaz.Options{
 		BuilderOpts: xtypes.BuilderOption{
 			App:    r.parent.app,
 			Logger: r.parent.app.Logger().With("package_id", packageId),
 		},
-		Code:          string(sourceBytes),
+		Code:          code,
 		WorkingFolder: path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
 	})
 

@@ -124,6 +124,18 @@ func (e *Engine) ServePluginFile(ctx *gin.Context) {
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
 
+	spaceKey := ctx.Param("space_key")
+
+	e.riLock.RLock()
+	ri, ok := e.RoutingIndex[spaceKey]
+	e.riLock.RUnlock()
+	if !ok {
+		ctx.JSON(404, gin.H{"error": "space not found"})
+		return
+	}
+
+	e.runtime.ExecHttp(spaceKey, ri.packageId, ri.spaceId, ctx)
+
 }
 
 func (e *Engine) PluginApi(ctx *gin.Context) {

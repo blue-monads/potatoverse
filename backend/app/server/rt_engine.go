@@ -143,10 +143,12 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 	}
 }
 
+func (a *Server) handleSpaceApi(ctx *gin.Context) {
+	a.engine.SpaceApi(ctx)
+}
+
 func (a *Server) handlePluginFile() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {}
 }
-
-func (a *Server) handleSpaceApi(ctx *gin.Context) {}
 
 func (a *Server) handlePluginApi(ctx *gin.Context) {}

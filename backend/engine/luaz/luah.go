@@ -33,6 +33,11 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 	handler := l.L.GetGlobal(handlerName)
 	ctxt := l.L.NewTable()
 
+	if handler == lua.LNil {
+		l.parent.logger.Error("handler not found", "handler", handlerName)
+		return
+	}
+
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
 		"request": func(l *lua.LState) int {
 			table := binds.HttpModule(l, ctx)
