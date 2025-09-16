@@ -123,6 +123,17 @@ CREATE TABLE IF NOT EXISTS SpaceKV (
 
 
 
+CREATE TABLE IF NOT EXISTS SpaceResources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL DEFAULT '',
+  space_id INTEGER NOT NULL,
+  resource_id TEXT NOT NULL DEFAULT '',
+  resource_type TEXT NOT NULL DEFAULT '', -- space, folder, ws_room
+  attrs JSON NOT NULL DEFAULT '{}'
+  unique(space_id, name)
+);
+
+
 CREATE TABLE IF NOT EXISTS SpaceUsers (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
   user_id INTEGER NOT NULL, 
