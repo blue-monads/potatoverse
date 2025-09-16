@@ -1,0 +1,9 @@
+{
+    "name": "Simple Graph Notes",
+    "description": "Notes app to manage your notes.",
+    "slug": "simple-graph-notes",
+    "type": "space",
+    "tags": "productivity, notes",
+    "version": "1.0.0",
+    "mcp": true
+}
