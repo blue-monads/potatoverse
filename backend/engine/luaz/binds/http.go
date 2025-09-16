@@ -57,6 +57,26 @@ func HttpModule(L *lua.LState, ctx *gin.Context) *lua.LTable {
 		return 1
 	}
 
+	reqClaim := func(L *lua.LState) int {
+		// todo
+		return 0
+	}
+
+	reqMustClaim := func(L *lua.LState) int {
+		// todo
+		return 0
+	}
+
+	reqGetUserId := func(L *lua.LState) int {
+		// todo
+		return 0
+	}
+
+	reqMustGetUserId := func(L *lua.LState) int {
+		// todo
+		return 0
+	}
+
 	reqData := func(L *lua.LState) int {
 		code := L.CheckInt(1)
 		contentType := L.CheckString(2)
@@ -364,6 +384,10 @@ func HttpModule(L *lua.LState, ctx *gin.Context) *lua.LTable {
 		"contentType":         reqContentType,
 		"cookie":              reqCookie,
 		"data":                reqData,
+		"claim":               reqClaim,
+		"mustClaim":           reqMustClaim,
+		"getUserId":           reqGetUserId,
+		"mustGetUserId":       reqMustGetUserId,
 		"defaultQuery":        reqDefaultQuery,
 		"defaultPostForm":     reqDefaultPostForm,
 		"fullPath":            reqFullPath,
