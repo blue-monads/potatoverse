@@ -6,13 +6,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-const code = `
-function handler(ctx)
-  print("Hello from lua!", ctx.type())
-end
-
-`
-
 type LuaH struct {
 	parent  *Luaz
 	closers []func() error
@@ -46,6 +39,11 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 		},
 		"type": func(l *lua.LState) int {
 			l.Push(lua.LString("http"))
+			return 1
+		},
+		"param": func(l *lua.LState) int {
+			key := l.CheckString(1)
+			l.Push(lua.LString(ctx.Param(key)))
 			return 1
 		},
 	})

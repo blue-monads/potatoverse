@@ -17,7 +17,9 @@ function on_http(ctx)
   local req = ctx.request()
 
   req.json(200, {
-	message = "Hello from lua! from lua!"
+	message = "Hello from lua! from lua!",
+	space_id = ctx.param("space_id"),
+	package_id = ctx.param("package_id"),
   })
 
 end
@@ -103,6 +105,13 @@ func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gi
 		return
 	}
 
-	e.Handle(ctx, "on_http")
+	e.Handle(luaz.HttpEvent{
+		HandlerName: "on_http",
+		Params: map[string]string{
+			"space_id":   fmt.Sprintf("%d", spaceId),
+			"package_id": fmt.Sprintf("%d", packageId),
+		},
+		Request: ctx,
+	})
 
 }

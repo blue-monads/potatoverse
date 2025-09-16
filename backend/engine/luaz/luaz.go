@@ -5,8 +5,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
+	"github.com/k0kubun/pp"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -33,10 +35,6 @@ func New(opts Options) *Luaz {
 		MaxSize: 20,
 		Ttl:     time.Hour,
 		InitFn: func() (*LuaH, error) {
-
-			if opts.Code == "" {
-				opts.Code = code
-			}
 
 			L := lua.NewState()
 			err := L.DoString(opts.Code)
@@ -68,14 +66,27 @@ func (l *Luaz) Cleanup() {
 	l.pool.CleanupExpiredStates()
 }
 
-func (l *Luaz) Handle(ctx *gin.Context, handlerName string) {
+type HttpEvent struct {
+	HandlerName string
+	Params      map[string]string
+	Request     *gin.Context
+}
+
+func (l *Luaz) Handle(event HttpEvent) {
+	pp.Println("@handle/1")
 
 	lh, err := l.pool.Get()
 	if err != nil {
+		pp.Println("@handle/1.1", err)
+		httpx.WriteErr(event.Request, err)
 		return
 	}
 
-	lh.Handle(ctx, handlerName, map[string]string{})
+	pp.Println("@handle/2", event.HandlerName, event.Params)
+
+	lh.Handle(event.Request, event.HandlerName, event.Params)
+
+	pp.Println("@handle/3")
 
 	l.pool.Put(lh)
 

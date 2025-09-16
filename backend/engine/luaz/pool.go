@@ -37,7 +37,7 @@ func NewLuaStatePool(opts LuaStatePoolOptions) *LuaStatePool {
 	}
 
 	L, err := pool.initFn()
-	if err != nil {
+	if err == nil {
 		pool.saved = append(pool.saved, L)
 	}
 
