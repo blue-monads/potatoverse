@@ -121,6 +121,9 @@ CREATE TABLE IF NOT EXISTS SpaceKV (
   FOREIGN KEY (space_id) REFERENCES Spaces(id)
 );
 
+-- rMCP -> perform(action, params)
+-- rMCP -> get(resource_id)
+-- rMCP -> list(resource_id)
 
 
 CREATE TABLE IF NOT EXISTS SpaceResources (
@@ -128,7 +131,7 @@ CREATE TABLE IF NOT EXISTS SpaceResources (
   name TEXT NOT NULL DEFAULT '',
   space_id INTEGER NOT NULL,
   resource_id TEXT NOT NULL DEFAULT '',
-  resource_type TEXT NOT NULL DEFAULT '', -- space, folder, ws_room
+  resource_type TEXT NOT NULL DEFAULT '', -- space, ws_room
   attrs JSON NOT NULL DEFAULT '{}'
   unique(space_id, name)
 );
