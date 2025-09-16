@@ -1,14 +1,18 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"path"
 	"sync"
 	"time"
 
 	"github.com/blue-monads/turnix/backend/engine/luaz"
+	"github.com/blue-monads/turnix/backend/utils/libx"
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
+	"github.com/k0kubun/pp"
 )
 
 const code = `
@@ -41,10 +45,12 @@ type Runtime struct {
 }
 
 func (r *Runtime) cleanupExecs() {
-	ticker := time.NewTicker(time.Minute * 5)
+	ticker := time.NewTicker(time.Second * 30)
 	defer ticker.Stop()
 
 	for range ticker.C {
+		pp.Println("@cleanup_execs/1")
+
 		r.execsLock.RLock()
 		for _, e := range r.execs {
 			e.Cleanup()
@@ -110,16 +116,27 @@ func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gi
 
 	e := r.GetExec(packageName, packageId, spaceId)
 	if e == nil {
+		pp.Println("@exec_http/1", "exec is nil")
+		httpx.WriteErr(ctx, errors.New("exec is nil"))
 		return
 	}
 
-	e.Handle(luaz.HttpEvent{
-		HandlerName: "on_http",
-		Params: map[string]string{
-			"space_id":   fmt.Sprintf("%d", spaceId),
-			"package_id": fmt.Sprintf("%d", packageId),
-		},
-		Request: ctx,
+	err := libx.PanicWrapper(func() {
+		e.Handle(luaz.HttpEvent{
+			HandlerName: "on_http",
+			Params: map[string]string{
+				"space_id":   fmt.Sprintf("%d", spaceId),
+				"package_id": fmt.Sprintf("%d", packageId),
+			},
+			Request: ctx,
+		})
+
 	})
+
+	if err != nil {
+		pp.Println("@Runtime/error", err)
+		httpx.WriteErrString(ctx, "Runtime error")
+		return
+	}
 
 }

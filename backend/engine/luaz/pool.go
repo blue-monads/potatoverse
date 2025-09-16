@@ -137,22 +137,30 @@ func (p *LuaStatePool) Close() {
 }
 
 func (p *LuaStatePool) CleanupExpiredStates() {
+	pp.Println("@cleanup_expired_states/1")
 	p.m.Lock()
 	defer p.m.Unlock()
 
+	pp.Println("@cleanup_expired_states/2")
+
 	currTotal := len(p.saved)
 	if currTotal < p.minSize {
+		pp.Println("@cleanup_expired_states/3")
 		return
 	}
+	pp.Println("@cleanup_expired_states/4")
 
-	if currTotal > p.maxSize {
-		toClose := currTotal - p.maxSize
+	if currTotal > p.minSize {
+		pp.Println("@cleanup_expired_states/5")
+		toClose := currTotal - p.minSize
 		for i := range toClose {
 			p.saved[i].Close()
 			p.onFlight--
 		}
+		pp.Println("@cleanup_expired_states/6")
 
 		p.saved = p.saved[toClose:]
+		pp.Println("@cleanup_expired_states/7", toClose)
 
 	}
 }

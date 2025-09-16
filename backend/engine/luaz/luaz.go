@@ -65,7 +65,9 @@ func New(opts Options) *Luaz {
 }
 
 func (l *Luaz) Cleanup() {
+	pp.Println("@cleanup/2")
 	l.pool.CleanupExpiredStates()
+	pp.Println("@cleanup/3")
 }
 
 type HttpEvent struct {
