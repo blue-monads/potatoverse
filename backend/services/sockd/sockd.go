@@ -8,26 +8,23 @@ import (
 	"sync"
 )
 
-type Connection struct {
-	id         int64
-	conn       net.Conn
-	selfAttrs  map[string]string
-	writeAttrs map[string]string
-}
-
 type Sockd struct {
-	connections     map[int64]*Connection
-	connectionsLock sync.RWMutex
+	rooms map[string]*SockdRoom
+	rLock sync.RWMutex
 }
 
-/*
+type Connection struct {
+	id        int64
+	conn      net.Conn
+	selfAttrs map[string]string
+}
 
-selfAttrs:
-	age -> 11
-	city -> new york
-	country -> usa
-
-*/
+type SockdRoom struct {
+	connections       map[int64]*Connection
+	connectionsLock   sync.RWMutex
+	roomType          string // server_process, client_broadcast, client_p2p, client_cond
+	broadcastPresence bool
+}
 
 type Condition struct {
 	Key   string
@@ -37,30 +34,7 @@ type Condition struct {
 	Or    bool
 }
 
-/*
-
-{
-	key: "age"
-	op: ">"
-	value: "10"
-	or: false
-	sub: [
-		{
-			key: "city"
-			op: "=="
-			value: "new york"
-		},
-		{
-			key: "country"
-			op: "=="
-			value: "usa"
-		}
-	]
-}
-
-*/
-
-func (s *Sockd) SendWithCondition(cond Condition, data []byte) {
+func (s *SockdRoom) SendWithCondition(cond Condition, data []byte) {
 
 	s.connectionsLock.RLock()
 	defer s.connectionsLock.RUnlock()
@@ -187,3 +161,42 @@ func checkCondition(attrs map[string]string, cond Condition) bool {
 
 	return false
 }
+
+/*
+
+{
+	key: "age"
+	op: ">"
+	value: "10"
+	or: false
+	sub: [
+		{
+			key: "city"
+			op: "=="
+			value: "new york"
+		},
+		{
+			key: "country"
+			op: "=="
+			value: "usa"
+		}
+	]
+}
+
+*/
+
+/*
+
+--metadata-start-5643126--
+{meta_data: 1}
+--metadata-end-5643126--
+{actual_payload: 1}
+
+
+
+selfAttrs:
+	age -> 11
+	city -> new york
+	country -> usa
+
+*/
