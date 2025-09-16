@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -87,6 +88,20 @@ func (a *Server) ListInstalledSpaces(claim *signer.AccessClaim, ctx *gin.Context
 	}
 
 	return spaces, nil
+}
+
+func (a *Server) DeletePackage(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	err = a.ctrl.DeletePackage(claim.UserId, packageId)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+
 }
 
 // engine core

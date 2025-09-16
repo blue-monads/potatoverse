@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
+import { deletePackage, InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
@@ -145,8 +145,20 @@ const SpacesDirectory = () => {
                             
                             const pkg = packageIndex[space.package_id] || { name: "Unknown", description: "Unknown" };
                             const gradient = staticGradients[space.id % staticGradients.length];
+                            
 
-                            return <SpaceCard key={space.id} space={{
+                            return <SpaceCard 
+                            key={space.id} 
+                            actionHandler={async () => {
+                                
+                                
+                                await deletePackage(space.id);
+                                loader.reload();
+
+
+                            }}
+
+                            space={{
                                 id: space.id,
                                 title: pkg.name,
                                 description: pkg.description || pkg.info,
@@ -166,7 +178,7 @@ const SpacesDirectory = () => {
     );
 };
 
-const SpaceCard = ({ space }: { space: any }) => {
+const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any }) => {
     const router = useRouter();
 
 
@@ -230,7 +242,9 @@ const SpaceCard = ({ space }: { space: any }) => {
                             <span>Run</span>
                         </button>
 
-                        <ActionDropdown />
+                        <ActionDropdown onClick={ (action) => {
+                            actionHandler(action);
+                        }} />
                     </div>
 
 
@@ -243,18 +257,22 @@ const SpaceCard = ({ space }: { space: any }) => {
 
 
 const actionsOptions = [
-    { label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
-    { label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
-    { label: "Files", icon: <Files className="w-4 h-4" /> },
-    { label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
-    { label: "Tools", icon: <Box className="w-4 h-4" /> },
-    { label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
-    { label: "Settings", icon: <Cog className="w-4 h-4" /> }
+    {id: "run", label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
+    {id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
+    {id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
+    {id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
+    {id: "tools", label: "Tools", icon: <Box className="w-4 h-4" /> },
+    {id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
+    {id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
+    {id: "delete", label: "Delete", icon: <Trash2Icon className="w-4 h-4" /> }
 ]
 
 
+interface ActionDropdownProps {
+    onClick: (action: string) => void;
+}
 
-const ActionDropdown = () => {
+const ActionDropdown = (props: ActionDropdownProps) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [buttonRect, setButtonRect] = useState<DOMRect | null>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -268,8 +286,15 @@ const ActionDropdown = () => {
     };
 
     useEffect(() => {
+        const dropdownRef = document.getElementById("action-dropdown"); // Add an ID to your dropdown container
         const handleClickOutside = (event: MouseEvent) => {
-            if (isDropdownOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+            if (
+                isDropdownOpen &&
+                buttonRef.current &&
+                !buttonRef.current.contains(event.target as Node) &&
+                dropdownRef &&
+                !dropdownRef.contains(event.target as Node)
+            ) {
                 setIsDropdownOpen(false);
             }
         };
@@ -318,9 +343,13 @@ const ActionDropdown = () => {
                 >
                     {actionsOptions.map((option) => (
                         <button
-                            key={option.label}
-                            onClick={() => {
-                                setIsDropdownOpen(false);
+                            key={option.id}
+                            onClick={async () => {
+                                console.log("clicked", option.id);
+                                props.onClick(option.id);
+                                setTimeout(() => {
+                                    setIsDropdownOpen(false);
+                                }, 100);
                             }}
                             className="w-full text-left px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
                         >
