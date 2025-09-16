@@ -25,7 +25,7 @@ func (a *Server) InstallPackage(claim *signer.AccessClaim, ctx *gin.Context) (an
 		return nil, err
 	}
 
-	packageId, err := a.engine.InstallPackageByUrl(claim.UserId, req.URL)
+	packageId, err := a.ctrl.InstallPackageByUrl(claim.UserId, req.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	if err != nil {
 		return nil, err
 	}
-	packageId, err := a.engine.InstallPackageByFile(claim.UserId, tempFile.Name())
+	packageId, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context
 		return nil, err
 	}
 
-	packageId, err := a.engine.InstallPackageEmbed(claim.UserId, req.Name)
+	packageId, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name)
 	if err != nil {
 		return nil, err
 	}

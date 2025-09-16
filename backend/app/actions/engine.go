@@ -2,6 +2,9 @@ package actions
 
 import (
 	"errors"
+	"io"
+	"net/http"
+	"os"
 
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
@@ -84,4 +87,73 @@ func (c *Controller) DeletePackage(userId int64, packageId int64) error {
 
 	return c.database.DeletePackage(packageId)
 
+}
+
+func (c *Controller) InstallPackageByUrl(userId int64, url string) (int64, error) {
+
+	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	if err != nil {
+		return 0, err
+	}
+	defer os.Remove(tmpFile.Name())
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(tmpFile, resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	file := tmpFile.Name()
+
+	return c.InstallPackageByFile(userId, file)
+
+}
+
+func (c *Controller) InstallPackageEmbed(userId int64, name string) (int64, error) {
+	file, err := engine.ZipEPackage(name)
+	if err != nil {
+		return 0, err
+	}
+
+	defer os.Remove(file)
+
+	return c.InstallPackageByFile(userId, file)
+}
+
+func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, error) {
+	packageId, err := c.database.InstallPackage(userId, file)
+	if err != nil {
+		return 0, err
+	}
+
+	pkg, err := c.database.GetPackage(packageId)
+	if err != nil {
+		return 0, err
+	}
+
+	spaceId, err := c.database.AddSpace(&models.Space{
+		PackageID:     packageId,
+		NamespaceKey:  pkg.Slug,
+		OwnsNamespace: true,
+		ExecutorType:  "luaz",
+		SubType:       "space",
+		OwnerID:       pkg.InstalledBy,
+		IsInitilized:  false,
+		IsPublic:      true,
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	c.engine.LoadRoutingIndex()
+
+	c.logger.Info("space installed", "space_id", spaceId)
+
+	return packageId, nil
 }
