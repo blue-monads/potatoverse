@@ -44,11 +44,14 @@ function on_http(ctx)
 	message = "Hello from lua! from lua!",
 	space_id = ctx.param("space_id"),
 	package_id = ctx.param("package_id"),
+	subpath = ctx.param("subpath"),
   })
 
 end
 
 `
+
+const ByPassPackageCode = true
 
 type Runtime struct {
 	execs     map[int64]*luaz.Luaz
@@ -95,16 +98,23 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Lu
 		return e
 	}
 
-	file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
-	if err != nil {
-		r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
-		return nil
-	}
+	source := Code
 
-	sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
-	if err != nil {
-		r.parent.app.Logger().Error("error getting package file", "error", err)
-		return nil
+	if !ByPassPackageCode {
+		file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
+		if err != nil {
+			r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
+			return nil
+		}
+
+		sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
+		if err != nil {
+			r.parent.app.Logger().Error("error getting package file", "error", err)
+			return nil
+		}
+
+		source = string(sourceBytes)
+
 	}
 
 	e = luaz.New(luaz.Options{
@@ -112,7 +122,7 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Lu
 			App:    r.parent.app,
 			Logger: r.parent.app.Logger().With("package_id", packageId),
 		},
-		Code:          string(sourceBytes), // code,
+		Code:          source, // code,
 		WorkingFolder: path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
 	})
 
@@ -136,11 +146,14 @@ func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gi
 	// print stack trace
 
 	err := libx.PanicWrapper(func() {
+		subpath := ctx.Param("subpath")
+
 		e.Handle(luaz.HttpEvent{
 			HandlerName: "on_http",
 			Params: map[string]string{
 				"space_id":   fmt.Sprintf("%d", spaceId),
 				"package_id": fmt.Sprintf("%d", packageId),
+				"subpath":    subpath,
 			},
 			Request: ctx,
 		})
