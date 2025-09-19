@@ -124,6 +124,7 @@ type SpaceKVOps interface {
 	AddSpaceKV(spaceId int64, data *models.SpaceKV) error
 	GetSpaceKV(spaceId int64, group string, key string) (*models.SpaceKV, error)
 	GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]models.SpaceKV, error)
-	UpdateSpaceKV(spaceId int64, group string, key string, value string) error
 	RemoveSpaceKV(spaceId int64, group string, key string) error
+	UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error
+	UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error
 }
