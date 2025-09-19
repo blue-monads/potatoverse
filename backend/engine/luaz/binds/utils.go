@@ -72,6 +72,110 @@ func TableToMap(L *lua.LState, table *lua.LTable) map[string]any {
 	return result
 }
 
+func TableToMapAny(L *lua.LState, table *lua.LTable) map[any]any {
+	result := make(map[any]any)
+
+	table.ForEach(func(key, value lua.LValue) {
+		switch value.Type() {
+		case lua.LTString:
+			result[key.String()] = value.String()
+		case lua.LTNumber:
+			result[key.String()] = float64(value.(lua.LNumber))
+		case lua.LTBool:
+			result[key.String()] = bool(value.(lua.LBool))
+		case lua.LTTable:
+			result[key.String()] = TableToMap(L, value.(*lua.LTable))
+		default:
+			result[key.String()] = value.String()
+		}
+	})
+
+	return result
+}
+
+func toStructFromTableInner(l *lua.LState, tb *lua.LTable, v reflect.Value) error {
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := t.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+
+		var inline bool
+		name := field.Name
+		if tag := field.Tag.Get("luautil"); tag != "" {
+			tagParts := strings.Split(tag, ",")
+			if tagParts[0] == "-" {
+				continue // Skip this field.
+			} else if tagParts[0] != "" {
+				name = tagParts[0] // Use the name from the tag.
+			}
+			if len(tagParts) > 1 && tagParts[1] == "inline" {
+				inline = true // Handle inlining.
+			}
+		}
+
+		goField := v.Field(i)
+		if !goField.CanSet() {
+			continue
+		}
+
+		if inline {
+			// If it's an inline struct, recurse into it.
+			if goField.Kind() == reflect.Struct {
+				if err := toStructFromTableInner(l, tb, goField); err != nil {
+					return err
+				}
+			}
+			continue
+		}
+
+		// Look for the corresponding value in the Lua table.
+		luaValue := tb.RawGetString(name)
+		if luaValue == lua.LNil {
+			continue // No matching key.
+		}
+
+		// Convert the Lua value to the Go field's type.
+		if err := setGoFieldValue(goField, luaValue); err != nil {
+			return fmt.Errorf("failed to set field '%s': %w", name, err)
+		}
+	}
+	return nil
+}
+
+// setGoFieldValue handles the type conversion and assignment.
+func setGoFieldValue(goField reflect.Value, luaValue lua.LValue) error {
+	switch goField.Kind() {
+	case reflect.String:
+		if str, ok := luaValue.(lua.LString); ok {
+			goField.SetString(string(str))
+			return nil
+		}
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		if num, ok := luaValue.(lua.LNumber); ok {
+			goField.SetInt(int64(num))
+			return nil
+		}
+	case reflect.Float32, reflect.Float64:
+		if num, ok := luaValue.(lua.LNumber); ok {
+			goField.SetFloat(float64(num))
+			return nil
+		}
+	case reflect.Bool:
+		if b, ok := luaValue.(lua.LBool); ok {
+			goField.SetBool(bool(b))
+			return nil
+		}
+	case reflect.Struct:
+		// Handle nested structs.
+		if nestedTb, ok := luaValue.(*lua.LTable); ok {
+			return toStructFromTableInner(nil, nestedTb, goField)
+		}
+	}
+	return fmt.Errorf("unsupported type conversion from %T to %s", luaValue, goField.Kind())
+}
+
 func ToTableFromStruct(l *lua.LState, v reflect.Value) lua.LValue {
 	tb := l.NewTable()
 	return toTableFromStructInner(l, tb, v)

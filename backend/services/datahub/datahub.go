@@ -14,6 +14,7 @@ type Database interface {
 	UserOps
 	FileDataOps
 	SpaceOps
+	SpaceKVOps
 	PackageOps
 }
 
@@ -119,7 +120,7 @@ type SpaceOps interface {
 }
 
 type SpaceKVOps interface {
-	QuerySpaceKV(spaceId int64, cond map[string]any) ([]models.SpaceKV, error)
+	QuerySpaceKV(spaceId int64, cond map[any]any) ([]models.SpaceKV, error)
 	AddSpaceKV(spaceId int64, data *models.SpaceKV) error
 	GetSpaceKV(spaceId int64, group string, key string) (*models.SpaceKV, error)
 	GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]models.SpaceKV, error)
