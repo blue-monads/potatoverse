@@ -95,24 +95,24 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Lu
 		return e
 	}
 
-	// file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "main.lua")
-	// if err != nil {
-	// 	r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
-	// 	return nil
-	// }
+	file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
+	if err != nil {
+		r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
+		return nil
+	}
 
-	// sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
-	// if err != nil {
-	// 	r.parent.app.Logger().Error("error getting package file", "error", err)
-	// 	return nil
-	// }
+	sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
+	if err != nil {
+		r.parent.app.Logger().Error("error getting package file", "error", err)
+		return nil
+	}
 
 	e = luaz.New(luaz.Options{
 		BuilderOpts: xtypes.BuilderOption{
 			App:    r.parent.app,
 			Logger: r.parent.app.Logger().With("package_id", packageId),
 		},
-		Code:          code,
+		Code:          string(sourceBytes), // code,
 		WorkingFolder: path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
 	})
 
