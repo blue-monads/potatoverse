@@ -47,6 +47,9 @@ func (a *Server) extraRoutes(g *gin.RouterGroup) {
 
 func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
+	spaceFile := a.handleSpaceFile()
+	pluginFile := a.handlePluginFile()
+
 	coreApi.POST("/package/install", a.withAccessTokenFn(a.InstallPackage))
 	coreApi.POST("/package/install/zip", a.withAccessTokenFn(a.InstallPackageZip))
 	coreApi.POST("/package/install/embed", a.withAccessTokenFn(a.InstallPackageEmbed))
@@ -56,9 +59,6 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
-
-	spaceFile := a.handleSpaceFile()
-	pluginFile := a.handlePluginFile()
 
 	zg.GET("/space/:space_key/*files", spaceFile)
 
