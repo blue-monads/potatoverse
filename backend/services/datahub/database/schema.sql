@@ -111,14 +111,13 @@ CREATE TABLE IF NOT EXISTS Spaces (
 CREATE TABLE IF NOT EXISTS SpaceKV (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL DEFAULT '', 
-  group TEXT NOT NULL DEFAULT '',
+  group_name TEXT NOT NULL DEFAULT '',
   value TEXT NOT NULL DEFAULT '',
   space_id INTEGER NOT NULL, -- DEFAULT 0, 
   tag1 TEXT NOT NULL DEFAULT '',
   tag2 TEXT NOT NULL DEFAULT '',
   tag3 TEXT NOT NULL DEFAULT '',
-  unique(space_id, group, key),
-  FOREIGN KEY (space_id) REFERENCES Spaces(id)
+  unique(space_id, group_name, key)
 );
 
 -- rMCP -> perform(action, params)
@@ -132,7 +131,7 @@ CREATE TABLE IF NOT EXISTS SpaceResources (
   space_id INTEGER NOT NULL,
   resource_id TEXT NOT NULL DEFAULT '',
   resource_type TEXT NOT NULL DEFAULT '', -- space, ws_room, webhook
-  attrs JSON NOT NULL DEFAULT '{}'
+  attrs JSON NOT NULL DEFAULT '{}',
   unique(space_id, name)
 );
 
