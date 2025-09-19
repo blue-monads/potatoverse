@@ -58,8 +58,8 @@ func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 		table := L.NewTable()
 		L.SetFuncs(table, map[string]lua.LGFunction{
-			"QuerySpaceKV": QuerySpaceKV,
-			"AddSpaceKV":   AddSpaceKV,
+			"query": QuerySpaceKV,
+			"add":   AddSpaceKV,
 		})
 		L.Push(table)
 		return 1
@@ -69,5 +69,5 @@ func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 }
 
 func BindsDB(handle *bhandle.Bhandle) func(L *lua.LState) int {
-	return bindsDB(handle.SpaceId, handle.Database)
+	return bindsDB(handle.SpaceId, handle.App.Database())
 }

@@ -1,6 +1,8 @@
 package luaz
 
 import (
+	"log/slog"
+
 	"github.com/blue-monads/turnix/backend/engine/luaz/binds"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
@@ -22,12 +24,16 @@ func (l *LuaH) Close() error {
 	return nil
 }
 
+func (l *LuaH) logger() *slog.Logger {
+	return l.parent.handle.Logger
+}
+
 func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]string) {
 	handler := l.L.GetGlobal(handlerName)
 	ctxt := l.L.NewTable()
 
 	if handler == lua.LNil {
-		l.parent.logger.Error("handler not found", "handler", handlerName)
+		l.logger().Error("handler not found", "handler", handlerName)
 		return
 	}
 
@@ -55,7 +61,8 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 }
 
 func (l *LuaH) registerModules() error {
-	l.L.PreloadModule("fs", binds.FsModule(l.parent.root))
+	l.L.PreloadModule("fs", binds.FsModule(l.parent.handle.FsRoot))
+	l.L.PreloadModule("db", binds.BindsDB(l.parent.handle))
 
 	return nil
 }

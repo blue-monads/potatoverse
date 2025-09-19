@@ -2,10 +2,10 @@ package luaz
 
 import (
 	"errors"
-	"log/slog"
 	"os"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/engine/bhandle"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
@@ -15,20 +15,30 @@ import (
 
 type Luaz struct {
 	pool   *LuaStatePool
-	app    xtypes.App
-	logger *slog.Logger
-	root   *os.Root
+	handle *bhandle.Bhandle
 }
 
 type Options struct {
 	BuilderOpts   xtypes.BuilderOption
 	Code          string
 	WorkingFolder string
+	SpaceId       int64
 }
 
 func New(opts Options) *Luaz {
+	rfs, err := os.OpenRoot(opts.WorkingFolder)
+	if err != nil {
+		panic(err)
+	}
+
 	lz := &Luaz{
 		pool: nil,
+		handle: &bhandle.Bhandle{
+			Logger:  opts.BuilderOpts.Logger,
+			FsRoot:  rfs,
+			SpaceId: opts.SpaceId,
+			App:     opts.BuilderOpts.App,
+		},
 	}
 
 	pool := NewLuaStatePool(LuaStatePoolOptions{
