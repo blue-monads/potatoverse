@@ -37,17 +37,15 @@ func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 		}
 		AddSpaceKV := func(L *lua.LState) int {
 
-			L.CheckUserData(1)
+			dataStruct := models.SpaceKV{}
 
-			dataStruct := &models.SpaceKV{}
-
-			if err := toStructFromTableInner(L, L.CheckTable(1), reflect.ValueOf(dataStruct)); err != nil {
+			if err := toStructFromTableInner(L, L.CheckTable(1), reflect.ValueOf(&dataStruct)); err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))
 				return 2
 			}
 
-			err := db.AddSpaceKV(spaceId, dataStruct)
+			err := db.AddSpaceKV(spaceId, &dataStruct)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))

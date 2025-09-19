@@ -26,6 +26,9 @@ type Options struct {
 }
 
 func New(opts Options) *Luaz {
+
+	os.MkdirAll(opts.WorkingFolder, 0755)
+
 	rfs, err := os.OpenRoot(opts.WorkingFolder)
 	if err != nil {
 		panic(err)
@@ -49,10 +52,6 @@ func New(opts Options) *Luaz {
 		InitFn: func() (*LuaH, error) {
 
 			L := lua.NewState()
-			err := L.DoString(opts.Code)
-			if err != nil {
-				return nil, err
-			}
 
 			lh := &LuaH{
 				parent:  lz,
@@ -61,6 +60,11 @@ func New(opts Options) *Luaz {
 			}
 
 			err = lh.registerModules()
+			if err != nil {
+				return nil, err
+			}
+
+			err := L.DoString(opts.Code)
 			if err != nil {
 				return nil, err
 			}

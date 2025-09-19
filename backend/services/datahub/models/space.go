@@ -100,12 +100,12 @@ type Route struct {
 }
 
 type SpaceKV struct {
-	ID      int64  `json:"id" db:"id,omitempty"`
-	Key     string `json:"key" db:"key"`
-	Group   string `json:"group_name" db:"group_name"`
-	Value   string `json:"value" db:"value"`
+	ID      int64  `json:"id" db:"id,omitempty" luautil:"-"`
+	Key     string `json:"key" db:"key" luautil:"key"`
+	Group   string `json:"group_name" db:"group_name" luautil:"group"`
+	Value   string `json:"value" db:"value" luautil:"value"`
 	SpaceID int64  `json:"space_id" db:"space_id"`
-	Tag1    string `json:"tag1" db:"tag1,omitempty"`
-	Tag2    string `json:"tag2" db:"tag2,omitempty"`
-	Tag3    string `json:"tag3" db:"tag3,omitempty"`
+	Tag1    string `json:"tag1" db:"tag1,omitempty" luautil:"tag1"`
+	Tag2    string `json:"tag2" db:"tag2,omitempty" luautil:"tag2"`
+	Tag3    string `json:"tag3" db:"tag3,omitempty" luautil:"tag3"`
 }

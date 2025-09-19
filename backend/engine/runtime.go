@@ -17,6 +17,8 @@ import (
 
 const code = `
 
+local db = require("db")
+
 function im_cool(a)
 	print("I'm cool")
 	return a + 1
@@ -26,6 +28,13 @@ end
 function on_http(ctx)
   print("Hello from lua!", ctx.type())
   local req = ctx.request()
+
+  db.add({
+	group_name = "test",
+	key = "test",
+	value = "test",
+  })
+
 
   req.json(200, {
 	im_cool = im_cool(18),
@@ -120,6 +129,8 @@ func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gi
 		httpx.WriteErr(ctx, errors.New("exec is nil"))
 		return
 	}
+
+	// print stack trace
 
 	err := libx.PanicWrapper(func() {
 		e.Handle(luaz.HttpEvent{

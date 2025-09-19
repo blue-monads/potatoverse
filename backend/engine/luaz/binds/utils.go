@@ -94,6 +94,17 @@ func TableToMapAny(L *lua.LState, table *lua.LTable) map[any]any {
 }
 
 func toStructFromTableInner(l *lua.LState, tb *lua.LTable, v reflect.Value) error {
+	// If the value is a pointer, dereference it.
+	// This is the key change to fix the panic.
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	// Now check if the dereferenced value is a struct.
+	if v.Kind() != reflect.Struct {
+		return fmt.Errorf("expected a struct, but got %s", v.Kind())
+	}
+
 	t := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
