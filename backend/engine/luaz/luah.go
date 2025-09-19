@@ -49,7 +49,7 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 		},
 		"param": func(l *lua.LState) int {
 			key := l.CheckString(1)
-			l.Push(lua.LString(ctx.Param(key)))
+			l.Push(lua.LString(params[key]))
 			return 1
 		},
 	})
