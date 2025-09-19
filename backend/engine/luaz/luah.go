@@ -38,9 +38,9 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 	}
 
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
-		"request": func(l *lua.LState) int {
-			table := binds.HttpModule(l, ctx)
-			l.Push(table)
+		"request": func(L *lua.LState) int {
+			table := binds.HttpModule(l.parent.handle, L, ctx)
+			L.Push(table)
 			return 1
 		},
 		"type": func(l *lua.LState) int {
