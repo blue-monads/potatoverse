@@ -15,7 +15,7 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-const code = `
+const Code = `
 
 local db = require("db")
 local math = require("math")
