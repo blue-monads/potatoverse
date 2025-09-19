@@ -18,6 +18,7 @@ import (
 const code = `
 
 local db = require("db")
+local math = require("math")
 
 function im_cool(a)
 	print("I'm cool")
@@ -29,9 +30,11 @@ function on_http(ctx)
   print("Hello from lua!", ctx.type())
   local req = ctx.request()
 
+  local rand = math.random(1, 100)
+
   db.add({
-	group_name = "test",
-	key = "test",
+	group = "test",
+	key = "test" .. rand,
 	value = "test",
   })
 
