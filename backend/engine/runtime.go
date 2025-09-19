@@ -90,12 +90,12 @@ func (r *Runtime) GetDebugData() map[int64]any {
 
 }
 
-func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Luaz {
+func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.Luaz, error) {
 	r.execsLock.RLock()
 	e := r.execs[packageId]
 	r.execsLock.RUnlock()
 	if e != nil {
-		return e
+		return e, nil
 	}
 
 	source := Code
@@ -104,13 +104,13 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Lu
 		file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
 		if err != nil {
 			r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
-			return nil
+			return nil, err
 		}
 
 		sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
 		if err != nil {
 			r.parent.app.Logger().Error("error getting package file", "error", err)
-			return nil
+			return nil, err
 		}
 
 		source = string(sourceBytes)
@@ -130,13 +130,19 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) *luaz.Lu
 	r.execs[packageId] = e
 	r.execsLock.Unlock()
 
-	return e
+	return e, nil
 
 }
 
 func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gin.Context) {
 
-	e := r.GetExec(packageName, packageId, spaceId)
+	e, err := r.GetExec(packageName, packageId, spaceId)
+	if err != nil {
+		pp.Println("@exec_http/1", "error getting exec", err)
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
 	if e == nil {
 		pp.Println("@exec_http/1", "exec is nil")
 		httpx.WriteErr(ctx, errors.New("exec is nil"))
@@ -145,7 +151,7 @@ func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gi
 
 	// print stack trace
 
-	err := libx.PanicWrapper(func() {
+	err = libx.PanicWrapper(func() {
 		subpath := ctx.Param("subpath")
 
 		e.Handle(luaz.HttpEvent{
