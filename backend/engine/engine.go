@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"maps"
 	"strings"
 	"sync"
@@ -149,5 +150,42 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 }
 
 func (e *Engine) PluginApi(ctx *gin.Context) {
+
+}
+
+type SpaceInfo struct {
+	ID            int64  `json:"id"`
+	NamespaceKey  string `json:"namespace_key"`
+	OwnsNamespace bool   `json:"owns_namespace"`
+	PackageName   string `json:"package_name"`
+	PackageInfo   string `json:"package_info"`
+}
+
+func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
+
+	e.riLock.RLock()
+	ri, ok := e.RoutingIndex[nsKey]
+	e.riLock.RUnlock()
+	if !ok {
+		return nil, errors.New("space not found")
+	}
+
+	space, err := e.db.GetSpace(ri.spaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	pkg, err := e.db.GetPackage(space.PackageID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SpaceInfo{
+		ID:            space.ID,
+		NamespaceKey:  space.NamespaceKey,
+		OwnsNamespace: space.OwnsNamespace,
+		PackageName:   pkg.Name,
+		PackageInfo:   pkg.Info,
+	}, nil
 
 }
