@@ -1,11 +1,18 @@
 package binds
 
 import (
+	"errors"
+	"reflect"
+
+	"github.com/blue-monads/turnix/backend/engine/bhandle"
+	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
 
-func HttpModule(L *lua.LState, ctx *gin.Context) *lua.LTable {
+func HttpModule(bh *bhandle.Bhandle, L *lua.LState, ctx *gin.Context) *lua.LTable {
+
+	sig := bh.App.Signer()
 
 	mod := L.NewTable()
 
@@ -57,24 +64,51 @@ func HttpModule(L *lua.LState, ctx *gin.Context) *lua.LTable {
 		return 1
 	}
 
-	reqClaim := func(L *lua.LState) int {
-		// todo
-		return 0
+	var spaceClaim *signer.SpaceClaim
+
+	getSpaceClaim := func() (*signer.SpaceClaim, error) {
+		if spaceClaim != nil {
+			return spaceClaim, nil
+		}
+		claim, err := sig.ParseSpace(ctx.GetHeader("Authorization"))
+		if err != nil {
+			return nil, err
+		}
+		if claim.SpaceId != bh.SpaceId {
+			return nil, errors.New("invalid space id")
+		}
+
+		return claim, nil
 	}
 
-	reqMustClaim := func(L *lua.LState) int {
-		// todo
-		return 0
+	reqGetClaim := func(L *lua.LState) int {
+
+		claim, err := getSpaceClaim()
+		if err != nil {
+			L.Push(lua.LNil)
+			L.Push(lua.LString(err.Error()))
+			return 2
+		}
+
+		L.Push(ToTableFromStruct(L, reflect.ValueOf(claim)))
+
+		spaceClaim = claim
+
+		return 1
 	}
 
 	reqGetUserId := func(L *lua.LState) int {
-		// todo
-		return 0
-	}
 
-	reqMustGetUserId := func(L *lua.LState) int {
-		// todo
-		return 0
+		claim, err := getSpaceClaim()
+		if err != nil {
+			L.Push(lua.LNil)
+			L.Push(lua.LString(err.Error()))
+			return 2
+		}
+
+		userId := claim.UserId
+		L.Push(lua.LNumber(userId))
+		return 1
 	}
 
 	reqData := func(L *lua.LState) int {
@@ -384,10 +418,8 @@ func HttpModule(L *lua.LState, ctx *gin.Context) *lua.LTable {
 		"contentType":         reqContentType,
 		"cookie":              reqCookie,
 		"data":                reqData,
-		"claim":               reqClaim,
-		"mustClaim":           reqMustClaim,
+		"getClaim":            reqGetClaim,
 		"getUserId":           reqGetUserId,
-		"mustGetUserId":       reqMustGetUserId,
 		"defaultQuery":        reqDefaultQuery,
 		"defaultPostForm":     reqDefaultPostForm,
 		"fullPath":            reqFullPath,
