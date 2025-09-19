@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	TokenTypeAccess      uint8 = 1
-	TokenTypeEmailInvite uint8 = 2
-	TokenTypePair        uint8 = 3
-	TokenTypeAdvisiery   uint8 = 4
+	TokenTypeAccess         uint8 = 1
+	TokenTypeEmailInvite    uint8 = 2
+	TokenTypePair           uint8 = 3
+	TokenTypeSpace          uint8 = 4
+	TokenTypeSpaceAdvisiery uint8 = 5
 )
 
 type AccessClaim struct {
@@ -33,18 +34,19 @@ type InviteClaim struct {
 	ProjectId      int64  `json:"p,omitempty"`
 }
 
-type AdvisieryClaimE struct {
-	XID       string `json:"x,omitempty"`
-	Typeid    uint8  `json:"t,omitempty"`
-	ProjectId int64  `json:"p,omitempty"`
-	Data      any    `json:"d,omitempty"`
+type SpaceClaim struct {
+	XID     string `json:"x,omitempty"`
+	Typeid  uint8  `json:"t,omitempty"`
+	SpaceId int64  `json:"s,omitempty"`
+	UserId  int64  `json:"u,omitempty"`
 }
 
-type AdvisieryClaimD struct {
-	XID       string          `json:"x,omitempty"`
-	Typeid    uint8           `json:"t,omitempty"`
-	ProjectId int64           `json:"p,omitempty"`
-	Data      json.RawMessage `json:"d,omitempty"`
+type SpaceAdvisieryClaim struct {
+	XID     string         `json:"x,omitempty"`
+	Typeid  uint8          `json:"t,omitempty"`
+	SpaceId int64          `json:"s,omitempty"`
+	UserId  int64          `json:"u,omitempty"`
+	Data    map[string]any `json:"d,omitempty"`
 }
 
 // fixme => add expiry
@@ -127,32 +129,48 @@ func (ts *Signer) SignInvite(claim *InviteClaim) (string, error) {
 	return ts.sign(claim)
 }
 
-func (ts *Signer) ParseProjectAdvisiery(pid int64, tstr string) ([]byte, error) {
+func (ts *Signer) ParseSpace(tstr string) (*SpaceClaim, error) {
 
-	claim := &AdvisieryClaimD{}
+	claim := &SpaceClaim{}
 
 	err := ts.parse(tstr, claim)
 	if err != nil {
 		return nil, err
 	}
 
-	if claim.ProjectId != pid {
+	if claim.Typeid != TokenTypeSpace {
 		return nil, ErrInvalidToken
 	}
 
-	if claim.Typeid != TokenTypeAdvisiery {
-		return nil, ErrInvalidToken
-	}
-
-	return claim.Data, nil
+	return claim, nil
 }
 
-func (ts *Signer) SignProjectAdvisiery(pid int64, data any) (string, error) {
-	claim := &AdvisieryClaimE{
-		ProjectId: pid,
-		Data:      data,
-		Typeid:    TokenTypeAdvisiery,
+func (ts *Signer) SignSpace(claim *SpaceClaim) (string, error) {
+
+	claim.Typeid = TokenTypeSpace
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParseSpaceAdvisiery(tstr string) (*SpaceAdvisieryClaim, error) {
+
+	claim := &SpaceAdvisieryClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
 	}
+
+	if claim.Typeid != TokenTypeSpaceAdvisiery {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignSpaceAdvisiery(claim *SpaceAdvisieryClaim) (string, error) {
+
+	claim.Typeid = TokenTypeSpaceAdvisiery
 
 	return ts.sign(claim)
 }
