@@ -98,3 +98,14 @@ type Route struct {
 	Handler string         `json:"handler"`
 	Options map[string]any `json:"options"`
 }
+
+type SpaceKV struct {
+	ID      int64  `json:"id" db:"id,omitempty"`
+	Key     string `json:"key" db:"key"`
+	Group   string `json:"group_name" db:"group_name"`
+	Value   string `json:"value" db:"value"`
+	SpaceID int64  `json:"space_id" db:"space_id"`
+	Tag1    string `json:"tag1" db:"tag1,omitempty"`
+	Tag2    string `json:"tag2" db:"tag2,omitempty"`
+	Tag3    string `json:"tag3" db:"tag3,omitempty"`
+}

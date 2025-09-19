@@ -117,3 +117,12 @@ type SpaceOps interface {
 	RunSpaceSQLQuery(spaceId int64, query string, data []any) ([]map[string]any, error)
 	RunSpaceDDL(spaceId int64, ddl string) error
 }
+
+type SpaceKVOps interface {
+	QuerySpaceKV(spaceId int64, cond map[string]any) ([]models.SpaceKV, error)
+	AddSpaceKV(spaceId int64, data *models.SpaceKV) error
+	GetSpaceKV(spaceId int64, group string, key string) (*models.SpaceKV, error)
+	GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]models.SpaceKV, error)
+	UpdateSpaceKV(spaceId int64, group string, key string, value string) error
+	RemoveSpaceKV(spaceId int64, group string, key string) error
+}
