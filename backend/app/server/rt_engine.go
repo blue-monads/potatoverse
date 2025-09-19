@@ -163,7 +163,7 @@ func (a *Server) handleSpaceInfo(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
 	spaceInfo, err := a.engine.SpaceInfo(spaceKey)
 	if err != nil {
-		ctx.JSON(404, gin.H{"error": err.Error()})
+		httpx.WriteErr(ctx, err)
 		return
 	}
 	httpx.WriteJSON(ctx, spaceInfo, nil)
