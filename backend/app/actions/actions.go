@@ -5,6 +5,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/mailer"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
@@ -15,6 +16,7 @@ type Option struct {
 	Signer   *signer.Signer
 	AppOpts  *xtypes.AppOptions
 	Engine   *engine.Engine
+	Mailer   mailer.Mailer
 }
 
 type Controller struct {
@@ -23,6 +25,7 @@ type Controller struct {
 	signer   *signer.Signer
 	AppOpts  *xtypes.AppOptions
 	engine   *engine.Engine
+	mailer   mailer.Mailer
 }
 
 func New(opt Option) *Controller {
@@ -32,5 +35,6 @@ func New(opt Option) *Controller {
 		signer:   opt.Signer,
 		AppOpts:  opt.AppOpts,
 		engine:   opt.Engine,
+		mailer:   opt.Mailer,
 	}
 }

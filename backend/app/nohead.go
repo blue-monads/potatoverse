@@ -5,20 +5,23 @@ import (
 	"log/slog"
 	"path"
 
-	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/k0kubun/pp"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/mailer"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
 type Option struct {
-	Database          datahub.Database
-	Logger            *slog.Logger
-	Signer            *signer.Signer
-	AppOpts           *xtypes.AppOptions
+	Database datahub.Database
+	Logger   *slog.Logger
+	Signer   *signer.Signer
+	AppOpts  *xtypes.AppOptions
+	Mailer   mailer.Mailer
+
 	WorkingFolderBase string
 }
 
@@ -29,7 +32,7 @@ type HeadLess struct {
 	db      datahub.Database
 	signer  *signer.Signer
 	logger  *slog.Logger
-	ctrl    *controller.Controller
+	ctrl    *actions.Controller
 	AppOpts *xtypes.AppOptions
 	engine  *engine.Engine
 }
@@ -42,12 +45,13 @@ func NewHeadLess(opt Option) *HeadLess {
 		db:     opt.Database,
 		signer: opt.Signer,
 		logger: opt.Logger,
-		ctrl: controller.New(controller.Option{
+		ctrl: actions.New(actions.Option{
 			Database: opt.Database,
 			Logger:   opt.Logger,
 			Signer:   opt.Signer,
 			AppOpts:  opt.AppOpts,
 			Engine:   engine,
+			Mailer:   opt.Mailer,
 		}),
 		engine:  engine,
 		AppOpts: opt.AppOpts,
@@ -83,7 +87,7 @@ func (h *HeadLess) Start() error {
 	shash := hashMasterSecret(h.AppOpts.MasterSecret)
 
 	if !has {
-		fingerPrint := &controller.AppFingerPrint{
+		fingerPrint := &actions.AppFingerPrint{
 			Version:          "0.1.0",
 			Commit:           "unknown",
 			BuildAt:          "unknown",
@@ -131,8 +135,12 @@ func (h *HeadLess) Controller() any {
 	return h.ctrl
 }
 
-func (h *HeadLess) Engine() *engine.Engine {
+func (h *HeadLess) Engine() any {
 	return h.engine
+}
+
+func (h *HeadLess) Config() any {
+	return h.AppOpts
 }
 
 // private

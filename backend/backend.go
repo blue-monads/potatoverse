@@ -4,8 +4,9 @@ import (
 	"log/slog"
 
 	"github.com/blue-monads/turnix/backend/app"
-	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
+	"github.com/blue-monads/turnix/backend/services/mailer/stdio"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
@@ -28,6 +29,8 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 
 	masterSecret := "default-master-secret"
 
+	m := stdio.NewMailer(logger.With("module", "mailer"))
+
 	app := app.NewHeadLess(app.Option{
 		Database: db,
 		Logger:   logger,
@@ -40,6 +43,7 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 			Debug:        true,
 			WorkingDir:   "./tmp",
 		},
+		Mailer: m,
 	})
 
 	return app, nil
@@ -54,7 +58,7 @@ func NewApp(options Options) (*app.App, error) {
 
 	if options.SeedDB {
 
-		happ.Controller().(*controller.Controller).AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
+		happ.Controller().(*actions.Controller).AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
 
 	}
 

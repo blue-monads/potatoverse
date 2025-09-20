@@ -4,8 +4,12 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/mailer"
+	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/easyerr"
+	"github.com/k0kubun/pp"
+	"github.com/rs/xid"
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]models.User, error) {
@@ -93,19 +97,16 @@ func (c *Controller) GetUserInvite(id int64) (*models.UserInvite, error) {
 }
 
 func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy int64) (*models.UserInvite, error) {
-	// Check if user already exists
 	existingUser, err := c.database.GetUserByEmail(email)
 	if err == nil && existingUser != nil {
 		return nil, easyerr.Error("User with this email already exists")
 	}
 
-	// Check if invite already exists
 	existingInvite, err := c.database.GetUserInviteByEmail(email)
 	if err == nil && existingInvite != nil {
 		return nil, easyerr.Error("Invite for this email already exists")
 	}
 
-	// Create invite with 7 days expiration
 	expiresOn := time.Now().Add(7 * 24 * time.Hour)
 
 	invite := &models.UserInvite{
@@ -118,6 +119,32 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 	}
 
 	id, err := c.database.AddUserInvite(invite)
+	if err != nil {
+		return nil, err
+	}
+
+	inviteToken, err := c.signer.SignInvite(&signer.InviteClaim{
+		XID:      xid.New().String(),
+		Typeid:   signer.TokenTypeEmailInvite,
+		InviteId: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	host := c.AppOpts.Host
+	port := c.AppOpts.Port
+
+	pp.Println(host, port)
+
+	fullUrl := xutils.GetFullUrl(host, "/z/auth/invite/"+inviteToken, port, false)
+
+	body := &mailer.SimpleMessage{
+		Text: fullUrl,
+		HTML: `<h1>Welcome to Turnix</h1><p> Please click the link below to accept the invite: <a href="` + fullUrl + `">` + fullUrl + `</a></p>`,
+	}
+
+	err = c.mailer.Send(email, "Welcome to Turnix", body)
 	if err != nil {
 		return nil, err
 	}

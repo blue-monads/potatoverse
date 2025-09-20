@@ -26,12 +26,9 @@ type AccessClaim struct {
 }
 
 type InviteClaim struct {
-	XID            string `json:"x,omitempty"`
-	Typeid         uint8  `json:"t,omitempty"`
-	InviteFromUser int64  `json:"u,omitempty"`
-	InviteToUser   int64  `json:"z,omitempty"`
-	InviteEmail    string `json:"e,omitempty"`
-	ProjectId      int64  `json:"p,omitempty"`
+	XID      string `json:"x,omitempty"`
+	Typeid   uint8  `json:"t,omitempty"`
+	InviteId int64  `json:"p,omitempty"`
 }
 
 type SpaceClaim struct {

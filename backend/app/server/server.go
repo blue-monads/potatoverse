@@ -3,14 +3,14 @@ package server
 import (
 	"fmt"
 
-	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	ctrl   *controller.Controller
+	ctrl   *actions.Controller
 	router *gin.Engine
 	signer *signer.Signer
 	port   int
@@ -20,7 +20,7 @@ type Server struct {
 
 type Option struct {
 	Port   int
-	Ctrl   *controller.Controller
+	Ctrl   *actions.Controller
 	Signer *signer.Signer
 	Engine *engine.Engine
 }

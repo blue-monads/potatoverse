@@ -3,7 +3,7 @@ package app
 import (
 	"log/slog"
 
-	controller "github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/app/server"
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub"
@@ -23,9 +23,9 @@ func NewApp(happ *HeadLess) *App {
 		happ: happ,
 		server: server.NewServer(server.Option{
 			Port:   happ.AppOpts.Port,
-			Ctrl:   happ.Controller().(*controller.Controller),
+			Ctrl:   happ.Controller().(*actions.Controller),
 			Signer: happ.Signer(),
-			Engine: happ.Engine(),
+			Engine: happ.Engine().(*engine.Engine),
 		}),
 	}
 }
@@ -60,6 +60,10 @@ func (a *App) Controller() any {
 	return a.happ.ctrl
 }
 
-func (a *App) Engine() *engine.Engine {
+func (a *App) Engine() any {
 	return a.happ.engine
+}
+
+func (a *App) Config() any {
+	return a.happ.AppOpts
 }

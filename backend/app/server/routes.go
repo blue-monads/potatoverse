@@ -1,13 +1,15 @@
 package server
 
 import (
+	"embed"
 	_ "embed"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed test_page.html
-var TestPageHTML []byte
+//go:embed all:static/*
+var StaticFiles embed.FS
 
 func (a *Server) bindRoutes() {
 
@@ -27,10 +29,8 @@ func (a *Server) bindRoutes() {
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
 
-	root.GET("/test_page.html", func(c *gin.Context) {
-
-		c.Data(200, "text/html", TestPageHTML)
-
+	root.GET("/static/*files", func(c *gin.Context) {
+		c.FileFromFS(c.Param("files"), http.FS(StaticFiles))
 	})
 
 }

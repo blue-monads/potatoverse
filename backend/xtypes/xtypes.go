@@ -14,4 +14,6 @@ type App interface {
 	Signer() *signer.Signer
 	Logger() *slog.Logger
 	Controller() any
+	Engine() any
+	Config() any
 }

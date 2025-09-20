@@ -76,7 +76,6 @@ func (s *Server) getUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (any
 func (s *Server) addUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	var req struct {
 		Email         string `json:"email" binding:"required,email"`
-		Role          string `json:"role" binding:"required"`
 		InvitedAsType string `json:"invited_as_type" binding:"required"`
 	}
 
@@ -84,7 +83,10 @@ func (s *Server) addUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, err
 	}
 
-	invite, err := s.ctrl.AddUserInvite(req.Email, req.Role, req.InvitedAsType, claim.UserId)
+	// fixme => future
+	role := "normal"
+
+	invite, err := s.ctrl.AddUserInvite(req.Email, role, req.InvitedAsType, claim.UserId)
 	if err != nil {
 		return nil, err
 	}
