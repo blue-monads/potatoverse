@@ -45,6 +45,14 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 	g.GET("/", a.withAccessTokenFn(a.listUsers))
 	g.GET("/:id", a.withAccessTokenFn(a.getUser))
 
+	// User Invites
+	g.GET("/invites", a.withAccessTokenFn(a.listUserInvites))
+	g.GET("/invites/:id", a.withAccessTokenFn(a.getUserInvite))
+	g.POST("/invites", a.withAccessTokenFn(a.addUserInvite))
+	g.PUT("/invites/:id", a.withAccessTokenFn(a.updateUserInvite))
+	g.DELETE("/invites/:id", a.withAccessTokenFn(a.deleteUserInvite))
+	g.POST("/invites/:id/resend", a.withAccessTokenFn(a.resendUserInvite))
+
 }
 
 func (a *Server) selfUserRoutes(g *gin.RouterGroup) {

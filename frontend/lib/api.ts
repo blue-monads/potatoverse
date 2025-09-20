@@ -62,6 +62,46 @@ export const getUsers = async () => {
     return iaxios.get<User[]>("/core/user");
 }
 
+// User Invites
+export interface UserInvite {
+    id: number;
+    email: string;
+    role: string;
+    status: string;
+    invited_by: number;
+    invited_as_type: string;
+    expires_on: string;
+    created_at: string;
+}
+
+export const getUserInvites = async () => {
+    return iaxios.get<UserInvite[]>("/core/user/invites");
+}
+
+export const getUserInvite = async (id: number) => {
+    return iaxios.get<UserInvite>(`/core/user/invites/${id}`);
+}
+
+export const createUserInvite = async (data: {
+    email: string;
+    role: string;
+    invited_as_type: string;
+}) => {
+    return iaxios.post<UserInvite>("/core/user/invites", data);
+}
+
+export const updateUserInvite = async (id: number, data: any) => {
+    return iaxios.put(`/core/user/invites/${id}`, data);
+}
+
+export const deleteUserInvite = async (id: number) => {
+    return iaxios.delete(`/core/user/invites/${id}`);
+}
+
+export const resendUserInvite = async (id: number) => {
+    return iaxios.post<UserInvite>(`/core/user/invites/${id}/resend`);
+}
+
 
 export interface AdminPortalData {
     popular_keywords: string[] 

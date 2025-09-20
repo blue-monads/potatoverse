@@ -1,8 +1,11 @@
 package actions
 
 import (
+	"time"
+
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	xutils "github.com/blue-monads/turnix/backend/utils"
+	"github.com/blue-monads/turnix/backend/utils/libx/easyerr"
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]models.User, error) {
@@ -77,4 +80,75 @@ func (c *Controller) UpdateUser(id int64, user *models.User) error {
 		"name": user.Name,
 		"bio":  user.Bio,
 	})
+}
+
+// User Invites
+
+func (c *Controller) ListUserInvites(offset int, limit int) ([]models.UserInvite, error) {
+	return c.database.ListUserInvites(offset, limit)
+}
+
+func (c *Controller) GetUserInvite(id int64) (*models.UserInvite, error) {
+	return c.database.GetUserInvite(id)
+}
+
+func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy int64) (*models.UserInvite, error) {
+	// Check if user already exists
+	existingUser, err := c.database.GetUserByEmail(email)
+	if err == nil && existingUser != nil {
+		return nil, easyerr.Error("User with this email already exists")
+	}
+
+	// Check if invite already exists
+	existingInvite, err := c.database.GetUserInviteByEmail(email)
+	if err == nil && existingInvite != nil {
+		return nil, easyerr.Error("Invite for this email already exists")
+	}
+
+	// Create invite with 7 days expiration
+	expiresOn := time.Now().Add(7 * 24 * time.Hour)
+
+	invite := &models.UserInvite{
+		Email:         email,
+		Role:          role,
+		Status:        "pending",
+		InvitedBy:     invitedBy,
+		InvitedAsType: invitedAsType,
+		ExpiresOn:     &expiresOn,
+	}
+
+	id, err := c.database.AddUserInvite(invite)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.database.GetUserInvite(id)
+}
+
+func (c *Controller) UpdateUserInvite(id int64, data map[string]any) error {
+	return c.database.UpdateUserInvite(id, data)
+}
+
+func (c *Controller) DeleteUserInvite(id int64) error {
+	return c.database.DeleteUserInvite(id)
+}
+
+func (c *Controller) ResendUserInvite(id int64) (*models.UserInvite, error) {
+	_, err := c.database.GetUserInvite(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update expiration to 7 days from now
+	expiresOn := time.Now().Add(7 * 24 * time.Hour)
+
+	err = c.database.UpdateUserInvite(id, map[string]any{
+		"expires_on": expiresOn,
+		"status":     "pending",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return c.database.GetUserInvite(id)
 }

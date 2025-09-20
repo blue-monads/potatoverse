@@ -52,6 +52,15 @@ type UserOps interface {
 	GetUserDevice(id int64) (*models.UserDevice, error)
 	DeleteUserDevice(id int64) error
 	UpdateUserDevice(id int64, data map[string]any) error
+
+	// User Invites
+	AddUserInvite(data *models.UserInvite) (int64, error)
+	GetUserInvite(id int64) (*models.UserInvite, error)
+	GetUserInviteByEmail(email string) (*models.UserInvite, error)
+	ListUserInvites(offset int, limit int) ([]models.UserInvite, error)
+	ListUserInvitesByInviter(inviterId int64) ([]models.UserInvite, error)
+	UpdateUserInvite(id int64, data map[string]any) error
+	DeleteUserInvite(id int64) error
 }
 
 type PackageOps interface {

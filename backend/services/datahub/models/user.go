@@ -49,3 +49,14 @@ type UserDevice struct {
 	CreatedAt *time.Time `json:"created_at" db:"created_at,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at" db:"updated_at,omitempty"`
 }
+
+type UserInvite struct {
+	ID            int64      `json:"id" db:"id,omitempty"`
+	Email         string     `json:"email" db:"email"`
+	Role          string     `json:"role" db:"role"`
+	Status        string     `json:"status" db:"status"` // pending, accepted, rejected
+	InvitedBy     int64      `json:"invited_by" db:"invited_by"`
+	InvitedAsType string     `json:"invited_as_type" db:"invited_as_type"` // user, admin, moderator, developer
+	ExpiresOn     *time.Time `json:"expires_on" db:"expires_on,omitempty"`
+	CreatedAt     *time.Time `json:"created_at" db:"created_at,omitempty"`
+}
