@@ -76,11 +76,7 @@ const SpacesDirectory = () => {
                 <AddButton
                     name="+ Space"
                     onClick={() => {
-
-
-
-
-
+                        router.push('/portal/admin/store');
                     }}
                 />
             }

@@ -258,3 +258,49 @@ export const uploadPackageFile = async (packageId: number, file: File, path: str
         },
     });
 }
+
+// Space KV API
+export interface SpaceKV {
+    id: number;
+    key: string;
+    group_name: string;
+    value: string;
+    space_id: number;
+    tag1: string;
+    tag2: string;
+    tag3: string;
+}
+
+export const listSpaceKV = async (spaceId: number) => {
+    return iaxios.get<SpaceKV[]>(`/core/space/${spaceId}/kv`);
+}
+
+export const getSpaceKV = async (spaceId: number, id: number) => {
+    return iaxios.get<SpaceKV>(`/core/space/${spaceId}/kv/${id}`);
+}
+
+export const createSpaceKV = async (spaceId: number, data: {
+    key: string;
+    group_name: string;
+    value: string;
+    tag1?: string;
+    tag2?: string;
+    tag3?: string;
+}) => {
+    return iaxios.post<SpaceKV>(`/core/space/${spaceId}/kv`, data);
+}
+
+export const updateSpaceKV = async (spaceId: number, id: number, data: {
+    key?: string;
+    group_name?: string;
+    value?: string;
+    tag1?: string;
+    tag2?: string;
+    tag3?: string;
+}) => {
+    return iaxios.put<SpaceKV>(`/core/space/${spaceId}/kv/${id}`, data);
+}
+
+export const deleteSpaceKV = async (spaceId: number, id: number) => {
+    return iaxios.delete<void>(`/core/space/${spaceId}/kv/${id}`);
+}

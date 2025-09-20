@@ -87,6 +87,13 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.DELETE("/package/:id/files/:fileId", a.withAccessTokenFn(a.DeletePackageFile))
 	coreApi.POST("/package/:id/files/upload", a.withAccessTokenFn(a.UploadPackageFile))
 
+	// Space KV API
+	coreApi.GET("/space/:id/kv", a.withAccessTokenFn(a.ListSpaceKV))
+	coreApi.GET("/space/:id/kv/:kvId", a.withAccessTokenFn(a.GetSpaceKV))
+	coreApi.POST("/space/:id/kv", a.withAccessTokenFn(a.CreateSpaceKV))
+	coreApi.PUT("/space/:id/kv/:kvId", a.withAccessTokenFn(a.UpdateSpaceKV))
+	coreApi.DELETE("/space/:id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
+
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
 
