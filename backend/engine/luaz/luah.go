@@ -61,8 +61,9 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 }
 
 func (l *LuaH) registerModules() error {
-	l.L.PreloadModule("fs", binds.FsModule(l.parent.handle.FsRoot))
+	l.L.PreloadModule("local_fs", binds.LocalFsModule(l.parent.handle.FsRoot))
 	l.L.PreloadModule("db", binds.BindsDB(l.parent.handle))
+	l.L.PreloadModule("files", binds.BindsFS(l.parent.handle))
 
 	return nil
 }
