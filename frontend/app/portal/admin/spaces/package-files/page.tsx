@@ -59,8 +59,9 @@ const FileManager = ({ packageId }: FileManagerProps) => {
     const gapp = useGApp();
 
     const loader = useSimpleDataLoader<PackageFile[]>({
-        loader: () => listPackageFiles(packageId),
+        loader: () => listPackageFiles(packageId, currentPath),
         ready: gapp.isInitialized,
+        dependencies: [currentPath, searchTerm],
     });
 
     const files = loader.data || [];
@@ -131,18 +132,6 @@ const FileManager = ({ packageId }: FileManagerProps) => {
                 fileInputRef.current.value = '';
             }
         }
-    };
-
-    const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString();
     };
 
     return (

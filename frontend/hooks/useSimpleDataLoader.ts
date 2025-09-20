@@ -7,6 +7,7 @@ type AxiosApi<T> = () => Promise<AxiosResponse<T, any>>
 interface PropsType<T> {
     loader: AxiosApi<T>
     ready: boolean
+    dependencies?: any[]
 }
 
 
@@ -33,7 +34,7 @@ const useSimpleDataLoader = <T>(props: PropsType<T>) => {
 
     useEffect(() => {
         load()
-    }, [props.ready])
+    }, [props.ready, ...(props.dependencies ? props.dependencies : [])])
 
     return {
         data: state,

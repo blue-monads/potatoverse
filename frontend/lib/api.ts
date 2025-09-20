@@ -225,8 +225,12 @@ export interface PackageFile {
     created_at: string;
 }
 
-export const listPackageFiles = async (packageId: number) => {
-    return iaxios.get<PackageFile[]>(`/core/package/${packageId}/files`);
+export const listPackageFiles = async (packageId: number, path: string = '' ) => {
+    return iaxios.get<PackageFile[]>(`/core/package/${packageId}/files`, {
+        params: {
+            path,
+        },
+    });
 }
 
 export const getPackageFile = async (packageId: number, fileId: number) => {
