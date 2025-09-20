@@ -180,6 +180,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 			"add_share":    AddFileShare,
 			"list_shares":  ListFileShares,
 			"remove_share": RemoveFileShare,
+			// "get_presigned_url": ,
 		})
 		L.Push(table)
 		return 1
