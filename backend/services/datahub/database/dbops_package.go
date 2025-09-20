@@ -62,6 +62,8 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 
 	packageId := id.ID().(int64)
 
+	folderToCreate := make(map[string]bool)
+
 	for _, file := range zipFile.File {
 		nameParts := strings.Split(file.Name, "/")
 		fpath := strings.Join(nameParts[:len(nameParts)-1], "/")
@@ -85,6 +87,8 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 		}
 		defer fileData.Close()
 
+		folderToCreate[fpath] = true
+
 		fid, err := d.AddPackageFileStreaming(packageId, fname, fpath, fileData)
 		if err != nil {
 			return 0, err
@@ -92,6 +96,13 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 
 		pp.Println("@fid", fid)
 
+	}
+
+	for folderPath := range folderToCreate {
+		err := d.createParentFoldersRecursively(packageId, folderPath)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	return id.ID().(int64), nil
@@ -144,9 +155,21 @@ func (d *DB) ListPackagesByIds(ids []int64) ([]models.Package, error) {
 	return items, nil
 }
 
+func (d *DB) ListPackageFilesByPath(packageId int64, path string) ([]models.PackageFile, error) {
+	items := make([]models.PackageFile, 0)
+	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId, "path": path}).All(&items)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 func (d *DB) ListPackageFiles(packageId int64) ([]models.PackageFile, error) {
 	items := make([]models.PackageFile, 0)
-	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId}).All(&items)
+
+	cond := db.Cond{"package_id": packageId}
+
+	err := d.packageFilesTable().Find(cond).All(&items)
 	if err != nil {
 		return nil, err
 	}
@@ -266,6 +289,52 @@ func (d *DB) createPackageFolder(packageId int64, path, name string) (int64, err
 		return 0, err
 	}
 	return rid.ID().(int64), nil
+}
+
+func (d *DB) createParentFoldersRecursively(packageId int64, folderPath string) error {
+	if folderPath == "" {
+		return nil
+	}
+
+	pathParts := strings.Split(folderPath, "/")
+
+	currentPath := ""
+	for i, part := range pathParts {
+		if part == "" {
+			continue
+		}
+
+		// Build the current path
+		if currentPath == "" {
+			currentPath = part
+		} else {
+			currentPath = currentPath + "/" + part
+		}
+
+		// Create the parent path for this folder
+		var parentPath string
+		if i == 0 {
+			parentPath = ""
+		} else {
+			parentParts := pathParts[:i]
+			parentPath = strings.Join(parentParts, "/")
+		}
+
+		// Check if this folder already exists
+		_, err := d.GetPackageFileMetaByPath(packageId, parentPath, part)
+		if err == nil {
+			// Folder already exists, continue to next level
+			continue
+		}
+
+		// Create the folder
+		_, err = d.createPackageFolder(packageId, parentPath, part)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *DB) AddPackageFile(packageId int64, name string, path string, data []byte) (int64, error) {

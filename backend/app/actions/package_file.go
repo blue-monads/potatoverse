@@ -6,8 +6,8 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 )
 
-func (c *Controller) ListPackageFiles(packageId int64) ([]models.PackageFile, error) {
-	return c.database.ListPackageFiles(packageId)
+func (c *Controller) ListPackageFiles(packageId int64, path string) ([]models.PackageFile, error) {
+	return c.database.ListPackageFilesByPath(packageId, path)
 }
 
 func (c *Controller) GetPackageFile(packageId, fileId int64) (*models.PackageFile, error) {

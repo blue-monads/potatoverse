@@ -24,7 +24,9 @@ func (a *Server) ListPackageFiles(claim *signer.AccessClaim, ctx *gin.Context) (
 		return nil, fmt.Errorf("you are not authorized to access this package")
 	}
 
-	files, err := a.ctrl.ListPackageFiles(packageId)
+	path := ctx.Query("path")
+
+	files, err := a.ctrl.ListPackageFiles(packageId, path)
 	if err != nil {
 		return nil, err
 	}

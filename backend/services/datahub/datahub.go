@@ -73,6 +73,7 @@ type PackageOps interface {
 	ListPackagesByIds(ids []int64) ([]models.Package, error)
 
 	ListPackageFiles(packageId int64) ([]models.PackageFile, error)
+	ListPackageFilesByPath(packageId int64, path string) ([]models.PackageFile, error)
 	GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error)
 	GetPackageFileMetaByPath(packageId int64, path, name string) (*models.PackageFile, error)
 
