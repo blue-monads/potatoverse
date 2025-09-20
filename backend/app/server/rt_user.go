@@ -109,7 +109,7 @@ func (s *Server) updateUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (
 		return nil, err
 	}
 
-	return gin.H{"message": "Invite updated successfully"}, nil
+	return gin.H{"message": "User invite updated successfully"}, nil
 }
 
 func (s *Server) deleteUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
@@ -124,7 +124,7 @@ func (s *Server) deleteUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (
 		return nil, err
 	}
 
-	return gin.H{"message": "Invite deleted successfully"}, nil
+	return gin.H{"message": "User invite deleted successfully"}, nil
 }
 
 func (s *Server) resendUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
@@ -142,15 +142,33 @@ func (s *Server) resendUserInvite(claim *signer.AccessClaim, ctx *gin.Context) (
 	return invite, nil
 }
 
-/*
+// Create User Directly
 
+func (s *Server) createUserDirectly(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	var req struct {
+		Name     string `json:"name" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Username string `json:"username" binding:"required"`
+		Utype    string `json:"utype" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		return nil, err
+	}
+
+	user, err := s.ctrl.CreateUserDirectly(req.Name, req.Email, req.Username, req.Utype, claim.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+/*
 AddUser
 ResetUserPassword
 DeactivateUser
 ActivateUser
 DeleteUser
 UpdateUser
-
-
-
 */

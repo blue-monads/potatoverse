@@ -53,6 +53,9 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 	g.DELETE("/invites/:id", a.withAccessTokenFn(a.deleteUserInvite))
 	g.POST("/invites/:id/resend", a.withAccessTokenFn(a.resendUserInvite))
 
+	// Create User Directly
+	g.POST("/create", a.withAccessTokenFn(a.createUserDirectly))
+
 }
 
 func (a *Server) selfUserRoutes(g *gin.RouterGroup) {

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Filter, MoreHorizontal, UserIcon, Mail, Calendar, Shield, Eye, Edit, Trash2, UserCheck, UserX, LockIcon, MailIcon } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -10,6 +11,7 @@ import { FantasticTable } from '@/contain';
 import { ModalHandle, useGApp } from '@/hooks';
 import { ColumnDef } from '@/contain/compo/FantasticTable/FantasticTable';
 import WithTabbedUserLayout from './WithTabbedUserLayout';
+import AddInviteModal from './sub/AddInviteModal';
 
 
 const columns = [
@@ -54,6 +56,7 @@ const columns = [
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
   const gapp = useGApp();
 
   const loader = useSimpleDataLoader<User[]>({
@@ -61,6 +64,13 @@ export default function Page() {
     ready: gapp.isInitialized,
   });
 
+  const handleUserAdded = () => {
+    loader.reload();
+  };
+
+  const handleCreateUser = () => {
+    router.push('/portal/admin/users/create');
+  };
 
   console.log("loader", loader);
 
@@ -72,11 +82,17 @@ export default function Page() {
       name='Users'
       description="Manage your users, roles, and permissions."
       rightContent={<>
+        <button
+          onClick={() => showInviteUserModal(gapp.modal, handleUserAdded)}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-colors"
+        >
+          <MailIcon className="w-4 h-4" />
+          Invite User
+        </button>
         <AddButton
           name="+ User"
-          onClick={() => { showLargeModal(gapp.modal) }}
+          onClick={handleCreateUser}
         />
-
       </>}
 
     >
@@ -154,44 +170,10 @@ export default function Page() {
 }
 
 
-const showLargeModal = (modal: ModalHandle) => {
-
+const showInviteUserModal = (modal: ModalHandle, onUserAdded: () => void) => {
   modal.openModal({
-    title: "Add User",
-    content: (
-      <div className="space-y-4">
-        <p className="text-gray-600 dark:text-gray-300">
-          Add a new user to the system.
-        </p>
-        <div className="bg-gray-100 dark:bg-gray-700 rounded-lg flex flex-col gap-2">
-
-          {/* 1. create user directly.  2. invite user */}
-
-          <div className="flex p-2 border border-gray-300 rounded-lg gap-2 items-center hover:bg-primary-50 cursor-pointer">
-            <UserIcon className='w-4 h-4' />
-            <h4 className='text-md'>Create User Directly</h4>
-          </div>
-
-          <div className="flex p-2 border border-gray-300 rounded-lg gap-2 items-center hover:bg-primary-50 cursor-pointer">
-            <MailIcon className='w-4 h-4' />
-
-            <h4 className='text-md'>Invite User</h4>
-          </div>
-
-        </div>
-
-        <div className="flex gap-2 justify-end">
-          <button
-            onClick={() => modal.closeModal()}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>         
-        </div>
-      </div>
-    ),
+    title: "Invite User",
+    content: <AddInviteModal onInviteAdded={onUserAdded} />,
     size: "lg"
   });
-
-
 };

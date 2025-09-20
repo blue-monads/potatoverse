@@ -102,6 +102,16 @@ export const resendUserInvite = async (id: number) => {
     return iaxios.post<UserInvite>(`/core/user/invites/${id}/resend`);
 }
 
+// Create User Directly
+export const createUserDirectly = async (data: {
+    name: string;
+    email: string;
+    username: string;
+    utype: string;
+}) => {
+    return iaxios.post<User>("/core/user/create", data);
+}
+
 
 export interface AdminPortalData {
     popular_keywords: string[] 

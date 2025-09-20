@@ -152,3 +152,48 @@ func (c *Controller) ResendUserInvite(id int64) (*models.UserInvite, error) {
 
 	return c.database.GetUserInvite(id)
 }
+
+// Create User Directly
+
+func (c *Controller) CreateUserDirectly(name, email, username, utype string, createdBy int64) (*models.User, error) {
+	// Check if user already exists by email
+	existingUser, err := c.database.GetUserByEmail(email)
+	if err == nil && existingUser != nil {
+		return nil, easyerr.Error("User with this email already exists")
+	}
+
+	// Generate a random password
+	password, err := xutils.GenerateRandomString(12)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create new user
+	user := &models.User{
+		Name:        name,
+		Email:       email,
+		Username:    &username,
+		Utype:       utype,
+		Password:    password,
+		Bio:         "",
+		IsVerified:  false,
+		ExtraMeta:   "{}",
+		OwnerUserId: createdBy,
+		Disabled:    false,
+		IsDeleted:   false,
+	}
+
+	id, err := c.database.AddUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the created user
+	createdUser, err := c.database.GetUser(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return user with password for display (admin needs to see it)
+	return createdUser, nil
+}
