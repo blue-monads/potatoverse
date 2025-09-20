@@ -95,6 +95,38 @@ const InSpaceAuthorizerWrapper = () => {
     }, [])
 
 
+    const redirectWithoutSpaceToken = () => {
+        const redirect_back_url = params.get('redirect_back_url');
+        if (!redirect_back_url) {
+            console.log("@redirect_back_url is not set");
+            return;
+        }
+
+        const redirect_back_url_url = new URL(redirect_back_url);
+        redirect_back_url_url.searchParams.set("deny_space_token", "true");
+        window.location.href = redirect_back_url_url.toString();
+    }
+
+
+    const redirrectToLoginPage = () => {
+        const redirect_back_url = params.get('redirect_back_url');
+        if (!redirect_back_url) {
+            console.log("@redirect_back_url is not set");
+            return;
+        }
+
+        window.sessionStorage.setItem('redirect_back_url', redirect_back_url);
+        const loginPageUrl = new URL('/z/pages/auth/login', window.location.origin);
+
+        const finalRedirectBackUrl = new URL("/z/pages/auth/space/in_host", window.location.origin);
+        finalRedirectBackUrl.searchParams.set('redirect_back_url', redirect_back_url);
+
+        loginPageUrl.searchParams.set('after_login_redirect_back_url', finalRedirectBackUrl.toString());
+        window.location.href = loginPageUrl.toString();
+
+    }
+
+
 
     return (<>
 
@@ -108,39 +140,26 @@ const InSpaceAuthorizerWrapper = () => {
 
         {mode === "success" && (<>
 
-            {isAuthenticated && (<>
+            {!isAuthenticated && (<>
                 <NotAuthorizedPromptCard
-                    onLogin={() => {
-                        const redirect_back_url = params.get('redirect_back_url');
-                        if (!redirect_back_url) {
-                            console.log("@redirect_back_url is not set");
-                            return;
-                        }
-
-                        window.sessionStorage.setItem('redirect_back_url', redirect_back_url);
-                        const loginPageUrl = new URL('/z/pages/auth/login', window.location.origin);
-
-                        const finalRedirectBackUrl = new URL("/z/pages/auth/space/in_host", window.location.origin);
-                        finalRedirectBackUrl.searchParams.set('redirect_back_url', redirect_back_url);
-
-                        loginPageUrl.searchParams.set('after_login_redirect_back_url', finalRedirectBackUrl.toString());
-                        window.location.href = loginPageUrl.toString();
-
-                    }}
-                    onDeny={() => { }}
+                    onLogin={redirrectToLoginPage}
+                    onDeny={redirectWithoutSpaceToken}
                 />
 
 
             </>)}
 
-            {!isAuthenticated && (<>
+            {isAuthenticated && (<>
 
 
                 <AuthorizePromptCard
                     spaceInfo={spaceInfo!}
-                    onAuthorize={() => { }}
-                    onDeny={() => { }}
-                    onChangeAccount={() => { }}
+                    onAuthorize={() => {
+                        
+
+                    }}
+                    onDeny={redirectWithoutSpaceToken}
+                    onChangeAccount={redirrectToLoginPage}
                     loggedInUser={userInfo?.name!}
                 />
 
