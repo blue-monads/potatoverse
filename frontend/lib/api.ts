@@ -141,3 +141,17 @@ export interface InstalledSpace {
 export const listInstalledSpaces = async () => {
     return iaxios.get<InstalledSpace>(`/core/space/installed`);
 }
+
+// /z/api/core/engine/space_info/:space_key
+
+export interface SpaceInfo {
+    id: number;
+    namespace_key: string;
+    owns_namespace: boolean;
+    package_name: string;
+    package_info: string;
+}
+
+export const getSpaceInfo = async (space_key: string) => {
+    return iaxios.get<SpaceInfo>(`/core/engine/space_info/${space_key}`);
+}

@@ -1,8 +1,13 @@
 package server
 
 import (
+	_ "embed"
+
 	"github.com/gin-gonic/gin"
 )
+
+//go:embed test_page.html
+var TestPageHTML []byte
 
 func (a *Server) bindRoutes() {
 
@@ -21,6 +26,12 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
+
+	root.GET("/test_page.html", func(c *gin.Context) {
+
+		c.Data(200, "text/html", TestPageHTML)
+
+	})
 
 }
 
