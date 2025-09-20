@@ -151,8 +151,64 @@ const SpacesDirectory = () => {
                                 actionHandler={async (action: string) => {
 
                                     if (action === "delete") {
-                                        await deletePackage(space.id);
-                                        loader.reload();
+                                        // Show confirmation modal
+                                        gapp.modal.openModal({
+                                            title: "Delete Space",
+                                            content: (
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                                                            <Trash2Icon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                                Are you sure you want to delete this space?
+                                                            </h3>
+                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                This action cannot be undone. All data associated with this space will be permanently removed.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-sm font-semibold`}>
+                                                                #{space.id}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-gray-900 dark:text-white">{pkg.name}</p>
+                                                                <p className="text-sm text-gray-600 dark:text-gray-400">{pkg.description || pkg.info}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex gap-3 justify-end">
+                                                        <button
+                                                            onClick={() => gapp.modal.closeModal()}
+                                                            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await deletePackage(space.id);
+                                                                    loader.reload();
+                                                                    gapp.modal.closeModal();
+                                                                } catch (error) {
+                                                                    console.error('Failed to delete space:', error);
+                                                                    // You might want to show an error message here
+                                                                }
+                                                            }}
+                                                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                                                        >
+                                                            Delete Space
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ),
+                                            size: "md"
+                                        });
                                     } else if (action === "run") {
                                         router.push(`/portal/admin/exec?nskey=${space.namespace_key}`);
                                     } else if (action === "logs") {
