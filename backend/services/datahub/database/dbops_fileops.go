@@ -22,13 +22,13 @@ var _ datahub.FileDataOps = (*DB)(nil)
 func (d *DB) AddFolder(spaceId int64, uid int64, path string, name string) (int64, error) {
 	t := time.Now()
 	file := &models.File{
-		Name:      name,
-		Path:      path,
-		CreatedBy: uid,
-		OwnerProj: spaceId,
-		Size:      0,
-		CreatedAt: &t,
-		IsFolder:  true,
+		Name:         name,
+		Path:         path,
+		CreatedBy:    uid,
+		OwnerSpaceID: spaceId,
+		Size:         0,
+		CreatedAt:    &t,
+		IsFolder:     true,
 	}
 	table := d.filesTable()
 	rid, err := table.Insert(file)
@@ -44,10 +44,10 @@ func (d *DB) AddFileStreaming(file *models.File, stream io.Reader) (id int64, er
 	filetable := d.filesTable()
 	partstable := d.filePartedBlobsTable()
 	exists, _ := filetable.Find(db.Cond{
-		"name":             file.Name,
-		"path":             file.Path,
-		"created_by":       file.CreatedBy,
-		"owner_project_id": file.OwnerProj,
+		"name":           file.Name,
+		"path":           file.Path,
+		"created_by":     file.CreatedBy,
+		"owner_space_id": file.OwnerSpaceID,
 	}).Exists()
 	pp.Println("@add_file_streaming/2", exists)
 	if exists {
@@ -99,12 +99,19 @@ func (d *DB) AddFileStreaming(file *models.File, stream io.Reader) (id int64, er
 			return 0, err
 		}
 		pp.Println("@add_file_streaming/12")
-		_, err = driver.Exec("UPDATE Files SET blob = ? WHERE id = ?", data, id)
-		return id, err
+		sizeTotal := int64(len(data))
+
+		_, err = driver.Exec("UPDATE Files SET blob = ? , size = ? WHERE id = ?", data, sizeTotal, id)
+		if err != nil {
+			return 0, err
+		}
+
+		return id, nil
 	} else if file.StoreType == 2 {
 		pp.Println("@add_file_streaming/13")
 		partId := 0
 		buf := make([]byte, d.minFileMultiPartSize)
+		sizeTotal := int64(0)
 		for {
 			pp.Println("@add_file_streaming/14", partId)
 			n, err := stream.Read(buf)
@@ -114,6 +121,8 @@ func (d *DB) AddFileStreaming(file *models.File, stream io.Reader) (id int64, er
 			if n == 0 {
 				break
 			}
+
+			sizeTotal += int64(n)
 			pp.Println("@add_file_streaming/15", n)
 			_, err = driver.Exec("INSERT INTO FilePartedBlobs (file_id, size, part_id, blob) VALUES (?, ?, ?, ?)", id, n, partId, buf[:n])
 			if err != nil {
@@ -123,6 +132,11 @@ func (d *DB) AddFileStreaming(file *models.File, stream io.Reader) (id int64, er
 			partId++
 		}
 		pp.Println("@add_file_streaming/17")
+
+		err = d.filesTable().Find(db.Cond{"id": id}).Update(map[string]any{"size": sizeTotal})
+		if err != nil {
+			return 0, err
+		}
 	}
 	pp.Println("@add_file_streaming/18")
 	return id, nil
@@ -235,10 +249,12 @@ func (d *DB) GetFileMeta(id int64) (*models.File, error) {
 func (d *DB) ListFilesBySpace(spaceId int64, path string) ([]models.File, error) {
 	table := d.filesTable()
 	cond := db.Cond{
-		"ftype":            "project",
-		"owner_project_id": spaceId,
-		"path":             path,
+		"owner_space_id": spaceId,
+		"path":           path,
 	}
+
+	pp.Println("@list_files_by_space/1", cond)
+
 	files := make([]models.File, 0)
 	err := table.Find(cond).All(&files)
 	if err != nil {

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -210,6 +210,8 @@ const SpacesDirectory = () => {
                                     } else if (action === "logs") {
                                         router.push(`/portal/admin/spaces/logs?id=${space.id}`);
                                     } else if (action === "files") {
+                                        router.push(`/portal/admin/spaces/files?id=${space.id}`);
+                                    } else if (action === "package-files") {
                                         router.push(`/portal/admin/spaces/package-files?packageId=${space.package_id}`);
                                     } else if (action === "kv") {
                                         router.push(`/portal/admin/spaces/kv?id=${space.id}`);
@@ -316,6 +318,7 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
 const actionsOptions = [
     { id: "run", label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
     { id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
+    { id: "package-files", label: "PackageFiles", icon: <FileCode2 className="w-4 h-4" /> },
     { id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
     { id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
     { id: "tools", label: "Tools", icon: <Box className="w-4 h-4" /> },

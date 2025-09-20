@@ -3,17 +3,17 @@ package models
 import "time"
 
 type File struct {
-	ID        int64      `db:"id,omitempty" json:"id"`
-	Name      string     `db:"name" json:"name"`
-	Path      string     `db:"path" json:"path"`
-	Size      int64      `db:"size" json:"size"`
-	Mime      string     `db:"mime" json:"mime"`
-	Hash      string     `db:"hash" json:"hash"`
-	IsFolder  bool       `db:"is_folder" json:"is_folder"`
-	StoreType int64      `db:"storeType" json:"storeType"`
-	OwnerProj int64      `db:"owner_project_id" json:"owner_project_id"`
-	CreatedBy int64      `db:"created_by" json:"created_by"`
-	CreatedAt *time.Time `db:"created_at" json:"created_at"`
+	ID           int64      `db:"id,omitempty" json:"id"`
+	Name         string     `db:"name" json:"name"`
+	Path         string     `db:"path" json:"path"`
+	Size         int64      `db:"size" json:"size"`
+	Mime         string     `db:"mime" json:"mime"`
+	Hash         string     `db:"hash" json:"hash"`
+	IsFolder     bool       `db:"is_folder" json:"is_folder"`
+	StoreType    int64      `db:"storeType" json:"storeType"`
+	OwnerSpaceID int64      `db:"owner_space_id" json:"owner_space_id"`
+	CreatedBy    int64      `db:"created_by" json:"created_by"`
+	CreatedAt    *time.Time `db:"created_at" json:"created_at"`
 }
 
 type FilePartedBlob struct {

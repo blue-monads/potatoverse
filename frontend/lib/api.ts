@@ -304,3 +304,59 @@ export const updateSpaceKV = async (spaceId: number, id: number, data: {
 export const deleteSpaceKV = async (spaceId: number, id: number) => {
     return iaxios.delete<void>(`/core/space/${spaceId}/kv/${id}`);
 }
+
+// Space Files API
+export interface SpaceFile {
+    id: number;
+    name: string;
+    is_folder: boolean;
+    path: string;
+    size: number;
+    mime: string;
+    hash: string;
+    storeType: number;
+    owner_space_id: number;
+    created_by: number;
+    created_at: string;
+}
+
+export const listSpaceFiles = async (spaceId: number, path: string = '') => {
+    return iaxios.get<SpaceFile[]>(`/core/space/${spaceId}/files`, {
+        params: {
+            path,
+        },
+    });
+}
+
+export const getSpaceFile = async (spaceId: number, fileId: number) => {
+    return iaxios.get<SpaceFile>(`/core/space/${spaceId}/files/${fileId}`);
+}
+
+export const downloadSpaceFile = async (spaceId: number, fileId: number) => {
+    return iaxios.get(`/core/space/${spaceId}/files/${fileId}/download`, {
+        responseType: 'blob'
+    });
+}
+
+export const deleteSpaceFile = async (spaceId: number, fileId: number) => {
+    return iaxios.delete(`/core/space/${spaceId}/files/${fileId}`);
+}
+
+export const uploadSpaceFile = async (spaceId: number, file: File, path: string = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+    
+    return iaxios.post(`/core/space/${spaceId}/files/upload`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
+export const createSpaceFolder = async (spaceId: number, name: string, path: string = '') => {
+    return iaxios.post(`/core/space/${spaceId}/files/folder`, {
+        name,
+        path,
+    });
+}
