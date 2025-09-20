@@ -5,12 +5,13 @@ interface PropsType {
     setSearchText: (text: string) => void;
     onSearchButtonClick?: () => void;
     placeholder?: string;
+    className?: string;
 }
 
 const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
 
     return (
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className={`bg-white border-b border-gray-200 px-6 py-4 ${props.className}`}>
             <div className="max-w-7xl mx-auto">
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
