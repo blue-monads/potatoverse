@@ -209,3 +209,48 @@ export const getSpaceInfo = async (space_key: string) => {
 export const authorizeSpace = async (space_key: string, space_id: number) => {
     return iaxios.post<{ token: string }>(`/core/space/authorize/${space_key}`, { space_id });
 }
+
+// Package Files API
+export interface PackageFile {
+    id: number;
+    package_id: number;
+    name: string;
+    is_folder: boolean;
+    path: string;
+    size: number;
+    mime: string;
+    hash: string;
+    store_type: number;
+    created_by: number;
+    created_at: string;
+}
+
+export const listPackageFiles = async (packageId: number) => {
+    return iaxios.get<PackageFile[]>(`/core/package/${packageId}/files`);
+}
+
+export const getPackageFile = async (packageId: number, fileId: number) => {
+    return iaxios.get<PackageFile>(`/core/package/${packageId}/files/${fileId}`);
+}
+
+export const downloadPackageFile = async (packageId: number, fileId: number) => {
+    return iaxios.get(`/core/package/${packageId}/files/${fileId}/download`, {
+        responseType: 'blob'
+    });
+}
+
+export const deletePackageFile = async (packageId: number, fileId: number) => {
+    return iaxios.delete(`/core/package/${packageId}/files/${fileId}`);
+}
+
+export const uploadPackageFile = async (packageId: number, file: File, path: string = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+    
+    return iaxios.post(`/core/package/${packageId}/files/upload`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}

@@ -32,9 +32,8 @@ const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const gapp = useGApp();
-
     const [packageIndex, setPackageIndex] = useState<Record<number, Package>>({});
-
+    const router = useRouter();
 
 
 
@@ -54,7 +53,7 @@ const SpacesDirectory = () => {
         }
     }, [loader.data]);
 
-   
+
     const sortOptions = [
         'Relevance',
         'Recently Created',
@@ -142,33 +141,41 @@ const SpacesDirectory = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {loader.data?.spaces.map((space) => {
-                            
+
                             const pkg = packageIndex[space.package_id] || { name: "Unknown", description: "Unknown" };
                             const gradient = staticGradients[space.id % staticGradients.length];
-                            
-
-                            return <SpaceCard 
-                            key={space.id} 
-                            actionHandler={async () => {
-                                
-                                
-                                await deletePackage(space.id);
-                                loader.reload();
 
 
-                            }}
+                            return <SpaceCard
+                                key={space.id}
+                                actionHandler={async (action: string) => {
 
-                            space={{
-                                id: space.id,
-                                title: pkg.name,
-                                description: pkg.description || pkg.info,
-                                author: "",
-                                timeAgo: "",
-                                gradient: gradient,
-                                from: pkg.slug,
-                                mcp: false,
+                                    if (action === "delete") {
+                                        await deletePackage(space.id);
+                                        loader.reload();
+                                    } else if (action === "run") {
+                                        router.push(`/portal/admin/exec?nskey=${space.namespace_key}`);
+                                    } else if (action === "logs") {
+                                        router.push(`/portal/admin/spaces/logs?id=${space.id}`);
+                                    } else if (action === "files") {
+                                        router.push(`/portal/admin/spaces/package-files?packageId=${space.package_id}`);
+                                    } else if (action === "kv") {
+                                        router.push(`/portal/admin/spaces/kv?id=${space.id}`);
+                                    }
+                                    
+                                }}
 
-                            }}  />
+                                space={{
+                                    id: space.id,
+                                    title: pkg.name,
+                                    description: pkg.description || pkg.info,
+                                    author: "",
+                                    timeAgo: "",
+                                    gradient: gradient,
+                                    from: pkg.slug,
+                                    mcp: false,
+
+                                }} />
                         })}
                     </div>
                 </div>
@@ -230,21 +237,19 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
                     <div className="flex gap-2">
                         {/* Run Action and other action drop down */}
 
-                        <button 
-                            
+                        <button
+
                             className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
                             onClick={() => {
                                 router.push(`/portal/admin/exec?nskey=${space.from}`);
                             }}
-                            
-                            >
+
+                        >
                             <CloudLightning className="w-4 h-4" />
                             <span>Run</span>
                         </button>
 
-                        <ActionDropdown onClick={ (action) => {
-                            actionHandler(action);
-                        }} />
+                        <ActionDropdown onClick={actionHandler} />
                     </div>
 
 
@@ -257,14 +262,14 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
 
 
 const actionsOptions = [
-    {id: "run", label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
-    {id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
-    {id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
-    {id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
-    {id: "tools", label: "Tools", icon: <Box className="w-4 h-4" /> },
-    {id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
-    {id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
-    {id: "delete", label: "Delete", icon: <Trash2Icon className="w-4 h-4" /> }
+    { id: "run", label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
+    { id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
+    { id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
+    { id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
+    { id: "tools", label: "Tools", icon: <Box className="w-4 h-4" /> },
+    { id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
+    { id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
+    { id: "delete", label: "Delete", icon: <Trash2Icon className="w-4 h-4" /> }
 ]
 
 
