@@ -3,7 +3,7 @@ import { getLoginData } from "./utils";
 
 
 let iaxios: AxiosInstance = axios.create({
-    baseURL: "/z/api",
+    baseURL: "/zz/api",
 });
 
 export const initHttpClient = () => {
@@ -21,7 +21,7 @@ export const initHttpClient = () => {
 
 
     iaxios = axios.create({
-        baseURL: "/z/api",
+        baseURL: "/zz/api",
         headers,
     });
 
@@ -56,7 +56,7 @@ export interface User {
 }
 
 
-// /z/api/core/user/
+// /zz/api/core/user/
 
 export const getUsers = async () => {
     return iaxios.get<User[]>("/core/user");

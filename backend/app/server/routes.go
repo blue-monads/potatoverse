@@ -11,7 +11,7 @@ var TestPageHTML []byte
 
 func (a *Server) bindRoutes() {
 
-	root := a.router.Group("/z")
+	root := a.router.Group("/zz")
 
 	root.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})

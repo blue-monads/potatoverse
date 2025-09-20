@@ -20,7 +20,7 @@ export default function PortalLayout({
 
             <Image
               className="dark:invert p-1 border "
-              src="/z/pages/logo.png"
+              src="/zz/pages/logo.png"
               alt="Turnix Logo"
               width={42}
               height={42}

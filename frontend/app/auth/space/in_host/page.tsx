@@ -44,7 +44,7 @@ const InSpaceAuthorizerWrapper = () => {
 
             const redirect_back_url_url = new URL(redirect_back_url);
 
-            if (!redirect_back_url_url.pathname.startsWith('/z/space/')) {
+            if (!redirect_back_url_url.pathname.startsWith('/zz/space/')) {
                 setError("redirect_back_url is not a valid redirect_back_url");
                 setMode('error');
                 return;
@@ -126,9 +126,9 @@ const InSpaceAuthorizerWrapper = () => {
         }
 
         window.sessionStorage.setItem('redirect_back_url', redirect_back_url);
-        const loginPageUrl = new URL('/z/pages/auth/login', window.location.origin);
+        const loginPageUrl = new URL('/zz/pages/auth/login', window.location.origin);
 
-        const finalRedirectBackUrl = new URL("/z/pages/auth/space/in_host", window.location.origin);
+        const finalRedirectBackUrl = new URL("/zz/pages/auth/space/in_host", window.location.origin);
         finalRedirectBackUrl.searchParams.set('redirect_back_url', redirect_back_url);
 
         loginPageUrl.searchParams.set('after_login_redirect_back_url', finalRedirectBackUrl.toString());
@@ -218,7 +218,7 @@ const InSpaceAuthorizerWrapper = () => {
             <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                     <div className="flex mb-6 space-x-4 items-center justify-center">
-                        <img src="/z/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                        <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                     </div>
                     
                     <h6 className="h4 text-base">
@@ -266,7 +266,7 @@ const AuthorizePromptCard = (props: PromptCardProps) => {
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
-                    <img src="/z/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                    <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                 </div>
 
                 <h6 className="h4 text-base">
@@ -316,7 +316,7 @@ const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
         <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
-                    <img src="/z/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                    <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                 </div>
                 <h6 className="h4 text-base">
                     You are not logged in, Please login first to authorize this space.

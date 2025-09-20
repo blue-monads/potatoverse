@@ -14,7 +14,7 @@ const WithLoginLayout = (props: PropsType) => {
                 <div className="relative flex-1 hidden items-center justify-center h-screen from-primary-700-300 to-secondary-700-300 bg-gradient-to-b lg:flex">
                     <div className="relative z-10 w-full max-w-md">
                         <Image
-                            src="/z/pages/logo.png"
+                            src="/zz/pages/logo.png"
                             alt="Turnix Logo"
                             width={200}
                             height={200}

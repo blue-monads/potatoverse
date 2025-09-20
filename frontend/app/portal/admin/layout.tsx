@@ -63,9 +63,9 @@ const Sidebar = () => {
       <nav className="fixed top-0 left-0 w-14 h-full border-r bg-white space-y-8">
         <div className="flex flex-col h-full">
           <div className="h-16 flex items-center justify-center mx-auto">
-            <a href="/z/pages/portal/admin" className="flex-none">
+            <a href="/zz/pages/portal/admin" className="flex-none">
               <Image
-                src="/z/pages/logo.png"
+                src="/zz/pages/logo.png"
                 alt="Turnix Logo"
                 width={36}
                 height={36}
@@ -100,10 +100,10 @@ const Sidebar = () => {
                   <li>
 
                     <a
-                      href={`/z/pages/portal/admin/profile`}
+                      href={`/zz/pages/portal/admin/profile`}
                       className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
                     >
-                      <img src={`/z/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
+                      <img src={`/zz/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
                     </a>
 
 
@@ -137,7 +137,7 @@ const Sidebar = () => {
 
 const navigation = [
   {
-    href: "/z/pages/portal/admin",
+    href: "/zz/pages/portal/admin",
     name: "Home",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" strokeWidth="1.5" viewBox="0 0 24 24" stroke="currentColor" fill="none" name="home" className="w-6 h-6">
@@ -147,7 +147,7 @@ const navigation = [
   },
 
   {
-    href: "/z/pages/portal/admin/spaces",
+    href: "/zz/pages/portal/admin/spaces",
     name: "Spaces",
     icon: (
       <svg
@@ -167,7 +167,7 @@ const navigation = [
     ),
   },
   {
-    href: "/z/pages/portal/admin/store",
+    href: "/zz/pages/portal/admin/store",
     name: "Store",
     icon: (
       <svg
@@ -188,7 +188,7 @@ const navigation = [
   },
 
   {
-    href: "/z/pages/portal/admin/users",
+    href: "/zz/pages/portal/admin/users",
     name: "Users",
     icon: (
       <svg

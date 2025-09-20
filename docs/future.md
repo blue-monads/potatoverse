@@ -23,19 +23,19 @@ Most of the resource realstate is diviup into structure of.
 Resources:
 1. HTTP routes
     - CORE
-        - /z/pages/ 
-        - /z/pages/doc
-        - /z/pages/doc/llm.txt
-        - /z/api/core
+        - /zz/pages/ 
+        - /zz/pages/doc
+        - /zz/pages/doc/llm.txt
+        - /zz/api/core
         
     - APP
-        - (asset serve) /z/space/<space_key>/ (external)
-        - (asset serve) /z/plugin/<space_key>/<plugin_id>/
+        - (asset serve) /zz/space/<space_key>/ (external)
+        - (asset serve) /zz/plugin/<space_key>/<plugin_id>/
 
-        - (api)     /z/api/space/<space_key>/
-        - (api)     /z/api/plugin/<space_key>/<plugin_id>
+        - (api)     /zz/api/space/<space_key>/
+        - (api)     /zz/api/plugin/<space_key>/<plugin_id>
 
-        - (extra)     /z/api/extra/<space_key> (extra stuff provided by runtime)
+        - (extra)     /zz/api/extra/<space_key> (extra stuff provided by runtime)
 
 
 2. DB Table space

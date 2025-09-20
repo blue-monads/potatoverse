@@ -20,9 +20,9 @@ export default function InSpacePrePage() {
 
         
         // FIXME => in future if space is running on different domain, we need to change this to use the correct domain        
-        // *.coolapps.com |>  xyzapp.coolapps.com -> xyzapp.coolapps.com/z/pages/auth/space/in_space/pre_page -> coolapps.com/z/pages/auth/space/in_host?redirect_back_url=/z/space/xyzapp
+        // *.coolapps.com |>  xyzapp.coolapps.com -> xyzapp.coolapps.com/zz/pages/auth/space/in_space/pre_page -> coolapps.com/zz/pages/auth/space/in_host?redirect_back_url=/zz/space/xyzapp
 
-        const authorizerPageUrl = new URL('/z/pages/auth/space/in_host', window.location.origin);
+        const authorizerPageUrl = new URL('/zz/pages/auth/space/in_host', window.location.origin);
         const finalRedirectBackUrl = new URL(redirect_back_url, window.location.origin);
         authorizerPageUrl.searchParams.set('redirect_back_url', finalRedirectBackUrl.toString());
 

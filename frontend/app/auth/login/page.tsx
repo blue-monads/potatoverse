@@ -57,7 +57,7 @@ export default function Page() {
                 <div className="">
                     <Image
                         className="lg:hidden"
-                        src="/z/pages/logo.png"
+                        src="/zz/pages/logo.png"
                         alt="Turnix Logo"
                         width={200}
                         height={200}
@@ -111,11 +111,11 @@ export default function Page() {
                 </form>
 
                 <div className="flex flex-col items-center gap-2">
-                    <p className="">Need account ? <a href="/z/pages/auth/signup/open" className="font-medium text-primary-contrast-200-800">Sign up</a></p>
+                    <p className="">Need account ? <a href="/zz/pages/auth/signup/open" className="font-medium text-primary-contrast-200-800">Sign up</a></p>
 
                     <div>
                         <a className="w-full text-xs text-white font-medium bg-secondary-700-300 duration-150 btn font-sans hover:opacity-80"
-                            href="/z/pages/auth/forgot-password"
+                            href="/zz/pages/auth/forgot-password"
 
                         >
                             Forgot password

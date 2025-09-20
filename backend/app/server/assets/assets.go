@@ -38,7 +38,7 @@ func PagesRoutesServer() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 
-		ppath := strings.TrimSuffix(strings.TrimPrefix(ctx.Request.URL.Path, "/z/pages"), "/")
+		ppath := strings.TrimSuffix(strings.TrimPrefix(ctx.Request.URL.Path, "/zz/pages"), "/")
 
 		if ppath == "" {
 			ppath = "index.html"

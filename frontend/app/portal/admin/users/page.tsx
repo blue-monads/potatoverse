@@ -23,7 +23,7 @@ const columns = [
       console.log("row", row);
 
       return <div>
-        <img src={`/z/profileImage/${row.id}/${(row.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
+        <img src={`/zz/profileImage/${row.id}/${(row.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
 
       </div>
     },

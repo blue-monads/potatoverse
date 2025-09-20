@@ -29,8 +29,8 @@ export default function Page() {
                 ) : (
                     <iframe
                         ref={iframeRef}
-                        src={`/z/space/${nskey}`}
-                        // src={`/z/test_page.html`}
+                        src={`/zz/space/${nskey}`}
+                        // src={`/zz/test_page.html`}
                         className='w-full h-full flex-grow'
                     ></iframe>
                 )}
