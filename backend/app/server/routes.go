@@ -30,7 +30,14 @@ func (a *Server) bindRoutes() {
 	a.engineRoutes(root, coreApi)
 
 	root.GET("/static/*files", func(c *gin.Context) {
-		c.FileFromFS(c.Param("files"), http.FS(StaticFiles))
+		filePath := c.Param("files")
+		if len(filePath) > 0 && filePath[0] == '/' {
+			filePath = filePath[1:]
+		}
+
+		fullPath := "static/" + filePath
+
+		c.FileFromFS(fullPath, http.FS(StaticFiles))
 	})
 
 }
