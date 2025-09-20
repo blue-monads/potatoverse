@@ -49,7 +49,7 @@ export default function AddInviteModal({ onInviteAdded }: AddInviteModalProps) {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 md:w-md">
             <h2 className="text-xl font-semibold mb-4">Invite User</h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
