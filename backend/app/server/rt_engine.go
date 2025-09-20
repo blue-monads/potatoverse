@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
@@ -89,6 +90,21 @@ func (a *Server) ListInstalledSpaces(claim *signer.AccessClaim, ctx *gin.Context
 	}
 
 	return spaces, nil
+}
+
+func (a *Server) AuthorizeSpace(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	data := &actions.SpaceAuth{}
+	if err := ctx.ShouldBindJSON(data); err != nil {
+		return nil, err
+	}
+
+	token, err := a.ctrl.AuthorizeSpace(claim.UserId, *data)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{"token": token}, nil
 }
 
 func (a *Server) DeletePackage(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {

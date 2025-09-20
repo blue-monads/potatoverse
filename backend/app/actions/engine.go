@@ -8,6 +8,8 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/rs/xid"
 )
 
 func (c *Controller) ListEPackages() ([]engine.EPackage, error) {
@@ -86,6 +88,34 @@ func (c *Controller) DeletePackage(userId int64, packageId int64) error {
 	}
 
 	return c.database.DeletePackage(packageId)
+
+}
+
+type SpaceAuth struct {
+	PackageId int64 `json:"package_id"`
+	SpaceId   int64 `json:"space_id"`
+}
+
+func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error) {
+
+	space, err := c.database.GetSpace(req.SpaceId)
+	if err != nil {
+		return "", err
+	}
+
+	if space.OwnerID != userId {
+		_, err := c.database.GetSpaceUserScope(userId, req.SpaceId)
+		if err != nil {
+			return "", errors.New("you are not authorized to access this space")
+		}
+	}
+
+	return c.signer.SignSpace(&signer.SpaceClaim{
+		SpaceId: req.SpaceId,
+		UserId:  userId,
+		XID:     xid.New().String(),
+		Typeid:  signer.TokenTypeSpace,
+	})
 
 }
 

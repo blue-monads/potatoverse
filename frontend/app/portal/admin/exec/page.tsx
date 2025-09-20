@@ -29,8 +29,8 @@ export default function Page() {
                 ) : (
                     <iframe
                         ref={iframeRef}
-                        // src={`http://extern.localhost:7777/z/pages/auth/in-space?redirect_back_url=/z/space/${nskey}`}
-                        src={`/z/test_page.html`}
+                        src={`/z/space/${nskey}`}
+                        // src={`/z/test_page.html`}
                         className='w-full h-full flex-grow'
                     ></iframe>
                 )}

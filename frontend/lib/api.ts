@@ -154,3 +154,8 @@ export interface SpaceInfo {
 export const getSpaceInfo = async (space_key: string) => {
     return iaxios.get<SpaceInfo>(`/core/engine/space_info/${space_key}`);
 }
+
+
+export const authorizeSpace = async (space_key: string, space_id: number) => {
+    return iaxios.post<{ token: string }>(`/core/space/authorize/${space_key}`, { space_id });
+}

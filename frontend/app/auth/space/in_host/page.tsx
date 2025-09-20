@@ -1,6 +1,6 @@
 "use client";
 import { UserInfo } from "@/hooks";
-import { getLoginData, getSpaceInfo, SpaceInfo } from "@/lib";
+import { authorizeSpace, getLoginData, getSpaceInfo, SpaceInfo } from "@/lib";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -16,10 +16,11 @@ export default function InHostPage() {
 
 const InSpaceAuthorizerWrapper = () => {
     const [spaceInfo, setSpaceInfo] = useState<SpaceInfo | null>(null);
-    const [mode, setMode] = useState<"loading" | "error" | "success">('loading');
+    const [mode, setMode] = useState<"loading" | "error" | "space_info_loaded" | "space_token_loaded">('loading');
     const [error, setError] = useState<string | null>(null);
     const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [spaceToken, setSpaceToken] = useState<string | null>(null);
 
     const params = useSearchParams();
 
@@ -59,15 +60,24 @@ const InSpaceAuthorizerWrapper = () => {
                 return;
             }
 
-
-            const resp = await getSpaceInfo(nspace_key);
-            if (resp.status === 200) {
-                setSpaceInfo(resp.data);
-                setMode('success');
-            } else {
-                setError("failed to get space info");
+            try {
+                const resp = await getSpaceInfo(nspace_key);
+                if (resp.status === 200) {
+                    setSpaceInfo(resp.data);
+                    setMode('space_info_loaded');
+                } else {
+                    setError("failed to get space info");
+                    setMode('error');
+                }
+    
+                
+            } catch (error) {
+                console.error(error);
+                setError("failed to get space info: " + error);
                 setMode('error');
             }
+
+
 
         }
 
@@ -126,6 +136,40 @@ const InSpaceAuthorizerWrapper = () => {
 
     }
 
+    const getSpaceToken = async () => {
+        if (!spaceInfo) {
+            setError("spaceInfo is not set");
+            setMode('error');
+            return;
+        }
+        
+        try {
+
+            setMode('loading');
+
+
+            const resp = await authorizeSpace(spaceInfo.namespace_key, spaceInfo.id);
+            if (resp.status === 200) {
+                setSpaceToken(resp.data.token);
+
+                localStorage.setItem(`${spaceInfo.namespace_key}_space_token`, resp.data.token);
+
+                setMode('space_token_loaded');
+            } else {
+                setError("failed to authorize space");
+                setMode('error');
+            }
+
+
+        } catch (error) {
+            console.error(error);
+            setError("failed to authorize space: " + error);
+            setMode('error');
+        }
+
+
+    }
+
 
 
     return (<>
@@ -138,7 +182,7 @@ const InSpaceAuthorizerWrapper = () => {
             <div>Error: {error}</div>
         </>)}
 
-        {mode === "success" && (<>
+        {mode === "space_info_loaded" && (<>
 
             {!isAuthenticated && (<>
                 <NotAuthorizedPromptCard
@@ -155,8 +199,7 @@ const InSpaceAuthorizerWrapper = () => {
                 <AuthorizePromptCard
                     spaceInfo={spaceInfo!}
                     onAuthorize={() => {
-                        
-
+                        getSpaceToken();
                     }}
                     onDeny={redirectWithoutSpaceToken}
                     onChangeAccount={redirrectToLoginPage}
@@ -168,6 +211,37 @@ const InSpaceAuthorizerWrapper = () => {
             </>)}
 
 
+
+        </>)}
+
+        {mode === "space_token_loaded" && (<>
+            <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+                    <div className="flex mb-6 space-x-4 items-center justify-center">
+                        <img src="/z/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                    </div>
+                    
+                    <h6 className="h4 text-base">
+                        Authorized successfully
+                    </h6>
+
+                    <div className="flex justify-center items-center">
+                        <button onClick={() => {
+                            const redirect_back_url = params.get('redirect_back_url');
+                            if (!redirect_back_url) {
+                                console.log("@redirect_back_url is not set");
+                                return;
+                            }
+                            const redirect_back_url_url = new URL(redirect_back_url);
+                            window.location.href = redirect_back_url_url.toString();
+                        }}>
+                            Redirect to space
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
 
         </>)}
 

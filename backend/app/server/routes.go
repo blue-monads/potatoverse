@@ -67,6 +67,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.DELETE("/package/:id", a.withAccessTokenFn(a.DeletePackage))
 	coreApi.GET("/package/list", a.withAccessTokenFn(a.ListEPackages))
 	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
+	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
