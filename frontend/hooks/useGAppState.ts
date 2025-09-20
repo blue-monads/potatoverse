@@ -16,11 +16,11 @@ export const useGAppState = () => {
     const modal = useGModal();
     const [isInitialized, setIsInitialized] = useState(false);
 
-    console.log("userInfo", userInfo);
+//    console.log("userInfo", userInfo);
 
     const checkToken = () => {
         const data = getLoginData();
-        console.log("@getLoginData", data);
+  //      console.log("@getLoginData", data);
         if (data?.accessToken) {
             setUserInfo(data.userInfo);
             setIsAuthenticated(true);

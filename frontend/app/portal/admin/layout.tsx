@@ -53,10 +53,10 @@ const Sidebar = () => {
   }, [gapp.isAuthenticated, gapp.loaded]);
 
 
-  console.log("@gapp", gapp);
-  console.log("isAuthenticated", gapp.isAuthenticated);
-  console.log("loaded", gapp.loaded);
-  console.log("userInfo", gapp.userInfo);
+  // console.log("@gapp", gapp);
+  // console.log("isAuthenticated", gapp.isAuthenticated);
+  // console.log("loaded", gapp.loaded);
+  // console.log("userInfo", gapp.userInfo);
 
   return (
     <>
