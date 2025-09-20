@@ -15,7 +15,7 @@ func oct2decimal(oct int) (uint64, error) {
 	return strconv.ParseUint(fmt.Sprintf("%d", oct), 8, 32)
 }
 
-func FsModule(root *os.Root) func(L *lua.LState) int {
+func LocalFsModule(root *os.Root) func(L *lua.LState) int {
 
 	return func(L *lua.LState) int {
 
