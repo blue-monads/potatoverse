@@ -3,11 +3,12 @@ import Image from "next/image";
 import WithLoginLayout from "./WithLoginLayout";
 import { useState } from "react";
 import { initHttpClient, login } from "@/lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useGApp } from "@/hooks";
 
 
 export default function Page() {
+    const params = useSearchParams();
 
     const gapp = useGApp();
 
@@ -15,6 +16,7 @@ export default function Page() {
     const [password, setPassword] = useState<string>("demogodTheGreat_123");
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
+
 
     const router = useRouter();
 
@@ -30,11 +32,15 @@ export default function Page() {
 
             const token = res.data.access_token;
             gapp.logIn(token, res.data.user_info);
-            console.log("@saveLoginData", res.data.user_info);
+            console.log("@saveLoginData", res.data.user_info);            
             initHttpClient();
 
-            router.push("/portal/admin");
-
+            const after_login_redirect_back_url = params.get('after_login_redirect_back_url');
+            if (after_login_redirect_back_url) {
+                router.push(after_login_redirect_back_url);
+            } else {
+                router.push("/portal/admin");
+            }
 
 
         } catch (err) {
