@@ -107,6 +107,18 @@ func (d *DB) GetPackage(id int64) (*models.Package, error) {
 }
 
 func (d *DB) DeletePackage(id int64) error {
+
+	files, err := d.ListPackageFiles(id)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		err = d.DeletePackageFile(id, file.ID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return d.packagesTable().Find(db.Cond{"id": id}).Delete()
 }
 
