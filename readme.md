@@ -1,4 +1,4 @@
-# Turnix
+# PotatoVerse
 
 Platform for apps.
 
