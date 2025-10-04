@@ -13,15 +13,9 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-type indexItem struct {
-	packageId   int64
-	spaceId     int64
-	serveFolder string
-}
-
 type Engine struct {
 	db            datahub.Database
-	RoutingIndex  map[string]indexItem
+	RoutingIndex  map[string]SpaceRouteIndexItem
 	riLock        sync.RWMutex
 	workingFolder string
 
@@ -34,7 +28,7 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 	return &Engine{
 		db:            db,
 		workingFolder: workingFolder,
-		RoutingIndex:  make(map[string]indexItem),
+		RoutingIndex:  make(map[string]SpaceRouteIndexItem),
 		runtime: Runtime{
 			execs:     make(map[int64]*luaz.Luaz),
 			execsLock: sync.RWMutex{},
@@ -43,7 +37,7 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 }
 
 func (e *Engine) GetDebugData() map[string]any {
-	indexCopy := make(map[string]indexItem)
+	indexCopy := make(map[string]SpaceRouteIndexItem)
 	e.riLock.RLock()
 	maps.Copy(indexCopy, e.RoutingIndex)
 	e.riLock.RUnlock()
@@ -57,7 +51,7 @@ func (e *Engine) GetDebugData() map[string]any {
 
 func (e *Engine) LoadRoutingIndex() error {
 
-	nextRoutingIndex := make(map[string]indexItem)
+	nextRoutingIndex := make(map[string]SpaceRouteIndexItem)
 
 	spaces, err := e.db.ListSpaces()
 	if err != nil {
@@ -66,7 +60,7 @@ func (e *Engine) LoadRoutingIndex() error {
 
 	for _, space := range spaces {
 		if space.OwnsNamespace {
-			nextRoutingIndex[space.NamespaceKey] = indexItem{
+			nextRoutingIndex[space.NamespaceKey] = SpaceRouteIndexItem{
 				packageId:   space.PackageID,
 				spaceId:     space.ID,
 				serveFolder: "public",
