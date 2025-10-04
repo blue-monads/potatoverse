@@ -3,7 +3,7 @@ package binds
 import (
 	"reflect"
 
-	"github.com/blue-monads/turnix/backend/engine/bhandle"
+	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	lua "github.com/yuin/gopher-lua"
@@ -146,6 +146,6 @@ func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 }
 
-func BindsDB(handle *bhandle.Bhandle) func(L *lua.LState) int {
+func BindsDB(handle *executors.EHandle) func(L *lua.LState) int {
 	return bindsDB(handle.SpaceId, handle.App.Database())
 }

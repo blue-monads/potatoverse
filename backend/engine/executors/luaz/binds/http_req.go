@@ -4,13 +4,13 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/blue-monads/turnix/backend/engine/bhandle"
+	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
 
-func HttpModule(bh *bhandle.Bhandle, L *lua.LState, ctx *gin.Context) *lua.LTable {
+func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTable {
 
 	sig := bh.App.Signer()
 

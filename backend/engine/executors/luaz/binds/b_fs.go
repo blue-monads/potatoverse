@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"reflect"
 
-	"github.com/blue-monads/turnix/backend/engine/bhandle"
+	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/models"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
@@ -187,6 +187,6 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 	}
 }
 
-func BindsFS(handle *bhandle.Bhandle) func(L *lua.LState) int {
+func BindsFS(handle *executors.EHandle) func(L *lua.LState) int {
 	return bindsFS(handle.SpaceId, handle.App.Database())
 }

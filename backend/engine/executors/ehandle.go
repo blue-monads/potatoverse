@@ -1,4 +1,4 @@
-package bhandle
+package executors
 
 import (
 	"log/slog"
@@ -7,7 +7,7 @@ import (
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
-type Bhandle struct {
+type EHandle struct {
 	Logger  *slog.Logger
 	App     xtypes.App
 	FsRoot  *os.Root

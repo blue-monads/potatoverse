@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/bhandle"
+	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
@@ -15,7 +15,7 @@ import (
 
 type Luaz struct {
 	pool   *LuaStatePool
-	handle *bhandle.Bhandle
+	handle *executors.EHandle
 }
 
 type Options struct {
@@ -36,7 +36,7 @@ func New(opts Options) *Luaz {
 
 	lz := &Luaz{
 		pool: nil,
-		handle: &bhandle.Bhandle{
+		handle: &executors.EHandle{
 			Logger:  opts.BuilderOpts.Logger,
 			FsRoot:  rfs,
 			SpaceId: opts.SpaceId,
