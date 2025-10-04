@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/luaz"
+	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/utils/libx"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"

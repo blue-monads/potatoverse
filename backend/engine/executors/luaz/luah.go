@@ -3,7 +3,7 @@ package luaz
 import (
 	"log/slog"
 
-	"github.com/blue-monads/turnix/backend/engine/luaz/binds"
+	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/luaz"
+	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
