@@ -207,14 +207,8 @@ const SpacesDirectory = () => {
                                         });
                                     } else if (action === "run") {
                                         router.push(`/portal/admin/exec?nskey=${space.namespace_key}`);
-                                    } else if (action === "logs") {
-                                        router.push(`/portal/admin/spaces/logs?id=${space.id}`);
-                                    } else if (action === "files") {
-                                        router.push(`/portal/admin/spaces/files?id=${space.id}`);
-                                    } else if (action === "package-files") {
-                                        router.push(`/portal/admin/spaces/package-files?packageId=${space.package_id}`);
-                                    } else if (action === "kv") {
-                                        router.push(`/portal/admin/spaces/kv?id=${space.id}`);
+                                    } else if (action === "tools") {
+                                        router.push(`/portal/admin/spaces/tools/files?id=${space.id}&packageId=${space.package_id}`);
                                     }
                                     
                                 }}
@@ -317,13 +311,13 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
 
 const actionsOptions = [
     { id: "run", label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
-    { id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
-    { id: "package-files", label: "PackageFiles", icon: <FileCode2 className="w-4 h-4" /> },
-    { id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
-    { id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
+    // { id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
+    // { id: "package-files", label: "Package Files", icon: <FileCode2 className="w-4 h-4" /> },
+    // { id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
+    // { id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
     { id: "tools", label: "Tools", icon: <Box className="w-4 h-4" /> },
-    { id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
-    { id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
+    // { id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
+    // { id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
     { id: "delete", label: "Delete", icon: <Trash2Icon className="w-4 h-4" /> }
 ]
 
