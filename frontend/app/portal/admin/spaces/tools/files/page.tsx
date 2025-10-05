@@ -239,7 +239,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
                 {/* Search and View Controls */}
                 <div className="flex items-center justify-between bg-white">
 
-                    <div className='flex w-1/2'>
+                    <div className='flex w-full'>
                         <BigSearchBar
                             searchText={searchTerm}
                             setSearchText={setSearchTerm}

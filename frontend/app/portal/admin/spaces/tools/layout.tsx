@@ -24,6 +24,16 @@ const tabs = [
         value: 'package-files',
         url: '/portal/admin/spaces/tools/package-files',
     },
+    {
+        label: 'Resources',
+        value: 'resources',
+        url: '/portal/admin/spaces/tools/resources',
+    },
+    {
+        label: 'Users',
+        value: 'users',
+        url: '/portal/admin/spaces/tools/users',
+    }
 ]
 
 
