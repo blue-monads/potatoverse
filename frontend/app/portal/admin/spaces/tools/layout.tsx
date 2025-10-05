@@ -33,7 +33,12 @@ const tabs = [
         label: 'Users',
         value: 'users',
         url: '/portal/admin/spaces/tools/users',
-    }
+    },
+    {
+        label: 'Plugins',
+        value: 'plugins',
+        url: '/portal/admin/spaces/tools/plugins',
+    },
 ]
 
 
