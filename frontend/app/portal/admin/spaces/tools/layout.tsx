@@ -20,7 +20,7 @@ const tabs = [
         url: '/portal/admin/spaces/tools/kv',
     },
     {
-        label: 'Package Files',
+        label: 'Package',
         value: 'package-files',
         url: '/portal/admin/spaces/tools/package-files',
     },
