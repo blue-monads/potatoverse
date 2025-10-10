@@ -79,6 +79,10 @@ export interface UserInvite {
     created_at: string;
 }
 
+export interface UserInviteResponse extends UserInvite {
+    invite_url?: string;
+}
+
 export const getUserInvites = async () => {
     return iaxios.get<UserInvite[]>("/core/user/invites");
 }
@@ -92,7 +96,7 @@ export const createUserInvite = async (data: {
     role: string;
     invited_as_type: string;
 }) => {
-    return iaxios.post<UserInvite>("/core/user/invites", data);
+    return iaxios.post<UserInviteResponse>("/core/user/invites", data);
 }
 
 export const updateUserInvite = async (id: number, data: any) => {
@@ -104,7 +108,7 @@ export const deleteUserInvite = async (id: number) => {
 }
 
 export const resendUserInvite = async (id: number) => {
-    return iaxios.post<UserInvite>(`/core/user/invites/${id}/resend`);
+    return iaxios.post<UserInviteResponse>(`/core/user/invites/${id}/resend`);
 }
 
 // Invite Acceptance

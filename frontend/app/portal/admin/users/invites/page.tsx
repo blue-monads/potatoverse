@@ -34,9 +34,8 @@ export default function Page() {
             return;
         }
 
-
         fetchInvites();
-    }, []);
+    }, [gapp.isInitialized]);
 
     const getStatusIcon = (status: string) => {
         switch (status) {

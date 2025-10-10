@@ -96,7 +96,12 @@ func (c *Controller) GetUserInvite(id int64) (*models.UserInvite, error) {
 	return c.database.GetUserInvite(id)
 }
 
-func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy int64) (*models.UserInvite, error) {
+type UserInviteResponse struct {
+	*models.UserInvite
+	InviteUrl string `json:"invite_url"`
+}
+
+func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy int64) (*UserInviteResponse, error) {
 	existingUser, err := c.database.GetUserByEmail(email)
 	if err == nil && existingUser != nil {
 		return nil, easyerr.Error("User with this email already exists")
@@ -149,7 +154,15 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 		return nil, err
 	}
 
-	return c.database.GetUserInvite(id)
+	inviteData, err := c.database.GetUserInvite(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserInviteResponse{
+		UserInvite: inviteData,
+		InviteUrl:  fullUrl,
+	}, nil
 }
 
 func (c *Controller) UpdateUserInvite(id int64, data map[string]any) error {
@@ -160,8 +173,8 @@ func (c *Controller) DeleteUserInvite(id int64) error {
 	return c.database.DeleteUserInvite(id)
 }
 
-func (c *Controller) ResendUserInvite(id int64) (*models.UserInvite, error) {
-	_, err := c.database.GetUserInvite(id)
+func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
+	invite, err := c.database.GetUserInvite(id)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +190,40 @@ func (c *Controller) ResendUserInvite(id int64) (*models.UserInvite, error) {
 		return nil, err
 	}
 
-	return c.database.GetUserInvite(id)
+	// Generate new invite token
+	inviteToken, err := c.signer.SignInvite(&signer.InviteClaim{
+		XID:      xid.New().String(),
+		Typeid:   signer.TokenTypeEmailInvite,
+		InviteId: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	host := c.AppOpts.Host
+	port := c.AppOpts.Port
+	fullUrl := xutils.GetFullUrl(host, "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
+
+	// Send email
+	body := &mailer.SimpleMessage{
+		Text: fullUrl,
+		HTML: `<h1>Welcome to Turnix</h1><p> Please click the link below to accept the invite: <a href="` + fullUrl + `">` + fullUrl + `</a></p>`,
+	}
+
+	err = c.mailer.Send(invite.Email, "Welcome to Turnix", body)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedInvite, err := c.database.GetUserInvite(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserInviteResponse{
+		UserInvite: updatedInvite,
+		InviteUrl:  fullUrl,
+	}, nil
 }
 
 func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password string) (*models.User, error) {
