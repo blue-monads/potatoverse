@@ -104,21 +104,23 @@ CREATE TABLE IF NOT EXISTS UserMessages(
 CREATE TABLE IF NOT EXISTS Spaces (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   package_id INTEGER NOT NULL,
-  namespace_key TEXT NOT NULL DEFAULT '',
   owns_namespace BOOLEAN NOT NULL DEFAULT FALSE,
+  
+  namespace_key TEXT NOT NULL DEFAULT '',
   executor_type TEXT NOT NULL DEFAULT '', 
   sub_type TEXT NOT NULL DEFAULT '',
+  route_options JSON NOT NULL DEFAULT '{}',
+  mcp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  mcp_definition_file TEXT NOT NULL DEFAULT '',
+  mcp_options JSON NOT NULL DEFAULT '{}',
+  dev_serve_port INTEGER NOT NULL DEFAULT 0,
+  dev_mode BOOLEAN NOT NULL DEFAULT FALSE,
+  
+  overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  
   owned_by INTEGER NOT NULL, 
   extrameta JSON NOT NULL DEFAULT '{}', 
   is_initilized BOOLEAN NOT NULL DEFAULT FALSE, 
   is_public BOOLEAN NOT NULL DEFAULT FALSE,
-
-  server_file TEXT NOT NULL DEFAULT '',
-  serve_folder TEXT NOT NULL DEFAULT '', -- default is public
-  trim_path_prefix TEXT NOT NULL DEFAULT '', -- default is empty
-  
-  overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  
-
 
   FOREIGN KEY (owned_by) REFERENCES Users(id)
 );
@@ -193,14 +195,22 @@ CREATE TABLE IF NOT EXISTS FileShares (
 
 
 CREATE TABLE IF NOT EXISTS Packages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,  
-  storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
-  slug TEXT NOT NULL DEFAULT '',
-  reference TEXT NOT NULL DEFAULT '',
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
   name TEXT NOT NULL DEFAULT '',
+  slug TEXT NOT NULL DEFAULT '',
   info TEXT NOT NULL DEFAULT '',
   tags TEXT NOT NULL DEFAULT '',
-  
+  format_version TEXT NOT NULL DEFAULT '',
+  author_name TEXT NOT NULL DEFAULT '',
+  author_email TEXT NOT NULL DEFAULT '',
+  author_site TEXT NOT NULL DEFAULT '',
+  source_code TEXT NOT NULL DEFAULT '',
+  license TEXT NOT NULL DEFAULT '',
+  version TEXT NOT NULL DEFAULT '',
+  update_url TEXT NOT NULL DEFAULT '',
+
+  storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
   installed_by INTEGER NOT NULL DEFAULT 0,
   installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP  
 

@@ -1,8 +1,0 @@
-{
-    "name": "Simple Notes",
-    "description": "Really simple notes app to take notes.",
-    "slug": "simple-notes",
-    "type": "space",
-    "tags": "notes",
-    "version": "1.0.0"
-}

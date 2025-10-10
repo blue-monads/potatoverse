@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -9,10 +11,11 @@ import (
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/rs/xid"
 )
 
-func (c *Controller) ListEPackages() ([]engine.EPackage, error) {
+func (c *Controller) ListEPackages() ([]models.PotatoPackage, error) {
 	return engine.ListEPackages()
 }
 
@@ -154,7 +157,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string) (int64, erro
 		return 0, err
 	}
 
-	defer os.Remove(file)
+	// defer os.Remove(file)
 
 	return c.InstallPackageByFile(userId, file)
 }
@@ -165,29 +168,59 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 		return 0, err
 	}
 
-	pkg, err := c.database.GetPackage(packageId)
+	buf := bytes.Buffer{}
+	err = c.database.GetPackageFileStreamingByPath(packageId, "", "potato.json", &buf)
 	if err != nil {
 		return 0, err
 	}
 
-	spaceId, err := c.database.AddSpace(&dbmodels.Space{
-		PackageID:     packageId,
-		NamespaceKey:  pkg.Slug,
-		OwnsNamespace: true,
-		ExecutorType:  "luaz",
-		SubType:       "space",
-		OwnerID:       pkg.InstalledBy,
-		IsInitilized:  false,
-		IsPublic:      true,
-	})
-
+	pkg := &models.PotatoPackage{}
+	err = json.Unmarshal(buf.Bytes(), pkg)
 	if err != nil {
 		return 0, err
+	}
+
+	for _, artifact := range pkg.Artifacts {
+		if artifact.Kind != "space" {
+			c.logger.Info("artifact is not a space", "artifact", artifact)
+			continue
+		}
+
+		routeOptions, err := json.Marshal(artifact.RouteOptions)
+		if err != nil {
+			return 0, err
+		}
+
+		mcpOptions, err := json.Marshal(artifact.McpOptions)
+		if err != nil {
+			return 0, err
+		}
+
+		spaceId, err := c.database.AddSpace(&dbmodels.Space{
+			PackageID:         packageId,
+			NamespaceKey:      artifact.Namespace,
+			OwnsNamespace:     true,
+			ExecutorType:      artifact.ExecutorType,
+			SubType:           artifact.SubType,
+			RouteOptions:      string(routeOptions),
+			McpEnabled:        artifact.McpOptions.Enabled,
+			McpDefinitionFile: artifact.McpOptions.DefinitionFile,
+			McpOptions:        string(mcpOptions),
+			DevServePort:      int64(artifact.DevServePort),
+			OwnerID:           userId,
+			IsInitilized:      false,
+			IsPublic:          true,
+		})
+
+		if err != nil {
+			return 0, err
+		}
+
+		c.logger.Info("space installed", "space_id", spaceId)
+
 	}
 
 	c.engine.LoadRoutingIndex()
-
-	c.logger.Info("space installed", "space_id", spaceId)
 
 	return packageId, nil
 }

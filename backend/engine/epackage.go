@@ -9,31 +9,20 @@ import (
 	"path"
 	"strings"
 
+	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/k0kubun/pp"
 )
 
 //go:embed all:epackages/*
 var embedPackages embed.FS
 
-type EPackage struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Slug        string `json:"slug"`
-	Type        string `json:"type"`
-	Tags        string `json:"tags"`
-	Version     string `json:"version"`
-	Author      string `json:"author"`
-	TimeAgo     string `json:"timeAgo"`
-	MCp         bool   `json:"mcp"`
-}
-
-func ListEPackages() ([]EPackage, error) {
+func ListEPackages() ([]models.PotatoPackage, error) {
 	files, err := embedPackages.ReadDir("epackages")
 	if err != nil {
 		return nil, err
 	}
 
-	epackages := []EPackage{}
+	epackages := []models.PotatoPackage{}
 
 	for _, file := range files {
 
@@ -43,21 +32,18 @@ func ListEPackages() ([]EPackage, error) {
 			continue
 		}
 
-		fileName := fmt.Sprintf("epackages/%s/turnix.json", file.Name())
+		fileName := fmt.Sprintf("epackages/%s/potato.json", file.Name())
 
 		jsonFile, err := embedPackages.ReadFile(fileName)
 		if err != nil {
 			return nil, err
 		}
 
-		epackage := EPackage{}
+		epackage := models.PotatoPackage{}
 		err = json.Unmarshal(jsonFile, &epackage)
 		if err != nil {
 			return nil, err
 		}
-
-		epackage.Author = "Demo"
-		epackage.TimeAgo = "Just now"
 
 		epackages = append(epackages, epackage)
 

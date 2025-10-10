@@ -3,16 +3,26 @@ package dbmodels
 import "time"
 
 type Space struct {
-	ID            int64  `json:"id" db:"id,omitempty"`
-	NamespaceKey  string `json:"namespace_key" db:"namespace_key,omitempty"`
-	OwnsNamespace bool   `json:"owns_namespace" db:"owns_namespace,omitempty"`
-	PackageID     int64  `json:"package_id" db:"package_id,omitempty"`
-	ExecutorType  string `json:"executor_type" db:"executor_type,omitempty"`
-	SubType       string `json:"sub_type" db:"sub_type,omitempty"`
-	OwnerID       int64  `json:"owned_by" db:"owned_by"`
-	ExtraMeta     string `json:"extrameta" db:"extrameta,omitempty"`
-	IsInitilized  bool   `json:"is_initilized" db:"is_initilized,omitempty"`
-	IsPublic      bool   `json:"is_public" db:"is_public,omitempty"`
+	ID            int64 `json:"id" db:"id,omitempty"`
+	PackageID     int64 `json:"package_id" db:"package_id,omitempty"`
+	OwnsNamespace bool  `json:"owns_namespace" db:"owns_namespace,omitempty"`
+
+	NamespaceKey      string `json:"namespace_key" db:"namespace_key,omitempty"`
+	ExecutorType      string `json:"executor_type" db:"executor_type,omitempty"`
+	SubType           string `json:"sub_type" db:"sub_type,omitempty"`
+	RouteOptions      string `json:"route_options" db:"route_options,omitempty"`
+	McpEnabled        bool   `json:"mcp_enabled" db:"mcp_enabled,omitempty"`
+	McpDefinitionFile string `json:"mcp_definition_file" db:"mcp_definition_file,omitempty"`
+	McpOptions        string `json:"mcp_options" db:"mcp_options,omitempty"`
+	DevServePort      int64  `json:"dev_serve_port" db:"dev_serve_port,omitempty"`
+
+	DevMode bool `json:"dev_mode" db:"dev_mode,omitempty"`
+
+	OverlayForSpaceID int64  `json:"overlay_for_space_id" db:"overlay_for_space_id,omitempty"`
+	OwnerID           int64  `json:"owned_by" db:"owned_by"`
+	ExtraMeta         string `json:"extrameta" db:"extrameta,omitempty"`
+	IsInitilized      bool   `json:"is_initilized" db:"is_initilized,omitempty"`
+	IsPublic          bool   `json:"is_public" db:"is_public,omitempty"`
 }
 
 type SpaceUser struct {

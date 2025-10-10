@@ -250,7 +250,7 @@ const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
                         </div>
 
                         <div className="flex flex-col">
-                            <span className="font-medium">{item.author}</span>
+                            <span className="text-sm">{item.author_name}</span>
                             <div className="flex items-center gap-1 text-xs">
                                 <span>{item.timeAgo}</span>
                             </div>

@@ -217,11 +217,19 @@ export const deletePackage = async (id: number) => {
 
 export interface EPackage {
     name: string;
-    description: string;
-    slug: string;
+    info: string;
     type: string;
     tags: string;
+    format_version: string;
+    author_name: string;
+    author_email: string;
+    author_site: string;
+    source_code: string;
+    license: string;
+    update_url: string;
+    artifacts: any[];
     version: string;
+
 }
 
 export const listEPackages = async () => {

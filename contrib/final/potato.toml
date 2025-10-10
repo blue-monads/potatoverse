@@ -1,5 +1,6 @@
 name = "Simple TODO"
 info = "Todo list app to manage your tasks."
+slug = "simple-todo"
 tags = ["productivity", "personal"]
 format_version = "0.0.1"
 author_name = "John Doe"

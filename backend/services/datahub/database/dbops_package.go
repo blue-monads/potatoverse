@@ -10,13 +10,14 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/k0kubun/pp"
 	"github.com/upper/db/v4"
 )
 
 // "@file" "public/"
 // "@file" "public/index.html"
-// "@file" "turnix.json"
+// "@file" "potato.json"
 
 func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 	zipFile, err := zip.OpenReader(file)
@@ -28,7 +29,7 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 	packageJson := []byte{}
 	for _, file := range zipFile.File {
 		pp.Println("@file", file.Name)
-		if file.Name == "turnix.json" || file.Name == "/turnix.json" {
+		if file.Name == "potato.json" || file.Name == "/potato.json" {
 			jsonFile, err := file.Open()
 			if err != nil {
 				return 0, err
@@ -39,15 +40,30 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 		}
 	}
 
-	pkg := &dbmodels.Package{}
-	err = json.Unmarshal(packageJson, pkg)
+	rawpkg := &models.PotatoPackage{}
+	err = json.Unmarshal(packageJson, rawpkg)
 	if err != nil {
 		pp.Println("@packageJson", string(packageJson))
 		pp.Println("@err/1", err)
 		return 0, err
 	}
 
-	pkg.InstalledBy = userId
+	pkg := &dbmodels.Package{
+		Name:          rawpkg.Name,
+		Info:          rawpkg.Info,
+		Slug:          rawpkg.Slug,
+		Tags:          strings.Join(rawpkg.Tags, ","),
+		FormatVersion: rawpkg.FormatVersion,
+		AuthorName:    rawpkg.AuthorName,
+		AuthorEmail:   rawpkg.AuthorEmail,
+		AuthorSite:    rawpkg.AuthorSite,
+		SourceCode:    rawpkg.SourceCode,
+		License:       rawpkg.License,
+		Version:       rawpkg.Version,
+		UpdateUrl:     rawpkg.UpdateUrl,
+		StorageType:   "db",
+		InstalledBy:   userId,
+	}
 
 	table := d.packagesTable()
 	id, err := table.Insert(pkg)

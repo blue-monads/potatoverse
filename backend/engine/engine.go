@@ -112,13 +112,11 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 		name = "index.html"
 	}
 
-	fmeta, err := e.db.GetPackageFileMetaByPath(sIndex.packageId, path, name)
+	err := e.db.GetPackageFileStreamingByPath(sIndex.packageId, path, name, ctx.Writer)
 	if err != nil {
 		ctx.JSON(404, gin.H{"error": "file not found"})
 		return
 	}
-
-	e.db.GetPackageFileStreaming(sIndex.packageId, fmeta.ID, ctx.Writer)
 
 }
 
