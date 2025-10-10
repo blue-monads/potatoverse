@@ -93,10 +93,6 @@ const UserProfile = () => {
         );
     }
 
-    const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    };
-
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
@@ -149,8 +145,8 @@ const UserProfile = () => {
             <div className="max-w-4xl mx-auto px-6 py-8">
                 <div className="bg-white rounded-xl border border-gray-200 p-8">
                     <div className="text-center mb-8">
-                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                            {getInitials(user.name)}
+                        <div className=" rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+                            <img src={`/zz/profileImage/${user.id}/${user.name}`} alt="User Profile" className="w-20 h-20 rounded-full" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
                         {user.username && (

@@ -48,10 +48,6 @@ const UserProfileViewer = () => {
         }
     };
 
-    const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    };
-
     const formatDate = (dateString: string) => {
         if (!dateString) return 'Unknown';
         try {
@@ -173,8 +169,8 @@ const UserProfileViewer = () => {
             <div className="max-w-4xl mx-auto px-6 py-8">
                 <div className="bg-white rounded-xl border border-gray-200 p-8">
                     <div className="text-center mb-8">
-                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                            {getInitials(user.name)}
+                        <div className=" rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
+                            <img src={`/zz/profileImage/${user.id}/${user.name}`} alt="User Profile" className="w-20 h-20 rounded-full" />
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-1">{user.name}</h2>
                         {user.username && (
@@ -200,19 +196,19 @@ const UserProfileViewer = () => {
                     {/* Contact Information */}
                     <div className="space-y-4">
                         <h3 className="font-semibold text-gray-900 mb-3">Contact Information</h3>
-                        
+
                         <div className="flex items-center gap-3 text-gray-600">
                             <Mail className="w-5 h-5" />
                             <span className="text-sm">{user.email}</span>
                         </div>
-                        
+
                         {user.phone && (
                             <div className="flex items-center gap-3 text-gray-600">
                                 <User className="w-5 h-5" />
                                 <span className="text-sm">{user.phone}</span>
                             </div>
                         )}
-                        
+
                         <div className="flex items-center gap-3 text-gray-600">
                             <div className="w-5 h-5 flex items-center justify-center">
                                 <div className={`w-3 h-3 rounded-full ${user.is_verified ? 'bg-green-500' : 'bg-gray-400'}`}></div>
