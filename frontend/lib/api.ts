@@ -40,6 +40,7 @@ export interface User {
     id: number;
     name: string;
     utype: string;
+    ugroup: string;
     email: string;
     phone: string;
     username: string;
@@ -60,6 +61,10 @@ export interface User {
 
 export const getUsers = async () => {
     return iaxios.get<User[]>("/core/user");
+}
+
+export const getUser = async (id: number) => {
+    return iaxios.get<User>(`/core/user/${id}`);
 }
 
 // User Invites
@@ -155,6 +160,15 @@ export interface AdminPortalData {
 
 export const getAdminPortalData = async (portal_type: string) => {
     return iaxios.get<AdminPortalData>(`/core/self/portalData/${portal_type}`);
+}
+
+// Self API
+export const getSelfInfo = async () => {
+    return iaxios.get<User>("/core/self/info");
+}
+
+export const updateSelfBio = async (bio: string) => {
+    return iaxios.put<{ message: string }>("/core/self/bio", { bio });
 }
 
 

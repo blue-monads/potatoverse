@@ -116,7 +116,7 @@ export default function Page() {
               label: "View",
               className: "bg-primary-500",
               onClick: (rowData: User) => {
-                console.log("rowData", rowData);
+                router.push(`/portal/admin/users/profile?user=${rowData.id}`);
               },
               icon: <Eye className="w-4 h-4" />,
             },

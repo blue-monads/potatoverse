@@ -74,6 +74,8 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 
 func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
 	g.GET("/portalData/:portal_type", a.withAccessTokenFn(a.selfUserPortalData))
+	g.GET("/info", a.withAccessTokenFn(a.selfInfo))
+	g.PUT("/bio", a.withAccessTokenFn(a.updateSelfBio))
 }
 
 func (a *Server) extraRoutes(g *gin.RouterGroup) {
