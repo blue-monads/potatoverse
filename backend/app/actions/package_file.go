@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 )
 
-func (c *Controller) ListPackageFiles(packageId int64, path string) ([]models.PackageFile, error) {
+func (c *Controller) ListPackageFiles(packageId int64, path string) ([]dbmodels.PackageFile, error) {
 	return c.database.ListPackageFilesByPath(packageId, path)
 }
 
-func (c *Controller) GetPackageFile(packageId, fileId int64) (*models.PackageFile, error) {
+func (c *Controller) GetPackageFile(packageId, fileId int64) (*dbmodels.PackageFile, error) {
 	return c.database.GetPackageFileMeta(packageId, fileId)
 }
 
@@ -31,15 +31,15 @@ func (c *Controller) UploadPackageFile(packageId int64, name, path string, strea
 
 // Space KV operations
 
-func (c *Controller) GetSpace(spaceId int64) (*models.Space, error) {
+func (c *Controller) GetSpace(spaceId int64) (*dbmodels.Space, error) {
 	return c.database.GetSpace(spaceId)
 }
 
-func (c *Controller) QuerySpaceKV(spaceId int64, cond map[any]any) ([]models.SpaceKV, error) {
+func (c *Controller) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error) {
 	return c.database.QuerySpaceKV(spaceId, cond)
 }
 
-func (c *Controller) GetSpaceKVByID(spaceId, kvId int64) (*models.SpaceKV, error) {
+func (c *Controller) GetSpaceKVByID(spaceId, kvId int64) (*dbmodels.SpaceKV, error) {
 	// First get all KV entries for the space and find by ID
 	kvEntries, err := c.database.QuerySpaceKV(spaceId, map[any]any{})
 	if err != nil {
@@ -55,7 +55,7 @@ func (c *Controller) GetSpaceKVByID(spaceId, kvId int64) (*models.SpaceKV, error
 	return nil, errors.New("KV entry not found")
 }
 
-func (c *Controller) CreateSpaceKV(spaceId int64, data map[string]any) (*models.SpaceKV, error) {
+func (c *Controller) CreateSpaceKV(spaceId int64, data map[string]any) (*dbmodels.SpaceKV, error) {
 	// Validate required fields
 	key, ok := data["key"].(string)
 	if !ok || key == "" {
@@ -77,7 +77,7 @@ func (c *Controller) CreateSpaceKV(spaceId int64, data map[string]any) (*models.
 	tag2, _ := data["tag2"].(string)
 	tag3, _ := data["tag3"].(string)
 
-	kv := &models.SpaceKV{
+	kv := &dbmodels.SpaceKV{
 		SpaceID: spaceId,
 		Key:     key,
 		Group:   groupName,
@@ -96,7 +96,7 @@ func (c *Controller) CreateSpaceKV(spaceId int64, data map[string]any) (*models.
 	return c.database.GetSpaceKV(spaceId, groupName, key)
 }
 
-func (c *Controller) UpdateSpaceKVByID(spaceId, kvId int64, data map[string]any) (*models.SpaceKV, error) {
+func (c *Controller) UpdateSpaceKVByID(spaceId, kvId int64, data map[string]any) (*dbmodels.SpaceKV, error) {
 	// Get the existing KV entry
 	kv, err := c.GetSpaceKVByID(spaceId, kvId)
 	if err != nil {
@@ -125,11 +125,11 @@ func (c *Controller) DeleteSpaceKVByID(spaceId, kvId int64) error {
 
 // Space Files operations
 
-func (c *Controller) ListSpaceFiles(spaceId int64, path string) ([]models.File, error) {
+func (c *Controller) ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File, error) {
 	return c.database.ListFilesBySpace(spaceId, path)
 }
 
-func (c *Controller) GetSpaceFile(spaceId, fileId int64) (*models.File, error) {
+func (c *Controller) GetSpaceFile(spaceId, fileId int64) (*dbmodels.File, error) {
 	// First get the file to verify it belongs to the space
 	file, err := c.database.GetFileMeta(fileId)
 	if err != nil {
@@ -166,7 +166,7 @@ func (c *Controller) DeleteSpaceFile(spaceId, fileId int64) error {
 func (c *Controller) UploadSpaceFile(spaceId int64, name, path string, stream io.Reader, createdBy int64) (int64, error) {
 	// Create file metadata
 	now := time.Now()
-	file := &models.File{
+	file := &dbmodels.File{
 		Name:         name,
 		Path:         path,
 		OwnerSpaceID: spaceId,

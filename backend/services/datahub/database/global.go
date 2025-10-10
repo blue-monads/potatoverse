@@ -2,17 +2,17 @@ package database
 
 import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/k0kubun/pp"
 	"github.com/upper/db/v4"
 )
 
 var _ datahub.GlobalOps = (*DB)(nil)
 
-func (d *DB) GetGlobalConfig(key, group string) (*models.GlobalConfig, error) {
+func (d *DB) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
 	pp.Println("@1", key, group)
-	var config models.GlobalConfig
+	var config dbmodels.GlobalConfig
 	err := table.Find(db.Cond{"key": key, "group_name": group}).One(&config)
 	if err != nil {
 		return nil, err
@@ -20,9 +20,9 @@ func (d *DB) GetGlobalConfig(key, group string) (*models.GlobalConfig, error) {
 	return &config, nil
 }
 
-func (d *DB) ListGlobalConfigs(group string, offset int, limit int) ([]models.GlobalConfig, error) {
+func (d *DB) ListGlobalConfigs(group string, offset int, limit int) ([]dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
-	var configs []models.GlobalConfig
+	var configs []dbmodels.GlobalConfig
 	err := table.Find(db.Cond{"group_name": group}).Offset(offset).Limit(limit).All(&configs)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (d *DB) ListGlobalConfigs(group string, offset int, limit int) ([]models.Gl
 	return configs, nil
 }
 
-func (d *DB) AddGlobalConfig(data *models.GlobalConfig) (int64, error) {
+func (d *DB) AddGlobalConfig(data *dbmodels.GlobalConfig) (int64, error) {
 	table := d.globalConfigTable()
 	res, err := table.Insert(data)
 	if err != nil {

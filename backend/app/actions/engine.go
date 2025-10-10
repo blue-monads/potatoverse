@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/rs/xid"
 )
@@ -17,8 +17,8 @@ func (c *Controller) ListEPackages() ([]engine.EPackage, error) {
 }
 
 type InstalledSpace struct {
-	Spaces   []models.Space   `json:"spaces"`
-	Packages []models.Package `json:"packages"`
+	Spaces   []dbmodels.Space   `json:"spaces"`
+	Packages []dbmodels.Package `json:"packages"`
 }
 
 func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
@@ -47,7 +47,7 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		return nil, err
 	}
 
-	finalSpaces := make([]models.Space, 0, len(ownspaces)+len(tpSpaces))
+	finalSpaces := make([]dbmodels.Space, 0, len(ownspaces)+len(tpSpaces))
 	hasPackageMap := make(map[int64]struct{})
 
 	for _, pkg := range packages {
@@ -144,7 +144,7 @@ func (c *Controller) InstallPackageByUrl(userId int64, url string) (int64, error
 
 }
 
-func (c *Controller) GetPackage(packageId int64) (*models.Package, error) {
+func (c *Controller) GetPackage(packageId int64) (*dbmodels.Package, error) {
 	return c.database.GetPackage(packageId)
 }
 
@@ -170,7 +170,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 		return 0, err
 	}
 
-	spaceId, err := c.database.AddSpace(&models.Space{
+	spaceId, err := c.database.AddSpace(&dbmodels.Space{
 		PackageID:     packageId,
 		NamespaceKey:  pkg.Slug,
 		OwnsNamespace: true,

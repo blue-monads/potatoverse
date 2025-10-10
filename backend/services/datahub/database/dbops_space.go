@@ -3,11 +3,11 @@ package database
 import (
 	"log"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
-func (d *DB) AddSpace(data *models.Space) (int64, error) {
+func (d *DB) AddSpace(data *dbmodels.Space) (int64, error) {
 	r, err := d.spaceTable().Insert(data)
 	if err != nil {
 		return 0, err
@@ -16,8 +16,8 @@ func (d *DB) AddSpace(data *models.Space) (int64, error) {
 	return r.ID().(int64), nil
 }
 
-func (d *DB) GetSpace(id int64) (*models.Space, error) {
-	data := &models.Space{}
+func (d *DB) GetSpace(id int64) (*dbmodels.Space, error) {
+	data := &dbmodels.Space{}
 
 	err := d.spaceTable().Find(db.Cond{"id": id}).One(data)
 	if err != nil {
@@ -27,8 +27,8 @@ func (d *DB) GetSpace(id int64) (*models.Space, error) {
 	return data, nil
 }
 
-func (d *DB) ListSpaces() ([]models.Space, error) {
-	datas := make([]models.Space, 0)
+func (d *DB) ListSpaces() ([]dbmodels.Space, error) {
+	datas := make([]dbmodels.Space, 0)
 
 	err := d.spaceTable().Find().All(&datas)
 	if err != nil {
@@ -46,9 +46,9 @@ func (d *DB) RemoveSpace(id int64) error {
 	return d.spaceTable().Find(db.Cond{"id": id}).Delete()
 }
 
-func (d *DB) ListSpaceUsers(spaceId int64) ([]models.SpaceUser, error) {
+func (d *DB) ListSpaceUsers(spaceId int64) ([]dbmodels.SpaceUser, error) {
 
-	datas := make([]models.SpaceUser, 0)
+	datas := make([]dbmodels.SpaceUser, 0)
 
 	err := d.spaceUserTable().Find(db.Cond{"space_id": spaceId}).All(&datas)
 	if err != nil {
@@ -64,7 +64,7 @@ func (d *DB) AddUserToSpace(ownerId int64, userId int64, spaceId int64) error {
 		return ErrUserNoScope
 	}
 
-	_, err := d.spaceUserTable().Insert(models.SpaceUser{
+	_, err := d.spaceUserTable().Insert(dbmodels.SpaceUser{
 		UserID:  userId,
 		SpaceID: spaceId,
 	})
@@ -76,7 +76,7 @@ func (d *DB) RemoveUserFromSpace(ownerId int64, userId int64, spaceId int64) err
 }
 func (d *DB) GetSpaceUserScope(userId int64, spaceId int64) (string, error) {
 
-	data := &models.SpaceUser{}
+	data := &dbmodels.SpaceUser{}
 	err := d.spaceUserTable().Find(db.Cond{"user_id": userId, "space_id": spaceId}).One(data)
 	if err != nil {
 		return "", err
@@ -85,13 +85,13 @@ func (d *DB) GetSpaceUserScope(userId int64, spaceId int64) (string, error) {
 	return data.Scope, nil
 }
 
-func (d *DB) ListOwnSpaces(ownerId int64, spaceType string) ([]models.Space, error) {
+func (d *DB) ListOwnSpaces(ownerId int64, spaceType string) ([]dbmodels.Space, error) {
 	cond := db.Cond{"owned_by": ownerId}
 	if spaceType != "" {
 		cond["stype"] = spaceType
 	}
 
-	datas := make([]models.Space, 0)
+	datas := make([]dbmodels.Space, 0)
 	err := d.spaceTable().Find(cond).All(&datas)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ type TSpace struct {
 	SpaceId int64 `json:"space_id" db:"space_id"`
 }
 
-func (d *DB) ListThirdPartySpaces(userId int64, spaceType string) ([]models.Space, error) {
+func (d *DB) ListThirdPartySpaces(userId int64, spaceType string) ([]dbmodels.Space, error) {
 	cond := db.Cond{
 		"userId": userId,
 	}
@@ -127,7 +127,7 @@ func (d *DB) ListThirdPartySpaces(userId int64, spaceType string) ([]models.Spac
 		projIds = append(projIds, p.SpaceId)
 	}
 
-	datas := make([]models.Space, 0, len(projs))
+	datas := make([]dbmodels.Space, 0, len(projs))
 
 	err = d.spaceTable().Find(db.Cond{
 		"userId": userId,
@@ -143,7 +143,7 @@ func (d *DB) ListThirdPartySpaces(userId int64, spaceType string) ([]models.Spac
 
 // Space Configs
 
-func (d *DB) AddSpaceConfig(spaceId int64, uid int64, data *models.SpaceConfig) (int64, error) {
+func (d *DB) AddSpaceConfig(spaceId int64, uid int64, data *dbmodels.SpaceConfig) (int64, error) {
 	data.SpaceID = spaceId
 
 	rid, err := d.spaceConfigsTable().Insert(data)
@@ -154,8 +154,8 @@ func (d *DB) AddSpaceConfig(spaceId int64, uid int64, data *models.SpaceConfig) 
 	return id, nil
 }
 
-func (d *DB) ListSpaceConfigs(spaceId int64) ([]models.SpaceConfig, error) {
-	configs := make([]models.SpaceConfig, 0)
+func (d *DB) ListSpaceConfigs(spaceId int64) ([]dbmodels.SpaceConfig, error) {
+	configs := make([]dbmodels.SpaceConfig, 0)
 	err := d.spaceConfigsTable().Find(db.Cond{"space_id": spaceId}).All(&configs)
 	if err != nil {
 		return nil, err
@@ -164,8 +164,8 @@ func (d *DB) ListSpaceConfigs(spaceId int64) ([]models.SpaceConfig, error) {
 	return configs, nil
 }
 
-func (d *DB) GetSpaceConfig(spaceId int64, uid int64, id int64) (*models.SpaceConfig, error) {
-	data := &models.SpaceConfig{}
+func (d *DB) GetSpaceConfig(spaceId int64, uid int64, id int64) (*dbmodels.SpaceConfig, error) {
+	data := &dbmodels.SpaceConfig{}
 	err := d.spaceConfigsTable().Find(db.Cond{"space_id": spaceId, "id": id}).One(data)
 	if err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (d *DB) ListSpaceTables(spaceId int64) ([]string, error) {
 	return nil, nil
 }
 
-func (d *DB) ListSpaceTableColumns(spaceId int64, table string) ([]models.SpaceTableColumn, error) {
+func (d *DB) ListSpaceTableColumns(spaceId int64, table string) ([]dbmodels.SpaceTableColumn, error) {
 	return nil, nil
 }
 

@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/rs/xid"
 )
@@ -16,16 +16,16 @@ type LoginOpts struct {
 }
 
 type LoginResponse struct {
-	AccessToken    string       `json:"access_token"`
-	UserInfo       *models.User `json:"user_info"`
-	PortalPageType string       `json:"portal_page_type"`
+	AccessToken    string         `json:"access_token"`
+	UserInfo       *dbmodels.User `json:"user_info"`
+	PortalPageType string         `json:"portal_page_type"`
 }
 
 var phoneRegex = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
 
 func (c *Controller) Login(opts *LoginOpts) (*LoginResponse, error) {
 
-	var user *models.User
+	var user *dbmodels.User
 
 	if strings.Contains(opts.Username, "@") {
 		_user, err := c.database.GetUserByEmail(opts.Username)

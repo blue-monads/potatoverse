@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/jaevor/go-nanoid"
 	"github.com/k0kubun/pp"
 
@@ -21,7 +21,7 @@ var _ datahub.FileDataOps = (*DB)(nil)
 
 func (d *DB) AddFolder(spaceId int64, uid int64, path string, name string) (int64, error) {
 	t := time.Now()
-	file := &models.File{
+	file := &dbmodels.File{
 		Name:         name,
 		Path:         path,
 		CreatedBy:    uid,
@@ -39,7 +39,7 @@ func (d *DB) AddFolder(spaceId int64, uid int64, path string, name string) (int6
 	return id, nil
 }
 
-func (d *DB) AddFileStreaming(file *models.File, stream io.Reader) (id int64, err error) {
+func (d *DB) AddFileStreaming(file *dbmodels.File, stream io.Reader) (id int64, err error) {
 	pp.Println("@add_file_streaming/1", file.Path)
 	filetable := d.filesTable()
 	partstable := d.filePartedBlobsTable()
@@ -145,7 +145,7 @@ func (d *DB) AddFileStreaming(file *models.File, stream io.Reader) (id int64, er
 func (d *DB) GetFileBlobStreaming(id int64, w http.ResponseWriter) error {
 	pp.Println("@get_file_blob_streaming/1", id)
 	table := d.filesTable()
-	file := models.File{}
+	file := dbmodels.File{}
 	err := table.Find(db.Cond{"id": id}).One(&file)
 	if err != nil {
 		return err
@@ -193,7 +193,7 @@ func (d *DB) GetFileBlobStreaming(id int64, w http.ResponseWriter) error {
 			return err
 		}
 	case 2:
-		parts := make([]models.FilePartedBlob, 0)
+		parts := make([]dbmodels.FilePartedBlob, 0)
 		pp.Println("@get_file_blob_streaming/12")
 		err := d.filePartedBlobsTable().Find(db.Cond{"file_id": id}).
 			Select("id", "size", "part_id").
@@ -236,9 +236,9 @@ func (d *DB) GetFileBlobStreaming(id int64, w http.ResponseWriter) error {
 	pp.Println("@get_file_blob_streaming/23")
 	return nil
 }
-func (d *DB) GetFileMeta(id int64) (*models.File, error) {
+func (d *DB) GetFileMeta(id int64) (*dbmodels.File, error) {
 	table := d.filesTable()
-	file := models.File{}
+	file := dbmodels.File{}
 	err := table.Find(db.Cond{"id": id}).One(&file)
 	if err != nil {
 		return nil, err
@@ -246,7 +246,7 @@ func (d *DB) GetFileMeta(id int64) (*models.File, error) {
 	return &file, nil
 }
 
-func (d *DB) ListFilesBySpace(spaceId int64, path string) ([]models.File, error) {
+func (d *DB) ListFilesBySpace(spaceId int64, path string) ([]dbmodels.File, error) {
 	table := d.filesTable()
 	cond := db.Cond{
 		"owner_space_id": spaceId,
@@ -255,21 +255,21 @@ func (d *DB) ListFilesBySpace(spaceId int64, path string) ([]models.File, error)
 
 	pp.Println("@list_files_by_space/1", cond)
 
-	files := make([]models.File, 0)
+	files := make([]dbmodels.File, 0)
 	err := table.Find(cond).All(&files)
 	if err != nil {
 		return nil, err
 	}
 	return files, nil
 }
-func (d *DB) ListFilesByUser(uid int64, path string) ([]models.File, error) {
+func (d *DB) ListFilesByUser(uid int64, path string) ([]dbmodels.File, error) {
 	table := d.filesTable()
 	cond := db.Cond{
 		"ftype":         "user",
 		"owner_user_id": uid,
 		"path":          path,
 	}
-	files := make([]models.File, 0)
+	files := make([]dbmodels.File, 0)
 	err := table.Find(cond).All(&files)
 	if err != nil {
 		return nil, err
@@ -279,7 +279,7 @@ func (d *DB) ListFilesByUser(uid int64, path string) ([]models.File, error) {
 
 func (d *DB) RemoveFile(id int64) error {
 	table := d.filesTable()
-	file := models.File{}
+	file := dbmodels.File{}
 	record := table.Find(db.Cond{"id": id})
 	err := record.One(&file)
 	if err != nil {
@@ -305,7 +305,7 @@ func (d *DB) UpdateFile(id int64, data map[string]any) error {
 	table := d.filesTable()
 	return table.Find(db.Cond{"id": id}).Update(data)
 }
-func (d *DB) UpdateFileStreaming(file *models.File, stream io.Reader) (int64, error) {
+func (d *DB) UpdateFileStreaming(file *dbmodels.File, stream io.Reader) (int64, error) {
 	err := d.RemoveFile(file.ID)
 	if err != nil {
 		return 0, err
@@ -317,7 +317,7 @@ func (d *DB) UpdateFileStreaming(file *models.File, stream io.Reader) (int64, er
 
 func (d *DB) GetSharedFile(id string, w http.ResponseWriter) error {
 	table := d.fileSharesTable()
-	file := &models.FileShare{}
+	file := &dbmodels.FileShare{}
 	err := table.Find(db.Cond{"id": id}).One(file)
 	if err != nil {
 		return err
@@ -341,7 +341,7 @@ func (d *DB) AddFileShare(fileId int64, userId int64, spaceId int64) (string, er
 
 	shareId := fmt.Sprintf("%s%s", generator(), ext)
 
-	data := &models.FileShare{
+	data := &dbmodels.FileShare{
 		ID:        shareId,
 		FileID:    fileId,
 		UserID:    userId,
@@ -358,10 +358,10 @@ func (d *DB) AddFileShare(fileId int64, userId int64, spaceId int64) (string, er
 	return shareId, nil
 }
 
-func (d *DB) ListFileShares(fileId int64) ([]models.FileShare, error) {
+func (d *DB) ListFileShares(fileId int64) ([]dbmodels.FileShare, error) {
 	table := d.fileSharesTable()
 
-	shares := make([]models.FileShare, 0)
+	shares := make([]dbmodels.FileShare, 0)
 
 	err := table.Find(db.Cond{"file_id": fileId}).All(&shares)
 	if err != nil {

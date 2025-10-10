@@ -1,16 +1,16 @@
 package actions
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 )
 
 // User Group actions
 
-func (c *Controller) ListUserGroups() ([]models.UserGroup, error) {
+func (c *Controller) ListUserGroups() ([]dbmodels.UserGroup, error) {
 	return c.database.ListUserGroups()
 }
 
-func (c *Controller) GetUserGroup(name string) (*models.UserGroup, error) {
+func (c *Controller) GetUserGroup(name string) (*dbmodels.UserGroup, error) {
 	return c.database.GetUserGroup(name)
 }
 

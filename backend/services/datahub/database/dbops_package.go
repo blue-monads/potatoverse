@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/k0kubun/pp"
 	"github.com/upper/db/v4"
 )
@@ -39,7 +39,7 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 		}
 	}
 
-	pkg := &models.Package{}
+	pkg := &dbmodels.Package{}
 	err = json.Unmarshal(packageJson, pkg)
 	if err != nil {
 		pp.Println("@packageJson", string(packageJson))
@@ -104,8 +104,8 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 	return id.ID().(int64), nil
 }
 
-func (d *DB) GetPackage(id int64) (*models.Package, error) {
-	item := models.Package{}
+func (d *DB) GetPackage(id int64) (*dbmodels.Package, error) {
+	item := dbmodels.Package{}
 	err := d.packagesTable().Find(db.Cond{"id": id}).One(&item)
 	if err != nil {
 		return nil, err
@@ -133,8 +133,8 @@ func (d *DB) UpdatePackage(id int64, data map[string]any) error {
 	return d.packagesTable().Find(db.Cond{"id": id}).Update(data)
 }
 
-func (d *DB) ListPackages() ([]models.Package, error) {
-	items := make([]models.Package, 0)
+func (d *DB) ListPackages() ([]dbmodels.Package, error) {
+	items := make([]dbmodels.Package, 0)
 	err := d.packagesTable().Find().All(&items)
 	if err != nil {
 		return nil, err
@@ -142,8 +142,8 @@ func (d *DB) ListPackages() ([]models.Package, error) {
 	return items, nil
 }
 
-func (d *DB) ListPackagesByIds(ids []int64) ([]models.Package, error) {
-	items := make([]models.Package, 0)
+func (d *DB) ListPackagesByIds(ids []int64) ([]dbmodels.Package, error) {
+	items := make([]dbmodels.Package, 0)
 	err := d.packagesTable().Find(db.Cond{"id": ids}).All(&items)
 	if err != nil {
 		return nil, err
@@ -151,8 +151,8 @@ func (d *DB) ListPackagesByIds(ids []int64) ([]models.Package, error) {
 	return items, nil
 }
 
-func (d *DB) ListPackageFilesByPath(packageId int64, path string) ([]models.PackageFile, error) {
-	items := make([]models.PackageFile, 0)
+func (d *DB) ListPackageFilesByPath(packageId int64, path string) ([]dbmodels.PackageFile, error) {
+	items := make([]dbmodels.PackageFile, 0)
 	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId, "path": path}).All(&items)
 	if err != nil {
 		return nil, err
@@ -160,8 +160,8 @@ func (d *DB) ListPackageFilesByPath(packageId int64, path string) ([]models.Pack
 	return items, nil
 }
 
-func (d *DB) ListPackageFiles(packageId int64) ([]models.PackageFile, error) {
-	items := make([]models.PackageFile, 0)
+func (d *DB) ListPackageFiles(packageId int64) ([]dbmodels.PackageFile, error) {
+	items := make([]dbmodels.PackageFile, 0)
 
 	cond := db.Cond{"package_id": packageId}
 
@@ -172,8 +172,8 @@ func (d *DB) ListPackageFiles(packageId int64) ([]models.PackageFile, error) {
 	return items, nil
 }
 
-func (d *DB) GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error) {
-	item := models.PackageFile{}
+func (d *DB) GetPackageFileMeta(packageId, id int64) (*dbmodels.PackageFile, error) {
+	item := dbmodels.PackageFile{}
 	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId, "id": id}).One(&item)
 	if err != nil {
 		return nil, err
@@ -181,8 +181,8 @@ func (d *DB) GetPackageFileMeta(packageId, id int64) (*models.PackageFile, error
 	return &item, nil
 }
 
-func (d *DB) GetPackageFileMetaByPath(packageId int64, path, name string) (*models.PackageFile, error) {
-	item := models.PackageFile{}
+func (d *DB) GetPackageFileMetaByPath(packageId int64, path, name string) (*dbmodels.PackageFile, error) {
+	item := dbmodels.PackageFile{}
 	err := d.packageFilesTable().Find(db.Cond{
 		"package_id": packageId,
 		"path":       path,
@@ -198,7 +198,7 @@ func (d *DB) GetPackageFileMetaByPath(packageId int64, path, name string) (*mode
 func (d *DB) GetPackageFileStreaming(packageId, id int64, w io.Writer) error {
 	pp.Println("@GetPackageFileStreaming/1")
 
-	item := models.PackageFile{}
+	item := dbmodels.PackageFile{}
 	err := d.packageFilesTable().Find(db.Cond{"package_id": packageId, "id": id}).One(&item)
 	if err != nil {
 		pp.Println("@GetPackageFileStreaming/2", err)
@@ -212,7 +212,7 @@ func (d *DB) GetPackageFileStreaming(packageId, id int64, w io.Writer) error {
 	}
 	pp.Println("@GetPackageFileStreaming/5")
 
-	fileBlobs := make([]models.PackageFileBlobLite, 0)
+	fileBlobs := make([]dbmodels.PackageFileBlobLite, 0)
 	err = d.packageFileBlobsTable().Find(db.Cond{"file_id": item.ID}).All(&fileBlobs)
 	if err != nil {
 		pp.Println("@GetPackageFileStreaming/6", err)
@@ -269,7 +269,7 @@ func (d *DB) GetPackageFile(packageId, id int64) ([]byte, error) {
 
 func (d *DB) createPackageFolder(packageId int64, path, name string) (int64, error) {
 	t := time.Now()
-	file := &models.PackageFile{
+	file := &dbmodels.PackageFile{
 		PackageID: packageId,
 		StoreType: 0,
 		Name:      name,
@@ -340,7 +340,7 @@ func (d *DB) AddPackageFile(packageId int64, name string, path string, data []by
 func (d *DB) AddPackageFileStreaming(packageId int64, name string, path string, stream io.Reader) (int64, error) {
 	t := time.Now()
 
-	file := &models.PackageFile{
+	file := &dbmodels.PackageFile{
 		PackageID: packageId,
 		StoreType: 2,
 		Name:      name,
@@ -407,7 +407,7 @@ func (d *DB) setPackageBlobs(fileId int64, stream io.Reader) (int64, error) {
 		if n == 0 {
 			break
 		}
-		_, err = d.packageFileBlobsTable().Insert(models.PackageFileBlob{
+		_, err = d.packageFileBlobsTable().Insert(dbmodels.PackageFileBlob{
 			FileID: fileId,
 			Size:   int64(n),
 			PartID: int64(partId),

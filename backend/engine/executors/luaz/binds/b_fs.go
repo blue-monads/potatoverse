@@ -6,7 +6,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -23,7 +23,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 			contentStr := L.CheckString(4)
 
 			reader := bytes.NewReader(kosher.Byte(contentStr))
-			id, err := db.AddFileStreaming(&models.File{
+			id, err := db.AddFileStreaming(&dbmodels.File{
 				IsFolder:     false,
 				OwnerSpaceID: spaceId,
 				CreatedBy:    uid,

@@ -1,4 +1,4 @@
-package models
+package dbmodels
 
 type GlobalConfig struct {
 	ID        int64  `db:"id,omitempty" json:"id"`

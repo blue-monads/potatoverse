@@ -1,11 +1,11 @@
 package actions
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 )
 
 // GetSelfInfo returns the current user's information
-func (c *Controller) GetSelfInfo(userId int64) (*models.User, error) {
+func (c *Controller) GetSelfInfo(userId int64) (*dbmodels.User, error) {
 	user, err := c.database.GetUser(userId)
 	if err != nil {
 		return nil, err

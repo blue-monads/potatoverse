@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/k0kubun/pp"
 )
 
 // user
 
-func (c *Controller) AddAdminUserDirect(name, password, email string) (*models.User, error) {
+func (c *Controller) AddAdminUserDirect(name, password, email string) (*dbmodels.User, error) {
 	return c.AddUserDirect(name, password, email, "admin")
 }
 
-func (c *Controller) AddNormalUserDirect(name, password, email string) (*models.User, error) {
+func (c *Controller) AddNormalUserDirect(name, password, email string) (*dbmodels.User, error) {
 	return c.AddUserDirect(name, password, email, "normal")
 }
 
-func (c *Controller) AddUserDirect(name, password, email, utype string) (*models.User, error) {
+func (c *Controller) AddUserDirect(name, password, email, utype string) (*dbmodels.User, error) {
 
-	uid, err := c.database.AddUser(&models.User{
+	uid, err := c.database.AddUser(&dbmodels.User{
 		ID:         0,
 		Name:       name,
 		Bio:        "This is a normal user.",
@@ -99,7 +99,7 @@ func (c *Controller) SetAppFingerPrint(fingerPrint *AppFingerPrint) error {
 		return err
 	}
 
-	config := &models.GlobalConfig{
+	config := &dbmodels.GlobalConfig{
 		Key:       "fingerprint",
 		GroupName: "CORE",
 		Value:     string(data),

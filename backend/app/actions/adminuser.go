@@ -3,7 +3,7 @@ package actions
 import (
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/mailer"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
@@ -12,15 +12,15 @@ import (
 	"github.com/rs/xid"
 )
 
-func (c *Controller) ListUsers(offset int, limit int) ([]models.User, error) {
+func (c *Controller) ListUsers(offset int, limit int) ([]dbmodels.User, error) {
 	return c.database.ListUser(offset, limit)
 }
 
-func (c *Controller) AddUser(user *models.User) (int64, error) {
+func (c *Controller) AddUser(user *dbmodels.User) (int64, error) {
 	return c.database.AddUser(user)
 }
 
-func (c *Controller) GetUser(id int64) (*models.User, error) {
+func (c *Controller) GetUser(id int64) (*dbmodels.User, error) {
 	usr, err := c.database.GetUser(id)
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (c *Controller) DeleteUser(id int64) error {
 	return c.database.DeleteUser(id)
 }
 
-func (c *Controller) UpdateUser(id int64, user *models.User) error {
+func (c *Controller) UpdateUser(id int64, user *dbmodels.User) error {
 
 	return c.database.UpdateUser(id, map[string]any{
 		"name": user.Name,
@@ -88,16 +88,16 @@ func (c *Controller) UpdateUser(id int64, user *models.User) error {
 
 // User Invites
 
-func (c *Controller) ListUserInvites(offset int, limit int) ([]models.UserInvite, error) {
+func (c *Controller) ListUserInvites(offset int, limit int) ([]dbmodels.UserInvite, error) {
 	return c.database.ListUserInvites(offset, limit)
 }
 
-func (c *Controller) GetUserInvite(id int64) (*models.UserInvite, error) {
+func (c *Controller) GetUserInvite(id int64) (*dbmodels.UserInvite, error) {
 	return c.database.GetUserInvite(id)
 }
 
 type UserInviteResponse struct {
-	*models.UserInvite
+	*dbmodels.UserInvite
 	InviteUrl string `json:"invite_url"`
 }
 
@@ -114,7 +114,7 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 
 	expiresOn := time.Now().Add(7 * 24 * time.Hour)
 
-	invite := &models.UserInvite{
+	invite := &dbmodels.UserInvite{
 		Email:         email,
 		Role:          role,
 		Status:        "pending",
@@ -226,7 +226,7 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 	}, nil
 }
 
-func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password string) (*models.User, error) {
+func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password string) (*dbmodels.User, error) {
 	// Get the invite
 	invite, err := c.database.GetUserInvite(inviteId)
 	if err != nil {
@@ -256,7 +256,7 @@ func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password s
 	}
 
 	// Create new user
-	user := &models.User{
+	user := &dbmodels.User{
 		Name:        name,
 		Email:       invite.Email,
 		Username:    &username,
@@ -287,7 +287,7 @@ func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password s
 
 // Create User Directly
 
-func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup string, createdBy int64) (*models.User, error) {
+func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup string, createdBy int64) (*dbmodels.User, error) {
 	// Check if user already exists by email
 	existingUser, err := c.database.GetUserByEmail(email)
 	if err == nil && existingUser != nil {
@@ -301,7 +301,7 @@ func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup str
 	}
 
 	// Create new user
-	user := &models.User{
+	user := &dbmodels.User{
 		Name:        name,
 		Email:       email,
 		Username:    &username,

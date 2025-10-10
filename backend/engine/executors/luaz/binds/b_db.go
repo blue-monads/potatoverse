@@ -5,7 +5,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -37,7 +37,7 @@ func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 		}
 		AddSpaceKV := func(L *lua.LState) int {
 
-			dataStruct := models.SpaceKV{}
+			dataStruct := dbmodels.SpaceKV{}
 
 			if err := toStructFromTableInner(L, L.CheckTable(1), reflect.ValueOf(&dataStruct)); err != nil {
 				L.Push(lua.LNil)

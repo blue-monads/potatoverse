@@ -2,13 +2,13 @@ package database
 
 import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/models"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
 var _ datahub.UserOps = (*DB)(nil)
 
-func (d *DB) AddUser(data *models.User) (int64, error) {
+func (d *DB) AddUser(data *dbmodels.User) (int64, error) {
 	r, err := d.userTable().Insert(data)
 	if err != nil {
 		return 0, err
@@ -21,9 +21,9 @@ func (d *DB) UpdateUser(id int64, data map[string]any) error {
 	return d.userTable().Find(db.Cond{"id": id}).Update(data)
 }
 
-func (d *DB) GetUser(id int64) (*models.User, error) {
+func (d *DB) GetUser(id int64) (*dbmodels.User, error) {
 
-	data := &models.User{}
+	data := &dbmodels.User{}
 
 	err := d.userTable().Find(db.Cond{"id": id}).One(data)
 	if err != nil {
@@ -33,9 +33,9 @@ func (d *DB) GetUser(id int64) (*models.User, error) {
 	return data, nil
 }
 
-func (d *DB) GetUserByEmail(email string) (*models.User, error) {
+func (d *DB) GetUserByEmail(email string) (*dbmodels.User, error) {
 
-	data := &models.User{}
+	data := &dbmodels.User{}
 
 	err := d.userTable().Find(db.Cond{"email": email}).One(data)
 	if err != nil {
@@ -45,9 +45,9 @@ func (d *DB) GetUserByEmail(email string) (*models.User, error) {
 	return data, nil
 }
 
-func (d *DB) GetUserByUsername(username string) (*models.User, error) {
+func (d *DB) GetUserByUsername(username string) (*dbmodels.User, error) {
 
-	data := &models.User{}
+	data := &dbmodels.User{}
 
 	err := d.userTable().Find(db.Cond{"username": username}).One(data)
 	if err != nil {
@@ -57,9 +57,9 @@ func (d *DB) GetUserByUsername(username string) (*models.User, error) {
 	return data, nil
 }
 
-func (d *DB) ListUser(offset int, limit int) ([]models.User, error) {
+func (d *DB) ListUser(offset int, limit int) ([]dbmodels.User, error) {
 
-	users := make([]models.User, 0)
+	users := make([]dbmodels.User, 0)
 
 	err := d.userTable().Find(db.Cond{"id >": offset}).Limit(limit).All(&users)
 	if err != nil {
@@ -69,9 +69,9 @@ func (d *DB) ListUser(offset int, limit int) ([]models.User, error) {
 	return users, nil
 }
 
-func (d *DB) ListUserByOwner(owner int64) ([]models.User, error) {
+func (d *DB) ListUserByOwner(owner int64) ([]dbmodels.User, error) {
 
-	users := make([]models.User, 0)
+	users := make([]dbmodels.User, 0)
 
 	err := d.userTable().Find(db.Cond{"owner_user_id": owner}).All(&users)
 	if err != nil {
@@ -87,9 +87,9 @@ func (d *DB) DeleteUser(id int64) error {
 
 // devices
 
-func (d *DB) ListUserDevice(userId int64) ([]models.UserDevice, error) {
+func (d *DB) ListUserDevice(userId int64) ([]dbmodels.UserDevice, error) {
 
-	devices := make([]models.UserDevice, 0)
+	devices := make([]dbmodels.UserDevice, 0)
 
 	err := d.deviceTable().Find(db.Cond{"user_id": userId}).All(&devices)
 	if err != nil {
@@ -99,7 +99,7 @@ func (d *DB) ListUserDevice(userId int64) ([]models.UserDevice, error) {
 	return devices, nil
 }
 
-func (d *DB) AddUserDevice(data *models.UserDevice) (int64, error) {
+func (d *DB) AddUserDevice(data *dbmodels.UserDevice) (int64, error) {
 	r, err := d.deviceTable().Insert(data)
 	if err != nil {
 		return 0, err
@@ -108,9 +108,9 @@ func (d *DB) AddUserDevice(data *models.UserDevice) (int64, error) {
 	return r.ID().(int64), nil
 }
 
-func (d *DB) GetUserDevice(id int64) (*models.UserDevice, error) {
+func (d *DB) GetUserDevice(id int64) (*dbmodels.UserDevice, error) {
 
-	data := &models.UserDevice{}
+	data := &dbmodels.UserDevice{}
 
 	err := d.deviceTable().Find(db.Cond{"id": id}).One(data)
 	if err != nil {
@@ -130,7 +130,7 @@ func (d *DB) DeleteUserDevice(id int64) error {
 
 // user invites
 
-func (d *DB) AddUserInvite(data *models.UserInvite) (int64, error) {
+func (d *DB) AddUserInvite(data *dbmodels.UserInvite) (int64, error) {
 	r, err := d.userInviteTable().Insert(data)
 	if err != nil {
 		return 0, err
@@ -139,8 +139,8 @@ func (d *DB) AddUserInvite(data *models.UserInvite) (int64, error) {
 	return r.ID().(int64), nil
 }
 
-func (d *DB) GetUserInvite(id int64) (*models.UserInvite, error) {
-	data := &models.UserInvite{}
+func (d *DB) GetUserInvite(id int64) (*dbmodels.UserInvite, error) {
+	data := &dbmodels.UserInvite{}
 
 	err := d.userInviteTable().Find(db.Cond{"id": id}).One(data)
 	if err != nil {
@@ -150,8 +150,8 @@ func (d *DB) GetUserInvite(id int64) (*models.UserInvite, error) {
 	return data, nil
 }
 
-func (d *DB) GetUserInviteByEmail(email string) (*models.UserInvite, error) {
-	data := &models.UserInvite{}
+func (d *DB) GetUserInviteByEmail(email string) (*dbmodels.UserInvite, error) {
+	data := &dbmodels.UserInvite{}
 
 	err := d.userInviteTable().Find(db.Cond{"email": email}).One(data)
 	if err != nil {
@@ -161,8 +161,8 @@ func (d *DB) GetUserInviteByEmail(email string) (*models.UserInvite, error) {
 	return data, nil
 }
 
-func (d *DB) ListUserInvites(offset int, limit int) ([]models.UserInvite, error) {
-	invites := make([]models.UserInvite, 0)
+func (d *DB) ListUserInvites(offset int, limit int) ([]dbmodels.UserInvite, error) {
+	invites := make([]dbmodels.UserInvite, 0)
 
 	err := d.userInviteTable().Find(db.Cond{"id >": offset}).Limit(limit).All(&invites)
 	if err != nil {
@@ -172,8 +172,8 @@ func (d *DB) ListUserInvites(offset int, limit int) ([]models.UserInvite, error)
 	return invites, nil
 }
 
-func (d *DB) ListUserInvitesByInviter(inviterId int64) ([]models.UserInvite, error) {
-	invites := make([]models.UserInvite, 0)
+func (d *DB) ListUserInvitesByInviter(inviterId int64) ([]dbmodels.UserInvite, error) {
+	invites := make([]dbmodels.UserInvite, 0)
 
 	err := d.userInviteTable().Find(db.Cond{"invited_by": inviterId}).All(&invites)
 	if err != nil {
@@ -194,7 +194,7 @@ func (d *DB) DeleteUserInvite(id int64) error {
 // user groups
 
 func (d *DB) AddUserGroup(name string, info string) error {
-	userGroup := &models.UserGroup{
+	userGroup := &dbmodels.UserGroup{
 		Name: name,
 		Info: info,
 	}
@@ -207,8 +207,8 @@ func (d *DB) AddUserGroup(name string, info string) error {
 	return nil
 }
 
-func (d *DB) GetUserGroup(name string) (*models.UserGroup, error) {
-	data := &models.UserGroup{}
+func (d *DB) GetUserGroup(name string) (*dbmodels.UserGroup, error) {
+	data := &dbmodels.UserGroup{}
 
 	err := d.userGroupTable().Find(db.Cond{"name": name}).One(data)
 	if err != nil {
@@ -218,8 +218,8 @@ func (d *DB) GetUserGroup(name string) (*models.UserGroup, error) {
 	return data, nil
 }
 
-func (d *DB) ListUserGroups() ([]models.UserGroup, error) {
-	userGroups := make([]models.UserGroup, 0)
+func (d *DB) ListUserGroups() ([]dbmodels.UserGroup, error) {
+	userGroups := make([]dbmodels.UserGroup, 0)
 
 	err := d.userGroupTable().Find().All(&userGroups)
 	if err != nil {
