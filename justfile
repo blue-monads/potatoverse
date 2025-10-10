@@ -4,6 +4,8 @@ frontend_start_dev:
 	cd frontend && npm run dev
 backend_start_dev:
 	FRONTEND_DEV_SERVER="http://localhost:7779" go run -v cmd/dev/*.go
+labs_start_dev:
+	go run -v backend/labs/labs.go
 run_tests:
 	cd tmp && rm -rf data.db && go run ../tests/*.go
 
