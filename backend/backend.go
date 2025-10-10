@@ -13,8 +13,9 @@ import (
 
 type Options struct {
 	DBFile string
-	PORT   int
+	Port   int
 	SeedDB bool
+	Host   string
 }
 
 func NewNoHead(options Options) (*app.HeadLess, error) {
@@ -37,8 +38,8 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 		Signer:   signer.New([]byte(masterSecret)),
 		AppOpts: &xtypes.AppOptions{
 			Name:         "Turnix",
-			Port:         options.PORT,
-			Host:         "localhost",
+			Port:         options.Port,
+			Host:         options.Host,
 			MasterSecret: masterSecret,
 			Debug:        true,
 			WorkingDir:   "./tmp",
