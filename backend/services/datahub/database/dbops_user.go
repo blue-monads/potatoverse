@@ -179,6 +179,54 @@ func (d *DB) DeleteUserInvite(id int64) error {
 	return d.userInviteTable().Find(db.Cond{"id": id}).Delete()
 }
 
+// user groups
+
+func (d *DB) AddUserGroup(name string, info string) error {
+	userGroup := &models.UserGroup{
+		Name: name,
+		Info: info,
+	}
+
+	_, err := d.userGroupTable().Insert(userGroup)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DB) GetUserGroup(name string) (*models.UserGroup, error) {
+	data := &models.UserGroup{}
+
+	err := d.userGroupTable().Find(db.Cond{"name": name}).One(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (d *DB) ListUserGroups() ([]models.UserGroup, error) {
+	userGroups := make([]models.UserGroup, 0)
+
+	err := d.userGroupTable().Find().All(&userGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	return userGroups, nil
+}
+
+func (d *DB) UpdateUserGroup(name string, info string) error {
+	return d.userGroupTable().Find(db.Cond{"name": name}).Update(map[string]any{
+		"info": info,
+	})
+}
+
+func (d *DB) DeleteUserGroup(name string) error {
+	return d.userGroupTable().Find(db.Cond{"name": name}).Delete()
+}
+
 // private
 
 func (d *DB) deviceTable() db.Collection {
@@ -191,4 +239,8 @@ func (d *DB) userTable() db.Collection {
 
 func (d *DB) userInviteTable() db.Collection {
 	return d.Table("UserInvites")
+}
+
+func (d *DB) userGroupTable() db.Collection {
+	return d.Table("UserGroups")
 }

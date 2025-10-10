@@ -40,6 +40,12 @@ type GlobalOps interface {
 }
 
 type UserOps interface {
+	AddUserGroup(name string, info string) error
+	GetUserGroup(name string) (*models.UserGroup, error)
+	ListUserGroups() ([]models.UserGroup, error)
+	UpdateUserGroup(name string, info string) error
+	DeleteUserGroup(name string) error
+
 	AddUser(data *models.User) (int64, error)
 	GetUser(id int64) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
