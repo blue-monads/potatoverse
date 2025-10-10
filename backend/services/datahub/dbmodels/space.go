@@ -66,31 +66,6 @@ type SpaceTableColumn struct {
 	PrimaryKey   bool   `json:"primary_key"`
 }
 
-// Manifest
-
-type SpaceManifest struct {
-	Name        string         `json:"name"`
-	Slug        string         `json:"slug"`
-	Info        string         `json:"info"`
-	Type        string         `json:"type"`
-	Format      string         `json:"format"`
-	Tags        []string       `json:"tags"`
-	Routes      []Route        `json:"routes"`
-	LinkPattern string         `json:"link_pattern"`
-	ServerFile  string         `json:"server_file"`
-	Services    map[string]any `json:"services"`
-	ServeFolder string         `json:"serve_folder"`
-}
-
-type Route struct {
-	Name    string         `json:"name"`
-	Type    string         `json:"type"` // authed_http, http, ws
-	Method  string         `json:"method"`
-	Path    string         `json:"path"`
-	Handler string         `json:"handler"`
-	Options map[string]any `json:"options"`
-}
-
 type SpaceKV struct {
 	ID      int64  `json:"id" db:"id,omitempty" luautil:"-"`
 	Key     string `json:"key" db:"key" luautil:"key"`
