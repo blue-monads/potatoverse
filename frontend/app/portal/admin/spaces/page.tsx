@@ -206,7 +206,7 @@ const SpacesDirectory = () => {
                                             size: "md"
                                         });
                                     } else if (action === "run") {
-                                        router.push(`/portal/admin/exec?nskey=${space.namespace_key}`);
+                                        router.push(`/portal/admin/exec?nskey=${space.namespace_key}&space_id=${space.id}`);
                                     } else if (action === "tools") {
                                         router.push(`/portal/admin/spaces/tools/files?id=${space.id}&packageId=${space.package_id}`);
                                     }
@@ -220,7 +220,7 @@ const SpacesDirectory = () => {
                                     author: "",
                                     timeAgo: "",
                                     gradient: gradient,
-                                    from: pkg.slug,
+                                    from: space.namespace_key,
                                     mcp: false,
 
                                 }} />
@@ -289,7 +289,7 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
 
                             className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
                             onClick={() => {
-                                router.push(`/portal/admin/exec?nskey=${space.from}`);
+                                router.push(`/portal/admin/exec?nskey=${space.from}&space_id=${space.id}`);
                             }}
 
                         >

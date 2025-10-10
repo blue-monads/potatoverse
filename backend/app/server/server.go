@@ -13,34 +13,42 @@ type Server struct {
 	ctrl   *actions.Controller
 	router *gin.Engine
 	signer *signer.Signer
-	port   int
 
 	engine *engine.Engine
+
+	opt Option
 }
 
 type Option struct {
-	Port   int
-	Ctrl   *actions.Controller
-	Signer *signer.Signer
-	Engine *engine.Engine
+	Port     int
+	Ctrl     *actions.Controller
+	Signer   *signer.Signer
+	Engine   *engine.Engine
+	Host     string
+	GlobalJS string
+	SiteName string
 }
 
 func NewServer(opt Option) *Server {
 	return &Server{
 		ctrl:   opt.Ctrl,
 		signer: opt.Signer,
-		port:   opt.Port,
 		engine: opt.Engine,
+		opt:    opt,
 	}
 }
 
 func (s *Server) Start() error {
+	err := s.buildGlobalJS()
+	if err != nil {
+		return err
+	}
 
 	s.router = gin.Default()
 
 	s.bindRoutes()
 
-	s.router.Run(fmt.Sprintf(":%d", s.port))
+	s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
 
 	return nil
 }

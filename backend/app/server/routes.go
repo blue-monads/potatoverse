@@ -29,6 +29,8 @@ func (a *Server) bindRoutes() {
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
 
+	coreApi.GET("/global.js", a.getGlobalJS)
+
 	root.GET("/static/*files", func(c *gin.Context) {
 		filePath := c.Param("files")
 		if len(filePath) > 0 && filePath[0] == '/' {

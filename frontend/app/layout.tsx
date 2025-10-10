@@ -5,7 +5,6 @@ import GModalWrapper from "@/hooks/modal/GModalWrapper";
 import { staticGradients } from "./utils";
 
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,6 +18,7 @@ export default function RootLayout({
       <body
         className={`antialiased`}
       >
+        <script src="/zz/api/core/global.js" />
 
         <div className="hidden">
           {staticGradients.map((gradient, index) => (
