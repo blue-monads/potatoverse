@@ -7,6 +7,13 @@ CREATE TABLE IF NOT EXISTS GlobalConfig (
   unique(group_name, key)
 );
 
+CREATE TABLE IF NOT EXISTS UserGroups (
+  name TEXT PRIMARY KEY, 
+  info TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(name)
+);
 
 CREATE TABLE IF NOT EXISTS Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -16,6 +23,7 @@ CREATE TABLE IF NOT EXISTS Users (
 
   name TEXT NOT NULL, 
   utype TEXT NOT NULL DEFAULT 'real',  -- admin, normal, bot
+  ugroup TEXT NOT NULL,
   bio TEXT NOT NULL DEFAULT '', 
   password TEXT NOT NULL, 
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -104,6 +112,14 @@ CREATE TABLE IF NOT EXISTS Spaces (
   extrameta JSON NOT NULL DEFAULT '{}', 
   is_initilized BOOLEAN NOT NULL DEFAULT FALSE, 
   is_public BOOLEAN NOT NULL DEFAULT FALSE,
+
+  server_entry_file TEXT NOT NULL DEFAULT '',
+  serve_folder TEXT NOT NULL DEFAULT '', -- default is public
+  trim_path_prefix TEXT NOT NULL DEFAULT '', -- default is empty
+  
+  overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  
+
+
   FOREIGN KEY (owned_by) REFERENCES Users(id)
 );
 
@@ -118,21 +134,6 @@ CREATE TABLE IF NOT EXISTS SpaceKV (
   tag2 TEXT NOT NULL DEFAULT '',
   tag3 TEXT NOT NULL DEFAULT '',
   unique(space_id, group_name, key)
-);
-
--- rMCP -> perform(action, params)
--- rMCP -> get_resource(resource_id)
--- rMCP -> list_resources(resource_type)
-
-
-CREATE TABLE IF NOT EXISTS SpaceResources (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL DEFAULT '',
-  space_id INTEGER NOT NULL,
-  resource_id TEXT NOT NULL DEFAULT '',
-  resource_type TEXT NOT NULL DEFAULT '', -- space, ws_room, webhook
-  attrs JSON NOT NULL DEFAULT '{}',
-  unique(space_id, name)
 );
 
 

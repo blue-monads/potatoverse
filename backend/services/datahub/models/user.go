@@ -2,10 +2,18 @@ package models
 
 import "time"
 
+type UserGroup struct {
+	Name      string     `json:"name" db:"name"`
+	Info      string     `json:"info" db:"info"`
+	CreatedAt *time.Time `json:"created_at" db:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at" db:"updated_at,omitempty"`
+}
+
 type User struct {
 	ID              int64      `json:"id" db:"id,omitempty"`
 	Name            string     `json:"name" db:"name"`
 	Utype           string     `json:"utype" db:"utype,omitempty"`
+	Ugroup          string     `json:"ugroup" db:"ugroup,omitempty"`
 	Email           string     `json:"email" db:"email,omitempty"`
 	Phone           *string    `json:"phone" db:"phone,omitempty"`
 	Username        *string    `json:"username" db:"username,omitempty"`
