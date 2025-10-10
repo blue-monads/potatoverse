@@ -59,19 +59,26 @@ func NewApp(options Options) (*app.App, error) {
 	if options.SeedDB {
 		ctrl := happ.Controller().(*actions.Controller)
 
-		err := ctrl.AddUserGroup("admin", "Admin group")
+		ugroups, err := ctrl.ListUserGroups()
 		if err != nil {
 			return nil, err
 		}
 
-		err = ctrl.AddUserGroup("normal", "Normal group")
-		if err != nil {
-			return nil, err
-		}
+		if len(ugroups) == 0 {
+			err = ctrl.AddUserGroup("admin", "Admin group")
+			if err != nil {
+				return nil, err
+			}
 
-		_, err = ctrl.AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
-		if err != nil {
-			return nil, err
+			err = ctrl.AddUserGroup("normal", "Normal group")
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = ctrl.AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
+			if err != nil {
+				return nil, err
+			}
 		}
 
 	}
