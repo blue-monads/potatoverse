@@ -1,0 +1,11 @@
+name = "potato"
+port = 7777
+host = "*.localhost"
+dev_mode = false
+# if starts with $ then it will be treated as an environment variable
+master_secret = "$POTATO_MASTER_SECRET" 
+debug = true
+working_dir = "./tmp"
+
+[mailer]
+type = "stdio"
