@@ -47,10 +47,6 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 		return 0, err
 	}
 
-	if pkg.Info == "" {
-		pkg.Info = pkg.Description
-	}
-
 	pkg.InstalledBy = userId
 
 	table := d.packagesTable()

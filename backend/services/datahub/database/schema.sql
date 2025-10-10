@@ -193,10 +193,9 @@ CREATE TABLE IF NOT EXISTS FileShares (
 
 
 CREATE TABLE IF NOT EXISTS Packages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  slug TEXT NOT NULL, 
-  type TEXT NOT NULL DEFAULT 'space', -- space, plugin
+  id INTEGER PRIMARY KEY AUTOINCREMENT,  
   storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
+  slug TEXT NOT NULL DEFAULT '',
   reference TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL DEFAULT '',
   info TEXT NOT NULL DEFAULT '',
