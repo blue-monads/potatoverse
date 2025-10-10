@@ -54,6 +54,10 @@ var gradients = []Gradient{
 	{"#4b6cb7", "#182848"}, // Royal blue to very dark blue
 }
 
+func (a *Server) ListGradients(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gradients)
+}
+
 func (a *Server) userSvgProfileIconById(ctx *gin.Context) {
 	id := ctx.Param("id")
 	idInt, err := strconv.Atoi(id)

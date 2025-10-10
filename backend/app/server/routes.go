@@ -79,6 +79,7 @@ func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
 func (a *Server) extraRoutes(g *gin.RouterGroup) {
 	g.GET("/profileImage/:id/:name", a.userSvgProfileIcon)
 	g.GET("/profileImage/:id", a.userSvgProfileIconById)
+	g.GET("/api/gradients", a.ListGradients)
 }
 
 func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
