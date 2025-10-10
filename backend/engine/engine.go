@@ -61,9 +61,14 @@ func (e *Engine) LoadRoutingIndex() error {
 	for _, space := range spaces {
 		if space.OwnsNamespace {
 			nextRoutingIndex[space.NamespaceKey] = SpaceRouteIndexItem{
-				packageId:   space.PackageID,
-				spaceId:     space.ID,
-				serveFolder: "public",
+				packageId: space.PackageID,
+				spaceId:   space.ID,
+				routeOption: RouteOption{
+					ServeFolder:        "public",
+					TrimPathPrefix:     "",
+					ForceHtmlExtension: false,
+					ForceIndexHtmlFile: false,
+				},
 			}
 		}
 	}
@@ -89,7 +94,7 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
 
 	e.riLock.RLock()
-	ri, ok := e.RoutingIndex[spaceKey]
+	sIndex, ok := e.RoutingIndex[spaceKey]
 	e.riLock.RUnlock()
 	if !ok {
 		ctx.JSON(404, gin.H{"error": "space not found"})
@@ -98,13 +103,7 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
 	filePath := ctx.Param("files")
 
-	nameParts := strings.Split(filePath, "/")
-	name := nameParts[len(nameParts)-1]
-	pathParts := nameParts[:len(nameParts)-1]
-	pathParts = append(pathParts, ri.serveFolder)
-
-	path := strings.Join(pathParts, "/")
-	path = strings.TrimLeft(path, "/")
+	name, path := buildPackageFilePath(filePath, &sIndex.routeOption)
 
 	pp.Println("@name", name)
 	pp.Println("@path", path)
@@ -113,13 +112,13 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 		name = "index.html"
 	}
 
-	fmeta, err := e.db.GetPackageFileMetaByPath(ri.packageId, path, name)
+	fmeta, err := e.db.GetPackageFileMetaByPath(sIndex.packageId, path, name)
 	if err != nil {
 		ctx.JSON(404, gin.H{"error": "file not found"})
 		return
 	}
 
-	e.db.GetPackageFileStreaming(ri.packageId, fmeta.ID, ctx.Writer)
+	e.db.GetPackageFileStreaming(sIndex.packageId, fmeta.ID, ctx.Writer)
 
 }
 
@@ -182,4 +181,28 @@ func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 		PackageInfo:   pkg.Info,
 	}, nil
 
+}
+
+func buildPackageFilePath(filePath string, ropt *RouteOption) (string, string) {
+	nameParts := strings.Split(filePath, "/")
+	name := nameParts[len(nameParts)-1]
+	pathParts := nameParts[:len(nameParts)-1]
+	pathParts = append(pathParts, ropt.ServeFolder)
+
+	path := strings.Join(pathParts, "/")
+	path = strings.TrimLeft(path, "/")
+
+	if ropt.TrimPathPrefix != "" {
+		path = strings.TrimPrefix(path, ropt.TrimPathPrefix)
+	}
+
+	if ropt.ForceHtmlExtension && !strings.Contains(name, ".") {
+		name = name + ".html"
+	}
+
+	if ropt.ForceIndexHtmlFile && name == "" {
+		name = "index.html"
+	}
+
+	return name, path
 }
