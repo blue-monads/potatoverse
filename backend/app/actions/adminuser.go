@@ -137,7 +137,7 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 
 	pp.Println(host, port)
 
-	fullUrl := xutils.GetFullUrl(host, "/z/auth/invite/"+inviteToken, port, false)
+	fullUrl := xutils.GetFullUrl(host, "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
 
 	body := &mailer.SimpleMessage{
 		Text: fullUrl,
@@ -178,6 +178,65 @@ func (c *Controller) ResendUserInvite(id int64) (*models.UserInvite, error) {
 	}
 
 	return c.database.GetUserInvite(id)
+}
+
+func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password string) (*models.User, error) {
+	// Get the invite
+	invite, err := c.database.GetUserInvite(inviteId)
+	if err != nil {
+		return nil, easyerr.Error("Invalid invite")
+	}
+
+	// Check if invite is still pending
+	if invite.Status != "pending" {
+		return nil, easyerr.Error("Invite has already been used or expired")
+	}
+
+	// Check if invite has expired
+	if invite.ExpiresOn != nil && time.Now().After(*invite.ExpiresOn) {
+		return nil, easyerr.Error("Invite has expired")
+	}
+
+	// Check if user already exists by email
+	existingUser, err := c.database.GetUserByEmail(invite.Email)
+	if err == nil && existingUser != nil {
+		return nil, easyerr.Error("User with this email already exists")
+	}
+
+	// Check if username is already taken
+	existingUserByUsername, err := c.database.GetUserByUsername(username)
+	if err == nil && existingUserByUsername != nil {
+		return nil, easyerr.Error("Username is already taken")
+	}
+
+	// Create new user
+	user := &models.User{
+		Name:        name,
+		Email:       invite.Email,
+		Username:    &username,
+		Utype:       "user",
+		Ugroup:      invite.InvitedAsType,
+		Password:    password,
+		Bio:         "",
+		IsVerified:  true, // Invited users are considered verified
+		ExtraMeta:   "{}",
+		OwnerUserId: invite.InvitedBy,
+	}
+
+	userId, err := c.database.AddUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update invite status to accepted
+	err = c.database.UpdateUserInvite(inviteId, map[string]any{
+		"status": "accepted",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return c.database.GetUser(userId)
 }
 
 // Create User Directly

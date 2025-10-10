@@ -107,6 +107,25 @@ export const resendUserInvite = async (id: number) => {
     return iaxios.post<UserInvite>(`/core/user/invites/${id}/resend`);
 }
 
+// Invite Acceptance
+export interface InviteInfo {
+    email: string;
+    role: string;
+    expires_on: string;
+}
+
+export const getInviteInfo = async (token: string) => {
+    return iaxios.get<InviteInfo>(`/core/auth/invite/${token}`);
+}
+
+export const acceptInvite = async (token: string, data: {
+    name: string;
+    username: string;
+    password: string;
+}) => {
+    return iaxios.post<{ message: string; user: User }>(`/core/auth/invite/${token}`, data);
+}
+
 // Create User Directly
 export const createUserDirectly = async (data: {
     name: string;

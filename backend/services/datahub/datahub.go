@@ -49,6 +49,7 @@ type UserOps interface {
 	AddUser(data *models.User) (int64, error)
 	GetUser(id int64) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
+	GetUserByUsername(username string) (*models.User, error)
 	ListUser(offset int, limit int) ([]models.User, error)
 	ListUserByOwner(owner int64) ([]models.User, error)
 	UpdateUser(id int64, data map[string]any) error

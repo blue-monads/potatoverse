@@ -45,6 +45,8 @@ func (a *Server) bindRoutes() {
 func (a *Server) authRoutes(g *gin.RouterGroup) {
 
 	g.POST("/login", a.login)
+	g.GET("/invite/:token", a.getInviteInfo)
+	g.POST("/invite/:token", a.acceptInvite)
 
 }
 

@@ -45,6 +45,18 @@ func (d *DB) GetUserByEmail(email string) (*models.User, error) {
 	return data, nil
 }
 
+func (d *DB) GetUserByUsername(username string) (*models.User, error) {
+
+	data := &models.User{}
+
+	err := d.userTable().Find(db.Cond{"username": username}).One(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 func (d *DB) ListUser(offset int, limit int) ([]models.User, error) {
 
 	users := make([]models.User, 0)
