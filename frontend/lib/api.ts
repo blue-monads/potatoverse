@@ -112,6 +112,39 @@ export const createUserDirectly = async (data: {
     return iaxios.post<User>("/core/user/create", data);
 }
 
+// User Groups API
+export interface UserGroup {
+    name: string;
+    info: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export const getUserGroups = async () => {
+    return iaxios.get<UserGroup[]>("/core/user/groups");
+}
+
+export const getUserGroup = async (name: string) => {
+    return iaxios.get<UserGroup>(`/core/user/groups/${name}`);
+}
+
+export const createUserGroup = async (data: {
+    name: string;
+    info: string;
+}) => {
+    return iaxios.post<UserGroup>("/core/user/groups", data);
+}
+
+export const updateUserGroup = async (name: string, data: {
+    info: string;
+}) => {
+    return iaxios.put<UserGroup>(`/core/user/groups/${name}`, data);
+}
+
+export const deleteUserGroup = async (name: string) => {
+    return iaxios.delete<void>(`/core/user/groups/${name}`);
+}
+
 
 export interface AdminPortalData {
     popular_keywords: string[] 

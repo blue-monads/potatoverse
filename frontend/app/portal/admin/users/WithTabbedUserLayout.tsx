@@ -14,6 +14,11 @@ const tabs = [
         value: 'invites',
         url: '/portal/admin/users/invites',
     },
+    {
+        label: 'Groups',
+        value: 'groups',
+        url: '/portal/admin/users/groups',
+    },
 ]
 
 

@@ -63,6 +63,13 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 	// Create User Directly
 	g.POST("/create", a.withAccessTokenFn(a.createUserDirectly))
 
+	// User Groups
+	g.GET("/groups", a.withAccessTokenFn(a.listUserGroups))
+	g.GET("/groups/:name", a.withAccessTokenFn(a.getUserGroup))
+	g.POST("/groups", a.withAccessTokenFn(a.addUserGroup))
+	g.PUT("/groups/:name", a.withAccessTokenFn(a.updateUserGroup))
+	g.DELETE("/groups/:name", a.withAccessTokenFn(a.deleteUserGroup))
+
 }
 
 func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
