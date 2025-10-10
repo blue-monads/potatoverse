@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS GlobalConfig (
 );
 
 CREATE TABLE IF NOT EXISTS UserGroups (
-  name TEXT PRIMARY KEY, 
+  name TEXT PRIMARY KEY,  
   info TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS Users (
   phone TEXT,
 
   name TEXT NOT NULL, 
-  utype TEXT NOT NULL DEFAULT 'real',  -- admin, normal, bot
-  ugroup TEXT NOT NULL,
+  utype TEXT NOT NULL DEFAULT 'user', -- user, bot, api
+  ugroup TEXT NOT NULL, --  UserGroups.name
   bio TEXT NOT NULL DEFAULT '', 
   password TEXT NOT NULL, 
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS UserInvites (
   role TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'pending', -- pending, accepted, rejected
   invited_by INTEGER NOT NULL DEFAULT 0,
-  invited_as_type TEXT NOT NULL DEFAULT 'normal', -- user, admin, moderator, developer
+  invited_as_type TEXT NOT NULL DEFAULT 'user', -- user, admin, moderator, developer
   expires_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   unique(email)
