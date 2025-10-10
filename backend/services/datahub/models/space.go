@@ -36,14 +36,6 @@ type SpaceTypes struct {
 	EventTypes  []string `json:"event_types,omitempty"`
 }
 
-type PluginImport struct {
-	Name            string `json:"name" yaml:"name"`
-	AppType         string `json:"apptype" yaml:"apptype"`
-	ProjectTypeSlug string `json:"project_type_slug" yaml:"project_type_slug"`
-	ServerCode      string `json:"server_code" yaml:"server_code"`
-	ClientCode      string `json:"client_code" yaml:"client_code"`
-}
-
 type SpacePlugin struct {
 	ID         int64      `json:"id" db:"id,omitempty"`
 	Name       string     `json:"name" db:"name"`

@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS Spaces (
   is_initilized BOOLEAN NOT NULL DEFAULT FALSE, 
   is_public BOOLEAN NOT NULL DEFAULT FALSE,
 
-  server_entry_file TEXT NOT NULL DEFAULT '',
+  server_file TEXT NOT NULL DEFAULT '',
   serve_folder TEXT NOT NULL DEFAULT '', -- default is public
   trim_path_prefix TEXT NOT NULL DEFAULT '', -- default is empty
   
