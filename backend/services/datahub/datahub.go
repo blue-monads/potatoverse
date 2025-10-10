@@ -85,6 +85,7 @@ type PackageOps interface {
 	GetPackageFileMetaByPath(packageId int64, path, name string) (*dbmodels.PackageFile, error)
 
 	GetPackageFileStreaming(packageId, id int64, w io.Writer) error
+	GetPackageFileStreamingByPath(packageId int64, path, name string, w io.Writer) error
 	GetPackageFile(packageId, id int64) ([]byte, error)
 	AddPackageFile(packageId int64, name string, path string, data []byte) (int64, error)
 	AddPackageFileStreaming(packageId int64, name string, path string, stream io.Reader) (int64, error)

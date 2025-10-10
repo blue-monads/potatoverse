@@ -195,6 +195,24 @@ func (d *DB) GetPackageFileMetaByPath(packageId int64, path, name string) (*dbmo
 	return &item, nil
 }
 
+type Ref struct {
+	ID int64 `json:"id" db:"id,omitempty"`
+}
+
+func (d *DB) GetPackageFileStreamingByPath(packageId int64, path, name string, w io.Writer) error {
+	ref := Ref{}
+	err := d.packageFilesTable().Find(db.Cond{
+		"package_id": packageId,
+		"path":       path,
+		"name":       name,
+	}).One(&ref)
+	if err != nil {
+		return err
+	}
+
+	return d.GetPackageFileStreaming(packageId, ref.ID, w)
+}
+
 func (d *DB) GetPackageFileStreaming(packageId, id int64, w io.Writer) error {
 	pp.Println("@GetPackageFileStreaming/1")
 
