@@ -108,6 +108,7 @@ export const createUserDirectly = async (data: {
     email: string;
     username: string;
     utype: string;
+    ugroup: string;
 }) => {
     return iaxios.post<User>("/core/user/create", data);
 }

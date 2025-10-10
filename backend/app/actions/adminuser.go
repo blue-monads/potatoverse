@@ -182,7 +182,7 @@ func (c *Controller) ResendUserInvite(id int64) (*models.UserInvite, error) {
 
 // Create User Directly
 
-func (c *Controller) CreateUserDirectly(name, email, username, utype string, createdBy int64) (*models.User, error) {
+func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup string, createdBy int64) (*models.User, error) {
 	// Check if user already exists by email
 	existingUser, err := c.database.GetUserByEmail(email)
 	if err == nil && existingUser != nil {
@@ -201,6 +201,7 @@ func (c *Controller) CreateUserDirectly(name, email, username, utype string, cre
 		Email:       email,
 		Username:    &username,
 		Utype:       utype,
+		Ugroup:      ugroup,
 		Password:    password,
 		Bio:         "",
 		IsVerified:  false,

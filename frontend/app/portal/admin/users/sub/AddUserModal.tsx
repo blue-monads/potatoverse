@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from 'react';
-import { createUserDirectly } from '@/lib';
+import React, { useState, useEffect } from 'react';
+import { createUserDirectly, getUserGroups, UserGroup } from '@/lib';
 import { useGApp } from '@/hooks';
 
 interface AddUserModalProps {
@@ -13,18 +13,40 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
         name: "",
         email: "",
         username: "",
-        utype: "normal"
+        utype: "user",
+        ugroup: ""
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [createdUser, setCreatedUser] = useState<any>(null);
+    const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+    const [loadingGroups, setLoadingGroups] = useState(true);
 
     const utypeOptions = [
-        { value: "admin", label: "Admin" },
-        { value: "moderator", label: "Moderator" },
-        { value: "normal", label: "Normal User" },
-        { value: "developer", label: "Developer" }
+        { value: "user", label: "User" },
+        { value: "bot", label: "Bot" }
     ];
+
+    // Load user groups on component mount
+    useEffect(() => {
+        const loadUserGroups = async () => {
+            try {
+                const response = await getUserGroups();
+                setUserGroups(response.data);
+                // Set default ugroup if available
+                if (response.data.length > 0 && !formData.ugroup) {
+                    setFormData(prev => ({ ...prev, ugroup: response.data[0].name }));
+                }
+            } catch (err) {
+                console.error('Failed to load user groups:', err);
+                setError('Failed to load user groups');
+            } finally {
+                setLoadingGroups(false);
+            }
+        };
+
+        loadUserGroups();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,6 +109,10 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                     <div>
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
                         <p className="text-sm text-gray-900 dark:text-white capitalize">{createdUser.utype}</p>
+                    </div>
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Group</label>
+                        <p className="text-sm text-gray-900 dark:text-white capitalize">{createdUser.ugroup}</p>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Generated Password</label>
@@ -191,6 +217,33 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                                 {option.label}
                             </option>
                         ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label htmlFor="ugroup" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        User Group *
+                    </label>
+                    <select
+                        id="ugroup"
+                        value={formData.ugroup}
+                        onChange={(e) => handleInputChange("ugroup", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        required
+                        disabled={loadingGroups}
+                    >
+                        {loadingGroups ? (
+                            <option value="">Loading groups...</option>
+                        ) : (
+                            <>
+                                <option value="">Select a user group</option>
+                                {userGroups.map((group) => (
+                                    <option key={group.name} value={group.name}>
+                                        {group.name} {group.info && `- ${group.info}`}
+                                    </option>
+                                ))}
+                            </>
+                        )}
                     </select>
                 </div>
 

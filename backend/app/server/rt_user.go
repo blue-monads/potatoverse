@@ -152,13 +152,14 @@ func (s *Server) createUserDirectly(claim *signer.AccessClaim, ctx *gin.Context)
 		Email    string `json:"email" binding:"required,email"`
 		Username string `json:"username" binding:"required"`
 		Utype    string `json:"utype" binding:"required"`
+		Ugroup   string `json:"ugroup" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return nil, err
 	}
 
-	user, err := s.ctrl.CreateUserDirectly(req.Name, req.Email, req.Username, req.Utype, claim.UserId)
+	user, err := s.ctrl.CreateUserDirectly(req.Name, req.Email, req.Username, req.Utype, req.Ugroup, claim.UserId)
 	if err != nil {
 		return nil, err
 	}

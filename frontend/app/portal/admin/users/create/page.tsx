@@ -1,9 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, UserIcon } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import { createUserDirectly } from '@/lib';
+import { createUserDirectly, getUserGroups, UserGroup } from '@/lib';
 
 export default function CreateUserPage() {
   const router = useRouter();
@@ -11,18 +11,40 @@ export default function CreateUserPage() {
     name: "",
     email: "",
     username: "",
-    utype: "normal"
+    utype: "user",
+    ugroup: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [createdUser, setCreatedUser] = useState<any>(null);
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
 
   const utypeOptions = [
-    { value: "admin", label: "Admin" },
-    { value: "moderator", label: "Moderator" },
-    { value: "normal", label: "Normal User" },
-    { value: "developer", label: "Developer" }
+    { value: "user", label: "User" },
+    { value: "bot", label: "Bot" }
   ];
+
+  // Load user groups on component mount
+  useEffect(() => {
+    const loadUserGroups = async () => {
+      try {
+        const response = await getUserGroups();
+        setUserGroups(response.data);
+        // Set default ugroup if available
+        if (response.data.length > 0 && !formData.ugroup) {
+          setFormData(prev => ({ ...prev, ugroup: response.data[0].name }));
+        }
+      } catch (err) {
+        console.error('Failed to load user groups:', err);
+        setError('Failed to load user groups');
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+
+    loadUserGroups();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +78,8 @@ export default function CreateUserPage() {
       name: "",
       email: "",
       username: "",
-      utype: "normal"
+      utype: "user",
+      ugroup: userGroups.length > 0 ? userGroups[0].name : ""
     });
     setError("");
   };
@@ -71,11 +94,6 @@ export default function CreateUserPage() {
       <div className="max-w-7xl mx-auto my-20">
         {createdUser ? (
           <>
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Create New User</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Create a new user account directly. A random password will be generated.</p>
-            </div>
-            
             <div className="text-center mb-8">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
                 <svg className="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,6 +125,10 @@ export default function CreateUserPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Type</label>
                   <p className="text-sm text-gray-900 dark:text-white mt-1 capitalize">{createdUser.utype}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Group</label>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1 capitalize">{createdUser.ugroup}</p>
                 </div>
               </div>
 
@@ -218,6 +240,33 @@ export default function CreateUserPage() {
                         {option.label}
                       </option>
                     ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="ugroup" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    User Group *
+                  </label>
+                  <select
+                    id="ugroup"
+                    value={formData.ugroup}
+                    onChange={(e) => handleInputChange("ugroup", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    required
+                    disabled={loadingGroups}
+                  >
+                    {loadingGroups ? (
+                      <option value="">Loading groups...</option>
+                    ) : (
+                      <>
+                        <option value="">Select a user group</option>
+                        {userGroups.map((group) => (
+                          <option key={group.name} value={group.name}>
+                            {group.name} {group.info && `- ${group.info}`}
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
