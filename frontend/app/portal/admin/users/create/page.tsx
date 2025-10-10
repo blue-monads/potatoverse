@@ -68,7 +68,7 @@ export default function CreateUserPage() {
       description="Manage your users, roles, and permissions."
           
     >
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto my-20">
         {createdUser ? (
           <>
             <div className="mb-6">
