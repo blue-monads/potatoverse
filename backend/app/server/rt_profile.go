@@ -9,8 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var GradientSeed = 71
+
 func hash(s string) uint32 {
-	h := uint32(0)
+	h := uint32(GradientSeed)
 	for i := 0; i < len(s); i++ {
 		h = h*31 + uint32(s[i])
 	}
@@ -23,35 +25,41 @@ type Gradient struct {
 }
 
 var gradients = []Gradient{
-	{"#6a11cb", "#2575fc"}, // Blue to purple
-	{"#fdbb2d", "#22c1c3"}, // Yellow to cyan
-	{"#ee9ca7", "#ffdde1"}, // Light pink to off-white
-	{"#43e97b", "#38f9d7"}, // Mint to turquoise
-	{"#ff9a9e", "#fad0c4"}, // Light pink to light red-orange
-	{"#ffb347", "#ffcc33"}, // Orange to yellow
-	{"#4568dc", "#b06ab3"}, // Blue to mauve
-	{"#659999", "#f4791f"}, // Green-gray to orange
-	{"#40e0d0", "#ff8c00"}, // Turquoise to dark orange
-	{"#4ca1af", "#c4e0e5"}, // Blue to light blue
-	{"#00b09b", "#96c93d"}, // Green to lime
-	{"#f4791f", "#660000"}, // Orange to dark red
-	{"#fc6767", "#ec008c"}, // Pink to dark pink
-	{"#f7b733", "#fc4a1a"}, // Orange to red
-	{"#e1eec3", "#f05053"}, // Pale green to red
-	{"#a8c0ff", "#3f2b96"}, // Light blue to dark purple
-	{"#e55d87", "#5fc3e4"}, // Pink to light blue
-	{"#00d2ff", "#3a7bd5"}, // Sky blue to deep blue
-	{"#a770ef", "#fdb99b"}, // Violet to peach
-	{"#d53a9d", "#00d2ff"}, // Magenta to blue
-	{"#334d50", "#cbcaa5"}, // Dark green to light yellow
-	{"#74ebd5", "#acb6e5"}, // Aqua to light purple
-	{"#f09819", "#edde5d"}, // Orange to light yellow
-	{"#56ab2f", "#a8e063"}, // Forest green to light green
-	{"#ffafbd", "#ffc3a0"}, // Light pink to peach
-	{"#34e89e", "#0f3443"}, // Mint green to dark blue
-	{"#76b852", "#8dc26f"}, // Olive green to bright green
-	{"#00c6ff", "#0072ff"}, // Cyan to deep blue
-	{"#4b6cb7", "#182848"}, // Royal blue to very dark blue
+	{"#d53a9d", "#cbcaa5"},
+	{"#74ebd5", "#edde5d"},
+	{"#6a11cb", "#2575fc"},
+	{"#fdbb2d", "#22c1c3"},
+	{"#ee9ca7", "#ffdde1"},
+	{"#43e97b", "#38f9d7"},
+	{"#ff9a9e", "#fad0c4"},
+	{"#ffb347", "#ffcc33"},
+	{"#4568dc", "#b06ab3"},
+	{"#659999", "#f4791f"},
+	{"#40e0d0", "#ff8c00"},
+	{"#4ca1af", "#c4e0e5"},
+	{"#00b09b", "#96c93d"},
+	{"#f4791f", "#660000"},
+	{"#fc6767", "#ec008c"},
+	{"#f7b733", "#fc4a1a"},
+	{"#e1eec3", "#f05053"},
+	{"#a8c0ff", "#3f2b96"},
+	{"#e55d87", "#5fc3e4"},
+	{"#00d2ff", "#3a7bd5"},
+	{"#a770ef", "#fdb99b"},
+	{"#d53a9d", "#00d2ff"},
+	{"#334d50", "#cbcaa5"},
+	{"#74ebd5", "#acb6e5"},
+	{"#f09819", "#edde5d"},
+	{"#56ab2f", "#a8e063"},
+	{"#ffafbd", "#ffc3a0"},
+	{"#34e89e", "#0f3443"},
+	{"#76b852", "#edc26f"},
+	{"#00c6ff", "#0072ff"},
+	{"#4b6cb7", "#182848"},
+	{"#f4791f", "#fdb99b"},
+	{"#f7b733", "#ec008c"},
+	{"#f7b733", "#fc4a1a"},
+	{"#a770ef", "#660000"},
 }
 
 func (a *Server) ListGradients(ctx *gin.Context) {
