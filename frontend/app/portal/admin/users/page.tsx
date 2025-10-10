@@ -8,10 +8,9 @@ import { AddButton } from '@/contain/AddButton';
 import { getUsers, User } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { FantasticTable } from '@/contain';
-import { ModalHandle, useGApp } from '@/hooks';
+import { useGApp } from '@/hooks';
 import { ColumnDef } from '@/contain/compo/FantasticTable/FantasticTable';
 import WithTabbedUserLayout from './WithTabbedUserLayout';
-import AddInviteModal from './sub/AddInviteModal';
 
 
 const columns = [
@@ -64,9 +63,6 @@ export default function Page() {
     ready: gapp.isInitialized,
   });
 
-  const handleUserAdded = () => {
-    loader.reload();
-  };
 
   const handleCreateUser = () => {
     router.push('/portal/admin/users/create');
@@ -82,13 +78,7 @@ export default function Page() {
       name='Users'
       description="Manage your users, roles, and permissions."
       rightContent={<>
-        <button
-          onClick={() => showInviteUserModal(gapp.modal, handleUserAdded)}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white transition-colors"
-        >
-          <MailIcon className="w-4 h-4" />
-          Invite User
-        </button>
+        
         <AddButton
           name="+ User"
           onClick={handleCreateUser}
@@ -170,10 +160,3 @@ export default function Page() {
 }
 
 
-const showInviteUserModal = (modal: ModalHandle, onUserAdded: () => void) => {
-  modal.openModal({
-    title: "Invite User",
-    content: <AddInviteModal onInviteAdded={onUserAdded} />,
-    size: "lg"
-  });
-};
