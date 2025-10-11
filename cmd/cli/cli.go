@@ -81,6 +81,8 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 		return err
 	}
 
+	os.MkdirAll(config.WorkingDir, 0755)
+
 	err = os.WriteFile("./config.toml", cfgData, 0644)
 	if err != nil {
 		return err
