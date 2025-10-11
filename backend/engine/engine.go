@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"log/slog"
 	"maps"
 	"regexp"
 	"strconv"
@@ -22,6 +23,8 @@ type Engine struct {
 
 	runtime Runtime
 
+	logger *slog.Logger
+
 	app xtypes.App
 }
 
@@ -34,6 +37,7 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			execs:     make(map[int64]*luaz.Luaz),
 			execsLock: sync.RWMutex{},
 		},
+		logger: slog.Default().With("module", "engine"),
 	}
 }
 
@@ -53,6 +57,7 @@ func (e *Engine) GetDebugData() map[string]any {
 func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
 	e.runtime.parent = e
+	e.logger = app.Logger().With("module", "engine")
 
 	go e.runtime.cleanupExecs()
 

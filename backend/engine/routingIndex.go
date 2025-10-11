@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type SpaceRouteIndexItem struct {
 	packageId         int64
@@ -33,14 +36,27 @@ func (e *Engine) LoadRoutingIndex() error {
 	}
 
 	for _, space := range spaces {
+
+		routeOptions := &RouteOption{}
+		err = json.Unmarshal([]byte(space.RouteOptions), routeOptions)
+		if err != nil {
+			routeOptions.ServeFolder = "public"
+			routeOptions.TrimPathPrefix = ""
+			routeOptions.ForceHtmlExtension = false
+			routeOptions.ForceIndexHtmlFile = false
+
+			e.logger.Warn("error unmarshalling route options, using default values", "error", err, "space_id", space.ID, "route_options", space.RouteOptions)
+
+		}
+
 		indexItem := &SpaceRouteIndexItem{
 			packageId: space.PackageID,
 			spaceId:   space.ID,
 			routeOption: RouteOption{
-				ServeFolder:        "public",
-				TrimPathPrefix:     "",
-				ForceHtmlExtension: false,
-				ForceIndexHtmlFile: false,
+				ServeFolder:        routeOptions.ServeFolder,
+				TrimPathPrefix:     routeOptions.TrimPathPrefix,
+				ForceHtmlExtension: routeOptions.ForceHtmlExtension,
+				ForceIndexHtmlFile: routeOptions.ForceIndexHtmlFile,
 			},
 		}
 
