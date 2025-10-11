@@ -121,10 +121,19 @@ type ExtraCmd struct {
 }
 
 func (e *ExtraCmd) Run(ctx *kong.Context) error {
-	parentCLI := ctx.Model.Parent.Target.Interface().(*CLI)
-	if parentCLI.Verbose {
-		fmt.Printf("[Global Flag] Verbose: true\n")
+	if len(e.CombinedArgs) == 0 {
+		return fmt.Errorf("must specify command and arguments for extra passthrough")
 	}
+
+	e.Command = e.CombinedArgs[0]
+	if len(e.CombinedArgs) > 1 {
+		e.Args = e.CombinedArgs[1:]
+	} else {
+		e.Args = []string{}
+	}
+
+	fmt.Printf("Executing Extra Command: %s\n", e.Command)
+	fmt.Printf("With Unparsed Args: %v\n", e.Args)
 
 	return nil
 }
