@@ -17,6 +17,7 @@ type Options struct {
 	Port   int
 	SeedDB bool
 	Host   string
+	Name   string
 }
 
 func NewNoHead(options Options) (*app.HeadLess, error) {
@@ -33,17 +34,21 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 
 	m := stdio.NewMailer(logger.With("module", "mailer"))
 
+	if options.Name == "" {
+		options.Name = "PotatoVerse"
+	}
+
 	app := app.NewHeadLess(app.Option{
 		Database: db,
 		Logger:   logger,
 		Signer:   signer.New([]byte(masterSecret)),
 		AppOpts: &xtypes.AppOptions{
-			Name:         "Turnix",
 			Port:         options.Port,
 			Host:         options.Host,
 			MasterSecret: masterSecret,
 			Debug:        true,
 			WorkingDir:   "./tmp",
+			Name:         options.Name,
 		},
 		Mailer: m,
 	})
@@ -94,6 +99,7 @@ func NewProdApp(config *xtypes.AppOptions) (*app.App, error) {
 		Port:   config.Port,
 		SeedDB: false,
 		Host:   config.Host,
+		Name:   config.Name,
 	})
 	if err != nil {
 		return nil, err

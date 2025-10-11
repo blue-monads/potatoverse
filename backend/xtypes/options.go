@@ -1,21 +1,21 @@
 package xtypes
 
 type AppOptions struct {
-	Name         string        `json:"name" toml:"name"`
-	Port         int           `json:"port" toml:"port"`
-	Host         string        `json:"host" toml:"host"`
-	MasterSecret string        `json:"master_secret" toml:"master_secret"`
-	Debug        bool          `json:"debug_mode" toml:"debug_mode"`
-	WorkingDir   string        `json:"working_dir" toml:"working_dir"`
-	SocketFile   string        `json:"socket_file" toml:"socket_file"`
-	Mailer       MailerOptions `json:"mailer" toml:"mailer"`
+	Name         string        `json:"name,omitempty" toml:"name,omitempty"`
+	Port         int           `json:"port,omitempty" toml:"port,omitempty"`
+	Host         string        `json:"host,omitempty" toml:"host,omitempty"`
+	MasterSecret string        `json:"master_secret,omitempty" toml:"master_secret,omitempty"`
+	Debug        bool          `json:"debug_mode,omitempty" toml:"debug_mode,omitempty"`
+	WorkingDir   string        `json:"working_dir,omitempty" toml:"working_dir,omitempty"`
+	SocketFile   string        `json:"socket_file,omitempty" toml:"socket_file,omitempty"`
+	Mailer       MailerOptions `json:"mailer,omitempty" toml:"mailer,omitempty"`
 }
 
 type MailerOptions struct {
-	Type     string            `json:"type" toml:"type"` // smtp, gmail, webhook
-	Host     string            `json:"host" toml:"host"`
-	Port     int               `json:"port" toml:"port"`
-	Username string            `json:"username" toml:"username"`
-	Password string            `json:"password" toml:"password"`
-	Meta     map[string]string `json:"meta" toml:"meta"`
+	Type     string            `json:"type,omitempty" toml:"type,omitempty"` // smtp, gmail, webhook
+	Host     string            `json:"host,omitempty" toml:"host,omitempty"`
+	Port     int               `json:"port,omitempty" toml:"port,omitempty"`
+	Username string            `json:"username,omitempty" toml:"username,omitempty"`
+	Password string            `json:"password,omitempty" toml:"password,omitempty"`
+	Meta     map[string]string `json:"meta,omitempty" toml:"meta,omitempty"`
 }

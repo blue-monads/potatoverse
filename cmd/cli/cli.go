@@ -3,8 +3,13 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/alecthomas/kong"
+	"github.com/blue-monads/turnix/backend"
+	xutils "github.com/blue-monads/turnix/backend/utils"
+	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type CLI struct {
@@ -14,7 +19,6 @@ type CLI struct {
 	Dev        DevCmd        `cmd:"" help:"Development utilities."`
 	Extra      ExtraCmd      `cmd:"" help:"Extra commands."`
 	Verbose    bool          `name:"verbose" short:"v" help:"Enable verbose output."`
-	Config     string        `name:"config" short:"c" help:"Path to configuration file." type:"path"`
 }
 
 type ServerCmd struct {
@@ -24,25 +28,100 @@ type ServerCmd struct {
 }
 
 type ServerInitCmd struct {
-	DBFile string `name:"db" help:"Path to database file." default:"data.db"`
-	Port   int    `name:"port" short:"p" help:"Server port." default:"7777"`
-	Host   string `name:"host" help:"Server host." default:"*.localhost"`
+	DBFile          string `name:"db" help:"Path to database file." default:"data.db"`
+	Port            int    `name:"port" short:"p" help:"Server port." default:"7777"`
+	Host            string `name:"host" help:"Server host." default:"*.localhost"`
+	Name            string `name:"name" help:"Name of node." default:"PotatoVerse"`
+	SocketFile      string `name:"socket-file" help:"Socket file of node."`
+	MasterSecret    string `name:"master-secret" help:"Master secret of node."`
+	MasterSecretEnv string `name:"master-secret-env" help:"Master secret environment variable of node."`
+	Debug           bool   `name:"debug" help:"Debug mode of node." default:"false"`
+	WorkingDir      string `name:"working-dir" help:"Working dir of node."`
 }
 
 func (c *ServerInitCmd) Run(ctx *kong.Context) error {
-	panic("Server Init - Not implemented yet")
+
+	config := xtypes.AppOptions{}
+
+	config.Name = c.Name
+	config.Port = c.Port
+	config.Host = c.Host
+	config.SocketFile = c.SocketFile
+	config.MasterSecret = c.MasterSecret
+	config.Debug = c.Debug
+	config.WorkingDir = c.WorkingDir
+	config.Mailer = xtypes.MailerOptions{
+		Type: "stdio",
+	}
+
+	if config.MasterSecret == "" && c.MasterSecretEnv != "" {
+		config.MasterSecret = fmt.Sprintf("$%s", c.MasterSecretEnv)
+	}
+
+	if config.MasterSecret == "" {
+		random, err := xutils.GenerateRandomString(32)
+		if err != nil {
+			return err
+		}
+
+		config.MasterSecret = fmt.Sprintf("potatosec_%s", random)
+	}
+
+	if config.WorkingDir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+
+		config.WorkingDir = path.Join(cwd, ".pdata")
+	}
+
+	cfgData, err := toml.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("./config.toml", cfgData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }
 
 type ServerStartCmd struct {
-	DBFile string `name:"db" help:"Path to database file." default:"data.db"`
-	Port   int    `name:"port" short:"p" help:"Server port." default:"7777"`
-	Host   string `name:"host" help:"Server host." default:"*.localhost"`
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
 func (c *ServerStartCmd) Run(ctx *kong.Context) error {
-	panic("Server Start - Not implemented yet")
 
+	cfgData, err := os.ReadFile(c.Config)
+	if err != nil {
+		return err
+	}
+
+	config := xtypes.AppOptions{}
+	err = toml.Unmarshal(cfgData, &config)
+	if err != nil {
+		return err
+	}
+
+	app, err := backend.NewProdApp(&config)
+	if err != nil {
+		return err
+	}
+
+	err = app.Start()
+	if err != nil {
+		return err
+	}
+
+	ch := make(chan struct{})
+	<-ch // block forever
+
+	return nil
 }
 
 type ServerStopCmd struct {
