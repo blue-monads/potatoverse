@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http/httputil"
@@ -197,4 +198,52 @@ func (a *Server) handleSpaceInfo(ctx *gin.Context) {
 		return
 	}
 	httpx.WriteJSON(ctx, spaceInfo, nil)
+}
+
+func (a *Server) PushPackage(ctx *gin.Context) {
+	// Get the dev token from Authorization header
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		httpx.WriteErr(ctx, errors.New("missing authorization token"))
+		return
+	}
+
+	// Parse the package dev token
+	claim, err := a.signer.ParsePackageDev(token)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	recreateArtifacts := ctx.Query("recreate_artifacts") == "true"
+
+	// Create temp file for the uploaded zip
+	tempFile, err := os.CreateTemp("", "turnix-package-push-*.zip")
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+	defer os.Remove(tempFile.Name())
+
+	// Copy the uploaded file to temp file
+	_, err = io.Copy(tempFile, ctx.Request.Body)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// Close the temp file before passing to UpgradePackage
+	tempFile.Close()
+
+	// Upgrade the package
+	packageId, err := a.ctrl.UpgradePackage(claim.UserId, claim.PackageXID, tempFile.Name(), recreateArtifacts)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	httpx.WriteJSON(ctx, gin.H{
+		"package_id": packageId,
+		"message":    "package upgraded successfully",
+	}, nil)
 }

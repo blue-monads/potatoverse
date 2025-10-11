@@ -7,7 +7,6 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/rs/xid"
 )
 
 type LoginOpts struct {
@@ -45,7 +44,6 @@ func (c *Controller) Login(opts *LoginOpts) (*LoginResponse, error) {
 	}
 
 	token, err := c.signer.SignAccess(&signer.AccessClaim{
-		XID:    xid.New().String(),
 		UserId: int64(user.ID),
 	})
 

@@ -19,7 +19,7 @@ import (
 // "@file" "public/index.html"
 // "@file" "potato.json"
 
-func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
+func (d *DB) InstallPackage(userId int64, file, xid string) (int64, error) {
 	zipFile, err := zip.OpenReader(file)
 	if err != nil {
 		return 0, err
@@ -49,6 +49,7 @@ func (d *DB) InstallPackage(userId int64, file string) (int64, error) {
 	}
 
 	pkg := &dbmodels.Package{
+		XID:           xid,
 		Name:          rawpkg.Name,
 		Info:          rawpkg.Info,
 		Slug:          rawpkg.Slug,
@@ -161,6 +162,15 @@ func (d *DB) ListPackages() ([]dbmodels.Package, error) {
 func (d *DB) ListPackagesByIds(ids []int64) ([]dbmodels.Package, error) {
 	items := make([]dbmodels.Package, 0)
 	err := d.packagesTable().Find(db.Cond{"id": ids}).All(&items)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (d *DB) ListPackagesByXID(xid string) ([]dbmodels.Package, error) {
+	items := make([]dbmodels.Package, 0)
+	err := d.packagesTable().Find(db.Cond{"xid": xid}).All(&items)
 	if err != nil {
 		return nil, err
 	}

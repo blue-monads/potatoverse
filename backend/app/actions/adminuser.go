@@ -9,7 +9,6 @@ import (
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/easyerr"
 	"github.com/k0kubun/pp"
-	"github.com/rs/xid"
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]dbmodels.User, error) {
@@ -129,7 +128,6 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 	}
 
 	inviteToken, err := c.signer.SignInvite(&signer.InviteClaim{
-		XID:      xid.New().String(),
 		Typeid:   signer.TokenTypeEmailInvite,
 		InviteId: id,
 	})
@@ -192,7 +190,6 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 
 	// Generate new invite token
 	inviteToken, err := c.signer.SignInvite(&signer.InviteClaim{
-		XID:      xid.New().String(),
 		Typeid:   signer.TokenTypeEmailInvite,
 		InviteId: id,
 	})

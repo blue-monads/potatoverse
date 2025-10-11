@@ -14,7 +14,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
-	"github.com/rs/xid"
+	"github.com/jaevor/go-nanoid"
 )
 
 func (c *Controller) ListEPackages() ([]models.PotatoPackage, error) {
@@ -118,7 +118,6 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 	return c.signer.SignSpace(&signer.SpaceClaim{
 		SpaceId: req.SpaceId,
 		UserId:  userId,
-		XID:     xid.New().String(),
 		Typeid:  signer.TokenTypeSpace,
 	})
 
@@ -166,10 +165,9 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 
 	// Generate the dev token
 	return c.signer.SignPackageDev(&signer.PackageDevClaim{
-		PackageId: packageId,
-		UserId:    userId,
-		XID:       xid.New().String(),
-		Typeid:    signer.ToekenPackageDev,
+		PackageXID: pkg.XID,
+		UserId:     userId,
+		Typeid:     signer.ToekenPackageDev,
 	})
 }
 
@@ -196,8 +194,12 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 
 }
 
+var packageXIDGenerator, _ = nanoid.ASCII(8)
+
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
-	packageId, err := database.InstallPackage(userId, file)
+	pxid := packageXIDGenerator()
+
+	packageId, err := database.InstallPackage(userId, file, pxid)
 	if err != nil {
 		return 0, err
 	}
@@ -213,7 +215,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			continue
 		}
 
-		spaceId, err := installArtifact(database, userId, packageId, artifact)
+		spaceId, err := installArtifact(database, userId, packageId, pxid, artifact)
 		if err != nil {
 			return 0, err
 		}
@@ -225,7 +227,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	return packageId, nil
 }
 
-func installArtifact(database datahub.Database, userId, packageId int64, artifact models.PotatoArtifact) (int64, error) {
+func installArtifact(database datahub.Database, userId, packageId int64, pxid string, artifact models.PotatoArtifact) (int64, error) {
 	routeOptions, err := json.Marshal(artifact.RouteOptions)
 	if err != nil {
 		return 0, err
@@ -238,6 +240,7 @@ func installArtifact(database datahub.Database, userId, packageId int64, artifac
 
 	return database.AddSpace(&dbmodels.Space{
 		PackageID:         packageId,
+		PackageXID:        pxid,
 		NamespaceKey:      artifact.Namespace,
 		OwnsNamespace:     true,
 		ExecutorType:      artifact.ExecutorType,
@@ -270,8 +273,22 @@ func readPackagePotatoManifest(database datahub.Database, packageId int64) (*mod
 	return pkg, nil
 }
 
-func (c *Controller) UpgradePackage(userId int64, packageId int64, file string, recreateArtifacts bool) (int64, error) {
-	packageId, err := c.database.InstallPackage(userId, file)
+func (c *Controller) UpgradePackage(userId int64, file, pxid string, recreateArtifacts bool) (int64, error) {
+
+	packages, err := c.database.ListPackagesByXID(pxid)
+	if err != nil {
+		return 0, err
+	}
+
+	oldPackageId := packages[0].ID
+
+	for _, pkg := range packages {
+		if oldPackageId > pkg.ID {
+			oldPackageId = pkg.ID
+		}
+	}
+
+	packageId, err := c.database.InstallPackage(userId, file, pxid)
 	if err != nil {
 		return 0, err
 	}
@@ -281,7 +298,7 @@ func (c *Controller) UpgradePackage(userId int64, packageId int64, file string, 
 		return 0, err
 	}
 
-	oldSpaces, err := c.database.ListSpacesByPackageId(packageId)
+	oldSpaces, err := c.database.ListSpacesByPackageId(oldPackageId)
 	if err != nil {
 		return 0, err
 	}
@@ -301,7 +318,7 @@ func (c *Controller) UpgradePackage(userId int64, packageId int64, file string, 
 		}
 
 		if currentArtifactIndex == -1 {
-			spaceId, err := installArtifact(c.database, userId, packageId, artifact)
+			spaceId, err := installArtifact(c.database, userId, packageId, pxid, artifact)
 			if err != nil {
 				return 0, err
 			}

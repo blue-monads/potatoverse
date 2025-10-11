@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS UserDevices (
   dtype TEXT NOT NULL DEFAULT 'sesssion', --  session token
   token_hash TEXT NOT NULL DEFAULT '', 
   user_id INTEGER NOT NULL, 
-  project_id INTEGER NOT NULL DEFAULT 0,
   last_ip TEXT NOT NULL DEFAULT '',
   last_login TEXT NOT NULL DEFAULT '',
   extrameta JSON NOT NULL DEFAULT '{}', 
@@ -104,6 +103,7 @@ CREATE TABLE IF NOT EXISTS UserMessages(
 CREATE TABLE IF NOT EXISTS Spaces (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   package_id INTEGER NOT NULL,
+  package_xid TEXT NOT NULL DEFAULT '',
   owns_namespace BOOLEAN NOT NULL DEFAULT FALSE,
   
   namespace_key TEXT NOT NULL DEFAULT '',
@@ -113,8 +113,6 @@ CREATE TABLE IF NOT EXISTS Spaces (
   mcp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   mcp_definition_file TEXT NOT NULL DEFAULT '',
   mcp_options JSON NOT NULL DEFAULT '{}',
-  dev_serve_port INTEGER NOT NULL DEFAULT 0,
-  dev_mode BOOLEAN NOT NULL DEFAULT FALSE,
   
   overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  
   owned_by INTEGER NOT NULL, 
@@ -196,7 +194,7 @@ CREATE TABLE IF NOT EXISTS FileShares (
 
 CREATE TABLE IF NOT EXISTS Packages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-
+  xid TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL DEFAULT '',
   info TEXT NOT NULL DEFAULT '',

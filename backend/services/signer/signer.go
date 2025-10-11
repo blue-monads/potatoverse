@@ -20,28 +20,23 @@ const (
 )
 
 type AccessClaim struct {
-	XID             string         `json:"x,omitempty"`
-	Typeid          uint8          `json:"t,omitempty"`
-	UserId          int64          `json:"u,omitempty"`
-	PinnedProjectId int64          `json:"p,omitempty"`
-	Extrameta       map[string]any `json:"e,omitempty"`
+	Typeid    uint8          `json:"t,omitempty"`
+	UserId    int64          `json:"u,omitempty"`
+	Extrameta map[string]any `json:"e,omitempty"`
 }
 
 type InviteClaim struct {
-	XID      string `json:"x,omitempty"`
-	Typeid   uint8  `json:"t,omitempty"`
-	InviteId int64  `json:"p,omitempty"`
+	Typeid   uint8 `json:"t,omitempty"`
+	InviteId int64 `json:"p,omitempty"`
 }
 
 type SpaceClaim struct {
-	XID     string `json:"x,omitempty"`
-	Typeid  uint8  `json:"t,omitempty"`
-	SpaceId int64  `json:"s,omitempty"`
-	UserId  int64  `json:"u,omitempty"`
+	Typeid  uint8 `json:"t,omitempty"`
+	SpaceId int64 `json:"s,omitempty"`
+	UserId  int64 `json:"u,omitempty"`
 }
 
 type SpaceAdvisieryClaim struct {
-	XID          string         `json:"x,omitempty"`
 	Typeid       uint8          `json:"t,omitempty"`
 	TokenSubType string         `json:"st,omitempty"`
 	SpaceId      int64          `json:"s,omitempty"`
@@ -50,7 +45,6 @@ type SpaceAdvisieryClaim struct {
 }
 
 type SpaceFilePresignedClaim struct {
-	XID      string `json:"x,omitempty"`
 	Typeid   uint8  `json:"t,omitempty"`
 	SpaceId  int64  `json:"s,omitempty"`
 	UserId   int64  `json:"u,omitempty"`
@@ -60,10 +54,9 @@ type SpaceFilePresignedClaim struct {
 }
 
 type PackageDevClaim struct {
-	XID       string `json:"x,omitempty"`
-	Typeid    uint8  `json:"t,omitempty"`
-	PackageId int64  `json:"p,omitempty"`
-	UserId    int64  `json:"u,omitempty"`
+	Typeid     uint8  `json:"t,omitempty"`
+	PackageXID string `json:"p,omitempty"`
+	UserId     int64  `json:"u,omitempty"`
 }
 
 // fixme => add expiry

@@ -4,6 +4,7 @@ import "time"
 
 type Package struct {
 	ID            int64      `json:"id" db:"id,omitempty"`
+	XID           string     `json:"xid" db:"xid"`
 	Name          string     `json:"name" db:"name"`
 	Slug          string     `json:"slug" db:"slug"`
 	Info          string     `json:"info" db:"info,omitempty"`

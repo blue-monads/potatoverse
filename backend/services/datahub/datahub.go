@@ -71,20 +71,19 @@ type UserOps interface {
 }
 
 type PackageOps interface {
-	InstallPackage(userId int64, file string) (int64, error)
-
-	// UpgradePackage(userId, packageId int64, patchZip string) (int64, error)
+	InstallPackage(userId int64, file, xid string) (int64, error)
 
 	GetPackage(id int64) (*dbmodels.Package, error)
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, data map[string]any) error
 
 	ListPackages() ([]dbmodels.Package, error)
+	ListPackagesByXID(xid string) ([]dbmodels.Package, error)
+
 	ListPackagesByIds(ids []int64) ([]dbmodels.Package, error)
 
 	ListPackageFiles(packageId int64) ([]dbmodels.PackageFile, error)
 	ListPackageFilesByPath(packageId int64, path string) ([]dbmodels.PackageFile, error)
-	// ListAllPackageFile(packageId int64, path string) ([]dbmodels.PackageFile, error)
 
 	GetPackageFileMeta(packageId, id int64) (*dbmodels.PackageFile, error)
 	GetPackageFileMetaByPath(packageId int64, path, name string) (*dbmodels.PackageFile, error)

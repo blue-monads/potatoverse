@@ -49,7 +49,6 @@ type UserDevice struct {
 	Dtype     string     `json:"dtype" db:"dtype"`
 	TokenHash string     `json:"token_hash" db:"token_hash"`
 	UserId    int64      `json:"user_id" db:"user_id"`
-	ProjectId int64      `json:"project_id" db:"project_id,omitempty"`
 	LastIp    string     `json:"last_ip" db:"last_ip"`
 	LastLogin string     `json:"last_login" db:"last_login"`
 	ExtraMeta string     `json:"extrameta" db:"extrameta,omitempty"`
