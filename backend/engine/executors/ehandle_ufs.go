@@ -45,7 +45,7 @@ func backend(path string) (string, string) {
 		return "tmp", after0
 	}
 
-	return "tmp", path
+	return "unknown", path
 }
 
 func isRootPath(path string) bool {
