@@ -179,7 +179,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string) (int64, erro
 		return 0, err
 	}
 
-	// defer os.Remove(file)
+	defer os.Remove(file)
 
 	return c.InstallPackageByFile(userId, file)
 }
@@ -202,14 +202,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return 0, err
 	}
 
-	buf := bytes.Buffer{}
-	err = database.GetPackageFileStreamingByPath(packageId, "", "potato.json", &buf)
-	if err != nil {
-		return 0, err
-	}
-
-	pkg := &models.PotatoPackage{}
-	err = json.Unmarshal(buf.Bytes(), pkg)
+	pkg, err := readPackagePotatoManifest(database, packageId)
 	if err != nil {
 		return 0, err
 	}
@@ -220,32 +213,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			continue
 		}
 
-		routeOptions, err := json.Marshal(artifact.RouteOptions)
-		if err != nil {
-			return 0, err
-		}
-
-		mcpOptions, err := json.Marshal(artifact.McpOptions)
-		if err != nil {
-			return 0, err
-		}
-
-		spaceId, err := database.AddSpace(&dbmodels.Space{
-			PackageID:         packageId,
-			NamespaceKey:      artifact.Namespace,
-			OwnsNamespace:     true,
-			ExecutorType:      artifact.ExecutorType,
-			SubType:           artifact.SubType,
-			RouteOptions:      string(routeOptions),
-			McpEnabled:        artifact.McpOptions.Enabled,
-			McpDefinitionFile: artifact.McpOptions.DefinitionFile,
-			McpOptions:        string(mcpOptions),
-			DevServePort:      int64(artifact.DevServePort),
-			OwnerID:           userId,
-			IsInitilized:      false,
-			IsPublic:          true,
-		})
-
+		spaceId, err := installArtifact(database, userId, packageId, artifact)
 		if err != nil {
 			return 0, err
 		}
@@ -255,4 +223,133 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	}
 
 	return packageId, nil
+}
+
+func installArtifact(database datahub.Database, userId, packageId int64, artifact models.PotatoArtifact) (int64, error) {
+	routeOptions, err := json.Marshal(artifact.RouteOptions)
+	if err != nil {
+		return 0, err
+	}
+
+	mcpOptions, err := json.Marshal(artifact.McpOptions)
+	if err != nil {
+		return 0, err
+	}
+
+	return database.AddSpace(&dbmodels.Space{
+		PackageID:         packageId,
+		NamespaceKey:      artifact.Namespace,
+		OwnsNamespace:     true,
+		ExecutorType:      artifact.ExecutorType,
+		SubType:           artifact.SubType,
+		RouteOptions:      string(routeOptions),
+		McpEnabled:        artifact.McpOptions.Enabled,
+		McpDefinitionFile: artifact.McpOptions.DefinitionFile,
+		McpOptions:        string(mcpOptions),
+		DevServePort:      int64(artifact.DevServePort),
+		OwnerID:           userId,
+		IsInitilized:      false,
+		IsPublic:          true,
+	})
+}
+
+func readPackagePotatoManifest(database datahub.Database, packageId int64) (*models.PotatoPackage, error) {
+
+	buf := bytes.Buffer{}
+	err := database.GetPackageFileStreamingByPath(packageId, "", "potato.json", &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	pkg := &models.PotatoPackage{}
+	err = json.Unmarshal(buf.Bytes(), pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	return pkg, nil
+}
+
+func (c *Controller) UpgradePackage(userId int64, packageId int64, file string, recreateArtifacts bool) (int64, error) {
+	packageId, err := c.database.InstallPackage(userId, file)
+	if err != nil {
+		return 0, err
+	}
+
+	pkg, err := readPackagePotatoManifest(c.database, packageId)
+	if err != nil {
+		return 0, err
+	}
+
+	oldSpaces, err := c.database.ListSpacesByPackageId(packageId)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, artifact := range pkg.Artifacts {
+		if artifact.Kind != "space" {
+			continue
+		}
+
+		currentArtifactIndex := -1
+
+		for i, oldSpace := range oldSpaces {
+			if oldSpace.NamespaceKey == artifact.Namespace {
+				currentArtifactIndex = i
+				break
+			}
+		}
+
+		if currentArtifactIndex == -1 {
+			spaceId, err := installArtifact(c.database, userId, packageId, artifact)
+			if err != nil {
+				return 0, err
+			}
+
+			c.logger.Info("space installed", "space_id", spaceId)
+		} else {
+
+			oldSpace := oldSpaces[currentArtifactIndex]
+
+			if recreateArtifacts {
+
+				routeOptions, err := json.Marshal(artifact.RouteOptions)
+				if err != nil {
+					return 0, err
+				}
+
+				mcpOptions, err := json.Marshal(artifact.McpOptions)
+				if err != nil {
+					return 0, err
+				}
+
+				c.database.UpdateSpace(oldSpace.ID, map[string]any{
+					"package_id":          packageId,
+					"namespace_key":       artifact.Namespace,
+					"executor_type":       artifact.ExecutorType,
+					"sub_type":            artifact.SubType,
+					"route_options":       string(routeOptions),
+					"mcp_enabled":         artifact.McpOptions.Enabled,
+					"mcp_definition_file": artifact.McpOptions.DefinitionFile,
+					"mcp_options":         string(mcpOptions),
+				})
+
+			} else {
+				err = c.database.UpdateSpace(oldSpace.ID, map[string]any{
+					"package_id": packageId,
+				})
+				if err != nil {
+					return 0, err
+				}
+
+			}
+
+		}
+
+	}
+
+	c.engine.LoadRoutingIndex()
+
+	return packageId, nil
+
 }
