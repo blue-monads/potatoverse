@@ -1,22 +1,34 @@
 package main
 
-import "github.com/blue-monads/turnix/backend"
+import (
+	"log"
+
+	"github.com/blue-monads/turnix/backend"
+	"github.com/blue-monads/turnix/backend/xtypes"
+)
 
 func main() {
 
-	app, err := backend.NewDevApp(backend.Options{
-		DBFile: "data.db",
-		Port:   7777,
-		SeedDB: true,
-		Host:   "*.localhost",
-	})
+	app, err := backend.NewDevApp(&xtypes.AppOptions{
+		WorkingDir:   "./tmp",
+		Port:         7777,
+		Host:         "*.localhost",
+		Name:         "PotatoVerse",
+		MasterSecret: "default-master-secret",
+		Debug:        true,
+		SocketFile:   "",
+		Mailer: xtypes.MailerOptions{
+			Type: "stdio",
+		},
+	}, true)
+
 	if err != nil {
-		panic("Failed to create HeadLess app: " + err.Error())
+		log.Fatalf("Failed to create HeadLess app: %v", err)
 	}
 
 	err = app.Start()
 	if err != nil {
-		panic("Failed to start HeadLess app: " + err.Error())
+		log.Fatalf("Failed to start HeadLess app: %v", err)
 	}
 
 	ch := make(chan struct{})

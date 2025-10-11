@@ -1,7 +1,9 @@
 package backend
 
 import (
+	"fmt"
 	"log/slog"
+	"os"
 	"path"
 
 	"github.com/blue-monads/turnix/backend/app"
@@ -12,25 +14,15 @@ import (
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
-type Options struct {
-	DBFile string
-	Port   int
-	SeedDB bool
-	Host   string
-	Name   string
-}
-
-func NewNoHead(options Options) (*app.HeadLess, error) {
+func BuildApp(options xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	logger := slog.Default()
 
-	db, err := database.NewDB(options.DBFile, logger)
+	db, err := database.NewDB(fmt.Sprintf("%s/data.db", options.WorkingDir), logger)
 	if err != nil {
 		logger.Error("Failed to initialize database", "err", err)
 		return nil, err
 	}
-
-	masterSecret := "default-master-secret"
 
 	m := stdio.NewMailer(logger.With("module", "mailer"))
 
@@ -38,32 +30,22 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 		options.Name = "PotatoVerse"
 	}
 
-	app := app.NewHeadLess(app.Option{
+	happ := app.NewHeadLess(app.Option{
 		Database: db,
 		Logger:   logger,
-		Signer:   signer.New([]byte(masterSecret)),
+		Signer:   signer.New([]byte(options.MasterSecret)),
 		AppOpts: &xtypes.AppOptions{
 			Port:         options.Port,
 			Host:         options.Host,
-			MasterSecret: masterSecret,
-			Debug:        true,
-			WorkingDir:   "./tmp",
+			MasterSecret: options.MasterSecret,
+			Debug:        options.Debug,
+			WorkingDir:   options.WorkingDir,
 			Name:         options.Name,
 		},
 		Mailer: m,
 	})
 
-	return app, nil
-}
-
-func NewDevApp(options Options) (*app.App, error) {
-
-	happ, err := NewNoHead(options)
-	if err != nil {
-		return nil, err
-	}
-
-	if options.SeedDB {
+	if seedDB {
 		ctrl := happ.Controller().(*actions.Controller)
 
 		ugroups, err := ctrl.ListUserGroups()
@@ -93,17 +75,51 @@ func NewDevApp(options Options) (*app.App, error) {
 	return app.NewApp(happ), nil
 }
 
-func NewProdApp(config *xtypes.AppOptions) (*app.App, error) {
-	happ, err := NewNoHead(Options{
-		DBFile: path.Join(config.WorkingDir, "data.db"),
-		Port:   config.Port,
-		SeedDB: false,
-		Host:   config.Host,
-		Name:   config.Name,
-	})
+func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
+	if config.WorkingDir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		config.WorkingDir = path.Join(cwd, ".pdata")
+	}
+
+	if config.MasterSecret == "" {
+		config.MasterSecret = "default-master-secret"
+	}
+
+	app, err := BuildApp(xtypes.AppOptions{
+		WorkingDir:   config.WorkingDir,
+		Port:         config.Port,
+		Host:         config.Host,
+		Name:         config.Name,
+		MasterSecret: config.MasterSecret,
+		Debug:        true,
+		SocketFile:   config.SocketFile,
+		Mailer:       config.Mailer,
+	}, seedDB)
 	if err != nil {
 		return nil, err
 	}
 
-	return app.NewApp(happ), nil
+	return app, nil
+}
+
+func NewProdApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
+	app, err := BuildApp(xtypes.AppOptions{
+		WorkingDir:   config.WorkingDir,
+		Port:         config.Port,
+		Host:         config.Host,
+		Name:         config.Name,
+		MasterSecret: config.MasterSecret,
+		Debug:        config.Debug,
+		SocketFile:   config.SocketFile,
+		Mailer:       config.Mailer,
+	}, seedDB)
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
+
 }

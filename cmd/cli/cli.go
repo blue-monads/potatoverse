@@ -108,7 +108,7 @@ func (c *ServerStartCmd) Run(ctx *kong.Context) error {
 		return err
 	}
 
-	app, err := backend.NewProdApp(&config)
+	app, err := backend.NewProdApp(&config, c.AutoSeed)
 	if err != nil {
 		return err
 	}
