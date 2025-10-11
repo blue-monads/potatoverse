@@ -13,7 +13,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func (c *PackageBuildCmd) doRun(_ *kong.Context) error {
+func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 	potatoTomlFile, err := os.ReadFile(c.PotatoTomlFile)
 	if err != nil {
 		return err
