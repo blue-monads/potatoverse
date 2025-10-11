@@ -141,6 +141,17 @@ func (d *DB) ListThirdPartySpaces(userId int64, spaceType string) ([]dbmodels.Sp
 	return datas, nil
 }
 
+func (d *DB) ListSpacesByPackageId(packageId int64) ([]dbmodels.Space, error) {
+	datas := make([]dbmodels.Space, 0)
+
+	err := d.spaceTable().Find(db.Cond{"package_id": packageId}).All(&datas)
+	if err != nil {
+		return nil, err
+	}
+
+	return datas, nil
+}
+
 // Space Configs
 
 func (d *DB) AddSpaceConfig(spaceId int64, uid int64, data *dbmodels.SpaceConfig) (int64, error) {

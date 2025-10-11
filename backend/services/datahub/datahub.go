@@ -72,6 +72,9 @@ type UserOps interface {
 
 type PackageOps interface {
 	InstallPackage(userId int64, file string) (int64, error)
+
+	// UpgradePackage(userId, packageId int64, patchZip string) (int64, error)
+
 	GetPackage(id int64) (*dbmodels.Package, error)
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, data map[string]any) error
@@ -81,6 +84,8 @@ type PackageOps interface {
 
 	ListPackageFiles(packageId int64) ([]dbmodels.PackageFile, error)
 	ListPackageFilesByPath(packageId int64, path string) ([]dbmodels.PackageFile, error)
+	// ListAllPackageFile(packageId int64, path string) ([]dbmodels.PackageFile, error)
+
 	GetPackageFileMeta(packageId, id int64) (*dbmodels.PackageFile, error)
 	GetPackageFileMetaByPath(packageId int64, path, name string) (*dbmodels.PackageFile, error)
 
@@ -132,6 +137,7 @@ type SpaceOps interface {
 	GetSpaceUserScope(userId int64, spaceId int64) (string, error)
 	ListOwnSpaces(ownerId int64, spaceType string) ([]dbmodels.Space, error)
 	ListThirdPartySpaces(userId int64, spaceType string) ([]dbmodels.Space, error)
+	ListSpacesByPackageId(packageId int64) ([]dbmodels.Space, error)
 
 	AddSpaceConfig(spaceId int64, uid int64, data *dbmodels.SpaceConfig) (int64, error)
 	ListSpaceConfigs(spaceId int64) ([]dbmodels.SpaceConfig, error)
