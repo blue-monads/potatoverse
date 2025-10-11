@@ -23,6 +23,7 @@ type Options struct {
 	Code          string
 	WorkingFolder string
 	SpaceId       int64
+	PackageId     int64
 }
 
 func New(opts Options) *Luaz {
@@ -37,10 +38,12 @@ func New(opts Options) *Luaz {
 	lz := &Luaz{
 		pool: nil,
 		handle: &executors.EHandle{
-			Logger:  opts.BuilderOpts.Logger,
-			FsRoot:  rfs,
-			SpaceId: opts.SpaceId,
-			App:     opts.BuilderOpts.App,
+			Logger:    opts.BuilderOpts.Logger,
+			FsRoot:    rfs,
+			SpaceId:   opts.SpaceId,
+			PackageId: opts.PackageId,
+			App:       opts.BuilderOpts.App,
+			Database:  opts.BuilderOpts.App.Database(),
 		},
 	}
 

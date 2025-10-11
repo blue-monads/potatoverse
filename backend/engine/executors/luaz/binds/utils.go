@@ -195,9 +195,16 @@ func ToTableFromStruct(l *lua.LState, v reflect.Value) lua.LValue {
 func toTableFromStructInner(l *lua.LState, tb *lua.LTable, v reflect.Value) lua.LValue {
 	t := v.Type()
 	for j := 0; j < v.NumField(); j++ {
+		field := t.Field(j)
+		
+		// Skip unexported fields
+		if !field.IsExported() {
+			continue
+		}
+		
 		var inline bool
-		name := t.Field(j).Name
-		if tag := t.Field(j).Tag.Get("luautil"); tag != "" {
+		name := field.Name
+		if tag := field.Tag.Get("luautil"); tag != "" {
 			tagParts := strings.Split(tag, ",")
 			if tagParts[0] == "-" {
 				continue

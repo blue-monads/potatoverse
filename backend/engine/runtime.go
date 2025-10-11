@@ -124,6 +124,8 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 		},
 		Code:          source, // code,
 		WorkingFolder: path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
+		SpaceId:       spaceid,
+		PackageId:     packageId,
 	})
 
 	r.execsLock.Lock()
