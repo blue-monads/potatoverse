@@ -24,12 +24,15 @@ export default function Page() {
         }, 300);
 
         const attrs = (window as any).__potato_attrs__ || {};
-        const host = attrs.site_host || '';
+        let host = attrs.site_host || '';
         if (host) {
             const origin = window.location.origin;
             const isSecure = origin.startsWith("https//");
             const hasPort = origin.includes(":");
             const port = hasPort ? origin.split(":").at(-1) : "";
+            if (host === "*") {
+                host = `*.${window.location.host.split(":")[0]}`;
+            }
 
             if (host.includes('*')) {
                 setIframeSrc(`${isSecure ? "https://" : "http://"}${host.replace('*', "s-" + space_id) }${hasPort ? ":" + port : ""}/zz/space/${nskey}`);
