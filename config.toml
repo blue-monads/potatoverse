@@ -1,8 +1,0 @@
-name = 'PotatoVerse'
-port = 7777
-host = '*.localhost'
-master_secret = 'potatosec_mvmhwdb6vpizi9rxqvyof751m2uafl3h'
-working_dir = '/home/bingo/zhome/code/blue-monads/potatoverse/.pdata'
-
-[mailer]
-type = 'stdio'
