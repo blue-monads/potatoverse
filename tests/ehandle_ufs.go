@@ -101,6 +101,8 @@ func HandleUfsTest() {
 	var testFilePath string
 	var foundTestFile bool
 
+	userId := int64(1)
+
 	// Try to find a readable file in the package
 	for _, f := range pkgRootFiles {
 		if !f.IsFolder && f.Name != "" {
@@ -174,7 +176,7 @@ func HandleUfsTest() {
 	// Test 6: Write file to /home
 	fmt.Println("\n=== Test 6: Write File to /home ===")
 	testContent := []byte("Hello from unified file system test!")
-	err = EHandle.WriteFile("/home/test.txt", testContent)
+	err = EHandle.WriteFile(userId, "/home/test.txt", testContent)
 	if err != nil {
 		log.Fatalf("Failed to write file to /home: %v", err)
 	}
@@ -198,7 +200,7 @@ func HandleUfsTest() {
 
 	// Test 9: Create directory in /home
 	fmt.Println("\n=== Test 9: Create Directory in /home ===")
-	err = EHandle.Mkdir("/home/testdir")
+	err = EHandle.Mkdir(userId, "/home/testdir")
 	if err != nil {
 		log.Fatalf("Failed to create directory in /home: %v", err)
 	}
@@ -206,7 +208,7 @@ func HandleUfsTest() {
 
 	// Test 10: Write file in subdirectory
 	fmt.Println("\n=== Test 10: Write File in Subdirectory ===")
-	err = EHandle.WriteFile("/home/testdir/nested.txt", []byte("nested content"))
+	err = EHandle.WriteFile(userId, "/home/testdir/nested.txt", []byte("nested content"))
 	if err != nil {
 		log.Fatalf("Failed to write file in subdirectory: %v", err)
 	}
@@ -225,7 +227,7 @@ func HandleUfsTest() {
 
 	// Test 12: Write to /tmp
 	fmt.Println("\n=== Test 12: Write File to /tmp ===")
-	err = EHandle.WriteFile("/tmp/tmpfile.txt", []byte("temporary content"))
+	err = EHandle.WriteFile(userId, "/tmp/tmpfile.txt", []byte("temporary content"))
 	if err != nil {
 		log.Fatalf("Failed to write file to /tmp: %v", err)
 	}
@@ -241,7 +243,7 @@ func HandleUfsTest() {
 
 	// Test 14: Create directory in /tmp
 	fmt.Println("\n=== Test 14: Create Directory in /tmp ===")
-	err = EHandle.Mkdir("/tmp/tmpdir")
+	err = EHandle.Mkdir(userId, "/tmp/tmpdir")
 	if err != nil {
 		log.Fatalf("Failed to create directory in /tmp: %v", err)
 	}
@@ -268,7 +270,7 @@ func HandleUfsTest() {
 
 	// Test 17: Remove file from /home
 	fmt.Println("\n=== Test 17: Remove File from /home ===")
-	err = EHandle.RemoveFile("/home/test.txt")
+	err = EHandle.RemoveFile(userId, "/home/test.txt")
 	if err != nil {
 		log.Fatalf("Failed to remove file from /home: %v", err)
 	}
@@ -284,7 +286,7 @@ func HandleUfsTest() {
 
 	// Test 19: Remove directory from /home
 	fmt.Println("\n=== Test 19: Remove Directory from /home ===")
-	err = EHandle.Rmdir("/home/testdir")
+	err = EHandle.Rmdir(userId, "/home/testdir")
 	if err != nil {
 		log.Fatalf("Failed to remove directory from /home: %v", err)
 	}
@@ -292,7 +294,7 @@ func HandleUfsTest() {
 
 	// Test 20: Remove file from /tmp
 	fmt.Println("\n=== Test 20: Remove File from /tmp ===")
-	err = EHandle.RemoveFile("/tmp/tmpfile.txt")
+	err = EHandle.RemoveFile(userId, "/tmp/tmpfile.txt")
 	if err != nil {
 		log.Fatalf("Failed to remove file from /tmp: %v", err)
 	}
@@ -300,7 +302,7 @@ func HandleUfsTest() {
 
 	// Test 21: Remove directory from /tmp
 	fmt.Println("\n=== Test 21: Remove Directory from /tmp ===")
-	err = EHandle.Rmdir("/tmp/tmpdir")
+	err = EHandle.Rmdir(userId, "/tmp/tmpdir")
 	if err != nil {
 		log.Fatalf("Failed to remove directory from /tmp: %v", err)
 	}
@@ -317,7 +319,7 @@ func HandleUfsTest() {
 
 	// Test 23: Error case - Try to write to read-only /pkg
 	fmt.Println("\n=== Test 23: Error Case - Write to Read-Only /pkg ===")
-	err = EHandle.WriteFile("/pkg/test.txt", []byte("should fail"))
+	err = EHandle.WriteFile(userId, "/pkg/test.txt", []byte("should fail"))
 	if err != nil {
 		fmt.Printf("Expected error for writing to /pkg: %v\n", err)
 	} else {
@@ -337,7 +339,7 @@ func HandleUfsTest() {
 	fmt.Println("\n=== Test 25: Share File from /home ===")
 	// First create a file to share
 	shareTestContent := []byte("This file will be shared")
-	err = EHandle.WriteFile("/home/shareable.txt", shareTestContent)
+	err = EHandle.WriteFile(userId, "/home/shareable.txt", shareTestContent)
 	if err != nil {
 		log.Fatalf("Failed to create file for sharing: %v", err)
 	}
@@ -366,7 +368,7 @@ func HandleUfsTest() {
 	// Test 27: Error case - Try to share file from /tmp
 	fmt.Println("\n=== Test 27: Error Case - Share File from /tmp ===")
 	// Create a temp file first
-	err = EHandle.WriteFile("/tmp/temp_shareable.txt", []byte("temp content"))
+	err = EHandle.WriteFile(userId, "/tmp/temp_shareable.txt", []byte("temp content"))
 	if err != nil {
 		log.Fatalf("Failed to create temp file: %v", err)
 	}
@@ -379,14 +381,14 @@ func HandleUfsTest() {
 	}
 
 	// Clean up the temp file
-	err = EHandle.RemoveFile("/tmp/temp_shareable.txt")
+	err = EHandle.RemoveFile(userId, "/tmp/temp_shareable.txt")
 	if err != nil {
 		log.Fatalf("Failed to clean up temp file: %v", err)
 	}
 
 	// Test 28: Clean up the shared file
 	fmt.Println("\n=== Test 28: Clean Up Shared File ===")
-	err = EHandle.RemoveFile("/home/shareable.txt")
+	err = EHandle.RemoveFile(userId, "/home/shareable.txt")
 	if err != nil {
 		log.Fatalf("Failed to remove shared file: %v", err)
 	}

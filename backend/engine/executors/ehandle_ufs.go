@@ -238,7 +238,7 @@ func (c *EHandle) ReadFile(path string) ([]byte, error) {
 	}
 }
 
-func (c *EHandle) WriteFile(path string, data []byte) error {
+func (c *EHandle) WriteFile(uid int64, path string, data []byte) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -279,7 +279,7 @@ func (c *EHandle) WriteFile(path string, data []byte) error {
 	}
 }
 
-func (c *EHandle) RemoveFile(path string) error {
+func (c *EHandle) RemoveFile(uid int64, path string) error {
 
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
@@ -320,7 +320,7 @@ func (c *EHandle) RemoveFile(path string) error {
 	}
 }
 
-func (c *EHandle) Mkdir(path string) error {
+func (c *EHandle) Mkdir(uid int64, path string) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -355,7 +355,7 @@ func (c *EHandle) Mkdir(path string) error {
 	}
 }
 
-func (c *EHandle) Rmdir(path string) error {
+func (c *EHandle) Rmdir(uid int64, path string) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
