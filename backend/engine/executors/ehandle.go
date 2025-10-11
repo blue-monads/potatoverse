@@ -32,11 +32,21 @@ func (c *EHandle) GetSpaceFilePresigned(uid int64, path string, fileName string,
 		expiry = 3600
 	}
 
+	backend, cleanPath := backend(path)
+	spaceId := c.RootSpaceId
+	if backend == "private" {
+		spaceId = c.SpaceId
+	}
+
+	if cleanPath == "/" || cleanPath == "." {
+		cleanPath = ""
+	}
+
 	// Create presigned claim
 	claim := &signer.SpaceFilePresignedClaim{
-		SpaceId:  c.RootSpaceId,
+		SpaceId:  spaceId,
 		UserId:   uid,
-		PathName: path,
+		PathName: cleanPath,
 		FileName: fileName,
 		Expiry:   expiry,
 	}
