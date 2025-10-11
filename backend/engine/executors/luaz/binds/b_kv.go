@@ -9,7 +9,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
+func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 	return func(L *lua.LState) int {
 
@@ -146,6 +146,6 @@ func bindsDB(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 }
 
-func BindsDB(handle *executors.EHandle) func(L *lua.LState) int {
-	return bindsDB(handle.SpaceId, handle.App.Database())
+func BindsKV(handle *executors.EHandle) func(L *lua.LState) int {
+	return bindsKV(handle.SpaceId, handle.App.Database())
 }
