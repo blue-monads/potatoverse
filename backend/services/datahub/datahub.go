@@ -100,6 +100,7 @@ type SpaceFileOps interface {
 	AddSpaceFolder(spaceId int64, uid int64, path string, name string) (int64, error)
 
 	GetSpaceFileMetaByPath(spaceId int64, path string) (*dbmodels.File, error)
+	GetSpaceFileMetaByPathAndName(spaceId int64, path string, name string) (*dbmodels.File, error)
 	GetSpaceFileMetaById(id int64) (*dbmodels.File, error)
 	GetSpaceFile(spaceId int64, id int64) ([]byte, error)
 	StreamGetSpaceFile(spaceId int64, uid int64, id int64, w http.ResponseWriter) error

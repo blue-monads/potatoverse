@@ -173,13 +173,29 @@ func (d *DB) AddSpaceFolder(spaceId int64, uid int64, path string, name string) 
 	return id, nil
 }
 
-// GetSpaceFileMetaByPath retrieves file metadata by path
+// GetSpaceFileMetaByPath retrieves file metadata by path (directory only)
+// Deprecated: Use GetSpaceFileMetaByPathAndName instead
 func (d *DB) GetSpaceFileMetaByPath(spaceId int64, path string) (*dbmodels.File, error) {
 	table := d.filesTable()
 	file := &dbmodels.File{}
 	err := table.Find(db.Cond{
 		"owner_space_id": spaceId,
 		"path":           path,
+	}).One(file)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
+// GetSpaceFileMetaByPathAndName retrieves file metadata by directory path and filename
+func (d *DB) GetSpaceFileMetaByPathAndName(spaceId int64, path string, name string) (*dbmodels.File, error) {
+	table := d.filesTable()
+	file := &dbmodels.File{}
+	err := table.Find(db.Cond{
+		"owner_space_id": spaceId,
+		"path":           path,
+		"name":           name,
 	}).One(file)
 	if err != nil {
 		return nil, err

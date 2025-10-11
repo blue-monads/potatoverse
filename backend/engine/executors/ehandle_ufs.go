@@ -38,10 +38,16 @@ type File struct {
 
 func backend(path string) (string, string) {
 	if after, ok := strings.CutPrefix(path, "/home"); ok {
+		// Strip leading slash to make it relative
+		after = strings.TrimPrefix(after, "/")
 		return "home", after
 	} else if after, ok := strings.CutPrefix(path, "/pkg"); ok {
+		// Strip leading slash to make it relative
+		after = strings.TrimPrefix(after, "/")
 		return "pkg", after
 	} else if after0, ok0 := strings.CutPrefix(path, "/tmp"); ok0 {
+		// Strip leading slash to make it relative
+		after0 = strings.TrimPrefix(after0, "/")
 		return "tmp", after0
 	}
 
@@ -85,6 +91,11 @@ func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
 
 	switch backend {
 	case "home":
+		// Normalize root path
+		if cleanPath == "/" || cleanPath == "." {
+			cleanPath = ""
+		}
+
 		files, err := c.Database.ListSpaceFiles(spaceId, cleanPath)
 		if err != nil {
 			return nil, err
@@ -101,6 +112,11 @@ func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
 		}
 		return rFiles, nil
 	case "pkg":
+		// Normalize root path: database stores root files with empty string path
+		if cleanPath == "/" || cleanPath == "." {
+			cleanPath = ""
+		}
+
 		files, err := c.Database.ListPackageFilesByPath(c.PackageId, cleanPath)
 		if err != nil {
 			return nil, err
@@ -116,6 +132,11 @@ func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
 		}
 		return rFiles, nil
 	case "tmp":
+		// Use "." for root of tmp directory
+		if cleanPath == "" {
+			cleanPath = "."
+		}
+
 		dir, err := c.FsRoot.Open(cleanPath)
 		if err != nil {
 			return nil, err
@@ -158,8 +179,14 @@ func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
-		// Get file metadata by path
-		file, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		// Normalize root path: filepath.Dir returns "/" or "." for root files
+		// but database stores root files with empty string path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
+		// Get file metadata by path and name
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -173,6 +200,12 @@ func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
 	case "pkg":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
+
+		// Normalize root path: filepath.Dir returns "/" or "." for root files
+		// but database stores root files with empty string path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
 
 		// Check if it's a directory first
 		file, err := c.Database.GetPackageFileMetaByPath(c.PackageId, filePath, fileName)
@@ -220,6 +253,11 @@ func (c *EHandle) WriteFile(spaceId int64, path string, data []byte) error {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
+		// Normalize root path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
 		_, err := c.Database.StreamAddSpaceFile(spaceId, 0, filePath, fileName, bytes.NewReader(data))
 		return err
 
@@ -257,8 +295,13 @@ func (c *EHandle) RemoveFile(spaceId int64, path string) error {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
+		// Normalize root path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
 		// Find the file by path and name
-		file, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return err
 		}
@@ -292,6 +335,11 @@ func (c *EHandle) Mkdir(spaceId int64, path string) error {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
+		// Normalize root path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
 		// Create folder in database
 		_, err := c.Database.AddSpaceFolder(spaceId, 0, filePath, fileName)
 		return err
@@ -318,7 +366,12 @@ func (c *EHandle) Rmdir(spaceId int64, path string) error {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
-		file, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		// Normalize root path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return err
 		}
@@ -352,17 +405,28 @@ func (c *EHandle) Exists(spaceId int64, path string) (bool, error) {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
+		// Normalize root path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
 		// Check if file exists in database
-		_, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		_, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return false, nil
 		}
 		return true, nil
 
 	case "pkg":
-
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
+
+		// Normalize root path: filepath.Dir returns "/" or "." for root files
+		// but database stores root files with empty string path
+		if filePath == "/" || filePath == "." {
+			filePath = ""
+		}
+
 		_, err := c.Database.GetPackageFileMetaByPath(c.PackageId, filePath, fileName)
 		if err != nil {
 			return false, nil // File doesn't exist
@@ -370,6 +434,10 @@ func (c *EHandle) Exists(spaceId int64, path string) (bool, error) {
 		return true, nil
 
 	case "tmp":
+		// Use "." for root of tmp directory
+		if cleanPath == "" {
+			cleanPath = "."
+		}
 		_, err := c.FsRoot.Stat(cleanPath)
 		return !os.IsNotExist(err), nil
 
