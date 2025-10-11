@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/blue-monads/turnix/backend"
@@ -80,6 +81,10 @@ func (c *ServerStartCmd) Run(ctx *kong.Context) error {
 	err = toml.Unmarshal(cfgData, &config)
 	if err != nil {
 		return err
+	}
+
+	if after, ok := strings.CutPrefix(config.MasterSecret, "$"); ok {
+		config.MasterSecret = os.Getenv(after)
 	}
 
 	app, err := backend.NewProdApp(&config, c.AutoSeed)
