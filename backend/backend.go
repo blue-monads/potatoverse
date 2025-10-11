@@ -14,7 +14,7 @@ import (
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
-func BuildApp(options xtypes.AppOptions, seedDB bool) (*app.App, error) {
+func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	logger := slog.Default()
 
@@ -41,6 +41,8 @@ func BuildApp(options xtypes.AppOptions, seedDB bool) (*app.App, error) {
 			Debug:        options.Debug,
 			WorkingDir:   options.WorkingDir,
 			Name:         options.Name,
+			SocketFile:   options.SocketFile,
+			Mailer:       options.Mailer,
 		},
 		Mailer: m,
 	})
@@ -88,16 +90,11 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		config.MasterSecret = "default-master-secret"
 	}
 
-	app, err := BuildApp(xtypes.AppOptions{
-		WorkingDir:   config.WorkingDir,
-		Port:         config.Port,
-		Host:         config.Host,
-		Name:         config.Name,
-		MasterSecret: config.MasterSecret,
-		Debug:        true,
-		SocketFile:   config.SocketFile,
-		Mailer:       config.Mailer,
-	}, seedDB)
+	if config.SocketFile == "" {
+		config.SocketFile = path.Join(config.WorkingDir, "./potatoverse.sock")
+	}
+
+	app, err := BuildApp(config, seedDB)
 	if err != nil {
 		return nil, err
 	}
@@ -106,16 +103,7 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 }
 
 func NewProdApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
-	app, err := BuildApp(xtypes.AppOptions{
-		WorkingDir:   config.WorkingDir,
-		Port:         config.Port,
-		Host:         config.Host,
-		Name:         config.Name,
-		MasterSecret: config.MasterSecret,
-		Debug:        config.Debug,
-		SocketFile:   config.SocketFile,
-		Mailer:       config.Mailer,
-	}, seedDB)
+	app, err := BuildApp(config, seedDB)
 	if err != nil {
 		return nil, err
 	}

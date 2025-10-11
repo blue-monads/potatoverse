@@ -22,12 +22,13 @@ func NewApp(happ *HeadLess) *App {
 	return &App{
 		happ: happ,
 		server: server.NewServer(server.Option{
-			Port:     happ.AppOpts.Port,
-			Ctrl:     happ.Controller().(*actions.Controller),
-			Signer:   happ.Signer(),
-			Engine:   happ.Engine().(*engine.Engine),
-			Host:     happ.AppOpts.Host,
-			SiteName: "Demo",
+			Port:        happ.AppOpts.Port,
+			Ctrl:        happ.Controller().(*actions.Controller),
+			Signer:      happ.Signer(),
+			Engine:      happ.Engine().(*engine.Engine),
+			Host:        happ.AppOpts.Host,
+			LocalSocket: happ.AppOpts.SocketFile,
+			SiteName:    "Demo",
 		}),
 	}
 }
