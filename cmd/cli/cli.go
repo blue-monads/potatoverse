@@ -76,6 +76,10 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 		config.WorkingDir = path.Join(cwd, ".pdata")
 	}
 
+	if config.SocketFile == "" {
+		config.SocketFile = path.Join(config.WorkingDir, "potatoverse.sock")
+	}
+
 	cfgData, err := toml.Marshal(config)
 	if err != nil {
 		return err
