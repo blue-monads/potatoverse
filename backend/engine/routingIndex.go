@@ -3,27 +3,22 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
 type SpaceRouteIndexItem struct {
 	packageId         int64
 	spaceId           int64
 	overlayForSpaceId int64
-	routeOption       RouteOption
+	routeOption       models.PotatoRouteOptions
 }
 
 type PluginRouteIndexItem struct {
 	pluginId    int64
 	packageId   int64
 	spaceId     int64
-	routeOption RouteOption
-}
-
-type RouteOption struct {
-	ServeFolder        string
-	TrimPathPrefix     string
-	ForceHtmlExtension bool
-	ForceIndexHtmlFile bool
+	routeOption models.PotatoRouteOptions
 }
 
 func (e *Engine) LoadRoutingIndex() error {
@@ -37,27 +32,22 @@ func (e *Engine) LoadRoutingIndex() error {
 
 	for _, space := range spaces {
 
-		routeOptions := &RouteOption{}
-		err = json.Unmarshal([]byte(space.RouteOptions), routeOptions)
+		routeOptions := models.PotatoRouteOptions{}
+		err = json.Unmarshal([]byte(space.RouteOptions), &routeOptions)
 		if err != nil {
 			routeOptions.ServeFolder = "public"
 			routeOptions.TrimPathPrefix = ""
 			routeOptions.ForceHtmlExtension = false
-			routeOptions.ForceIndexHtmlFile = false
+			routeOptions.ForceIndexHtmlFile = true
 
 			e.logger.Warn("error unmarshalling route options, using default values", "error", err, "space_id", space.ID, "route_options", space.RouteOptions)
 
 		}
 
 		indexItem := &SpaceRouteIndexItem{
-			packageId: space.PackageID,
-			spaceId:   space.ID,
-			routeOption: RouteOption{
-				ServeFolder:        routeOptions.ServeFolder,
-				TrimPathPrefix:     routeOptions.TrimPathPrefix,
-				ForceHtmlExtension: routeOptions.ForceHtmlExtension,
-				ForceIndexHtmlFile: routeOptions.ForceIndexHtmlFile,
-			},
+			packageId:   space.PackageID,
+			spaceId:     space.ID,
+			routeOption: routeOptions,
 		}
 
 		if space.OwnsNamespace {

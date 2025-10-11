@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"log/slog"
 	"maps"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 	"github.com/k0kubun/pp"
 )
@@ -80,6 +82,13 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
 	sIndex := e.getIndex(spaceKey, spaceId)
 
+	if sIndex == nil {
+		ctx.JSON(404, gin.H{"error": "space not found"})
+		return
+	}
+
+	pp.Println("@sIndex", sIndex)
+
 	filePath := ctx.Param("files")
 
 	name, path := buildPackageFilePath(filePath, &sIndex.routeOption)
@@ -115,6 +124,11 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 
 	sIndex := e.getIndex(spaceKey, spaceId)
 
+	if sIndex == nil {
+		ctx.JSON(404, gin.H{"error": "space not found"})
+		return
+	}
+
 	e.runtime.ExecHttp(spaceKey, sIndex.packageId, sIndex.spaceId, ctx)
 
 }
@@ -134,6 +148,10 @@ type SpaceInfo struct {
 func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 
 	ri := e.getIndex(nsKey, 0)
+
+	if ri == nil {
+		return nil, errors.New("space not found")
+	}
 
 	space, err := e.db.GetSpace(ri.spaceId)
 	if err != nil {
@@ -155,7 +173,7 @@ func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 
 }
 
-func buildPackageFilePath(filePath string, ropt *RouteOption) (string, string) {
+func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
 	nameParts := strings.Split(filePath, "/")
 	name := nameParts[len(nameParts)-1]
 	pathParts := nameParts[:len(nameParts)-1]
@@ -175,6 +193,10 @@ func buildPackageFilePath(filePath string, ropt *RouteOption) (string, string) {
 	if ropt.ForceIndexHtmlFile && name == "" {
 		name = "index.html"
 	}
+
+	pp.Println("@ropt", ropt)
+	pp.Println("@name", name)
+	pp.Println("@path", path)
 
 	return name, path
 }

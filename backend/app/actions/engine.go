@@ -194,7 +194,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 
 }
 
-var packageXIDGenerator, _ = nanoid.ASCII(8)
+var packageXIDGenerator, _ = nanoid.CustomUnicode("0123456789abcdefghijklmnopqrstuvwxyz", 12)
 
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
 	pxid := packageXIDGenerator()
