@@ -3,6 +3,7 @@ module github.com/blue-monads/turnix
 go 1.24
 
 require (
+	github.com/alecthomas/kong v1.12.1
 	github.com/alecthomas/repr v0.5.1
 	github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506
 	github.com/gin-gonic/gin v1.10.0
