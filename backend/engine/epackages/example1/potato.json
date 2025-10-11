@@ -9,5 +9,15 @@
     "author_site": "https://github.com/bornjre",
     "license": "MIT",
     "version": "0.0.1",
-    "artifacts": []
+    "artifacts": [{
+        "namespace": "example1",
+        "kind": "space",
+        "executor_type": "luaz",
+        "server_file": "server.lua",
+        "route_options": {
+            "serve_folder": "public",
+            "force_html_extension": false,
+            "force_index_html_file": false
+        }
+    }]
 }
