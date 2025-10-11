@@ -38,12 +38,13 @@ func New(opts Options) *Luaz {
 	lz := &Luaz{
 		pool: nil,
 		handle: &executors.EHandle{
-			Logger:    opts.BuilderOpts.Logger,
-			FsRoot:    rfs,
-			SpaceId:   opts.SpaceId,
-			PackageId: opts.PackageId,
-			App:       opts.BuilderOpts.App,
-			Database:  opts.BuilderOpts.App.Database(),
+			Logger:      opts.BuilderOpts.Logger,
+			FsRoot:      rfs,
+			SpaceId:     opts.SpaceId,
+			PackageId:   opts.PackageId,
+			App:         opts.BuilderOpts.App,
+			Database:    opts.BuilderOpts.App.Database(),
+			RootSpaceId: opts.SpaceId,
 		},
 	}
 

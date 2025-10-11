@@ -11,12 +11,13 @@ import (
 )
 
 type EHandle struct {
-	Logger    *slog.Logger
-	App       xtypes.App
-	FsRoot    *os.Root
-	SpaceId   int64
-	PackageId int64
-	Database  datahub.Database
+	Logger      *slog.Logger
+	App         xtypes.App
+	FsRoot      *os.Root
+	RootSpaceId int64
+	SpaceId     int64
+	PackageId   int64
+	Database    datahub.Database
 }
 
 func (c *EHandle) GetSpaceFilePresigned(uid int64, path string, fileName string, expiry int64) (string, error) {
@@ -33,7 +34,7 @@ func (c *EHandle) GetSpaceFilePresigned(uid int64, path string, fileName string,
 
 	// Create presigned claim
 	claim := &signer.SpaceFilePresignedClaim{
-		SpaceId:  c.SpaceId,
+		SpaceId:  c.RootSpaceId,
 		UserId:   uid,
 		PathName: path,
 		FileName: fileName,

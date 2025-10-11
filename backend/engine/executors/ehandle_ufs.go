@@ -12,7 +12,8 @@ import (
 
 /*
 
-/home -> SpaceFileOps
+/home -> SpaceFileOps (rootSpaceId)
+/private -> SpaceFileOps (spaceId) # if rootSpaceId == spaceId then /home and /private are the same
 /pkg -> PackageOps
 /tmp -> LocalFsModule(root *os.Root)
 
@@ -50,6 +51,10 @@ func backend(path string) (string, string) {
 		// Strip leading slash to make it relative
 		after0 = strings.TrimPrefix(after0, "/")
 		return "tmp", after0
+	} else if after1, ok1 := strings.CutPrefix(path, "/private"); ok1 {
+		// Strip leading slash to make it relative
+		after1 = strings.TrimPrefix(after1, "/")
+		return "private", after1
 	}
 
 	return "unknown", path
@@ -85,19 +90,30 @@ func (c *EHandle) ListFiles(path string) ([]File, error) {
 				IsFolder: true,
 				Size:     0,
 			},
+			{
+				Name:     "private",
+				IsFolder: true,
+				Size:     0,
+			},
 		}, nil
 	}
 
 	backend, cleanPath := backend(path)
 
+	spaceId := c.RootSpaceId
+
 	switch backend {
+	case "private":
+		spaceId = c.SpaceId
+		fallthrough
 	case "home":
+
 		// Normalize root path
 		if cleanPath == "/" || cleanPath == "." {
 			cleanPath = ""
 		}
 
-		files, err := c.Database.ListSpaceFiles(c.SpaceId, cleanPath)
+		files, err := c.Database.ListSpaceFiles(spaceId, cleanPath)
 		if err != nil {
 			return nil, err
 		}
@@ -174,8 +190,12 @@ func (c *EHandle) ReadFile(path string) ([]byte, error) {
 	}
 
 	backend, cleanPath := backend(path)
+	spaceId := c.RootSpaceId
 
 	switch backend {
+	case "private":
+		spaceId = c.SpaceId
+		fallthrough
 	case "home":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
@@ -187,7 +207,7 @@ func (c *EHandle) ReadFile(path string) ([]byte, error) {
 		}
 
 		// Get file metadata by path and name
-		file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -196,7 +216,7 @@ func (c *EHandle) ReadFile(path string) ([]byte, error) {
 			return nil, errors.New("path is a directory")
 		}
 
-		return c.Database.GetSpaceFile(c.SpaceId, file.ID)
+		return c.Database.GetSpaceFile(c.RootSpaceId, file.ID)
 
 	case "pkg":
 		fileName := filepath.Base(cleanPath)
@@ -249,7 +269,12 @@ func (c *EHandle) WriteFile(uid int64, path string, data []byte) error {
 
 	backend, cleanPath := backend(path)
 
+	spaceId := c.RootSpaceId
+
 	switch backend {
+	case "private":
+		spaceId = c.SpaceId
+		fallthrough
 	case "home":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
@@ -259,7 +284,7 @@ func (c *EHandle) WriteFile(uid int64, path string, data []byte) error {
 			filePath = ""
 		}
 
-		_, err := c.Database.StreamAddSpaceFile(c.SpaceId, 0, filePath, fileName, bytes.NewReader(data))
+		_, err := c.Database.StreamAddSpaceFile(spaceId, uid, filePath, fileName, bytes.NewReader(data))
 		return err
 
 	case "pkg":
@@ -291,7 +316,12 @@ func (c *EHandle) RemoveFile(uid int64, path string) error {
 
 	backend, cleanPath := backend(path)
 
+	spaceId := c.RootSpaceId
+
 	switch backend {
+	case "private":
+		spaceId = c.SpaceId
+		fallthrough
 	case "home":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
@@ -302,12 +332,12 @@ func (c *EHandle) RemoveFile(uid int64, path string) error {
 		}
 
 		// Find the file by path and name
-		file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return err
 		}
 
-		return c.Database.RemoveSpaceFile(c.SpaceId, file.ID)
+		return c.Database.RemoveSpaceFile(c.RootSpaceId, file.ID)
 
 	case "pkg":
 		return errors.New("package file removal not implemented - packages are read-only")
@@ -342,7 +372,7 @@ func (c *EHandle) Mkdir(uid int64, path string) error {
 		}
 
 		// Create folder in database
-		_, err := c.Database.AddSpaceFolder(c.SpaceId, 0, filePath, fileName)
+		_, err := c.Database.AddSpaceFolder(c.RootSpaceId, 0, filePath, fileName)
 		return err
 
 	case "pkg":
@@ -362,7 +392,12 @@ func (c *EHandle) Rmdir(uid int64, path string) error {
 
 	backend, cleanPath := backend(path)
 
+	spaceId := c.RootSpaceId
+
 	switch backend {
+	case "private":
+		spaceId = c.SpaceId
+		fallthrough
 	case "home":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
@@ -372,7 +407,7 @@ func (c *EHandle) Rmdir(uid int64, path string) error {
 			filePath = ""
 		}
 
-		file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return err
 		}
@@ -381,7 +416,7 @@ func (c *EHandle) Rmdir(uid int64, path string) error {
 			return errors.New("path is not a directory")
 		}
 
-		return c.Database.RemoveSpaceFile(c.SpaceId, file.ID)
+		return c.Database.RemoveSpaceFile(spaceId, file.ID)
 
 	case "pkg":
 		return errors.New("package directory removal not implemented - packages are read-only")
@@ -401,7 +436,12 @@ func (c *EHandle) Exists(path string) (bool, error) {
 
 	backend, cleanPath := backend(path)
 
+	spaceId := c.RootSpaceId
+
 	switch backend {
+	case "private":
+		spaceId = c.SpaceId
+		fallthrough
 	case "home":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
@@ -412,7 +452,7 @@ func (c *EHandle) Exists(path string) (bool, error) {
 		}
 
 		// Check if file exists in database
-		_, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
+		_, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 		if err != nil {
 			return false, nil
 		}
@@ -453,8 +493,14 @@ func (c *EHandle) ShareFile(uid int64, path string) (string, error) {
 	}
 
 	backend, cleanPath := backend(path)
-	if backend != "home" {
+	spaceId := c.RootSpaceId
+
+	if backend != "home" && backend != "private" {
 		return "", errors.New("You can only share files in the home")
+	}
+
+	if backend == "private" {
+		spaceId = c.SpaceId
 	}
 
 	fileName := filepath.Base(cleanPath)
@@ -465,10 +511,10 @@ func (c *EHandle) ShareFile(uid int64, path string) (string, error) {
 		filePath = ""
 	}
 
-	file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
+	file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
 	if err != nil {
 		return "", err
 	}
 
-	return c.Database.AddFileShare(file.ID, uid, c.SpaceId)
+	return c.Database.AddFileShare(file.ID, uid, spaceId)
 }
