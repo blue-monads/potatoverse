@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/blue-monads/turnix/backend/engine"
+	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
@@ -163,13 +165,25 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string) (int64, erro
 }
 
 func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, error) {
-	packageId, err := c.database.InstallPackage(userId, file)
+	id, err := InstallPackageByFile(c.database, c.logger, userId, file)
+	if err != nil {
+		return 0, err
+	}
+
+	c.engine.LoadRoutingIndex()
+
+	return id, nil
+
+}
+
+func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
+	packageId, err := database.InstallPackage(userId, file)
 	if err != nil {
 		return 0, err
 	}
 
 	buf := bytes.Buffer{}
-	err = c.database.GetPackageFileStreamingByPath(packageId, "", "potato.json", &buf)
+	err = database.GetPackageFileStreamingByPath(packageId, "", "potato.json", &buf)
 	if err != nil {
 		return 0, err
 	}
@@ -182,7 +196,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 
 	for _, artifact := range pkg.Artifacts {
 		if artifact.Kind != "space" {
-			c.logger.Info("artifact is not a space", "artifact", artifact)
+			logger.Info("artifact is not a space", "artifact", artifact)
 			continue
 		}
 
@@ -196,7 +210,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 			return 0, err
 		}
 
-		spaceId, err := c.database.AddSpace(&dbmodels.Space{
+		spaceId, err := database.AddSpace(&dbmodels.Space{
 			PackageID:         packageId,
 			NamespaceKey:      artifact.Namespace,
 			OwnsNamespace:     true,
@@ -216,11 +230,9 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 			return 0, err
 		}
 
-		c.logger.Info("space installed", "space_id", spaceId)
+		logger.Info("space installed", "space_id", spaceId)
 
 	}
-
-	c.engine.LoadRoutingIndex()
 
 	return packageId, nil
 }
