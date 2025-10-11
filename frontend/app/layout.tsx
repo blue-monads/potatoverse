@@ -1,5 +1,6 @@
 "use client"
 import "./globals.css";
+import { Suspense } from "react";
 import { GAppStateContext } from "@/hooks/contexts/GAppStateContext";
 import GModalWrapper from "@/hooks/modal/GModalWrapper";
 import { staticGradients } from "./utils";
@@ -27,7 +28,9 @@ export default function RootLayout({
         </div>
 
         <GAppStateContext>
-          {children}
+          <Suspense fallback={<div>Loading...</div>}>
+            {children}
+          </Suspense>
           <GModalWrapper />
         </GAppStateContext>
       </body>

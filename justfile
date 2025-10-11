@@ -14,7 +14,7 @@ play:
 
 build:
 	cd frontend && npm run build
-	go build -v -o tmp/turnix ./main.go
+	go build -v -o ./tmp/potatoverse ./main.go
 
 build_frontend:
 	cd frontend && npm run build

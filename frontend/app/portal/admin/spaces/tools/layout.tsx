@@ -1,7 +1,7 @@
 "use client"
 
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 const tabs = [
     {
@@ -49,7 +49,8 @@ interface PropsType {
 
 const WithTabbedToolsLayout = (props: PropsType) => {
     const router = useRouter();
-    const activeTab = location.pathname.split('/').at(8);
+    const pathname = usePathname();
+    const activeTab = pathname?.split('/').at(8);
     return (
 
         <div className='w-full px-2'>
