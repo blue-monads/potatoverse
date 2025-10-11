@@ -1,0 +1,13 @@
+{
+    "name": "Example 1",
+    "info": "Example e-package for testing",
+    "slug": "example1",
+    "tags": [],
+    "format_version": "0.0.1",
+    "author_name": "Bornjre",
+    "author_email": "bornjre@gmail.com",
+    "author_site": "https://github.com/bornjre",
+    "license": "MIT",
+    "version": "0.0.1",
+    "artifacts": []
+}

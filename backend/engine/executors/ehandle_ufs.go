@@ -1,4 +1,4 @@
-package actions
+package executors
 
 import (
 	"bytes"
@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/blue-monads/turnix/backend/services/datahub"
 )
 
 /*
@@ -50,12 +48,6 @@ func backend(path string) (string, string) {
 	return "tmp", path
 }
 
-type UnifiedFs struct {
-	database  datahub.Database
-	root      *os.Root
-	packageId int64
-}
-
 func isRootPath(path string) bool {
 	return path == "/"
 }
@@ -64,7 +56,7 @@ func shouldStartWithSlash(path string) bool {
 	return strings.HasPrefix(path, "/")
 }
 
-func (c *UnifiedFs) ListFiles(spaceId int64, path string) ([]File, error) {
+func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
 	if !shouldStartWithSlash(path) {
 		return nil, errors.New("path must start with /")
 	}
@@ -93,7 +85,7 @@ func (c *UnifiedFs) ListFiles(spaceId int64, path string) ([]File, error) {
 
 	switch backend {
 	case "home":
-		files, err := c.database.ListSpaceFiles(spaceId, cleanPath)
+		files, err := c.Database.ListSpaceFiles(spaceId, cleanPath)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +101,7 @@ func (c *UnifiedFs) ListFiles(spaceId int64, path string) ([]File, error) {
 		}
 		return rFiles, nil
 	case "pkg":
-		files, err := c.database.ListPackageFilesByPath(c.packageId, cleanPath)
+		files, err := c.Database.ListPackageFilesByPath(c.PackageId, cleanPath)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +116,7 @@ func (c *UnifiedFs) ListFiles(spaceId int64, path string) ([]File, error) {
 		}
 		return rFiles, nil
 	case "tmp":
-		dir, err := c.root.Open(cleanPath)
+		dir, err := c.FsRoot.Open(cleanPath)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +133,6 @@ func (c *UnifiedFs) ListFiles(spaceId int64, path string) ([]File, error) {
 				Name:      entry.Name(),
 				IsFolder:  entry.IsDir(),
 				Size:      entry.Size(),
-				CreatedAt: time.Now(), // os.FileInfo doesn't provide creation time
 				UpdatedAt: entry.ModTime(),
 			}
 		}
@@ -151,7 +142,7 @@ func (c *UnifiedFs) ListFiles(spaceId int64, path string) ([]File, error) {
 	}
 }
 
-func (c *UnifiedFs) ReadFile(spaceId int64, path string) ([]byte, error) {
+func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
 	if !shouldStartWithSlash(path) {
 		return nil, errors.New("path must start with /")
 	}
@@ -168,7 +159,7 @@ func (c *UnifiedFs) ReadFile(spaceId int64, path string) ([]byte, error) {
 		filePath := filepath.Dir(cleanPath)
 
 		// Get file metadata by path
-		file, err := c.database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		file, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
 		if err != nil {
 			return nil, err
 		}
@@ -177,14 +168,14 @@ func (c *UnifiedFs) ReadFile(spaceId int64, path string) ([]byte, error) {
 			return nil, errors.New("path is a directory")
 		}
 
-		return c.database.GetSpaceFile(spaceId, file.ID)
+		return c.Database.GetSpaceFile(spaceId, file.ID)
 
 	case "pkg":
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
 		// Check if it's a directory first
-		file, err := c.database.GetPackageFileMetaByPath(c.packageId, filePath, fileName)
+		file, err := c.Database.GetPackageFileMetaByPath(c.PackageId, filePath, fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -194,14 +185,14 @@ func (c *UnifiedFs) ReadFile(spaceId int64, path string) ([]byte, error) {
 
 		// Read package file content directly using path
 		var buf bytes.Buffer
-		err = c.database.GetPackageFileStreamingByPath(c.packageId, filePath, fileName, &buf)
+		err = c.Database.GetPackageFileStreamingByPath(c.PackageId, filePath, fileName, &buf)
 		if err != nil {
 			return nil, err
 		}
 		return buf.Bytes(), nil
 
 	case "tmp":
-		file, err := c.root.Open(cleanPath)
+		file, err := c.FsRoot.Open(cleanPath)
 		if err != nil {
 			return nil, err
 		}
@@ -213,7 +204,7 @@ func (c *UnifiedFs) ReadFile(spaceId int64, path string) ([]byte, error) {
 	}
 }
 
-func (c *UnifiedFs) WriteFile(spaceId int64, path string, data []byte) error {
+func (c *EHandle) WriteFile(spaceId int64, path string, data []byte) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -229,14 +220,14 @@ func (c *UnifiedFs) WriteFile(spaceId int64, path string, data []byte) error {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
-		_, err := c.database.StreamAddSpaceFile(spaceId, 0, filePath, fileName, bytes.NewReader(data))
+		_, err := c.Database.StreamAddSpaceFile(spaceId, 0, filePath, fileName, bytes.NewReader(data))
 		return err
 
 	case "pkg":
 		return errors.New("package file writing not implemented - packages are read-only")
 
 	case "tmp":
-		file, err := c.root.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		file, err := c.FsRoot.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
 			return err
 		}
@@ -249,7 +240,7 @@ func (c *UnifiedFs) WriteFile(spaceId int64, path string, data []byte) error {
 	}
 }
 
-func (c *UnifiedFs) RemoveFile(spaceId int64, path string) error {
+func (c *EHandle) RemoveFile(spaceId int64, path string) error {
 
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
@@ -267,41 +258,25 @@ func (c *UnifiedFs) RemoveFile(spaceId int64, path string) error {
 		filePath := filepath.Dir(cleanPath)
 
 		// Find the file by path and name
-		file, err := c.database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		file, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
 		if err != nil {
-			// Try alternative: find by listing files
-			files, err := c.database.ListSpaceFiles(spaceId, filePath)
-			if err != nil {
-				return err
-			}
-			// Find the file by name
-			found := false
-			for _, f := range files {
-				if f.Name == fileName {
-					file = &f
-					found = true
-					break
-				}
-			}
-			if !found {
-				return errors.New("file not found")
-			}
+			return err
 		}
 
-		return c.database.RemoveSpaceFile(spaceId, file.ID)
+		return c.Database.RemoveSpaceFile(spaceId, file.ID)
 
 	case "pkg":
 		return errors.New("package file removal not implemented - packages are read-only")
 
 	case "tmp":
-		return c.root.Remove(cleanPath)
+		return c.FsRoot.Remove(cleanPath)
 
 	default:
 		return errors.New("unknown backend")
 	}
 }
 
-func (c *UnifiedFs) Mkdir(spaceId int64, path string) error {
+func (c *EHandle) Mkdir(spaceId int64, path string) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -318,25 +293,20 @@ func (c *UnifiedFs) Mkdir(spaceId int64, path string) error {
 		filePath := filepath.Dir(cleanPath)
 
 		// Create folder in database
-		_, err := c.database.AddSpaceFolder(spaceId, 0, filePath, fileName)
+		_, err := c.Database.AddSpaceFolder(spaceId, 0, filePath, fileName)
 		return err
 
 	case "pkg":
 		return errors.New("package directory creation not implemented - packages are read-only")
 
 	case "tmp":
-		// Use local filesystem
-		if c.root == nil {
-			return errors.New("local filesystem not available")
-		}
-		return c.root.Mkdir(cleanPath, 0755)
-
+		return c.FsRoot.Mkdir(cleanPath, 0755)
 	default:
 		return errors.New("unknown backend")
 	}
 }
 
-func (c *UnifiedFs) Rmdir(spaceId int64, path string) error {
+func (c *EHandle) Rmdir(spaceId int64, path string) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -348,44 +318,29 @@ func (c *UnifiedFs) Rmdir(spaceId int64, path string) error {
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
 
-		file, err := c.database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		file, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
 		if err != nil {
-			// Try alternative: find by listing
-			files, err := c.database.ListSpaceFiles(spaceId, filePath)
-			if err != nil {
-				return err
-			}
-			found := false
-			for _, f := range files {
-				if f.Name == fileName {
-					file = &f
-					found = true
-					break
-				}
-			}
-			if !found {
-				return errors.New("directory not found")
-			}
+			return err
 		}
 
 		if !file.IsFolder {
 			return errors.New("path is not a directory")
 		}
 
-		return c.database.RemoveSpaceFile(spaceId, file.ID)
+		return c.Database.RemoveSpaceFile(spaceId, file.ID)
 
 	case "pkg":
 		return errors.New("package directory removal not implemented - packages are read-only")
 
 	case "tmp":
-		return c.root.Remove(cleanPath)
+		return c.FsRoot.Remove(cleanPath)
 
 	default:
 		return errors.New("unknown backend")
 	}
 }
 
-func (c *UnifiedFs) Exists(spaceId int64, path string) (bool, error) {
+func (c *EHandle) Exists(spaceId int64, path string) (bool, error) {
 	if !shouldStartWithSlash(path) {
 		return false, errors.New("path must start with /")
 	}
@@ -398,19 +353,8 @@ func (c *UnifiedFs) Exists(spaceId int64, path string) (bool, error) {
 		filePath := filepath.Dir(cleanPath)
 
 		// Check if file exists in database
-		_, err := c.database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
+		_, err := c.Database.GetSpaceFileMetaByPath(spaceId, filepath.Join(filePath, fileName))
 		if err != nil {
-			// Try alternative: find by listing
-			files, err := c.database.ListSpaceFiles(spaceId, filePath)
-			if err != nil {
-				return false, nil
-			}
-			// Check if file exists in list
-			for _, f := range files {
-				if f.Name == fileName {
-					return true, nil
-				}
-			}
 			return false, nil
 		}
 		return true, nil
@@ -419,14 +363,14 @@ func (c *UnifiedFs) Exists(spaceId int64, path string) (bool, error) {
 
 		fileName := filepath.Base(cleanPath)
 		filePath := filepath.Dir(cleanPath)
-		_, err := c.database.GetPackageFileMetaByPath(c.packageId, filePath, fileName)
+		_, err := c.Database.GetPackageFileMetaByPath(c.PackageId, filePath, fileName)
 		if err != nil {
 			return false, nil // File doesn't exist
 		}
 		return true, nil
 
 	case "tmp":
-		_, err := c.root.Stat(cleanPath)
+		_, err := c.FsRoot.Stat(cleanPath)
 		return !os.IsNotExist(err), nil
 
 	default:
