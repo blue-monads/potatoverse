@@ -63,6 +63,7 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 func (l *LuaH) registerModules() error {
 	l.L.PreloadModule("kv", binds.BindsKV(l.parent.handle))
 	l.L.PreloadModule("ufs", binds.UfsModule(l.parent.handle))
+	l.L.PreloadModule("core", binds.CoreModule(l.parent.handle))
 
 	return nil
 }

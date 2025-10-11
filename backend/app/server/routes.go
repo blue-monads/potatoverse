@@ -122,6 +122,9 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.DELETE("/space/:id/files/:fileId", a.withAccessTokenFn(a.DeleteSpaceFile))
 	coreApi.POST("/space/:id/files/upload", a.withAccessTokenFn(a.UploadSpaceFile))
 	coreApi.POST("/space/:id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
+	coreApi.POST("/space/:id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
+
+	zg.POST("/file/upload-presigned", a.UploadFileWithPresigned)
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)

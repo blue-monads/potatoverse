@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	TokenTypeAccess         uint8 = 1
-	TokenTypeEmailInvite    uint8 = 2
-	TokenTypePair           uint8 = 3
-	TokenTypeSpace          uint8 = 4
-	TokenTypeSpaceAdvisiery uint8 = 5
+	TokenTypeAccess             uint8 = 1
+	TokenTypeEmailInvite        uint8 = 2
+	TokenTypePair               uint8 = 3
+	TokenTypeSpace              uint8 = 4
+	TokenTypeSpaceAdvisiery     uint8 = 5
+	TokenTypeSpaceFilePresigned uint8 = 6
 )
 
 type AccessClaim struct {
@@ -39,11 +40,22 @@ type SpaceClaim struct {
 }
 
 type SpaceAdvisieryClaim struct {
-	XID     string         `json:"x,omitempty"`
-	Typeid  uint8          `json:"t,omitempty"`
-	SpaceId int64          `json:"s,omitempty"`
-	UserId  int64          `json:"u,omitempty"`
-	Data    map[string]any `json:"d,omitempty"`
+	XID          string         `json:"x,omitempty"`
+	Typeid       uint8          `json:"t,omitempty"`
+	TokenSubType string         `json:"st,omitempty"`
+	SpaceId      int64          `json:"s,omitempty"`
+	UserId       int64          `json:"u,omitempty"`
+	Data         map[string]any `json:"d,omitempty"`
+}
+
+type SpaceFilePresignedClaim struct {
+	XID      string `json:"x,omitempty"`
+	Typeid   uint8  `json:"t,omitempty"`
+	SpaceId  int64  `json:"s,omitempty"`
+	UserId   int64  `json:"u,omitempty"`
+	PathName string `json:"pn,omitempty"`
+	FileName string `json:"fn,omitempty"`
+	Expiry   int64  `json:"e,omitempty"`
 }
 
 // fixme => add expiry
@@ -168,6 +180,29 @@ func (ts *Signer) ParseSpaceAdvisiery(tstr string) (*SpaceAdvisieryClaim, error)
 func (ts *Signer) SignSpaceAdvisiery(claim *SpaceAdvisieryClaim) (string, error) {
 
 	claim.Typeid = TokenTypeSpaceAdvisiery
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParseSpaceFilePresigned(tstr string) (*SpaceFilePresignedClaim, error) {
+
+	claim := &SpaceFilePresignedClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	if claim.Typeid != TokenTypeSpaceFilePresigned {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignSpaceFilePresigned(claim *SpaceFilePresignedClaim) (string, error) {
+
+	claim.Typeid = TokenTypeSpaceFilePresigned
 
 	return ts.sign(claim)
 }

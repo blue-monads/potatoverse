@@ -439,3 +439,29 @@ export const createSpaceFolder = async (spaceId: number, name: string, path: str
         path,
     });
 }
+
+// Presigned Upload API
+export interface PresignedUploadResponse {
+    presigned_token: string;
+    upload_url: string;
+    expiry: number;
+}
+
+export const createPresignedUploadURL = async (spaceId: number, fileName: string, path: string = '', expiry?: number) => {
+    return iaxios.post<PresignedUploadResponse>(`/core/space/${spaceId}/files/presigned`, {
+        file_name: fileName,
+        path,
+        expiry,
+    });
+}
+
+export const uploadFileWithPresignedToken = async (presignedKey: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return axios.post(`/zz/file/upload-presigned?presigned-key=${presignedKey}`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
