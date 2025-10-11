@@ -287,6 +287,12 @@ func (a *Server) UploadFileWithPresigned(ctx *gin.Context) {
 	}
 	defer file.Close()
 
+	existingFile, err := a.ctrl.GetSpaceFileByPath(claim.SpaceId, claim.PathName, claim.FileName)
+	if err != nil || existingFile != nil {
+		ctx.JSON(400, gin.H{"error": "File already exists"})
+		return
+	}
+
 	// Upload the file
 	fileId, err := a.ctrl.UploadSpaceFile(claim.SpaceId, claim.FileName, claim.PathName, file, claim.UserId)
 	if err != nil {

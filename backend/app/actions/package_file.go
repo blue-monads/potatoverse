@@ -128,6 +128,10 @@ func (c *Controller) ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File
 	return c.database.ListSpaceFiles(spaceId, path)
 }
 
+func (c *Controller) GetSpaceFileByPath(spaceId int64, path, name string) (*dbmodels.File, error) {
+	return c.database.GetSpaceFileMetaByPathAndName(spaceId, path, name)
+}
+
 func (c *Controller) GetSpaceFile(spaceId, fileId int64) (*dbmodels.File, error) {
 	// First get the file to verify it belongs to the space
 	file, err := c.database.GetSpaceFileMetaById(fileId)
