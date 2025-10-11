@@ -25,6 +25,7 @@ import (
 	- mkdir
 	- rmdir
 	- exists
+	- share_file
 
 */
 
