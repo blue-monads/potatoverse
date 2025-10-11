@@ -6,12 +6,11 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
 	lua "github.com/yuin/gopher-lua"
 )
 
-func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
+func bindsFS(spaceId int64, db datahub.SpaceFileOps) func(L *lua.LState) int {
 
 	return func(L *lua.LState) int {
 
@@ -23,13 +22,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 			contentStr := L.CheckString(4)
 
 			reader := bytes.NewReader(kosher.Byte(contentStr))
-			id, err := db.AddFileStreaming(&dbmodels.File{
-				IsFolder:     false,
-				OwnerSpaceID: spaceId,
-				CreatedBy:    uid,
-				Path:         path,
-				Name:         name,
-			}, reader)
+			id, err := db.StreamAddSpaceFile(spaceId, uid, path, name, reader)
 
 			if err != nil {
 				L.Push(lua.LNil)
@@ -46,7 +39,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 			path := L.CheckString(2)
 			name := L.CheckString(3)
 
-			id, err := db.AddFolder(spaceId, uid, path, name)
+			id, err := db.AddSpaceFolder(spaceId, uid, path, name)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))
@@ -60,7 +53,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 		GetFileMeta := func(L *lua.LState) int {
 			id := L.CheckInt64(1)
 
-			file, err := db.GetFileMeta(id)
+			file, err := db.GetSpaceFileMetaById(id)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))
@@ -74,7 +67,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 		ListFilesBySpace := func(L *lua.LState) int {
 			path := L.CheckString(1)
 
-			files, err := db.ListFilesBySpace(spaceId, path)
+			files, err := db.ListSpaceFiles(spaceId, path)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))
@@ -93,7 +86,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 		RemoveFile := func(L *lua.LState) int {
 			id := L.CheckInt64(1)
 
-			err := db.RemoveFile(id)
+			err := db.RemoveSpaceFile(spaceId, id)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))
@@ -109,7 +102,7 @@ func bindsFS(spaceId int64, db datahub.FileDataOps) func(L *lua.LState) int {
 			data := L.CheckTable(2)
 			dataMap := TableToMap(L, data)
 
-			err := db.UpdateFile(id, dataMap)
+			err := db.UpdateSpaceFile(spaceId, id, dataMap)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))

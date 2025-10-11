@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 )
@@ -126,12 +125,12 @@ func (c *Controller) DeleteSpaceKVByID(spaceId, kvId int64) error {
 // Space Files operations
 
 func (c *Controller) ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File, error) {
-	return c.database.ListFilesBySpace(spaceId, path)
+	return c.database.ListSpaceFiles(spaceId, path)
 }
 
 func (c *Controller) GetSpaceFile(spaceId, fileId int64) (*dbmodels.File, error) {
 	// First get the file to verify it belongs to the space
-	file, err := c.database.GetFileMeta(fileId)
+	file, err := c.database.GetSpaceFileMetaById(fileId)
 	if err != nil {
 		return nil, err
 	}
@@ -144,13 +143,17 @@ func (c *Controller) GetSpaceFile(spaceId, fileId int64) (*dbmodels.File, error)
 }
 
 func (c *Controller) DownloadSpaceFile(spaceId, fileId int64, w http.ResponseWriter) error {
-	_, err := c.GetSpaceFile(spaceId, fileId)
+	file, err := c.database.GetSpaceFileMetaById(fileId)
 	if err != nil {
 		return err
 	}
 
+	if file.OwnerSpaceID != spaceId {
+		return errors.New("file does not belong to this space")
+	}
+
 	// Use the existing file streaming method
-	return c.database.GetFileBlobStreaming(fileId, w)
+	return c.database.StreamGetSpaceFile(spaceId, file.CreatedBy, fileId, w)
 }
 
 func (c *Controller) DeleteSpaceFile(spaceId, fileId int64) error {
@@ -160,25 +163,13 @@ func (c *Controller) DeleteSpaceFile(spaceId, fileId int64) error {
 		return err
 	}
 
-	return c.database.RemoveFile(fileId)
+	return c.database.RemoveSpaceFile(spaceId, fileId)
 }
 
 func (c *Controller) UploadSpaceFile(spaceId int64, name, path string, stream io.Reader, createdBy int64) (int64, error) {
-	// Create file metadata
-	now := time.Now()
-	file := &dbmodels.File{
-		Name:         name,
-		Path:         path,
-		OwnerSpaceID: spaceId,
-		CreatedBy:    createdBy,
-		IsFolder:     false,
-		Size:         0, // Will be set by AddFileStreaming
-		CreatedAt:    &now,
-	}
-
-	return c.database.AddFileStreaming(file, stream)
+	return c.database.StreamAddSpaceFile(spaceId, createdBy, path, name, stream)
 }
 
 func (c *Controller) CreateSpaceFolder(spaceId int64, name, path string, createdBy int64) (int64, error) {
-	return c.database.AddFolder(spaceId, createdBy, path, name)
+	return c.database.AddSpaceFolder(spaceId, createdBy, path, name)
 }

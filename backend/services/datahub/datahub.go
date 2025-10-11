@@ -12,7 +12,7 @@ type Database interface {
 	Core
 	GlobalOps
 	UserOps
-	FileDataOps
+	SpaceFileOps
 	SpaceOps
 	SpaceKVOps
 	PackageOps
@@ -95,20 +95,27 @@ type PackageOps interface {
 	DeletePackageFile(packageId, id int64) error
 }
 
-type FileDataOps interface {
+type SpaceFileOps interface {
+	StreamAddSpaceFile(spaceId int64, uid int64, path string, name string, stream io.Reader) (id int64, err error)
+	AddSpaceFolder(spaceId int64, uid int64, path string, name string) (int64, error)
+
+	GetSpaceFileMetaByPath(spaceId int64, path string) (*dbmodels.File, error)
+	GetSpaceFileMetaById(id int64) (*dbmodels.File, error)
+	GetSpaceFile(spaceId int64, id int64) ([]byte, error)
+	StreamGetSpaceFile(spaceId int64, uid int64, id int64, w http.ResponseWriter) error
+	StreamGetSpaceFileByPath(spaceId int64, uid int64, path string, name string, w http.ResponseWriter) error
+
+	RemoveSpaceFile(spaceId, id int64) error
+	UpdateSpaceFile(spaceId, id int64, data map[string]any) error
+	StreamUpdateSpaceFile(spaceId, id int64, stream io.Reader) (int64, error)
+	ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File, error)
+
+	// File Shares
+
 	AddFileShare(fileId int64, userId int64, spaceId int64) (string, error)
-	AddFileStreaming(file *dbmodels.File, stream io.Reader) (id int64, err error)
-	AddFolder(spaceId int64, uid int64, path string, name string) (int64, error)
-	GetFileBlobStreaming(id int64, w http.ResponseWriter) error
-	GetFileMeta(id int64) (*dbmodels.File, error)
 	GetSharedFile(id string, w http.ResponseWriter) error
 	ListFileShares(fileId int64) ([]dbmodels.FileShare, error)
-	ListFilesBySpace(spaceId int64, path string) ([]dbmodels.File, error)
-	ListFilesByUser(uid int64, path string) ([]dbmodels.File, error)
 	RemoveFileShare(userId int64, id string) error
-	RemoveFile(id int64) error
-	UpdateFile(id int64, data map[string]any) error
-	UpdateFileStreaming(file *dbmodels.File, stream io.Reader) (int64, error)
 }
 
 type SpaceOps interface {
