@@ -493,7 +493,6 @@ func (d *DB) AddFileShare(fileId int64, userId int64, spaceId int64) (string, er
 		ID:        shareId,
 		FileID:    fileId,
 		UserID:    userId,
-		ProjectID: spaceId,
 		CreatedAt: &t,
 	}
 

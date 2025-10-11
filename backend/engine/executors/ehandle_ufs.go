@@ -62,7 +62,7 @@ func shouldStartWithSlash(path string) bool {
 	return strings.HasPrefix(path, "/")
 }
 
-func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
+func (c *EHandle) ListFiles(path string) ([]File, error) {
 	if !shouldStartWithSlash(path) {
 		return nil, errors.New("path must start with /")
 	}
@@ -96,7 +96,7 @@ func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
 			cleanPath = ""
 		}
 
-		files, err := c.Database.ListSpaceFiles(spaceId, cleanPath)
+		files, err := c.Database.ListSpaceFiles(c.SpaceId, cleanPath)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +163,7 @@ func (c *EHandle) ListFiles(spaceId int64, path string) ([]File, error) {
 	}
 }
 
-func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
+func (c *EHandle) ReadFile(path string) ([]byte, error) {
 	if !shouldStartWithSlash(path) {
 		return nil, errors.New("path must start with /")
 	}
@@ -186,7 +186,7 @@ func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
 		}
 
 		// Get file metadata by path and name
-		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +195,7 @@ func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
 			return nil, errors.New("path is a directory")
 		}
 
-		return c.Database.GetSpaceFile(spaceId, file.ID)
+		return c.Database.GetSpaceFile(c.SpaceId, file.ID)
 
 	case "pkg":
 		fileName := filepath.Base(cleanPath)
@@ -237,7 +237,7 @@ func (c *EHandle) ReadFile(spaceId int64, path string) ([]byte, error) {
 	}
 }
 
-func (c *EHandle) WriteFile(spaceId int64, path string, data []byte) error {
+func (c *EHandle) WriteFile(path string, data []byte) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -258,7 +258,7 @@ func (c *EHandle) WriteFile(spaceId int64, path string, data []byte) error {
 			filePath = ""
 		}
 
-		_, err := c.Database.StreamAddSpaceFile(spaceId, 0, filePath, fileName, bytes.NewReader(data))
+		_, err := c.Database.StreamAddSpaceFile(c.SpaceId, 0, filePath, fileName, bytes.NewReader(data))
 		return err
 
 	case "pkg":
@@ -278,7 +278,7 @@ func (c *EHandle) WriteFile(spaceId int64, path string, data []byte) error {
 	}
 }
 
-func (c *EHandle) RemoveFile(spaceId int64, path string) error {
+func (c *EHandle) RemoveFile(path string) error {
 
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
@@ -301,12 +301,12 @@ func (c *EHandle) RemoveFile(spaceId int64, path string) error {
 		}
 
 		// Find the file by path and name
-		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
 		if err != nil {
 			return err
 		}
 
-		return c.Database.RemoveSpaceFile(spaceId, file.ID)
+		return c.Database.RemoveSpaceFile(c.SpaceId, file.ID)
 
 	case "pkg":
 		return errors.New("package file removal not implemented - packages are read-only")
@@ -319,7 +319,7 @@ func (c *EHandle) RemoveFile(spaceId int64, path string) error {
 	}
 }
 
-func (c *EHandle) Mkdir(spaceId int64, path string) error {
+func (c *EHandle) Mkdir(path string) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -341,7 +341,7 @@ func (c *EHandle) Mkdir(spaceId int64, path string) error {
 		}
 
 		// Create folder in database
-		_, err := c.Database.AddSpaceFolder(spaceId, 0, filePath, fileName)
+		_, err := c.Database.AddSpaceFolder(c.SpaceId, 0, filePath, fileName)
 		return err
 
 	case "pkg":
@@ -354,7 +354,7 @@ func (c *EHandle) Mkdir(spaceId int64, path string) error {
 	}
 }
 
-func (c *EHandle) Rmdir(spaceId int64, path string) error {
+func (c *EHandle) Rmdir(path string) error {
 	if !shouldStartWithSlash(path) {
 		return errors.New("path must start with /")
 	}
@@ -371,7 +371,7 @@ func (c *EHandle) Rmdir(spaceId int64, path string) error {
 			filePath = ""
 		}
 
-		file, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
+		file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
 		if err != nil {
 			return err
 		}
@@ -380,7 +380,7 @@ func (c *EHandle) Rmdir(spaceId int64, path string) error {
 			return errors.New("path is not a directory")
 		}
 
-		return c.Database.RemoveSpaceFile(spaceId, file.ID)
+		return c.Database.RemoveSpaceFile(c.SpaceId, file.ID)
 
 	case "pkg":
 		return errors.New("package directory removal not implemented - packages are read-only")
@@ -393,7 +393,7 @@ func (c *EHandle) Rmdir(spaceId int64, path string) error {
 	}
 }
 
-func (c *EHandle) Exists(spaceId int64, path string) (bool, error) {
+func (c *EHandle) Exists(path string) (bool, error) {
 	if !shouldStartWithSlash(path) {
 		return false, errors.New("path must start with /")
 	}
@@ -411,7 +411,7 @@ func (c *EHandle) Exists(spaceId int64, path string) (bool, error) {
 		}
 
 		// Check if file exists in database
-		_, err := c.Database.GetSpaceFileMetaByPathAndName(spaceId, filePath, fileName)
+		_, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
 		if err != nil {
 			return false, nil
 		}
@@ -444,4 +444,30 @@ func (c *EHandle) Exists(spaceId int64, path string) (bool, error) {
 	default:
 		return false, errors.New("unknown backend")
 	}
+}
+
+func (c *EHandle) ShareFile(uid int64, path string) (string, error) {
+	if !shouldStartWithSlash(path) {
+		return "", errors.New("path must start with /")
+	}
+
+	backend, cleanPath := backend(path)
+	if backend != "home" {
+		return "", errors.New("You can only share files in the home")
+	}
+
+	fileName := filepath.Base(cleanPath)
+	filePath := filepath.Dir(cleanPath)
+
+	// Normalize root path
+	if filePath == "/" || filePath == "." {
+		filePath = ""
+	}
+
+	file, err := c.Database.GetSpaceFileMetaByPathAndName(c.SpaceId, filePath, fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return c.Database.AddFileShare(file.ID, uid, c.SpaceId)
 }

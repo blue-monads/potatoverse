@@ -27,6 +27,5 @@ type FileShare struct {
 	ID        string     `json:"id" db:"id,omitempty"`
 	FileID    int64      `json:"file_id" db:"file_id"`
 	UserID    int64      `json:"user_id" db:"user_id"`
-	ProjectID int64      `json:"project_id" db:"project_id"`
 	CreatedAt *time.Time `json:"created_at" db:"created_at"`
 }

@@ -76,7 +76,7 @@ func main() {
 
 	// Test 1: List root directory
 	fmt.Println("\n=== Test 1: List Root Directory ===")
-	rootFiles, err := EHandle.ListFiles(spaceId, "/")
+	rootFiles, err := EHandle.ListFiles("/")
 	if err != nil {
 		log.Fatalf("Failed to list root: %v", err)
 	}
@@ -87,7 +87,7 @@ func main() {
 
 	// Test 2: List package root directory to see what's available
 	fmt.Println("\n=== Test 2: List Package Root Directory ===")
-	pkgRootFiles, err := EHandle.ListFiles(spaceId, "/pkg")
+	pkgRootFiles, err := EHandle.ListFiles("/pkg")
 	if err != nil {
 		log.Fatalf("Failed to list package root: %v", err)
 	}
@@ -110,7 +110,7 @@ func main() {
 		}
 		if f.IsFolder && f.Name == "public" {
 			// Check public folder
-			publicFiles, err := EHandle.ListFiles(spaceId, "/pkg/public")
+			publicFiles, err := EHandle.ListFiles("/pkg/public")
 			if err == nil && len(publicFiles) > 0 {
 				for _, pf := range publicFiles {
 					if !pf.IsFolder {
@@ -127,7 +127,7 @@ func main() {
 	}
 
 	if foundTestFile {
-		content, err := EHandle.ReadFile(spaceId, testFilePath)
+		content, err := EHandle.ReadFile(testFilePath)
 		if err != nil {
 			log.Fatalf("Failed to read package file %s: %v", testFilePath, err)
 		}
@@ -147,7 +147,7 @@ func main() {
 	}
 
 	if hasPublicDir {
-		pkgFiles, err := EHandle.ListFiles(spaceId, "/pkg/public")
+		pkgFiles, err := EHandle.ListFiles("/pkg/public")
 		if err != nil {
 			log.Fatalf("Failed to list package directory: %v", err)
 		}
@@ -162,7 +162,7 @@ func main() {
 	// Test 5: Check if package file exists
 	fmt.Println("\n=== Test 5: Check Package File Exists ===")
 	if foundTestFile {
-		exists, err := EHandle.Exists(spaceId, testFilePath)
+		exists, err := EHandle.Exists(testFilePath)
 		if err != nil {
 			log.Fatalf("Failed to check file existence: %v", err)
 		}
@@ -174,7 +174,7 @@ func main() {
 	// Test 6: Write file to /home
 	fmt.Println("\n=== Test 6: Write File to /home ===")
 	testContent := []byte("Hello from unified file system test!")
-	err = EHandle.WriteFile(spaceId, "/home/test.txt", testContent)
+	err = EHandle.WriteFile("/home/test.txt", testContent)
 	if err != nil {
 		log.Fatalf("Failed to write file to /home: %v", err)
 	}
@@ -182,7 +182,7 @@ func main() {
 
 	// Test 7: Read file from /home
 	fmt.Println("\n=== Test 7: Read File from /home ===")
-	homeContent, err := EHandle.ReadFile(spaceId, "/home/test.txt")
+	homeContent, err := EHandle.ReadFile("/home/test.txt")
 	if err != nil {
 		log.Fatalf("Failed to read file from /home: %v", err)
 	}
@@ -190,7 +190,7 @@ func main() {
 
 	// Test 8: Check if /home file exists
 	fmt.Println("\n=== Test 8: Check /home File Exists ===")
-	homeExists, err := EHandle.Exists(spaceId, "/home/test.txt")
+	homeExists, err := EHandle.Exists("/home/test.txt")
 	if err != nil {
 		log.Fatalf("Failed to check home file existence: %v", err)
 	}
@@ -198,7 +198,7 @@ func main() {
 
 	// Test 9: Create directory in /home
 	fmt.Println("\n=== Test 9: Create Directory in /home ===")
-	err = EHandle.Mkdir(spaceId, "/home/testdir")
+	err = EHandle.Mkdir("/home/testdir")
 	if err != nil {
 		log.Fatalf("Failed to create directory in /home: %v", err)
 	}
@@ -206,7 +206,7 @@ func main() {
 
 	// Test 10: Write file in subdirectory
 	fmt.Println("\n=== Test 10: Write File in Subdirectory ===")
-	err = EHandle.WriteFile(spaceId, "/home/testdir/nested.txt", []byte("nested content"))
+	err = EHandle.WriteFile("/home/testdir/nested.txt", []byte("nested content"))
 	if err != nil {
 		log.Fatalf("Failed to write file in subdirectory: %v", err)
 	}
@@ -214,7 +214,7 @@ func main() {
 
 	// Test 11: List /home directory
 	fmt.Println("\n=== Test 11: List /home Directory ===")
-	homeFiles, err := EHandle.ListFiles(spaceId, "/home")
+	homeFiles, err := EHandle.ListFiles("/home")
 	if err != nil {
 		log.Fatalf("Failed to list /home directory: %v", err)
 	}
@@ -225,7 +225,7 @@ func main() {
 
 	// Test 12: Write to /tmp
 	fmt.Println("\n=== Test 12: Write File to /tmp ===")
-	err = EHandle.WriteFile(spaceId, "/tmp/tmpfile.txt", []byte("temporary content"))
+	err = EHandle.WriteFile("/tmp/tmpfile.txt", []byte("temporary content"))
 	if err != nil {
 		log.Fatalf("Failed to write file to /tmp: %v", err)
 	}
@@ -233,7 +233,7 @@ func main() {
 
 	// Test 13: Read from /tmp
 	fmt.Println("\n=== Test 13: Read File from /tmp ===")
-	tmpContent, err := EHandle.ReadFile(spaceId, "/tmp/tmpfile.txt")
+	tmpContent, err := EHandle.ReadFile("/tmp/tmpfile.txt")
 	if err != nil {
 		log.Fatalf("Failed to read file from /tmp: %v", err)
 	}
@@ -241,7 +241,7 @@ func main() {
 
 	// Test 14: Create directory in /tmp
 	fmt.Println("\n=== Test 14: Create Directory in /tmp ===")
-	err = EHandle.Mkdir(spaceId, "/tmp/tmpdir")
+	err = EHandle.Mkdir("/tmp/tmpdir")
 	if err != nil {
 		log.Fatalf("Failed to create directory in /tmp: %v", err)
 	}
@@ -249,7 +249,7 @@ func main() {
 
 	// Test 15: List /tmp directory
 	fmt.Println("\n=== Test 15: List /tmp Directory ===")
-	tmpFiles, err := EHandle.ListFiles(spaceId, "/tmp")
+	tmpFiles, err := EHandle.ListFiles("/tmp")
 	if err != nil {
 		log.Fatalf("Failed to list /tmp directory: %v", err)
 	}
@@ -260,7 +260,7 @@ func main() {
 
 	// Test 16: Check /tmp file exists
 	fmt.Println("\n=== Test 16: Check /tmp File Exists ===")
-	tmpExists, err := EHandle.Exists(spaceId, "/tmp/tmpfile.txt")
+	tmpExists, err := EHandle.Exists("/tmp/tmpfile.txt")
 	if err != nil {
 		log.Fatalf("Failed to check /tmp file existence: %v", err)
 	}
@@ -268,7 +268,7 @@ func main() {
 
 	// Test 17: Remove file from /home
 	fmt.Println("\n=== Test 17: Remove File from /home ===")
-	err = EHandle.RemoveFile(spaceId, "/home/test.txt")
+	err = EHandle.RemoveFile("/home/test.txt")
 	if err != nil {
 		log.Fatalf("Failed to remove file from /home: %v", err)
 	}
@@ -276,7 +276,7 @@ func main() {
 
 	// Test 18: Verify file was removed
 	fmt.Println("\n=== Test 18: Verify File Removal ===")
-	removedExists, err := EHandle.Exists(spaceId, "/home/test.txt")
+	removedExists, err := EHandle.Exists("/home/test.txt")
 	if err != nil {
 		log.Fatalf("Failed to check removed file: %v", err)
 	}
@@ -284,7 +284,7 @@ func main() {
 
 	// Test 19: Remove directory from /home
 	fmt.Println("\n=== Test 19: Remove Directory from /home ===")
-	err = EHandle.Rmdir(spaceId, "/home/testdir")
+	err = EHandle.Rmdir("/home/testdir")
 	if err != nil {
 		log.Fatalf("Failed to remove directory from /home: %v", err)
 	}
@@ -292,7 +292,7 @@ func main() {
 
 	// Test 20: Remove file from /tmp
 	fmt.Println("\n=== Test 20: Remove File from /tmp ===")
-	err = EHandle.RemoveFile(spaceId, "/tmp/tmpfile.txt")
+	err = EHandle.RemoveFile("/tmp/tmpfile.txt")
 	if err != nil {
 		log.Fatalf("Failed to remove file from /tmp: %v", err)
 	}
@@ -300,7 +300,7 @@ func main() {
 
 	// Test 21: Remove directory from /tmp
 	fmt.Println("\n=== Test 21: Remove Directory from /tmp ===")
-	err = EHandle.Rmdir(spaceId, "/tmp/tmpdir")
+	err = EHandle.Rmdir("/tmp/tmpdir")
 	if err != nil {
 		log.Fatalf("Failed to remove directory from /tmp: %v", err)
 	}
@@ -308,7 +308,7 @@ func main() {
 
 	// Test 22: Error cases - Invalid path (no leading slash)
 	fmt.Println("\n=== Test 22: Error Case - Invalid Path ===")
-	_, err = EHandle.ReadFile(spaceId, "home/test.txt")
+	_, err = EHandle.ReadFile("home/test.txt")
 	if err != nil {
 		fmt.Printf("Expected error for path without leading slash: %v\n", err)
 	} else {
@@ -317,7 +317,7 @@ func main() {
 
 	// Test 23: Error case - Try to write to read-only /pkg
 	fmt.Println("\n=== Test 23: Error Case - Write to Read-Only /pkg ===")
-	err = EHandle.WriteFile(spaceId, "/pkg/test.txt", []byte("should fail"))
+	err = EHandle.WriteFile("/pkg/test.txt", []byte("should fail"))
 	if err != nil {
 		fmt.Printf("Expected error for writing to /pkg: %v\n", err)
 	} else {
@@ -326,12 +326,71 @@ func main() {
 
 	// Test 24: Error case - Try to read root directory
 	fmt.Println("\n=== Test 24: Error Case - Read Root Directory ===")
-	_, err = EHandle.ReadFile(spaceId, "/")
+	_, err = EHandle.ReadFile("/")
 	if err != nil {
 		fmt.Printf("Expected error for reading root: %v\n", err)
 	} else {
 		log.Fatalf("Should have failed for reading root")
 	}
+
+	// Test 25: Share a file from /home
+	fmt.Println("\n=== Test 25: Share File from /home ===")
+	// First create a file to share
+	shareTestContent := []byte("This file will be shared")
+	err = EHandle.WriteFile("/home/shareable.txt", shareTestContent)
+	if err != nil {
+		log.Fatalf("Failed to create file for sharing: %v", err)
+	}
+	fmt.Println("Created file /home/shareable.txt")
+
+	// Now share it
+	shareId, err := EHandle.ShareFile(spaceId, "/home/shareable.txt")
+	if err != nil {
+		log.Fatalf("Failed to share file: %v", err)
+	}
+	fmt.Printf("Successfully shared file, share ID: %s\n", shareId)
+
+	// Test 26: Error case - Try to share file from /pkg
+	fmt.Println("\n=== Test 26: Error Case - Share File from /pkg ===")
+	if foundTestFile {
+		_, err = EHandle.ShareFile(0, testFilePath)
+		if err != nil {
+			fmt.Printf("Expected error for sharing from /pkg: %v\n", err)
+		} else {
+			log.Fatalf("Should have failed for sharing from /pkg")
+		}
+	} else {
+		fmt.Println("Skipping (no test file found in /pkg)")
+	}
+
+	// Test 27: Error case - Try to share file from /tmp
+	fmt.Println("\n=== Test 27: Error Case - Share File from /tmp ===")
+	// Create a temp file first
+	err = EHandle.WriteFile("/tmp/temp_shareable.txt", []byte("temp content"))
+	if err != nil {
+		log.Fatalf("Failed to create temp file: %v", err)
+	}
+
+	_, err = EHandle.ShareFile(spaceId, "/tmp/temp_shareable.txt")
+	if err != nil {
+		fmt.Printf("Expected error for sharing from /tmp: %v\n", err)
+	} else {
+		log.Fatalf("Should have failed for sharing from /tmp")
+	}
+
+	// Clean up the temp file
+	err = EHandle.RemoveFile("/tmp/temp_shareable.txt")
+	if err != nil {
+		log.Fatalf("Failed to clean up temp file: %v", err)
+	}
+
+	// Test 28: Clean up the shared file
+	fmt.Println("\n=== Test 28: Clean Up Shared File ===")
+	err = EHandle.RemoveFile("/home/shareable.txt")
+	if err != nil {
+		log.Fatalf("Failed to remove shared file: %v", err)
+	}
+	fmt.Println("Successfully removed shared file")
 
 	fmt.Println("\n=== All Tests Passed Successfully! ===")
 
