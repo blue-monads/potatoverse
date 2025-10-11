@@ -2,6 +2,7 @@ package backend
 
 import (
 	"log/slog"
+	"path"
 
 	"github.com/blue-monads/turnix/backend/app"
 	"github.com/blue-monads/turnix/backend/app/actions"
@@ -50,7 +51,7 @@ func NewNoHead(options Options) (*app.HeadLess, error) {
 	return app, nil
 }
 
-func NewApp(options Options) (*app.App, error) {
+func NewDevApp(options Options) (*app.App, error) {
 
 	happ, err := NewNoHead(options)
 	if err != nil {
@@ -82,6 +83,20 @@ func NewApp(options Options) (*app.App, error) {
 			}
 		}
 
+	}
+
+	return app.NewApp(happ), nil
+}
+
+func NewProdApp(config *xtypes.AppOptions) (*app.App, error) {
+	happ, err := NewNoHead(Options{
+		DBFile: path.Join(config.WorkingDir, "data.db"),
+		Port:   config.Port,
+		SeedDB: false,
+		Host:   config.Host,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return app.NewApp(happ), nil

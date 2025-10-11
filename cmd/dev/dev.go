@@ -4,7 +4,7 @@ import "github.com/blue-monads/turnix/backend"
 
 func main() {
 
-	app, err := backend.NewApp(backend.Options{
+	app, err := backend.NewDevApp(backend.Options{
 		DBFile: "data.db",
 		Port:   7777,
 		SeedDB: true,
