@@ -14,6 +14,12 @@ type PotatoPackage struct {
 	Version       string           `json:"version" toml:"version"`
 	UpdateUrl     string           `json:"update_url" toml:"update_url"`
 	Artifacts     []PotatoArtifact `json:"artifacts" toml:"artifacts"`
+
+	// for local dev
+
+	// files to bundle in the package
+	FilesDir string `json:"files_dir,omitempty" toml:"files_dir,omitempty"`
+	DevToken string `json:"dev_token,omitempty" toml:"dev_token,omitempty"`
 }
 
 type PotatoArtifact struct {

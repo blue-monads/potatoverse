@@ -144,12 +144,12 @@ type PackageCmd struct {
 }
 
 type PackageBuildCmd struct {
-	Path   string `arg:"" help:"Path to package directory." type:"path" default:"./potato.toml"`
-	Output string `name:"output" short:"o" help:"Output path for built package." type:"path"`
+	PotatoTomlFile string `name:"potato-toml-file" help:"Path to package directory." type:"path" default:"./potato.toml"`
+	OutputZipFile  string `name:"output-zip-file" help:"Output path for built package." type:"path"`
 }
 
 func (c *PackageBuildCmd) Run(ctx *kong.Context) error {
-	panic("Package Build - Not implemented yet")
+	return c.doRun(ctx)
 }
 
 type OperationsCmd struct {

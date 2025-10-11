@@ -1,0 +1,13 @@
+name = "Dev Space Example"
+slug = "dev-space-example"
+info = "This is a example of a dev space"
+tags = ["example", "dev", "space"]
+format_version = "1.0.0"
+author_name = "John Doe"
+author_email = "john.doe@example.com"
+author_site = "https://example.com"
+source_code = "https://github.com/example/dev-space-example"
+license = "MIT"
+version = "1.0.0"
+update_url = "https://example.com/dev-space-example"
+files_dir = "./myfiles"
