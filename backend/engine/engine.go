@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"errors"
 	"maps"
 	"regexp"
 	"strconv"
@@ -129,12 +128,7 @@ type SpaceInfo struct {
 
 func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 
-	e.riLock.RLock()
-	ri, ok := e.RoutingIndex[nsKey]
-	e.riLock.RUnlock()
-	if !ok {
-		return nil, errors.New("space not found")
-	}
+	ri := e.getIndex(nsKey, 0)
 
 	space, err := e.db.GetSpace(ri.spaceId)
 	if err != nil {
