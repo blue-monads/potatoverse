@@ -121,6 +121,20 @@ func (a *Server) DeletePackage(claim *signer.AccessClaim, ctx *gin.Context) (any
 
 }
 
+func (a *Server) GeneratePackageDevToken(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	token, err := a.ctrl.GeneratePackageDevToken(claim.UserId, packageId)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{"token": token}, nil
+}
+
 // engine core
 
 func (a *Server) handleSpaceFile() func(ctx *gin.Context) {

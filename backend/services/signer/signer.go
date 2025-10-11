@@ -16,6 +16,7 @@ const (
 	TokenTypeSpace              uint8 = 4
 	TokenTypeSpaceAdvisiery     uint8 = 5
 	TokenTypeSpaceFilePresigned uint8 = 6
+	ToekenPackageDev            uint8 = 7
 )
 
 type AccessClaim struct {
@@ -56,6 +57,13 @@ type SpaceFilePresignedClaim struct {
 	PathName string `json:"pn,omitempty"`
 	FileName string `json:"fn,omitempty"`
 	Expiry   int64  `json:"e,omitempty"`
+}
+
+type PackageDevClaim struct {
+	XID       string `json:"x,omitempty"`
+	Typeid    uint8  `json:"t,omitempty"`
+	PackageId int64  `json:"p,omitempty"`
+	UserId    int64  `json:"u,omitempty"`
 }
 
 // fixme => add expiry
@@ -203,6 +211,29 @@ func (ts *Signer) ParseSpaceFilePresigned(tstr string) (*SpaceFilePresignedClaim
 func (ts *Signer) SignSpaceFilePresigned(claim *SpaceFilePresignedClaim) (string, error) {
 
 	claim.Typeid = TokenTypeSpaceFilePresigned
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParsePackageDev(tstr string) (*PackageDevClaim, error) {
+
+	claim := &PackageDevClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	if claim.Typeid != ToekenPackageDev {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignPackageDev(claim *PackageDevClaim) (string, error) {
+
+	claim.Typeid = ToekenPackageDev
 
 	return ts.sign(claim)
 }

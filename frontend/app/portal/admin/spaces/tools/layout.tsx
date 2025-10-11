@@ -5,6 +5,11 @@ import { usePathname, useRouter } from 'next/navigation';
 
 const tabs = [
     {
+        label: 'About',
+        value: 'about',
+        url: '/portal/admin/spaces/tools/about',
+    },
+    {
         label: 'Logs',
         value: 'logs',
         url: '/portal/admin/spaces/tools/logs',
@@ -50,7 +55,8 @@ interface PropsType {
 const WithTabbedToolsLayout = (props: PropsType) => {
     const router = useRouter();
     const pathname = usePathname();
-    const activeTab = pathname?.split('/').at(8);
+    // Extract the last segment of the path (e.g., 'about' from '/portal/admin/spaces/tools/about')
+    const activeTab = pathname?.split('/').filter(Boolean).pop();
     return (
 
         <div className='w-full px-2'>

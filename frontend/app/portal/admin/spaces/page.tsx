@@ -208,7 +208,7 @@ const SpacesDirectory = () => {
                                     } else if (action === "run") {
                                         router.push(`/portal/admin/exec?nskey=${space.namespace_key}&space_id=${space.id}`);
                                     } else if (action === "tools") {
-                                        router.push(`/portal/admin/spaces/tools/files?id=${space.id}&packageId=${space.package_id}`);
+                                        router.push(`/portal/admin/spaces/tools/about?id=${space.id}&packageId=${space.package_id}`);
                                     }
                                     
                                 }}

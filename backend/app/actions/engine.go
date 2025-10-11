@@ -153,6 +153,26 @@ func (c *Controller) GetPackage(packageId int64) (*dbmodels.Package, error) {
 	return c.database.GetPackage(packageId)
 }
 
+func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (string, error) {
+	// Verify the user owns the package
+	pkg, err := c.database.GetPackage(packageId)
+	if err != nil {
+		return "", err
+	}
+
+	if pkg.InstalledBy != userId {
+		return "", errors.New("you are not the owner of this package")
+	}
+
+	// Generate the dev token
+	return c.signer.SignPackageDev(&signer.PackageDevClaim{
+		PackageId: packageId,
+		UserId:    userId,
+		XID:       xid.New().String(),
+		Typeid:    signer.ToekenPackageDev,
+	})
+}
+
 func (c *Controller) InstallPackageEmbed(userId int64, name string) (int64, error) {
 	file, err := engine.ZipEPackage(name)
 	if err != nil {

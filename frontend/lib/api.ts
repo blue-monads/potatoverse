@@ -215,6 +215,10 @@ export const deletePackage = async (id: number) => {
     return iaxios.delete<void>(`/core/package/${id}`);
 }
 
+export const generatePackageDevToken = async (packageId: number) => {
+    return iaxios.post<{ token: string }>(`/core/package/${packageId}/dev-token`);
+}
+
 export interface EPackage {
     name: string;
     info: string;
