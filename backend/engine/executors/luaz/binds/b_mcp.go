@@ -25,10 +25,19 @@ func BindMCP() func(L *lua.LState) int {
 		createHttpClient := func(L *lua.LState) int {
 			endpoint := L.CheckString(1)
 			name := L.CheckString(2)
+			transportType := L.CheckString(3)
 
 			client := mcp.NewClient(&mcp.Implementation{Name: name, Version: "v1.0.0"}, nil)
-			transport := &mcp.StreamableClientTransport{
-				Endpoint: endpoint,
+			var transport mcp.Transport
+
+			if transportType == "sse" {
+				transport = &mcp.SSEClientTransport{
+					Endpoint: endpoint,
+				}
+			} else {
+				transport = &mcp.StreamableClientTransport{
+					Endpoint: endpoint,
+				}
 			}
 
 			session, err := client.Connect(context.Background(), transport, nil)
