@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/k0kubun/pp"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -54,10 +55,10 @@ func runSharedServerExample() {
 	})
 
 	// Step 3: Create transport with the shared server
-	transport := NewSharedServerTransport(server)
+	clientTransport, serverTransport := NewSharedServerTransport()
 
 	go func() {
-		if err := server.Run(ctx, transport); err != nil {
+		if err := server.Run(ctx, serverTransport); err != nil {
 			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
@@ -88,7 +89,7 @@ func runSharedServerExample() {
 
 			log.Printf("[%s] Created client\n", clientName)
 
-			session, err := client.Connect(ctx, transport, nil)
+			session, err := client.Connect(ctx, clientTransport, nil)
 			if err != nil {
 				log.Printf("[%s] Connect error: %v\n", clientName, err)
 				return
@@ -110,6 +111,7 @@ func runSharedServerExample() {
 			if err != nil {
 				log.Printf("[%s] CallTool error: %v\n", clientName, err)
 			} else {
+				pp.Println("result", result.Content)
 				log.Printf("[%s] Tool result: %v\n", clientName, result.Content)
 			}
 
@@ -139,7 +141,7 @@ func runSharedServerExample() {
 	log.Println("Benefits: Lower memory usage, shared state, single point of configuration")
 
 	// Step 6: Cleanup - shutdown the shared server
-	if err := transport.Shutdown(); err != nil {
+	if err := clientTransport.Shutdown(); err != nil {
 		log.Printf("Shutdown error: %v\n", err)
 	}
 

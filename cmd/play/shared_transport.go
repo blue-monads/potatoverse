@@ -61,12 +61,13 @@ type multiplexedConnection struct {
 }
 
 // NewSharedServerTransport creates a transport where all clients share a single server.
-func NewSharedServerTransport(server *mcp.Server) *SharedServerTransport {
+// Returns both the client transport and the server transport.
+func NewSharedServerTransport() (*SharedServerTransport, mcp.Transport) {
 	t := &SharedServerTransport{
 		//	server:       server,
 		clients:      make(map[string]*clientConnection),
 		aggregatedCh: make(chan messageWithClient, 100),
-		requestMap:   make(map[interface{}]string),
+		requestMap:   make(map[any]string),
 	}
 
 	// Create the multiplexed connection for the server
@@ -75,7 +76,12 @@ func NewSharedServerTransport(server *mcp.Server) *SharedServerTransport {
 		connID:    "shared-server",
 	}
 
-	return t
+	// Create the wrapper for the server side
+	serverTransport := &sharedServerTransportWrapper{
+		conn: t.serverConn,
+	}
+
+	return t, serverTransport
 }
 
 // Connect implements mcp.Transport for clients. Each client gets its own connection,
@@ -160,7 +166,7 @@ func (t *SharedServerTransport) trackRequestFromClient(msg jsonrpc.Message, clie
 		return
 	}
 
-	var msgMap map[string]interface{}
+	var msgMap map[string]any
 	if err := json.Unmarshal(data, &msgMap); err != nil {
 		return
 	}
@@ -179,7 +185,7 @@ func (t *SharedServerTransport) getClientForResponse(msg jsonrpc.Message) (strin
 		return "", false
 	}
 
-	var msgMap map[string]interface{}
+	var msgMap map[string]any
 	if err := json.Unmarshal(data, &msgMap); err != nil {
 		return "", false
 	}
@@ -292,11 +298,10 @@ func (m *multiplexedConnection) SessionID() string {
 // sharedServerTransportWrapper wraps SharedServerTransport to provide the server
 // with its multiplexed connection
 type sharedServerTransportWrapper struct {
-	transport *SharedServerTransport
-	once      sync.Once
+	conn mcp.Connection
 }
 
 func (w *sharedServerTransportWrapper) Connect(ctx context.Context) (mcp.Connection, error) {
 	// Always return the same multiplexed connection
-	return w.transport.serverConn, nil
+	return w.conn, nil
 }
