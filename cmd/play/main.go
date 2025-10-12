@@ -11,6 +11,10 @@ import (
 )
 
 func main() {
+	runMcp()
+}
+
+func Main1() {
 	ctx := context.Background()
 
 	// Create a new client, with no features.
