@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	runMcp()
+	// runMcp()
+	runSharedServerExample()
 }
 
 func Main1() {
