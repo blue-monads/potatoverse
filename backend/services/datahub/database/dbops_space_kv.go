@@ -30,7 +30,7 @@ func (d *DB) AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) error {
 func (d *DB) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	data := &dbmodels.SpaceKV{}
-	err := table.Find(db.Cond{"space_id": spaceId, "group_name": group, "key": key}).One(data)
+	err := table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).One(data)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (d *DB) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.Spac
 func (d *DB) GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
-	err := table.Find(db.Cond{"space_id": spaceId, "group_name": group}).Offset(offset).Limit(limit).All(&datas)
+	err := table.Find(db.Cond{"space_id": spaceId, "group": group}).Offset(offset).Limit(limit).All(&datas)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func (d *DB) GetSpaceKVByGroup(spaceId int64, group string, offset int, limit in
 
 func (d *DB) UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
-	return table.Find(db.Cond{"space_id": spaceId, "group_name": group, "key": key}).Update(data)
+	return table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).Update(data)
 }
 
 func (d *DB) UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
-	cond := db.Cond{"space_id": spaceId, "group_name": group, "key": key}
+	cond := db.Cond{"space_id": spaceId, "group": group, "key": key}
 
 	exists, err := table.Find(cond).Exists()
 	if err != nil {
@@ -81,7 +81,7 @@ func (d *DB) UpsertSpaceKV(spaceId int64, group, key string, data map[string]any
 
 func (d *DB) RemoveSpaceKV(spaceId int64, group string, key string) error {
 	table := d.spaceKVTable()
-	return table.Find(db.Cond{"space_id": spaceId, "group_name": group, "key": key}).Delete()
+	return table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).Delete()
 }
 
 func (d *DB) spaceKVTable() db.Collection {

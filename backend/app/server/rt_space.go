@@ -26,7 +26,7 @@ func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, 
 	}
 
 	// Get query parameters for filtering
-	groupName := ctx.Query("group_name")
+	groupName := ctx.Query("group")
 	key := ctx.Query("key")
 	tag1 := ctx.Query("tag1")
 	tag2 := ctx.Query("tag2")
@@ -35,7 +35,7 @@ func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, 
 	// Build condition map
 	cond := make(map[any]any)
 	if groupName != "" {
-		cond["group_name"] = groupName
+		cond["group"] = groupName
 	}
 	if key != "" {
 		cond["key"] = key

@@ -38,22 +38,22 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
         const matchesSearch = searchTerm === '' || 
             kv.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
             kv.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            kv.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            kv.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
             kv.tag1.toLowerCase().includes(searchTerm.toLowerCase()) ||
             kv.tag2.toLowerCase().includes(searchTerm.toLowerCase()) ||
             kv.tag3.toLowerCase().includes(searchTerm.toLowerCase());
         
-        const matchesGroup = selectedGroup === '' || kv.group_name === selectedGroup;
+        const matchesGroup = selectedGroup === '' || kv.group === selectedGroup;
         
         return matchesSearch && matchesGroup;
     }) || [];
 
     // Get unique groups for filter dropdown
-    const uniqueGroups = Array.from(new Set(loader.data?.map(kv => kv.group_name) || []));
+    const uniqueGroups = Array.from(new Set(loader.data?.map(kv => kv.group) || []));
 
     const handleCreate = async (data: {
         key: string;
-        group_name: string;
+        group: string;
         value: string;
         tag1?: string;
         tag2?: string;
@@ -70,7 +70,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
 
     const handleUpdate = async (id: number, data: {
         key?: string;
-        group_name?: string;
+        group?: string;
         value?: string;
         tag1?: string;
         tag2?: string;
@@ -195,7 +195,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    {kv.group_name}
+                                                    {kv.group}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -282,7 +282,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
 const CreateKVModal = ({ onClose, onSubmit }: { onClose: () => void; onSubmit: (data: any) => void }) => {
     const [formData, setFormData] = useState({
         key: '',
-        group_name: '',
+        group: '',
         value: '',
         tag1: '',
         tag2: '',
@@ -313,8 +313,8 @@ const CreateKVModal = ({ onClose, onSubmit }: { onClose: () => void; onSubmit: (
                         <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
                         <input
                             type="text"
-                            value={formData.group_name}
-                            onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
+                            value={formData.group}
+                            onChange={(e) => setFormData({ ...formData, group: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                         />
@@ -382,7 +382,7 @@ const CreateKVModal = ({ onClose, onSubmit }: { onClose: () => void; onSubmit: (
 const EditKVModal = ({ kv, onClose, onSubmit }: { kv: SpaceKV; onClose: () => void; onSubmit: (data: any) => void }) => {
     const [formData, setFormData] = useState({
         key: kv.key,
-        group_name: kv.group_name,
+        group: kv.group,
         value: kv.value,
         tag1: kv.tag1,
         tag2: kv.tag2,
@@ -413,8 +413,8 @@ const EditKVModal = ({ kv, onClose, onSubmit }: { kv: SpaceKV; onClose: () => vo
                         <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
                         <input
                             type="text"
-                            value={formData.group_name}
-                            onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
+                            value={formData.group}
+                            onChange={(e) => setFormData({ ...formData, group: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                         />

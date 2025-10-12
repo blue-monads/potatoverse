@@ -114,7 +114,7 @@ func toStructFromTableInner(l *lua.LState, tb *lua.LTable, v reflect.Value) erro
 
 		var inline bool
 		name := field.Name
-		if tag := field.Tag.Get("luautil"); tag != "" {
+		if tag := field.Tag.Get("json"); tag != "" {
 			tagParts := strings.Split(tag, ",")
 			if tagParts[0] == "-" {
 				continue // Skip this field.
@@ -193,15 +193,23 @@ func ToTableFromStruct(l *lua.LState, v reflect.Value) lua.LValue {
 }
 
 func toTableFromStructInner(l *lua.LState, tb *lua.LTable, v reflect.Value) lua.LValue {
+	// If the value is a pointer, dereference it
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return lua.LNil
+		}
+		v = v.Elem()
+	}
+
 	t := v.Type()
 	for j := 0; j < v.NumField(); j++ {
 		field := t.Field(j)
-		
+
 		// Skip unexported fields
 		if !field.IsExported() {
 			continue
 		}
-		
+
 		var inline bool
 		name := field.Name
 		if tag := field.Tag.Get("luautil"); tag != "" {
@@ -218,7 +226,12 @@ func toTableFromStructInner(l *lua.LState, tb *lua.LTable, v reflect.Value) lua.
 		if inline {
 			toTableFromStructInner(l, tb, v.Field(j))
 		} else {
-			tb.RawSetString(name, ToArbitraryValue(l, v.Field(j).Interface()))
+			fieldValue := v.Field(j)
+			if !fieldValue.IsValid() || (fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil()) {
+				tb.RawSetString(name, lua.LNil)
+			} else {
+				tb.RawSetString(name, ToArbitraryValue(l, fieldValue.Interface()))
+			}
 		}
 	}
 	return tb

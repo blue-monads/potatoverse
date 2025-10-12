@@ -13,7 +13,7 @@ func (d *DB) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) 
 	table := d.globalConfigTable()
 	pp.Println("@1", key, group)
 	var config dbmodels.GlobalConfig
-	err := table.Find(db.Cond{"key": key, "group_name": group}).One(&config)
+	err := table.Find(db.Cond{"key": key, "group": group}).One(&config)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (d *DB) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) 
 func (d *DB) ListGlobalConfigs(group string, offset int, limit int) ([]dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
 	var configs []dbmodels.GlobalConfig
-	err := table.Find(db.Cond{"group_name": group}).Offset(offset).Limit(limit).All(&configs)
+	err := table.Find(db.Cond{"group": group}).Offset(offset).Limit(limit).All(&configs)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (d *DB) UpdateGlobalConfig(id int64, data map[string]any) error {
 
 func (d *DB) UpdateGlobalConfigByKey(key, group string, data map[string]any) error {
 	table := d.globalConfigTable()
-	return table.Find(db.Cond{"key": key, "group_name": group}).Update(data)
+	return table.Find(db.Cond{"key": key, "group": group}).Update(data)
 }
 
 func (d *DB) DeleteGlobalConfig(id int64) error {

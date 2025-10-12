@@ -61,9 +61,9 @@ func (c *Controller) CreateSpaceKV(spaceId int64, data map[string]any) (*dbmodel
 		return nil, errors.New("key is required")
 	}
 
-	groupName, ok := data["group_name"].(string)
+	groupName, ok := data["group"].(string)
 	if !ok || groupName == "" {
-		return nil, errors.New("group_name is required")
+		return nil, errors.New("group is required")
 	}
 
 	value, ok := data["value"].(string)

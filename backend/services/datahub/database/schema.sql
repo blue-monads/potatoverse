@@ -2,9 +2,9 @@
 CREATE TABLE IF NOT EXISTS GlobalConfig (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
   key TEXT NOT NULL DEFAULT '', 
-  group_name TEXT NOT NULL DEFAULT '',
+  "group" TEXT NOT NULL DEFAULT '',
   value TEXT NOT NULL DEFAULT '',
-  unique(group_name, key)
+  unique("group", key)
 );
 
 CREATE TABLE IF NOT EXISTS UserGroups (
@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS UserInvites (
 CREATE TABLE IF NOT EXISTS UserConfig (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
   key TEXT NOT NULL DEFAULT '', 
-  group_name TEXT NOT NULL DEFAULT '',
+  "group" TEXT NOT NULL DEFAULT '',
   value TEXT NOT NULL DEFAULT '',
   user_id INTEGER NOT NULL, 
-  unique(user_id, group_name, key),
+  unique(user_id, "group", key),
   FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
@@ -127,13 +127,13 @@ CREATE TABLE IF NOT EXISTS Spaces (
 CREATE TABLE IF NOT EXISTS SpaceKV (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   key TEXT NOT NULL DEFAULT '', 
-  group_name TEXT NOT NULL DEFAULT '',
+  "group" TEXT NOT NULL DEFAULT '',
   value TEXT NOT NULL DEFAULT '',
   space_id INTEGER NOT NULL, -- DEFAULT 0, 
   tag1 TEXT NOT NULL DEFAULT '',
   tag2 TEXT NOT NULL DEFAULT '',
   tag3 TEXT NOT NULL DEFAULT '',
-  unique(space_id, group_name, key)
+  unique(space_id, "group", key)
 );
 
 
