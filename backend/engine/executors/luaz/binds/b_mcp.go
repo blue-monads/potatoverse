@@ -25,7 +25,7 @@ func BindMCP() func(L *lua.LState) int {
 		createHttpClient := func(L *lua.LState) int {
 			endpoint := L.CheckString(1)
 			name := L.CheckString(2)
-			transportType := L.CheckString(3)
+			transportType := L.OptString(3, "http")
 
 			client := mcp.NewClient(&mcp.Implementation{Name: name, Version: "v1.0.0"}, nil)
 			var transport mcp.Transport
