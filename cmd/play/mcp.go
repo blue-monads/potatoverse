@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/k0kubun/pp"
@@ -12,6 +15,8 @@ import (
 func runMcp() {
 	ctx := context.Background()
 	const channelBufferSize = 100
+	const numClients = 10
+	const operationsPerClient = 5
 
 	// Create a server factory function that creates a new configured server for each client
 	serverFactory := func() *mcp.Server {
@@ -35,11 +40,46 @@ func runMcp() {
 			}, struct{}{}, nil
 		})
 
+		// Add another tool for variety
+		type EchoArgs struct {
+			Text  string `json:"text" jsonschema:"Text to echo"`
+			Count int    `json:"count" jsonschema:"Number of times to repeat"`
+		}
+		mcp.AddTool(server, &mcp.Tool{
+			Name:        "echo-tool",
+			Description: "Echoes text multiple times",
+		}, func(ctx context.Context, req *mcp.CallToolRequest, args EchoArgs) (*mcp.CallToolResult, struct{}, error) {
+			result := ""
+			for i := 0; i < args.Count; i++ {
+				result += fmt.Sprintf("[%d] %s\n", i+1, args.Text)
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					&mcp.TextContent{Text: result},
+				},
+			}, struct{}{}, nil
+		})
+
 		server.AddResource(&mcp.Resource{
 			Name:        "easyws",
 			Description: "Easy WebSocket",
 			URI:         "easyws://test",
 		}, EasyWsResourceHandler)
+
+		server.AddResource(&mcp.Resource{
+			Name:        "test-data",
+			Description: "Test data resource",
+			URI:         "test://data",
+		}, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
+			return &mcp.ReadResourceResult{
+				Contents: []*mcp.ResourceContents{
+					{
+						Text: "This is test data content",
+						URI:  "test://data",
+					},
+				},
+			}, nil
+		})
 
 		return server
 	}
@@ -47,56 +87,152 @@ func runMcp() {
 	// Create transport with server factory
 	transport := NewChannelTransport(channelBufferSize, serverFactory)
 
-	log.Println("Transport ready, connecting clients...")
+	log.Printf("Transport ready, spawning %d concurrent clients...\n", numClients)
 
-	// --- Client 1 Execution ---
-	log.Println("Connecting client 1...")
-	client1 := mcp.NewClient(&mcp.Implementation{Name: "test-client-1", Version: "1.0.0"}, nil)
-	session1, err := client1.Connect(ctx, transport, nil)
-	if err != nil {
-		log.Fatalf("Client 1 connect error: %v", err)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	successCount := 0
+	errorCount := 0
+
+	// Spawn multiple clients concurrently
+	for i := 0; i < numClients; i++ {
+		wg.Add(1)
+		clientID := i + 1
+
+		go func(id int) {
+			defer wg.Done()
+
+			clientName := fmt.Sprintf("test-client-%d", id)
+			log.Printf("[Client %d] Starting...\n", id)
+
+			// Create client
+			client := mcp.NewClient(&mcp.Implementation{Name: clientName, Version: "1.0.0"}, nil)
+			session, err := client.Connect(ctx, transport, nil)
+			if err != nil {
+				log.Printf("[Client %d] Connect error: %v\n", id, err)
+				mu.Lock()
+				errorCount++
+				mu.Unlock()
+				return
+			}
+			defer session.Close()
+
+			log.Printf("[Client %d] Connected successfully\n", id)
+
+			// Random delay to stagger operations
+			time.Sleep(time.Duration(rand.Intn(50)) * time.Millisecond)
+
+			// Perform random operations
+			for opNum := 0; opNum < operationsPerClient; opNum++ {
+				operation := rand.Intn(4)
+
+				switch operation {
+				case 0:
+					// List tools
+					log.Printf("[Client %d] Operation %d: Listing tools...\n", id, opNum+1)
+					tools, err := session.ListTools(ctx, &mcp.ListToolsParams{})
+					if err != nil {
+						log.Printf("[Client %d] ListTools error: %v\n", id, err)
+						mu.Lock()
+						errorCount++
+						mu.Unlock()
+					} else {
+						log.Printf("[Client %d] Found %d tools\n", id, len(tools.Tools))
+					}
+
+				case 1:
+					// Call test-tool
+					message := fmt.Sprintf("Hello from client %d, operation %d", id, opNum+1)
+					log.Printf("[Client %d] Operation %d: Calling test-tool...\n", id, opNum+1)
+					result, err := session.CallTool(ctx, &mcp.CallToolParams{
+						Name: "test-tool",
+						Arguments: map[string]interface{}{
+							"message": message,
+						},
+					})
+					if err != nil {
+						log.Printf("[Client %d] CallTool error: %v\n", id, err)
+						mu.Lock()
+						errorCount++
+						mu.Unlock()
+					} else {
+						log.Printf("[Client %d] Tool result received: %d content items\n", id, len(result.Content))
+					}
+
+				case 2:
+					// Call echo-tool
+					log.Printf("[Client %d] Operation %d: Calling echo-tool...\n", id, opNum+1)
+					_, err := session.CallTool(ctx, &mcp.CallToolParams{
+						Name: "echo-tool",
+						Arguments: map[string]interface{}{
+							"text":  fmt.Sprintf("Client-%d-Echo", id),
+							"count": rand.Intn(3) + 1,
+						},
+					})
+					if err != nil {
+						log.Printf("[Client %d] CallTool (echo) error: %v\n", id, err)
+						mu.Lock()
+						errorCount++
+						mu.Unlock()
+					} else {
+						log.Printf("[Client %d] Echo result received\n", id)
+					}
+
+				case 3:
+					// List resources
+					log.Printf("[Client %d] Operation %d: Listing resources...\n", id, opNum+1)
+					resources, err := session.ListResources(ctx, &mcp.ListResourcesParams{})
+					if err != nil {
+						log.Printf("[Client %d] ListResources error: %v\n", id, err)
+						mu.Lock()
+						errorCount++
+						mu.Unlock()
+					} else {
+						log.Printf("[Client %d] Found %d resources\n", id, len(resources.Resources))
+
+						// Randomly read a resource if available
+						if len(resources.Resources) > 0 && rand.Intn(2) == 0 {
+							resourceURI := resources.Resources[rand.Intn(len(resources.Resources))].URI
+							log.Printf("[Client %d] Reading resource: %s\n", id, resourceURI)
+							_, err := session.ReadResource(ctx, &mcp.ReadResourceParams{URI: resourceURI})
+							if err != nil {
+								log.Printf("[Client %d] ReadResource error: %v\n", id, err)
+								mu.Lock()
+								errorCount++
+								mu.Unlock()
+							}
+						}
+					}
+				}
+
+				// Random delay between operations
+				time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+			}
+
+			mu.Lock()
+			successCount++
+			mu.Unlock()
+			log.Printf("[Client %d] Completed all operations\n", id)
+		}(clientID)
 	}
-	defer session1.Close()
 
-	log.Println("Client 1 connected, listing tools...")
-	r1, err := session1.ListTools(ctx, &mcp.ListToolsParams{})
-	if err != nil {
-		log.Fatalf("Client 1 ListTools error: %v", err)
-	}
+	// Wait for all clients to finish
+	log.Println("Waiting for all clients to complete...")
+	wg.Wait()
 
-	pp.Println("@client1 tools", r1.Tools)
+	log.Println("\n=== Test Summary ===")
+	log.Printf("Total clients: %d\n", numClients)
+	log.Printf("Successful completions: %d\n", successCount)
+	log.Printf("Total errors encountered: %d\n", errorCount)
 
-	// --- Second Client Execution ---
-	log.Println("Connecting client 2...")
-	client2 := mcp.NewClient(&mcp.Implementation{Name: "test-client-2", Version: "1.0.0"}, nil)
-	session2, err := client2.Connect(ctx, transport, nil)
-	if err != nil {
-		log.Fatalf("Client 2 connect error: %v", err)
-	}
-	defer session2.Close()
+	// Show transport stats
+	transport.mu.RLock()
+	activeConnections := len(transport.connections)
+	transport.mu.RUnlock()
+	log.Printf("Active connections remaining: %d\n", activeConnections)
 
-	log.Println("Client 2 connected, listing tools...")
-	r2, err := session2.ListTools(ctx, &mcp.ListToolsParams{})
-	if err != nil {
-		log.Fatalf("Client 2 ListTools error: %v", err)
-	}
-
-	pp.Println("@client2 tools", r2.Tools)
-
-	// Test calling a tool
-	log.Println("Client 1 calling test tool...")
-	toolResult, err := session1.CallTool(ctx, &mcp.CallToolParams{
-		Name: "test-tool",
-		Arguments: map[string]interface{}{
-			"message": "Hello from client 1",
-		},
-	})
-	if err != nil {
-		log.Fatalf("Client 1 CallTool error: %v", err)
-	}
-	pp.Println("@client1 tool result", toolResult)
-
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
+	pp.Println("Transport test completed successfully!")
 }
 
 func EasyWsResourceHandler(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
