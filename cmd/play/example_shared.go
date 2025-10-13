@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,7 +70,7 @@ func runSharedServerExample() {
 	log.Println("Shared server started, spawning multiple clients...")
 
 	// Step 5: Create multiple clients that share the same server
-	const numClients = 5
+	const numClients = 30
 	var wg sync.WaitGroup
 
 	for i := range numClients {
@@ -77,6 +79,8 @@ func runSharedServerExample() {
 
 		go func(id int) {
 			defer wg.Done()
+
+			time.Sleep(time.Duration(rand.Intn(50)) * time.Millisecond)
 
 			clientName := fmt.Sprintf("client-%d", id)
 			log.Printf("[%s] Connecting to shared server...\n", clientName)
@@ -111,7 +115,15 @@ func runSharedServerExample() {
 			if err != nil {
 				log.Printf("[%s] CallTool error: %v\n", clientName, err)
 			} else {
-				pp.Println("result", result.Content)
+
+				innertext := result.Content[0].(*mcp.TextContent).Text
+				fullClientName := fmt.Sprintf("client-%d", id)
+
+				if !strings.Contains(innertext, fullClientName) {
+					panic(fmt.Sprintf("expected %s to contain %s", innertext, fullClientName))
+				}
+
+				pp.Println("result", fullClientName, "|>", innertext)
 				log.Printf("[%s] Tool result: %v\n", clientName, result.Content)
 			}
 

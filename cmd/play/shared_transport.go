@@ -8,6 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/k0kubun/pp"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -178,36 +179,6 @@ func (t *SharedServerTransport) trackRequestFromClient(msg jsonrpc.Message, clie
 	}
 }
 
-// getClientForResponse extracts response ID and finds the corresponding client
-func (t *SharedServerTransport) getClientForResponse(msg jsonrpc.Message) (string, bool) {
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return "", false
-	}
-
-	var msgMap map[string]any
-	if err := json.Unmarshal(data, &msgMap); err != nil {
-		return "", false
-	}
-
-	if id, ok := msgMap["id"]; ok && id != nil {
-		t.requestMu.RLock()
-		clientID, found := t.requestMap[id]
-		t.requestMu.RUnlock()
-
-		// Clean up the mapping after use
-		if found {
-			t.requestMu.Lock()
-			delete(t.requestMap, id)
-			t.requestMu.Unlock()
-		}
-
-		return clientID, found
-	}
-
-	return "", false
-}
-
 // Shutdown stops the shared server and closes all client connections
 func (t *SharedServerTransport) Shutdown() error {
 
@@ -250,30 +221,15 @@ func (m *multiplexedConnection) Write(ctx context.Context, msg jsonrpc.Message) 
 		return errors.New("multiplexed connection closed")
 	}
 
-	// Try to find the specific client for this response
-	if clientID, found := m.transport.getClientForResponse(msg); found {
-		m.transport.mu.RLock()
-		client, exists := m.transport.clients[clientID]
-		m.transport.mu.RUnlock()
-
-		if exists {
-			select {
-			case client.inCh <- msg:
-				return nil
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				return errors.New("client channel full")
-			}
-		}
-	}
-
 	// If we can't find a specific client, it might be a notification
 	// Broadcast to all clients (useful for server-initiated messages)
 	m.transport.mu.RLock()
 	defer m.transport.mu.RUnlock()
 
+	pp.Println("@using_broadcast", len(m.transport.clients))
+
 	for _, client := range m.transport.clients {
+		pp.Println("@broadcasting_to", client.id)
 		select {
 		case client.inCh <- msg:
 		case <-ctx.Done():
