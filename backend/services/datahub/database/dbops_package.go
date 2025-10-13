@@ -3,6 +3,8 @@ package database
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -400,12 +402,12 @@ func (d *DB) AddPackageFileStreaming(packageId int64, name string, path string, 
 
 	fileId := rid.ID().(int64)
 
-	file.Size, err = d.setPackageBlobs(fileId, stream)
+	file.Size, file.Hash, err = d.setPackageBlobs(fileId, stream)
 	if err != nil {
 		return 0, err
 	}
 
-	err = d.packageFilesTable().Find(db.Cond{"id": fileId}).Update(map[string]any{"size": file.Size})
+	err = d.packageFilesTable().Find(db.Cond{"id": fileId}).Update(map[string]any{"size": file.Size, "hash": file.Hash})
 	if err != nil {
 		return 0, err
 	}
@@ -423,12 +425,12 @@ func (d *DB) UpdatePackageFileStreaming(packageId, id int64, stream io.Reader) e
 		return err
 	}
 
-	size, err := d.setPackageBlobs(id, stream)
+	size, hash, err := d.setPackageBlobs(id, stream)
 	if err != nil {
 		return err
 	}
 
-	return d.packageFilesTable().Find(db.Cond{"id": id}).Update(map[string]any{"size": size})
+	return d.packageFilesTable().Find(db.Cond{"id": id}).Update(map[string]any{"size": size, "hash": hash})
 }
 
 func (d *DB) DeletePackageFile(packageId, id int64) error {
@@ -439,31 +441,41 @@ func (d *DB) DeletePackageFile(packageId, id int64) error {
 	return d.packageFilesTable().Find(db.Cond{"package_id": packageId, "id": id}).Delete()
 }
 
-func (d *DB) setPackageBlobs(fileId int64, stream io.Reader) (int64, error) {
+func (d *DB) setPackageBlobs(fileId int64, stream io.Reader) (int64, string, error) {
 	buf := make([]byte, d.minFileMultiPartSize)
 	partId := 0
 	totalSize := int64(0)
+	hash := sha1.New()
+
 	for {
 		n, err := stream.Read(buf)
 		if err != nil && err != io.EOF {
-			return 0, err
+			return 0, "", err
 		}
 		if n == 0 {
 			break
 		}
+
+		currBytes := buf[:n]
+		hash.Write(currBytes)
+
 		_, err = d.packageFileBlobsTable().Insert(dbmodels.PackageFileBlob{
 			FileID: fileId,
 			Size:   int64(n),
 			PartID: int64(partId),
-			Blob:   buf[:n],
+			Blob:   currBytes,
 		})
 		if err != nil {
-			return 0, err
+			return 0, "", err
 		}
 		partId++
 		totalSize += int64(n)
 	}
-	return totalSize, nil
+
+	hashSum := hash.Sum(nil)
+	hashSumStr := hex.EncodeToString(hashSum)
+
+	return totalSize, hashSumStr, nil
 }
 
 func (d *DB) cleanPackageBlobs(fileId int64) error {

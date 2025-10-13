@@ -1,8 +1,11 @@
 package database
 
 import (
+	"crypto/sha1"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
+	"hash"
 	"io"
 	"net/http"
 	"os"
@@ -72,6 +75,9 @@ func (d *DB) StreamAddSpaceFile(spaceId int64, uid int64, path string, name stri
 		}
 	}()
 
+	hash := sha1.New()
+	sizeTotal := int64(0)
+
 	if d.externalFileMode {
 		pp.Println("@stream_add_space_file/5")
 		dirPath := fmt.Sprintf("files/%d/%d", spaceId, uid)
@@ -93,13 +99,20 @@ func (d *DB) StreamAddSpaceFile(spaceId int64, uid int64, path string, name stri
 
 		f.Sync()
 
+		err = readFileHash(f, hash)
+		if err != nil {
+			pp.Println("@stream_add_space_file/6", err)
+		}
+
+		hashSum := hash.Sum(nil)
+		hashSumStr := hex.EncodeToString(hashSum)
+		pp.Println("@stream_add_space_file/7", hashSumStr)
+
 		// Update size
-		err = filetable.Find(db.Cond{"id": id}).Update(map[string]any{"size": written})
+		err = filetable.Find(db.Cond{"id": id}).Update(map[string]any{"size": written, "hash": hashSumStr})
 		if err != nil {
 			return 0, err
 		}
-
-		return id, nil
 	}
 
 	driver := d.sess.Driver().(*sql.DB)
@@ -111,18 +124,18 @@ func (d *DB) StreamAddSpaceFile(spaceId int64, uid int64, path string, name stri
 			return 0, err
 		}
 
-		sizeTotal := int64(len(data))
+		hash.Write(data)
+
+		sizeTotal = int64(len(data))
 		_, err = driver.Exec("UPDATE Files SET blob = ? , size = ? WHERE id = ?", data, sizeTotal, id)
 		if err != nil {
 			return 0, err
 		}
 
-		return id, nil
 	} else if file.StoreType == 2 {
 		pp.Println("@stream_add_space_file/7")
 		partId := 0
 		buf := make([]byte, d.minFileMultiPartSize)
-		sizeTotal := int64(0)
 
 		for {
 			n, err := stream.Read(buf)
@@ -133,21 +146,30 @@ func (d *DB) StreamAddSpaceFile(spaceId int64, uid int64, path string, name stri
 				break
 			}
 
+			currBytes := buf[:n]
+			hash.Write(currBytes)
+
 			sizeTotal += int64(n)
-			_, err = driver.Exec("INSERT INTO FilePartedBlobs (file_id, size, part_id, blob) VALUES (?, ?, ?, ?)", id, n, partId, buf[:n])
+			_, err = driver.Exec("INSERT INTO FilePartedBlobs (file_id, size, part_id, blob) VALUES (?, ?, ?, ?)", id, n, partId, currBytes)
 			if err != nil {
 				return 0, err
 			}
 			partId++
 		}
 
-		err = filetable.Find(db.Cond{"id": id}).Update(map[string]any{"size": sizeTotal})
-		if err != nil {
-			return 0, err
-		}
 	}
 
-	pp.Println("@stream_add_space_file/8")
+	hashSum := hash.Sum(nil)
+	hashSumStr := hex.EncodeToString(hashSum)
+
+	pp.Println("@stream_add_space_file/8", hashSumStr)
+
+	err = filetable.Find(db.Cond{"id": id}).Update(map[string]any{"size": sizeTotal, "hash": hashSumStr})
+	if err != nil {
+		return 0, err
+	}
+
+	pp.Println("@stream_add_space_file/9")
 	return id, nil
 }
 
@@ -346,23 +368,20 @@ func (d *DB) StreamGetSpaceFileByPath(spaceId int64, uid int64, path string, nam
 	table := d.filesTable()
 	file := &dbmodels.File{}
 
-	fullPath := filepath.Join(path, name)
+	// fullPath := filepath.Join(path, name)
+
+	// err := table.Find(db.Cond{
+	// 	"owner_space_id": spaceId,
+	// 	"path":           fullPath,
+	// }).One(file)
 
 	err := table.Find(db.Cond{
 		"owner_space_id": spaceId,
-		"path":           fullPath,
+		"path":           path,
+		"name":           name,
 	}).One(file)
-
 	if err != nil {
-		// Try alternative: path and name separately
-		err = table.Find(db.Cond{
-			"owner_space_id": spaceId,
-			"path":           path,
-			"name":           name,
-		}).One(file)
-		if err != nil {
-			return err
-		}
+		return err
 	}
 
 	return d.StreamGetSpaceFile(spaceId, uid, file.ID, w)
@@ -523,6 +542,23 @@ func (d *DB) RemoveFileShare(userId int64, id string) error {
 }
 
 // Helper methods
+
+func readFileHash(file *os.File, hash hash.Hash) error {
+	buf := make([]byte, 1024*1024)
+	for {
+		n, err := file.Read(buf)
+		if err != nil {
+			return err
+		}
+
+		if n == 0 {
+			break
+		}
+		hash.Write(buf[:n])
+	}
+
+	return nil
+}
 
 func (d *DB) fileSharesTable() db.Collection {
 	return d.Table("FileShares")
