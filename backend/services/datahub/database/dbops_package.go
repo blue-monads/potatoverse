@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"crypto/sha1"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -473,7 +473,7 @@ func (d *DB) setPackageBlobs(fileId int64, stream io.Reader) (int64, string, err
 	}
 
 	hashSum := hash.Sum(nil)
-	hashSumStr := hex.EncodeToString(hashSum)
+	hashSumStr := base64.StdEncoding.EncodeToString(hashSum)
 
 	return totalSize, hashSumStr, nil
 }

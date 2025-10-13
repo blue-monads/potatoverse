@@ -3,7 +3,7 @@ package database
 import (
 	"crypto/sha1"
 	"database/sql"
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"hash"
 	"io"
@@ -105,7 +105,7 @@ func (d *DB) StreamAddSpaceFile(spaceId int64, uid int64, path string, name stri
 		}
 
 		hashSum := hash.Sum(nil)
-		hashSumStr := hex.EncodeToString(hashSum)
+		hashSumStr := base64.StdEncoding.EncodeToString(hashSum)
 		pp.Println("@stream_add_space_file/7", hashSumStr)
 
 		// Update size
@@ -160,7 +160,7 @@ func (d *DB) StreamAddSpaceFile(spaceId int64, uid int64, path string, name stri
 	}
 
 	hashSum := hash.Sum(nil)
-	hashSumStr := hex.EncodeToString(hashSum)
+	hashSumStr := base64.StdEncoding.EncodeToString(hashSum)
 
 	pp.Println("@stream_add_space_file/8", hashSumStr)
 
