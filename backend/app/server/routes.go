@@ -28,6 +28,7 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
+	a.helpRoutes(root)
 
 	coreApi.GET("/global.js", a.getGlobalJS)
 
@@ -139,5 +140,23 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	zg.GET("/api/space/:space_key/*subpath", a.handleSpaceApi)
 	zg.GET("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
 	zg.GET("/api/plugin/:space_key/:plugin_id/*subpath", a.handlePluginApi)
+
+}
+
+func (a *Server) helpRoutes(g *gin.RouterGroup) {
+
+	/*
+		- docs
+		- docs/llm.txt
+		- api_docs
+		- api_docs/llm.txt
+		- glossary
+		- glossary/llm.txt
+		- lua_bindings
+		- lua_bindings/llm.txt
+
+
+
+	*/
 
 }
