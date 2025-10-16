@@ -11,6 +11,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
@@ -83,26 +84,17 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	sIndex := e.getIndex(spaceKey, spaceId)
 
 	if sIndex == nil {
-		ctx.JSON(404, gin.H{"error": "space not found"})
+		httpx.WriteErrString(ctx, "space not found")
 		return
 	}
 
-	pp.Println("@sIndex", sIndex)
-
-	filePath := ctx.Param("files")
-
-	name, path := buildPackageFilePath(filePath, &sIndex.routeOption)
-
-	pp.Println("@name", name)
-	pp.Println("@path", path)
-
-	if name == "" {
-		name = "index.html"
-	}
-
-	err := e.db.GetPackageFileStreamingByPath(sIndex.packageId, path, name, ctx.Writer)
-	if err != nil {
-		ctx.JSON(404, gin.H{"error": "file not found"})
+	switch sIndex.routeOption.RouterType {
+	case "simple", "":
+		e.serveSimpleRoute(ctx, sIndex)
+	case "dynamic":
+		e.serveDynamicRoute(ctx, sIndex)
+	default:
+		httpx.WriteErrString(ctx, "router type not supported")
 		return
 	}
 

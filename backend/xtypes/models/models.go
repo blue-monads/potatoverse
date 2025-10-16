@@ -35,10 +35,21 @@ type PotatoArtifact struct {
 }
 
 type PotatoRouteOptions struct {
-	ServeFolder        string `json:"serve_folder" toml:"serve_folder"`
-	ForceHtmlExtension bool   `json:"force_html_extension" toml:"force_html_extension"`
-	ForceIndexHtmlFile bool   `json:"force_index_html_file" toml:"force_index_html_file"`
-	TrimPathPrefix     string `json:"trim_path_prefix" toml:"trim_path_prefix"`
+	RouterType         string        `json:"router_type" toml:"router_type"`
+	ServeFolder        string        `json:"serve_folder" toml:"serve_folder"`
+	ForceHtmlExtension bool          `json:"force_html_extension" toml:"force_html_extension"`
+	ForceIndexHtmlFile bool          `json:"force_index_html_file" toml:"force_index_html_file"`
+	TrimPathPrefix     string        `json:"trim_path_prefix" toml:"trim_path_prefix"`
+	TemplateFolder     string        `json:"template_folder" toml:"template_folder"`
+	Routes             []PotatoRoute `json:"routes" toml:"routes"`
+}
+
+type PotatoRoute struct {
+	Path    string `json:"path" toml:"path"`
+	Method  string `json:"method" toml:"method"`
+	Type    string `json:"type" toml:"type"`
+	Handler string `json:"handler" toml:"handler"`
+	File    string `json:"file" toml:"file"`
 }
 
 type PotatoMcpOptions struct {
