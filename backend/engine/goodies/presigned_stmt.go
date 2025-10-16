@@ -16,9 +16,9 @@ type PresignedClaim struct {
 }
 
 type PresignedStmt struct {
-	Stmt    string
-	Params  map[string]any
-	Selects []string
+	Stmt      string
+	Selects   []string
+	ParamsUse map[string]string
 
 	// insert, batch_insert, update, delete, query
 	Mode            string
