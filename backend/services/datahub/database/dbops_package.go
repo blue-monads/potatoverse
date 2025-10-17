@@ -289,11 +289,19 @@ func (d *DB) GetPackageFileStreaming(packageId, id int64, w io.Writer) error {
 			pp.Println("@GetPackageFileStreaming/13", err)
 			return err
 		}
-		pp.Println("@GetPackageFileStreaming/14")
-		_, err = w.Write(blobBytes)
-		if err != nil {
-			pp.Println("@GetPackageFileStreaming/15", err)
-			return err
+		pp.Println("@GetPackageFileStreaming/14", string(blobBytes[:10]))
+
+		n := 0
+
+		for {
+			n, err = w.Write(blobBytes[n:])
+			if err != nil {
+				pp.Println("@GetPackageFileStreaming/15", err)
+				return err
+			}
+			if n == 0 {
+				break
+			}
 		}
 
 		pp.Println("@GetPackageFileStreaming/16")
