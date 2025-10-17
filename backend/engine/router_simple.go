@@ -13,8 +13,8 @@ func (e *Engine) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIndexIt
 
 	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
 
-	pp.Println("@name", name)
-	pp.Println("@path", path)
+	pp.Println("@simple_route/name", name)
+	pp.Println("@simple_route/path", path)
 
 	err := e.db.GetPackageFileStreamingByPath(indexItem.packageId, path, name, ctx.Writer)
 	if err != nil {

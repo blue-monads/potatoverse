@@ -73,25 +73,35 @@ var spaceIdPattern = regexp.MustCompile(`^s-(\d+)\.`)
 
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
+	pp.Println("@ServeSpaceFile/1")
+
 	spaceKey := ctx.Param("space_key")
 	spaceId := int64(0)
+
+	pp.Println("@ServeSpaceFile/2")
 
 	if matches := spaceIdPattern.FindStringSubmatch(ctx.Request.URL.Host); matches != nil {
 		sid, _ := strconv.ParseInt(matches[1], 10, 64)
 		spaceId = sid
 	}
 
+	pp.Println("@ServeSpaceFile/3")
+
 	sIndex := e.getIndex(spaceKey, spaceId)
 
 	if sIndex == nil {
+		pp.Println("@ServeSpaceFile/4")
 		httpx.WriteErrString(ctx, "space not found")
 		return
 	}
+
+	pp.Println("@ServeSpaceFile/5")
 
 	switch sIndex.routeOption.RouterType {
 	case "simple", "":
 		e.serveSimpleRoute(ctx, sIndex)
 	case "dynamic":
+		pp.Println("@ServeSpaceFile/6")
 		e.serveDynamicRoute(ctx, sIndex)
 	default:
 		httpx.WriteErrString(ctx, "router type not supported")

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
@@ -66,6 +68,11 @@ func (e *Engine) LoadRoutingIndex() error {
 			nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
 		}
 
+		if indexItem.routeOption.RouterType != "dynamic" && space.NamespaceKey == "example2" {
+			pp.Println("@router", indexItem.routeOption)
+			os.Exit(1)
+		}
+
 		if routeOptions.RouterType == "dynamic" {
 			indexItem.compiledTemplates = make(map[string]*template.Template)
 
@@ -74,13 +81,14 @@ func (e *Engine) LoadRoutingIndex() error {
 				return err
 			}
 
-			defer os.RemoveAll(tempFolder)
+			// defer os.RemoveAll(tempFolder)
 
 			for _, route := range routeOptions.Routes {
 				if route.Type == "template" && route.File != "" {
 
 					tmpl, err := template.ParseFiles(tempFolder + "/" + route.File)
 					if err != nil {
+						pp.Println("@err/5", err)
 						return err
 					}
 
@@ -110,57 +118,93 @@ func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
 }
 
 func (e *Engine) copyFolderToTemp(packageId int64, folder string) (string, error) {
-	tempFolder := os.TempDir() +
-		"/turnix/packages/" +
-		strconv.FormatInt(packageId, 10) +
-		"/" + folder
+
+	tempFolder := path.Join(os.TempDir(), "turnix", "packages", strconv.FormatInt(packageId, 10))
 
 	os.MkdirAll(tempFolder, 0755)
 
-	folderName := filepath.Base(folder)
-	pathName := filepath.Dir(folder)
+	folderName := ""
+	pathName := ""
+	if strings.Contains(folder, "/") {
+		folderName = filepath.Base(folder)
+		pathName = filepath.Dir(folder)
+	} else {
+		folderName = folder
+		pathName = ""
+	}
 
 	pp.Println("@folderName", folderName)
 	pp.Println("@pathName", pathName)
 
 	folderFile, err := e.db.GetPackageFileMetaByPath(packageId, pathName, folderName)
 	if err != nil {
+		pp.Println("@err/1", err)
 		return "", err
 	}
 
-	err = copyFolder(e.db, tempFolder, *folderFile)
+	err = copyFolder(e.db, tempFolder, folderFile)
 	if err != nil {
+		pp.Println("@err/2", err)
 		return "", err
 	}
 
-	return tempFolder, nil
+	return path.Join(tempFolder, folder), nil
 }
 
-func copyFolder(db datahub.Database, basePath string, folder dbmodels.PackageFile) error {
+func copyFolder(db datahub.Database, basePath string, folder *dbmodels.PackageFile) error {
 
-	files, err := db.ListPackageFilesByPath(folder.PackageID, folder.Path)
+	pp.Println("@copyFolder/1", basePath, folder.Path)
+
+	files, err := db.ListPackageFilesByPath(folder.PackageID, folder.Name)
 	if err != nil {
+		pp.Println("@err/3", err)
 		return err
 	}
 
+	pp.Println("@copyFolder/2", files)
+
 	for _, file := range files {
+		pp.Println("@file", file.Name)
 		if file.IsFolder {
 			continue
 		}
 
-		filePath := basePath + "/" + file.Path + "/" + file.Name
-		tfile, err := os.Create(filePath)
+		pp.Println("@file/2", file.Path, file.Name)
+
+		filePath := path.Join(basePath, file.Path, file.Name)
+		//basePath + "/" + file.Path + "/" + file.Name
+
+		prePath := path.Join(basePath, file.Path)
+		err = os.MkdirAll(prePath, 0755)
 		if err != nil {
+			pp.Println("@err/4", err)
 			return err
 		}
+
+		pp.Println("@prePath", prePath)
+
+		tfile, err := os.Create(filePath)
+		if err != nil {
+			pp.Println("@err/5", err)
+			pp.Println("@err/5", err.Error())
+			return err
+		}
+		pp.Println("@file/3", filePath)
+
 		defer tfile.Close()
+
+		pp.Println("@file/4", file.PackageID, file.ID)
 
 		err = db.GetPackageFileStreaming(file.PackageID, file.ID, tfile)
 		if err != nil {
 			return err
 		}
 
+		pp.Println("@file/5", err)
+
 	}
+
+	pp.Println("@copyFolder/3")
 
 	return nil
 
