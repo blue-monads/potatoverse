@@ -70,8 +70,10 @@ func New(opts Options) *Luaz {
 
 			err := L.DoString(opts.Code)
 			if err != nil {
+				pp.Println("@lua_exec_error", err)
 				return nil, err
 			}
+			pp.Println("@lua_exec_success", "code length", len(opts.Code))
 
 			return lh, nil
 		},
@@ -94,29 +96,34 @@ type HttpEvent struct {
 	Request     *gin.Context
 }
 
-func (l *Luaz) Handle(event HttpEvent) {
+func (l *Luaz) Handle(event HttpEvent) error {
 	pp.Println("@handle/1")
 
 	lh, err := l.pool.Get()
 	if err != nil {
 		pp.Println("@handle/1.1", err)
 		httpx.WriteErr(event.Request, err)
-		return
+		return err
 	}
 
 	if lh == nil {
 		pp.Println("@handle/1.2", "lh is nil")
 		httpx.WriteErr(event.Request, errors.New("Could not get lua state"))
-		return
+		return errors.New("Could not get lua state")
 	}
 
 	pp.Println("@handle/2", event.HandlerName, event.Params)
 
-	lh.Handle(event.Request, event.HandlerName, event.Params)
+	err = lh.Handle(event.Request, event.HandlerName, event.Params)
+	if err != nil {
+		return err
+	}
 
 	pp.Println("@handle/3")
 
 	l.pool.Put(lh)
+
+	return nil
 
 }
 

@@ -1,6 +1,7 @@
 package libx
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
@@ -27,13 +28,18 @@ func PanicWrapper(wrapped func()) (err error) {
 			// Get the stack trace
 			stack := debug.Stack()
 
+			stackStr := strings.Split(string(stack), "\n")
+			causeStr := fmt.Sprintf("%v", cause)
+
 			// Print the error and the stack trace
 			err = &PanicError{
-				Err:   fmt.Errorf("panic: %v", cause),
-				Stack: strings.Split(string(stack), "\n"),
+				Err:   errors.New(causeStr),
+				Stack: stackStr,
 			}
 
-			pp.Println("@stack", stack)
+			pp.Println(causeStr)
+
+			pp.Println("@stack", stackStr)
 
 		}
 	}()

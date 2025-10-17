@@ -51,7 +51,7 @@ end
 
 `
 
-const ByPassPackageCode = true
+const ByPassPackageCode = false
 
 type Runtime struct {
 	execs     map[int64]*luaz.Luaz
@@ -137,6 +137,10 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 }
 
 func (r *Runtime) ExecHttpWithErr(packageName string, packageId, spaceId int64, ctx *gin.Context) error {
+	return r.ExecHttpWithHandlerAndErr(packageName, packageId, spaceId, "on_http", ctx)
+}
+
+func (r *Runtime) ExecHttpWithHandlerAndErr(packageName string, packageId, spaceId int64, handlerName string, ctx *gin.Context) error {
 
 	e, err := r.GetExec(packageName, packageId, spaceId)
 	if err != nil {
@@ -156,8 +160,8 @@ func (r *Runtime) ExecHttpWithErr(packageName string, packageId, spaceId int64, 
 	err = libx.PanicWrapper(func() {
 		subpath := ctx.Param("subpath")
 
-		e.Handle(luaz.HttpEvent{
-			HandlerName: "on_http",
+		err := e.Handle(luaz.HttpEvent{
+			HandlerName: handlerName,
 			Params: map[string]string{
 				"space_id":   fmt.Sprintf("%d", spaceId),
 				"package_id": fmt.Sprintf("%d", packageId),
@@ -165,6 +169,10 @@ func (r *Runtime) ExecHttpWithErr(packageName string, packageId, spaceId int64, 
 			},
 			Request: ctx,
 		})
+		if err != nil {
+			pp.Println("@exec_http/2", "error handling http", err)
+			panic(err)
+		}
 
 	})
 
