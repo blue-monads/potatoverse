@@ -136,38 +136,48 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 
 }
 
-func (r *Runtime) ExecHttpWithErr(packageName string, packageId, spaceId int64, ctx *gin.Context) error {
-	return r.ExecHttpWithHandlerAndErr(packageName, packageId, spaceId, "on_http", ctx)
+type ExecuteOptions struct {
+	PackageName string
+	PackageId   int64
+	SpaceId     int64
+	HandlerName string
+	HttpContext *gin.Context
+	Params      map[string]string
 }
 
-func (r *Runtime) ExecHttpWithHandlerAndErr(packageName string, packageId, spaceId int64, handlerName string, ctx *gin.Context) error {
+func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
-	e, err := r.GetExec(packageName, packageId, spaceId)
+	e, err := r.GetExec(opts.PackageName, opts.PackageId, opts.SpaceId)
 	if err != nil {
 		pp.Println("@exec_http/1", "error getting exec", err)
-		httpx.WriteErr(ctx, err)
+		httpx.WriteErr(opts.HttpContext, err)
 		return err
 	}
 
 	if e == nil {
 		pp.Println("@exec_http/1", "exec is nil")
-		httpx.WriteErr(ctx, errors.New("exec is nil"))
+		httpx.WriteErr(opts.HttpContext, errors.New("exec is nil"))
 		return errors.New("exec is nil")
 	}
 
 	// print stack trace
 
 	err = libx.PanicWrapper(func() {
-		subpath := ctx.Param("subpath")
+		subpath := opts.HttpContext.Param("subpath")
+
+		params := opts.Params
+		if params == nil {
+			params = make(map[string]string)
+		}
+
+		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
+		params["package_id"] = fmt.Sprintf("%d", opts.PackageId)
+		params["subpath"] = subpath
 
 		err := e.Handle(luaz.HttpEvent{
-			HandlerName: handlerName,
-			Params: map[string]string{
-				"space_id":   fmt.Sprintf("%d", spaceId),
-				"package_id": fmt.Sprintf("%d", packageId),
-				"subpath":    subpath,
-			},
-			Request: ctx,
+			HandlerName: opts.HandlerName,
+			Params:      params,
+			Request:     opts.HttpContext,
 		})
 		if err != nil {
 			pp.Println("@exec_http/2", "error handling http", err)
@@ -185,7 +195,13 @@ func (r *Runtime) ExecHttpWithHandlerAndErr(packageName string, packageId, space
 }
 
 func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gin.Context) {
-	err := r.ExecHttpWithErr(packageName, packageId, spaceId, ctx)
+	err := r.ExecuteHttp(ExecuteOptions{
+		PackageName: packageName,
+		PackageId:   packageId,
+		SpaceId:     spaceId,
+		HandlerName: "on_http",
+		HttpContext: ctx,
+	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

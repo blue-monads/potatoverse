@@ -114,17 +114,22 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttpWithHandlerAndErr(spaceKey, indexItem.packageId, indexItem.spaceId, routeMatch.Handler, ctx)
-	if err != nil {
-		httpx.WriteErr(ctx, err)
-		return
-	}
+	err := e.runtime.ExecuteHttp(ExecuteOptions{
+		PackageName: spaceKey,
+		PackageId:   indexItem.packageId,
+		SpaceId:     indexItem.spaceId,
+		HandlerName: routeMatch.Handler,
+		HttpContext: ctx,
+		Params:      pathParams,
+	})
 
 	tmpl, ok := indexItem.compiledTemplates[routeMatch.File]
 	if !ok {
 		httpx.WriteErrString(ctx, "template not found")
 		return
 	}
+
+	pp.Println("@template ctx.Keys", pathParams)
 
 	err = tmpl.Execute(ctx.Writer, ctx.Keys)
 	if err != nil {
@@ -147,7 +152,15 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 
 	// Execute the handler
 	spaceKey := ctx.Param("space_key")
-	err := e.runtime.ExecHttpWithHandlerAndErr(spaceKey, indexItem.packageId, indexItem.spaceId, routeMatch.Handler, ctx)
+	err := e.runtime.ExecuteHttp(ExecuteOptions{
+		PackageName: spaceKey,
+		PackageId:   indexItem.packageId,
+		SpaceId:     indexItem.spaceId,
+		HandlerName: routeMatch.Handler,
+		HttpContext: ctx,
+		Params:      pathParams,
+	})
+
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

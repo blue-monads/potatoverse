@@ -30,32 +30,16 @@ func (l *LuaH) logger() *slog.Logger {
 	return l.parent.handle.Logger
 }
 
+type LuaContextOptions struct {
+	HttpContext *gin.Context
+	Params      map[string]string
+	HandlerName string
+}
+
 func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]string) error {
-	handler := l.L.GetGlobal(handlerName)
 	ctxt := l.L.NewTable()
-	pp.Println("@LuaH/handle/1")
 
-	if handler == lua.LNil {
-		pp.Println("@LuaH/handle/2", handlerName, params)
-		pp.Println("@LuaH/handle/3", handler)
-
-		l.logger().Error("handler not found", "handler", handlerName)
-		// Debug: check if some known functions exist
-		testHandler := l.L.GetGlobal("get_category_page")
-		if testHandler != lua.LNil {
-			l.logger().Error("get_category_page exists but handler not found", "handler", handlerName)
-		} else {
-			l.logger().Error("no functions found in lua state")
-		}
-
-		return errors.New("handler not found")
-	}
-
-	if handler == nil {
-		pp.Println("@LuaH/handle/4")
-	}
-
-	pp.Println("@LuaH/handle/5")
+	l.logger().Info("handling http", "handler", handlerName, "params", params)
 
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
 		"request": func(L *lua.LState) int {
@@ -74,14 +58,42 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 		},
 	})
 
-	pp.Println("@LuaH/handle/6")
+	l.logger().Info("ctxt")
+
+	err := callHandler(l, ctxt, handlerName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
+	handler := l.L.GetGlobal(handlerName)
+	if handler == lua.LNil {
+		pp.Println("@callHandler/1", "handler not found", handlerName)
+		return errors.New("handler not found")
+	}
+
+	if handler == nil {
+		pp.Println("@callHandler/2", "handler is nil", handlerName)
+		return errors.New("handler is nil")
+	}
+
+	pp.Println("@callHandler/3", "handler", handler.String())
 
 	l.L.Push(handler)
-	pp.Println("@LuaH/handle/7")
-	l.L.Push(ctxt)
-	pp.Println("@LuaH/handle/8")
+
+	pp.Println("@callHandler/4", "handler pushed")
+
+	l.L.Push(ctable)
+
+	pp.Println("@callHandler/5", "ctable pushed")
+
 	l.L.Call(1, 0)
-	pp.Println("@LuaH/handle/9")
+
+	pp.Println("@callHandler/6", "handler called")
 
 	return nil
 
