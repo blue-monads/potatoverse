@@ -136,19 +136,19 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 
 }
 
-func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gin.Context) {
+func (r *Runtime) ExecHttpWithErr(packageName string, packageId, spaceId int64, ctx *gin.Context) error {
 
 	e, err := r.GetExec(packageName, packageId, spaceId)
 	if err != nil {
 		pp.Println("@exec_http/1", "error getting exec", err)
 		httpx.WriteErr(ctx, err)
-		return
+		return err
 	}
 
 	if e == nil {
 		pp.Println("@exec_http/1", "exec is nil")
 		httpx.WriteErr(ctx, errors.New("exec is nil"))
-		return
+		return errors.New("exec is nil")
 	}
 
 	// print stack trace
@@ -169,8 +169,17 @@ func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gi
 	})
 
 	if err != nil {
-		pp.Println("@Runtime/error", err)
-		httpx.WriteErrString(ctx, "Runtime error")
+		return err
+	}
+
+	return nil
+
+}
+
+func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gin.Context) {
+	err := r.ExecHttpWithErr(packageName, packageId, spaceId, ctx)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
 		return
 	}
 

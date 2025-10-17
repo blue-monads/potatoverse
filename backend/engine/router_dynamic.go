@@ -11,7 +11,7 @@ import (
 )
 
 /*
-
+EXAMPLE
 {
                 "router": "dynamic",
                 "serve_folder": "public",
@@ -114,7 +114,11 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	e.runtime.ExecHttp(spaceKey, indexItem.packageId, indexItem.spaceId, ctx)
+	err := e.runtime.ExecHttpWithErr(spaceKey, indexItem.packageId, indexItem.spaceId, ctx)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
 
 	tmpl, ok := indexItem.compiledTemplates[routeMatch.File]
 	if !ok {
@@ -122,9 +126,9 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		return
 	}
 
-	err := tmpl.Execute(ctx.Writer, ctx.Keys)
+	err = tmpl.Execute(ctx.Writer, ctx.Keys)
 	if err != nil {
-		httpx.WriteErrString(ctx, "template execution error")
+		httpx.WriteErr(ctx, err)
 		return
 	}
 }
