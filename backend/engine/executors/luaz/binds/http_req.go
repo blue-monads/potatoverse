@@ -32,13 +32,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		jsonTbl := L.CheckTable(2)
 		jsonObj := TableToMap(L, jsonTbl)
 		ctx.AbortWithStatusJSON(code, jsonObj)
-		return 0
-	}
 
-	reqAddParam := func(L *lua.LState) int {
-		key := L.CheckString(1)
-		value := L.CheckString(2)
-		ctx.AddParam(key, value)
 		return 0
 	}
 
@@ -413,7 +407,6 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		"abort":               reqAbort,
 		"abortWithStatus":     reqAbortWithStatus,
 		"abortWithStatusJSON": reqAbortWithStatusJSON,
-		"addParam":            reqAddParam,
 		"clientIP":            reqClientIP,
 		"contentType":         reqContentType,
 		"cookie":              reqCookie,
