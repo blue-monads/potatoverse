@@ -48,11 +48,10 @@ import (
 
 */
 
-func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem) {
-	pp.Println("@indexItem", indexItem)
+func (e *Engine) serveDynamicRoute(ctx *gin.Context, spaceKey string, indexItem *SpaceRouteIndexItem) {
 
 	// Get the request path and method
-	requestPath := ctx.Request.URL.Path
+	requestPath := strings.TrimPrefix(ctx.Request.URL.Path, fmt.Sprintf("/zz/space/%s/", spaceKey))
 	requestMethod := ctx.Request.Method
 
 	pp.Println("@requestPath", requestPath)
@@ -167,7 +166,10 @@ func matchPath(routePattern, requestPath string) (map[string]string, bool) {
 	patternSegments := strings.Split(strings.Trim(routePattern, "/"), "/")
 	pathSegments := strings.Split(strings.Trim(requestPath, "/"), "/")
 
+	pp.Println("@matchPath/1", patternSegments, pathSegments)
+
 	if len(patternSegments) != len(pathSegments) {
+		pp.Println("@matchPath/2", len(patternSegments), len(pathSegments))
 		return nil, false
 	}
 

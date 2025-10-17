@@ -102,7 +102,7 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 		e.serveSimpleRoute(ctx, sIndex)
 	case "dynamic":
 		pp.Println("@ServeSpaceFile/6")
-		e.serveDynamicRoute(ctx, sIndex)
+		e.serveDynamicRoute(ctx, spaceKey, sIndex)
 	default:
 		httpx.WriteErrString(ctx, "router type not supported")
 		return
