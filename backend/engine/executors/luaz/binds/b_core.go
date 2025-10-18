@@ -6,6 +6,17 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+/*
+
+Goodies Bindings
+ - goodies_list
+ - goodies_action_meta
+ - goodies_execute_action
+ - goodies_actions
+
+
+*/
+
 func CoreModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 	return func(L *lua.LState) int {

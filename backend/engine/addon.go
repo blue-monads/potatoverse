@@ -1,4 +1,4 @@
-package goodies
+package engine
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ type LazyData interface {
 	AsJson(target any) error
 }
 
-type Goodies interface {
+type AddOn interface {
 	Name() string
 	Handle(ctx *gin.Context) error
 	List() ([]string, error)
@@ -22,19 +22,19 @@ type Goodies interface {
 	Execute(method string, params LazyData) (map[string]any, error)
 }
 
-type GoodiesBuilderFactory func(app xtypes.App) (GoodiesBuilder, error)
+type AddOnBuilderFactory func(app xtypes.App) (AddOnBuilder, error)
 
-type GoodiesBuilder func(spaceId int64) (Goodies, error)
+type AddOnBuilder func(spaceId int64) (AddOn, error)
 
-type GoodiesHub struct {
-	goodies map[string]Goodies
+type AddOnHub struct {
+	goodies map[string]AddOn
 	glock   sync.RWMutex
 	app     xtypes.App
 
-	builders map[string]GoodiesBuilder
+	builders map[string]AddOnBuilder
 }
 
-func (gh *GoodiesHub) Handle(spaceId int64, name string, ctx *gin.Context) error {
+func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) error {
 	gs, err := gh.get(name, spaceId)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (gh *GoodiesHub) Handle(spaceId int64, name string, ctx *gin.Context) error
 	return gs.Handle(ctx)
 }
 
-func (gh *GoodiesHub) List(spaceId int64) ([]string, error) {
+func (gh *AddOnHub) List(spaceId int64) ([]string, error) {
 	keys := make([]string, 0)
 
 	for key := range gh.builders {
@@ -53,7 +53,7 @@ func (gh *GoodiesHub) List(spaceId int64) ([]string, error) {
 	return keys, nil
 }
 
-func (gh *GoodiesHub) GetMeta(spaceId int64, gname, method string) (map[string]any, error) {
+func (gh *AddOnHub) GetMeta(spaceId int64, gname, method string) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (gh *GoodiesHub) GetMeta(spaceId int64, gname, method string) (map[string]a
 	return gs.GetMeta(method)
 }
 
-func (gh *GoodiesHub) Execute(spaceId int64, gname, method string, params LazyData) (map[string]any, error) {
+func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params LazyData) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (gh *GoodiesHub) Execute(spaceId int64, gname, method string, params LazyDa
 
 // private
 
-func (gh *GoodiesHub) get(name string, spaceId int64) (Goodies, error) {
+func (gh *AddOnHub) get(name string, spaceId int64) (AddOn, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.RLock()
