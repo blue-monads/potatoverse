@@ -376,46 +376,39 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		return 2
 	}
 
-	reqState := func(L *lua.LState) int {
+	reqStateKeys := func(l *lua.LState) int {
 		table := L.NewTable()
-		L.SetFuncs(table, map[string]lua.LGFunction{
-			"keys": func(l *lua.LState) int {
-				table := L.NewTable()
-				for key := range ctx.Keys {
-					L.SetField(table, key, lua.LString(key))
-				}
-				L.Push(table)
-				return 1
-			},
-			"get": func(l *lua.LState) int {
-				key := l.CheckString(1)
-				value := ctx.Keys[key]
-				if value == nil {
-					L.Push(lua.LNil)
-					return 1
-				}
+		for key := range ctx.Keys {
+			L.SetField(table, key, lua.LString(key))
+		}
+		L.Push(table)
+		return 1
+	}
+	reqStateGet := func(l *lua.LState) int {
+		key := l.CheckString(1)
+		value := ctx.Keys[key]
+		if value == nil {
+			L.Push(lua.LNil)
+			return 1
+		}
 
-				lvalue := luaplus.GoTypeToLuaType(l, value)
-				L.Push(lvalue)
-				return 1
-			},
-			"set": func(l *lua.LState) int {
-				key := l.CheckString(1)
-				value := l.CheckAny(2)
-				ctx.Set(key, value)
-				return 0
-			},
+		lvalue := luaplus.GoTypeToLuaType(l, value)
+		L.Push(lvalue)
+		return 1
+	}
+	reqStateSet := func(l *lua.LState) int {
+		key := l.CheckString(1)
+		value := l.CheckAny(2)
+		ctx.Set(key, value)
+		return 0
+	}
 
-			"setAll": func(l *lua.LState) int {
-				data := l.CheckTable(1)
+	reqStateSetAll := func(l *lua.LState) int {
+		data := l.CheckTable(1)
 
-				data.ForEach(func(key, value lua.LValue) {
-					gvalue := luaplus.LuaTypeToGoType(l, value)
-					ctx.Set(key.String(), gvalue)
-				})
-
-				return 0
-			},
+		data.ForEach(func(key, value lua.LValue) {
+			gvalue := luaplus.LuaTypeToGoType(l, value)
+			ctx.Set(key.String(), gvalue)
 		})
 
 		return 0
@@ -479,7 +472,10 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		"getPostFormMap":      reqGetPostFormMap,
 		"getPostFormArray":    reqGetPostFormArray,
 		"sseEvent":            reqSSEvent,
-		"state":               reqState,
+		"state_keys":          reqStateKeys,
+		"state_get":           reqStateGet,
+		"state_set":           reqStateSet,
+		"state_set_all":       reqStateSetAll,
 	})
 
 	return mod

@@ -63,6 +63,8 @@ local users_data = {
 function get_category_page(ctx)
     -- Get the category ID from path parameter
     local category_id = ctx.param("id")
+    local req = ctx.request()
+    
     
     print("get_category_page called with ID:", category_id)
     
@@ -87,14 +89,23 @@ function get_category_page(ctx)
         category.category_name = category.name
     end
 
-    
-    
+    print("state", state)
+
+    req.state_set_all({
+        category_id = category.category_id,
+        category_name = category.category_name,
+        description = category.description,
+        item_count = category.item_count,
+        created_at = category.created_at,
+        items = category.items
+    })
 end
 
 -- Template handler: Get user profile
 function get_user_profile(ctx)
     -- Get the user ID from path parameter
     local user_id = ctx.param("userId")
+    local req = ctx.request()
     
     print("get_user_profile called with userId:", user_id)
     
@@ -118,8 +129,21 @@ function get_user_profile(ctx)
         }
     end
     
-    -- Note: Template variables would be set here in a full implementation
-    -- For now, we'll just use the user data directly
+    -- Set template variables using setAll
+
+    req.state_set_all({
+        user_id = user.user_id,
+        username = user.username,
+        email = user.email,
+        bio = user.bio,
+        location = user.location,
+        website = user.website,
+        member_since = user.member_since,
+        avatar_emoji = user.avatar_emoji,
+        post_count = user.post_count,
+        follower_count = user.follower_count,
+        following_count = user.following_count
+    })
 end
 
 -- API handler: Get category
