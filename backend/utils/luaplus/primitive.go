@@ -52,6 +52,24 @@ func GoTypeToLuaType(l *lua.LState, goValue any) lua.LValue {
 		return lua.LNumber(v)
 	case float32:
 		return lua.LNumber(v)
+	case int8:
+		return lua.LNumber(v)
+	case int16:
+		return lua.LNumber(v)
+	case int32:
+		return lua.LNumber(v)
+	case uint:
+		return lua.LNumber(v)
+	case uint8:
+		return lua.LNumber(v)
+	case uint16:
+		return lua.LNumber(v)
+	case uint32:
+		return lua.LNumber(v)
+	case uint64:
+		return lua.LNumber(v)
+	case []byte:
+		return lua.LString(v)
 	case []any:
 		return arrayToTable(l, v)
 	case map[string]any:

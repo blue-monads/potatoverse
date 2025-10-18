@@ -1,11 +1,10 @@
 package binds
 
 import (
-	"reflect"
-
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -17,7 +16,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 			cond := L.CheckTable(1)
 
-			condMap := TableToMapAny(L, cond)
+			condMap := luaplus.TableToMapAny(L, cond)
 
 			datas, err := db.QuerySpaceKV(spaceId, condMap)
 			if err != nil {
@@ -28,7 +27,14 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 			result := L.NewTable()
 			for _, data := range datas {
-				result.Append(ToTableFromStruct(L, reflect.ValueOf(data)))
+				luaTable, err := luaplus.StructToTable(L, data)
+				if err != nil {
+					L.Push(lua.LNil)
+					L.Push(lua.LString(err.Error()))
+					return 2
+				}
+
+				result.Append(luaTable)
 			}
 
 			L.Push(result)
@@ -37,20 +43,22 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 		}
 		AddSpaceKV := func(L *lua.LState) int {
 
-			dataStruct := dbmodels.SpaceKV{}
+			dataStruct := &dbmodels.SpaceKV{}
 
-			if err := toStructFromTableInner(L, L.CheckTable(1), reflect.ValueOf(&dataStruct)); err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
-			}
-
-			err := db.AddSpaceKV(spaceId, &dataStruct)
+			luaTable, err := luaplus.StructToTable(L, dataStruct)
 			if err != nil {
 				L.Push(lua.LNil)
 				L.Push(lua.LString(err.Error()))
 				return 2
 			}
+
+			err = db.AddSpaceKV(spaceId, dataStruct)
+			if err != nil {
+				L.Push(lua.LNil)
+				L.Push(lua.LString(err.Error()))
+				return 2
+			}
+			L.Push(luaTable)
 			return 1
 		}
 
@@ -63,7 +71,15 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 				L.Push(lua.LString(err.Error()))
 				return 2
 			}
-			L.Push(ToTableFromStruct(L, reflect.ValueOf(data)))
+
+			luaTable, err := luaplus.StructToTable(L, data)
+			if err != nil {
+				L.Push(lua.LNil)
+				L.Push(lua.LString(err.Error()))
+				return 2
+			}
+
+			L.Push(luaTable)
 			return 1
 		}
 
@@ -80,7 +96,13 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 			result := L.NewTable()
 			for _, data := range datas {
-				result.Append(ToTableFromStruct(L, reflect.ValueOf(data)))
+				luaTable, err := luaplus.StructToTable(L, data)
+				if err != nil {
+					L.Push(lua.LNil)
+					L.Push(lua.LString(err.Error()))
+					return 2
+				}
+				result.Append(luaTable)
 			}
 
 			L.Push(result)
@@ -103,7 +125,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			group := L.CheckString(1)
 			key := L.CheckString(2)
 			data := L.CheckTable(3)
-			dataMap := TableToMap(L, data)
+			dataMap := luaplus.TableToMap(L, data)
 
 			err := db.UpdateSpaceKV(spaceId, group, key, dataMap)
 			if err != nil {
@@ -118,7 +140,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			group := L.CheckString(1)
 			key := L.CheckString(2)
 			data := L.CheckTable(3)
-			dataMap := TableToMap(L, data)
+			dataMap := luaplus.TableToMap(L, data)
 			err := db.UpsertSpaceKV(spaceId, group, key, dataMap)
 			if err != nil {
 				L.Push(lua.LNil)

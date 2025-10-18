@@ -6,6 +6,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -30,7 +31,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 	reqAbortWithStatusJSON := func(L *lua.LState) int {
 		code := L.CheckInt(1)
 		jsonTbl := L.CheckTable(2)
-		jsonObj := TableToMap(L, jsonTbl)
+		jsonObj := luaplus.TableToMap(L, jsonTbl)
 		ctx.AbortWithStatusJSON(code, jsonObj)
 
 		return 0
@@ -185,7 +186,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 	reqJSON := func(L *lua.LState) int {
 		code := L.CheckInt(1)
 		jsonTbl := L.CheckTable(2)
-		jsonObj := TableToMap(L, jsonTbl)
+		jsonObj := luaplus.TableToMap(L, jsonTbl)
 		ctx.JSON(code, jsonObj)
 		return 0
 	}
@@ -194,7 +195,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		code := L.CheckInt(1)
 		name := L.CheckString(2)
 		dataTbl := L.CheckTable(3)
-		dataObj := TableToMap(L, dataTbl)
+		dataObj := luaplus.TableToMap(L, dataTbl)
 		ctx.HTML(code, name, dataObj)
 		return 0
 	}
@@ -254,7 +255,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 			L.Push(lua.LString(err.Error()))
 			return 2
 		}
-		result := MapToTable(L, obj)
+		result := luaplus.MapToTable(L, obj)
 		L.Push(result)
 		return 1
 	}
@@ -267,7 +268,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 			L.Push(lua.LString(err.Error()))
 			return 2
 		}
-		result := MapToTable(L, obj)
+		result := luaplus.MapToTable(L, obj)
 		L.Push(result)
 		return 1
 	}
@@ -280,7 +281,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 			L.Push(lua.LString(err.Error()))
 			return 2
 		}
-		result := MapToTable(L, obj)
+		result := luaplus.MapToTable(L, obj)
 		L.Push(result)
 		return 1
 
@@ -394,7 +395,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		case lua.LTBool:
 			msgValue = bool(message.(lua.LBool))
 		case lua.LTTable:
-			msgValue = TableToMap(L, message.(*lua.LTable))
+			msgValue = luaplus.TableToMap(L, message.(*lua.LTable))
 		default:
 			msgValue = message.String()
 		}
