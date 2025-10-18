@@ -24,6 +24,8 @@ type Engine struct {
 	riLock        sync.RWMutex
 	workingFolder string
 
+	addons AddOnHub
+
 	runtime Runtime
 
 	logger *slog.Logger
@@ -32,7 +34,7 @@ type Engine struct {
 }
 
 func NewEngine(db datahub.Database, workingFolder string) *Engine {
-	return &Engine{
+	e := &Engine{
 		db:            db,
 		workingFolder: workingFolder,
 		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
@@ -41,7 +43,16 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			execsLock: sync.RWMutex{},
 		},
 		logger: slog.Default().With("module", "engine"),
+		addons: AddOnHub{
+			goodies:  make(map[string]AddOn),
+			glock:    sync.RWMutex{},
+			builders: make(map[string]AddOnBuilder),
+		},
 	}
+
+	e.addons.parent = e
+
+	return e
 }
 
 func (e *Engine) GetDebugData() map[string]any {
@@ -201,4 +212,8 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 	pp.Println("@path", path)
 
 	return name, path
+}
+
+func (e *Engine) GetAddonHub() *AddOnHub {
+	return &e.addons
 }

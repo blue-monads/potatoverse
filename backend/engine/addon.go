@@ -27,11 +27,23 @@ type AddOnBuilderFactory func(app xtypes.App) (AddOnBuilder, error)
 type AddOnBuilder func(spaceId int64) (AddOn, error)
 
 type AddOnHub struct {
+	parent  *Engine
 	goodies map[string]AddOn
 	glock   sync.RWMutex
-	app     xtypes.App
 
 	builders map[string]AddOnBuilder
+}
+
+func (gh *AddOnHub) Init() error {
+	app := gh.parent.app
+
+	app.Logger().Info("Initializing AddOnHub")
+
+	gh.builders = make(map[string]AddOnBuilder)
+
+	app.Logger().Info("AddOnHub initialized")
+
+	return nil
 }
 
 func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) error {
