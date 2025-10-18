@@ -20,18 +20,14 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			files, err := handle.ListFiles(path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			result := L.NewTable()
 			for _, file := range files {
 				fileTable, err := luaplus.StructToTable(L, file)
 				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
+					return pushError(L, err)
 				}
 
 				result.Append(fileTable)
@@ -47,9 +43,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			content, err := handle.ReadFile(path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LString(string(content)))
@@ -64,9 +58,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			err := handle.WriteFile(uid, path, content)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LTrue)
@@ -80,9 +72,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			err := handle.RemoveFile(uid, path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LTrue)
@@ -96,9 +86,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			err := handle.Mkdir(uid, path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LTrue)
@@ -112,9 +100,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			err := handle.Rmdir(uid, path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LTrue)
@@ -127,9 +113,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			exists, err := handle.Exists(path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LBool(exists))
@@ -143,9 +127,7 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			shareId, err := handle.ShareFile(uid, path)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
 			L.Push(lua.LString(shareId))

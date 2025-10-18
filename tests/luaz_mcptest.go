@@ -18,7 +18,7 @@ func HandleLuazMcpTest() {
 	defer L.Close()
 
 	// Register MCP module
-	L.PreloadModule("mcp", binds.BindMCP())
+	L.PreloadModule("mcp", binds.BindMCP)
 
 	// Test 0: Verify Module Structure
 	fmt.Println("\n=== Test 0: Verify MCP Module Structure (Lua) ===")

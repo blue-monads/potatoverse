@@ -17,141 +17,121 @@ create_client
 
 */
 
-func BindMCP() func(L *lua.LState) int {
-	return func(L *lua.LState) int {
+func BindMCP(L *lua.LState) int {
 
-		table := L.NewTable()
+	table := L.NewTable()
 
-		createHttpClient := func(L *lua.LState) int {
-			endpoint := L.CheckString(1)
-			name := L.CheckString(2)
-			transportType := L.OptString(3, "http")
+	createHttpClient := func(L *lua.LState) int {
+		endpoint := L.CheckString(1)
+		name := L.CheckString(2)
+		transportType := L.OptString(3, "http")
 
-			client := mcp.NewClient(&mcp.Implementation{Name: name, Version: "v1.0.0"}, nil)
-			var transport mcp.Transport
+		client := mcp.NewClient(&mcp.Implementation{Name: name, Version: "v1.0.0"}, nil)
+		var transport mcp.Transport
 
-			if transportType == "sse" {
-				transport = &mcp.SSEClientTransport{
-					Endpoint: endpoint,
-				}
-			} else {
-				transport = &mcp.StreamableClientTransport{
-					Endpoint: endpoint,
-				}
+		if transportType == "sse" {
+			transport = &mcp.SSEClientTransport{
+				Endpoint: endpoint,
 			}
+		} else {
+			transport = &mcp.StreamableClientTransport{
+				Endpoint: endpoint,
+			}
+		}
 
-			session, err := client.Connect(context.Background(), transport, nil)
+		session, err := client.Connect(context.Background(), transport, nil)
+		if err != nil {
+			L.Push(lua.LNil)
+			L.Push(lua.LString(err.Error()))
+			return 2
+		}
+
+		subTable := L.NewTable()
+
+		listTools := func(L *lua.LState) int {
+			params := mcp.ListToolsParams{}
+			err := luaplus.MapToStruct(L, L.CheckTable(2), &params)
 			if err != nil {
-				L.Push(lua.LNil)
-				L.Push(lua.LString(err.Error()))
-				return 2
+				return pushError(L, err)
 			}
 
-			subTable := L.NewTable()
-
-			listTools := func(L *lua.LState) int {
-				params := mcp.ListToolsParams{}
-				err := luaplus.MapToStruct(L, L.CheckTable(2), &params)
-				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
-				}
-
-				tools, err := session.ListTools(context.Background(), &params)
-				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
-				}
-				table := L.NewTable()
-				for _, tool := range tools.Tools {
-					toolTable, err := luaplus.StructToTable(L, tool)
-					if err != nil {
-						L.Push(lua.LNil)
-						L.Push(lua.LString(err.Error()))
-						return 2
-					}
-
-					table.Append(toolTable)
-				}
-				L.Push(table)
-				return 1
+			tools, err := session.ListTools(context.Background(), &params)
+			if err != nil {
+				return pushError(L, err)
 			}
-			listResources := func(L *lua.LState) int {
-				params := mcp.ListResourcesParams{}
-
-				err := luaplus.MapToStruct(L, L.CheckTable(2), &params)
+			table := L.NewTable()
+			for _, tool := range tools.Tools {
+				toolTable, err := luaplus.StructToTable(L, tool)
 				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
+					return pushError(L, err)
 				}
 
-				resources, err := session.ListResources(context.Background(), &params)
-				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
-				}
-				table := L.NewTable()
-				for _, resource := range resources.Resources {
-					resourceTable, err := luaplus.StructToTable(L, resource)
-					if err != nil {
-						L.Push(lua.LNil)
-						L.Push(lua.LString(err.Error()))
-						return 2
-					}
-					table.Append(resourceTable)
-				}
-				L.Push(table)
-				return 1
+				table.Append(toolTable)
 			}
-			callTool := func(L *lua.LState) int {
-				params := mcp.CallToolParams{}
+			L.Push(table)
+			return 1
+		}
+		listResources := func(L *lua.LState) int {
+			params := mcp.ListResourcesParams{}
 
-				err := luaplus.MapToStruct(L, L.CheckTable(1), &params)
-				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
-				}
-
-				result, err := session.CallTool(context.Background(), &params)
-				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
-				}
-				resultTable, err := luaplus.StructToTable(L, result)
-				if err != nil {
-					L.Push(lua.LNil)
-					L.Push(lua.LString(err.Error()))
-					return 2
-				}
-				L.Push(resultTable)
-				return 1
+			err := luaplus.MapToStruct(L, L.CheckTable(2), &params)
+			if err != nil {
+				return pushError(L, err)
 			}
 
-			L.SetFuncs(subTable, map[string]lua.LGFunction{
-				"list_tools":     listTools,
-				"list_resources": listResources,
-				"call_tool":      callTool,
-			})
+			resources, err := session.ListResources(context.Background(), &params)
+			if err != nil {
+				return pushError(L, err)
+			}
+			table := L.NewTable()
+			for _, resource := range resources.Resources {
+				resourceTable, err := luaplus.StructToTable(L, resource)
+				if err != nil {
+					return pushError(L, err)
+				}
+				table.Append(resourceTable)
+			}
+			L.Push(table)
+			return 1
+		}
+		callTool := func(L *lua.LState) int {
+			params := mcp.CallToolParams{}
 
-			L.Push(subTable)
+			err := luaplus.MapToStruct(L, L.CheckTable(1), &params)
+			if err != nil {
+				return pushError(L, err)
+			}
 
+			result, err := session.CallTool(context.Background(), &params)
+			if err != nil {
+				return pushError(L, err)
+			}
+			resultTable, err := luaplus.StructToTable(L, result)
+			if err != nil {
+				return pushError(L, err)
+			}
+			L.Push(resultTable)
 			return 1
 		}
 
-		L.SetFuncs(table, map[string]lua.LGFunction{
-			"create_http_client": createHttpClient,
+		L.SetFuncs(subTable, map[string]lua.LGFunction{
+			"list_tools":     listTools,
+			"list_resources": listResources,
+			"call_tool":      callTool,
 		})
 
-		L.Push(table)
+		L.Push(subTable)
 
 		return 1
 	}
+
+	L.SetFuncs(table, map[string]lua.LGFunction{
+		"create_http_client": createHttpClient,
+	})
+
+	L.Push(table)
+
+	return 1
 
 }
 

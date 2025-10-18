@@ -20,19 +20,21 @@ type EHandle struct {
 	Database    datahub.Database
 }
 
-func (c *EHandle) GetSpaceFilePresigned(uid int64, path string, fileName string, expiry int64) (string, error) {
-	// Get signer from app
+type PresignedOptions struct {
+	Uid      int64  `json:"uid,omitempty"`
+	Path     string `json:"path,omitempty"`
+	FileName string `json:"file_name,omitempty"`
+	Expiry   int64  `json:"expiry,omitempty"`
+}
+
+func (c *EHandle) GetSpaceFilePresigned(opts PresignedOptions) (string, error) {
 	signerInstance := c.App.Signer()
-	if signerInstance == nil {
-		return "", fmt.Errorf("signer not available")
+
+	if opts.Expiry == 0 {
+		opts.Expiry = 3600
 	}
 
-	// Default expiry to 1 hour if not specified
-	if expiry == 0 {
-		expiry = 3600
-	}
-
-	backend, cleanPath := backend(path)
+	backend, cleanPath := backend(opts.Path)
 	spaceId := c.RootSpaceId
 	if backend == "private" {
 		spaceId = c.SpaceId
@@ -42,16 +44,14 @@ func (c *EHandle) GetSpaceFilePresigned(uid int64, path string, fileName string,
 		cleanPath = ""
 	}
 
-	// Create presigned claim
 	claim := &signer.SpaceFilePresignedClaim{
 		SpaceId:  spaceId,
-		UserId:   uid,
+		UserId:   opts.Uid,
 		PathName: cleanPath,
-		FileName: fileName,
-		Expiry:   expiry,
+		FileName: opts.FileName,
+		Expiry:   opts.Expiry,
 	}
 
-	// Sign and return the token
 	token, err := signerInstance.SignSpaceFilePresigned(claim)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign presigned token: %w", err)

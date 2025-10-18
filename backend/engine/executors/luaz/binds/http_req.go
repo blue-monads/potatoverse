@@ -256,9 +256,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		var obj map[string]any
 		err := ctx.BindJSON(&obj)
 		if err != nil {
-			L.Push(lua.LNil)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			return pushError(L, err)
 		}
 		result := luaplus.MapToTable(L, obj)
 		L.Push(result)
@@ -269,9 +267,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		var obj map[string]any
 		err := ctx.BindHeader(&obj)
 		if err != nil {
-			L.Push(lua.LNil)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			return pushError(L, err)
 		}
 		result := luaplus.MapToTable(L, obj)
 		L.Push(result)
@@ -282,9 +278,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		var obj map[string]any
 		err := ctx.BindQuery(&obj)
 		if err != nil {
-			L.Push(lua.LNil)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			return pushError(L, err)
 		}
 		result := luaplus.MapToTable(L, obj)
 		L.Push(result)
@@ -295,9 +289,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 	reqGetRawData := func(L *lua.LState) int {
 		data, err := ctx.GetRawData()
 		if err != nil {
-			L.Push(lua.LNil)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			return pushError(L, err)
 		}
 		L.Push(lua.LString(string(data)))
 		return 1
@@ -307,9 +299,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		name := L.CheckString(1)
 		file, err := ctx.FormFile(name)
 		if err != nil {
-			L.Push(lua.LNil)
-			L.Push(lua.LString(err.Error()))
-			return 2
+			return pushError(L, err)
 		}
 		fileTable := L.NewTable()
 		L.SetField(fileTable, "filename", lua.LString(file.Filename))
