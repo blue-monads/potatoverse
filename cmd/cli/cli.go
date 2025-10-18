@@ -16,6 +16,8 @@ type CLI struct {
 	Verbose    bool          `name:"verbose" short:"v" help:"Enable verbose output."`
 }
 
+// server
+
 type ServerCmd struct {
 	Init  ServerInitCmd  `cmd:"" help:"Initialize the server with default options."`
 	Start ServerStartCmd `cmd:"" help:"Start the server."`
@@ -39,6 +41,8 @@ type ServerStartCmd struct {
 	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
+// package
+
 type PackageCmd struct {
 	Build PackageBuildCmd `cmd:"" help:"Build the package."`
 }
@@ -47,6 +51,8 @@ type PackageBuildCmd struct {
 	PotatoTomlFile string `name:"potato-toml-file" help:"Path to package directory." type:"path" default:"./potato.toml"`
 	OutputZipFile  string `name:"output-zip-file" help:"Output path for built package." type:"path"`
 }
+
+// operations
 
 type OperationsCmd struct {
 	Backup  OperationsBackupCmd  `cmd:"" help:"Backup the database and files."`
@@ -72,9 +78,21 @@ func (c *OperationsRestoreCmd) Run(ctx *kong.Context) error {
 
 }
 
+// singleton
+
+type SingletonCmd struct {
+	Start SingletonStartCmd `cmd:"" help:"Start the singleton."`
+}
+
+type SingletonStartCmd struct {
+	Port           int    `name:"port" short:"p" help:"Server port." default:"7777"`
+	PackageOutPath string `name:"package-out-path" short:"pop" help:"Package output path." default:"./.single"`
+}
+
+// dev
+
 type DevCmd struct {
-	RunStateless DevRunStatelessCmd `cmd:"" help:"Run a server in sqlite :memory: with default options for quick testing."`
-	Push         DevPushCmd         `cmd:"" help:"Push development changes."`
+	Push DevPushCmd `cmd:"" help:"Push development changes."`
 }
 
 type DevRunStatelessCmd struct {
@@ -94,6 +112,8 @@ func (c *DevPushCmd) Run(ctx *kong.Context) error {
 	panic("Dev Push - Not implemented yet")
 
 }
+
+// extra
 
 type ExtraCmd struct {
 	CombinedArgs []string `arg:"" passthrough:"partial" help:"Extra command and its arguments."`
