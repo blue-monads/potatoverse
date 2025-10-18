@@ -2,7 +2,6 @@ package binds
 
 import (
 	"errors"
-	"reflect"
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -84,8 +83,14 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 			L.Push(lua.LString(err.Error()))
 			return 2
 		}
+		claimTable, err := luaplus.StructToTable(L, claim)
+		if err != nil {
+			L.Push(lua.LNil)
+			L.Push(lua.LString(err.Error()))
+			return 2
+		}
 
-		L.Push(ToTableFromStruct(L, reflect.ValueOf(claim)))
+		L.Push(claimTable)
 
 		spaceClaim = claim
 

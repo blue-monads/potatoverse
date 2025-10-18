@@ -2,8 +2,8 @@ package binds
 
 import (
 	"context"
-	"reflect"
 
+	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -51,8 +51,8 @@ func BindMCP() func(L *lua.LState) int {
 
 			listTools := func(L *lua.LState) int {
 				params := mcp.ListToolsParams{}
-
-				if err := toStructFromTableInner(L, L.CheckTable(2), reflect.ValueOf(&params)); err != nil {
+				err := luaplus.MapToStruct(L, L.CheckTable(2), &params)
+				if err != nil {
 					L.Push(lua.LNil)
 					L.Push(lua.LString(err.Error()))
 					return 2
@@ -66,7 +66,14 @@ func BindMCP() func(L *lua.LState) int {
 				}
 				table := L.NewTable()
 				for _, tool := range tools.Tools {
-					table.Append(ToTableFromStruct(L, reflect.ValueOf(tool)))
+					toolTable, err := luaplus.StructToTable(L, tool)
+					if err != nil {
+						L.Push(lua.LNil)
+						L.Push(lua.LString(err.Error()))
+						return 2
+					}
+
+					table.Append(toolTable)
 				}
 				L.Push(table)
 				return 1
@@ -74,7 +81,8 @@ func BindMCP() func(L *lua.LState) int {
 			listResources := func(L *lua.LState) int {
 				params := mcp.ListResourcesParams{}
 
-				if err := toStructFromTableInner(L, L.CheckTable(2), reflect.ValueOf(&params)); err != nil {
+				err := luaplus.MapToStruct(L, L.CheckTable(2), &params)
+				if err != nil {
 					L.Push(lua.LNil)
 					L.Push(lua.LString(err.Error()))
 					return 2
@@ -88,7 +96,13 @@ func BindMCP() func(L *lua.LState) int {
 				}
 				table := L.NewTable()
 				for _, resource := range resources.Resources {
-					table.Append(ToTableFromStruct(L, reflect.ValueOf(resource)))
+					resourceTable, err := luaplus.StructToTable(L, resource)
+					if err != nil {
+						L.Push(lua.LNil)
+						L.Push(lua.LString(err.Error()))
+						return 2
+					}
+					table.Append(resourceTable)
 				}
 				L.Push(table)
 				return 1
@@ -96,7 +110,8 @@ func BindMCP() func(L *lua.LState) int {
 			callTool := func(L *lua.LState) int {
 				params := mcp.CallToolParams{}
 
-				if err := toStructFromTableInner(L, L.CheckTable(1), reflect.ValueOf(&params)); err != nil {
+				err := luaplus.MapToStruct(L, L.CheckTable(1), &params)
+				if err != nil {
 					L.Push(lua.LNil)
 					L.Push(lua.LString(err.Error()))
 					return 2
@@ -108,7 +123,13 @@ func BindMCP() func(L *lua.LState) int {
 					L.Push(lua.LString(err.Error()))
 					return 2
 				}
-				L.Push(ToTableFromStruct(L, reflect.ValueOf(result)))
+				resultTable, err := luaplus.StructToTable(L, result)
+				if err != nil {
+					L.Push(lua.LNil)
+					L.Push(lua.LString(err.Error()))
+					return 2
+				}
+				L.Push(resultTable)
 				return 1
 			}
 

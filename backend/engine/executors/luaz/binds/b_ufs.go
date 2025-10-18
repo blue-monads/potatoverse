@@ -2,9 +2,9 @@ package binds
 
 import (
 	"path/filepath"
-	"reflect"
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
+	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -27,7 +27,14 @@ func UfsModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 			result := L.NewTable()
 			for _, file := range files {
-				result.Append(ToTableFromStruct(L, reflect.ValueOf(file)))
+				fileTable, err := luaplus.StructToTable(L, file)
+				if err != nil {
+					L.Push(lua.LNil)
+					L.Push(lua.LString(err.Error()))
+					return 2
+				}
+
+				result.Append(fileTable)
 			}
 
 			L.Push(result)
