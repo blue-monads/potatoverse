@@ -135,6 +135,8 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	zg.Any("/space/:space_key/*subpath", spaceFile)
 	zg.Any("/plugin/:space_key/:plugin_id/*subpath", pluginFile)
 	zg.Any("/addons/:space_key/:addon_name/*subpath", a.handleAddons)
+	zg.Any("/addons/:space_key/:addon_name/*subpath", a.handleAddons)
+	zg.Any("/addon-root/:addon_name/*subpath", a.handleAddonsRoot)
 
 	zg.Any("/api/space/:space_key", a.handleSpaceApi)
 	zg.Any("/api/space/:space_key/*subpath", a.handleSpaceApi)

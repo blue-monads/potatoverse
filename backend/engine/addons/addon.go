@@ -20,4 +20,7 @@ type AddOn interface {
 
 type BuilderFactory func(app xtypes.App) (Builder, error)
 
-type Builder func(spaceId int64) (AddOn, error)
+type Builder interface {
+	Build(spaceId int64) (AddOn, error)
+	Serve(ctx *gin.Context)
+}

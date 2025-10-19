@@ -132,6 +132,11 @@ func (e *Engine) ServeAddon(ctx *gin.Context) {
 
 }
 
+func (e *Engine) ServeAddonRoot(ctx *gin.Context) {
+	addonName := ctx.Param("addon_name")
+	e.addons.HandleRoot(addonName, ctx)
+}
+
 func (e *Engine) SpaceApi(ctx *gin.Context) {
 
 	spaceKey := ctx.Param("space_key")

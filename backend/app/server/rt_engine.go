@@ -251,3 +251,7 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 func (a *Server) handleAddons(ctx *gin.Context) {
 	a.engine.ServeAddon(ctx)
 }
+
+func (a *Server) handleAddonsRoot(ctx *gin.Context) {
+	a.engine.ServeAddonRoot(ctx)
+}

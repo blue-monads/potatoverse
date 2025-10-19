@@ -55,6 +55,16 @@ func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) {
 	gs.Handle(ctx)
 }
 
+func (gh *AddOnHub) HandleRoot(name string, ctx *gin.Context) {
+	builder, ok := gh.builders[name]
+	if !ok {
+		httpx.WriteErr(ctx, errors.New("addon builder not found"))
+		return
+	}
+
+	builder.Serve(ctx)
+}
+
 func (gh *AddOnHub) List(spaceId int64) ([]string, error) {
 	keys := make([]string, 0)
 
@@ -98,7 +108,7 @@ func (gh *AddOnHub) get(name string, spaceId int64) (addons.AddOn, error) {
 			return nil, errors.New("goodies builder not found")
 		}
 
-		instance, err := gbFactory(spaceId)
+		instance, err := gbFactory.Build(spaceId)
 		if err != nil {
 			return nil, err
 		}
