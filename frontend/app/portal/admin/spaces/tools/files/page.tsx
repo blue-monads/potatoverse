@@ -435,13 +435,13 @@ print(response.json())`}
                                                     <div className="relative">
                                                         <input
                                                             type="text"
-                                                            value={`${window.location.origin}/zz/pages/file-presigned?presigned-key=${presignedData.presigned_token}`}
+                                                            value={`${window.location.origin}/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`}
                                                             readOnly
                                                             className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-xs"
                                                         />
                                                         <button
                                                             onClick={() => {
-                                                                navigator.clipboard.writeText(`${window.location.origin}/zz/pages/file-presigned?presigned-key=${presignedData.presigned_token}`);
+                                                                navigator.clipboard.writeText(`${window.location.origin}/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`);
                                                             }}
                                                             className="absolute right-2 top-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
                                                         >
@@ -449,7 +449,7 @@ print(response.json())`}
                                                         </button>
                                                     </div>
                                                     <a
-                                                        href={`/zz/pages/file-presigned?presigned-key=${presignedData.presigned_token}`}
+                                                        href={`/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="inline-block text-xs text-purple-600 hover:text-purple-800"
