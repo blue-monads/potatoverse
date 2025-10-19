@@ -150,6 +150,19 @@ CREATE TABLE IF NOT EXISTS SpaceUsers (
   unique(space_id, user_id)
 );
 
+
+CREATE TABLE IF NOT EXISTS SpaceResources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL DEFAULT '',
+  space_id INTEGER NOT NULL,
+  resource_type TEXT NOT NULL DEFAULT '', -- 
+  resource_target TEXT NOT NULL DEFAULT '',
+  attrs JSON NOT NULL DEFAULT '{}',
+  unique(space_id, name)
+
+);
+
+
 -- files
 
 CREATE TABLE IF NOT EXISTS Files (
@@ -191,6 +204,9 @@ CREATE TABLE IF NOT EXISTS FileShares (
 );
 
 -- packages
+
+
+
 
 
 CREATE TABLE IF NOT EXISTS Packages (
@@ -240,3 +256,5 @@ CREATE TABLE IF NOT EXISTS PackageFileBlobs (
   part_id INTEGER NOT NULL,
   blob BLOB NOT NULL
 );
+
+--  events
