@@ -8,7 +8,8 @@ type AppOptions struct {
 	Debug        bool          `json:"debug_mode,omitempty" toml:"debug_mode,omitempty"`
 	WorkingDir   string        `json:"working_dir,omitempty" toml:"working_dir,omitempty"`
 	SocketFile   string        `json:"socket_file,omitempty" toml:"socket_file,omitempty"`
-	Mailer       MailerOptions `json:"mailer,omitempty" toml:"mailer,omitempty"`
+	Mailer       MailerOptions `json:"mailer" toml:"mailer"`
+	Repos        []RepoOptions `json:"repos" toml:"repos"`
 }
 
 type MailerOptions struct {
@@ -18,4 +19,11 @@ type MailerOptions struct {
 	Username string            `json:"username,omitempty" toml:"username,omitempty"`
 	Password string            `json:"password,omitempty" toml:"password,omitempty"`
 	Meta     map[string]string `json:"meta,omitempty" toml:"meta,omitempty"`
+}
+
+type RepoOptions struct {
+	URL  string `json:"url,omitempty" toml:"url,omitempty"`
+	Type string `json:"type,omitempty" toml:"type,omitempty"` // http, embeded
+	Slug string `json:"slug,omitempty" toml:"slug,omitempty"`
+	Name string `json:"name,omitempty" toml:"name,omitempty"`
 }
