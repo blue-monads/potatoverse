@@ -6,6 +6,8 @@ type PresignedStmtHub struct {
 
 /*
 
+db presigned operations  (DPO Keys)
+
 insert into Events (name, description, tenant_id, created_at) values (?, ?, ?, {{tenant_id}})
 
 */
