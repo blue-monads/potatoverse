@@ -16,8 +16,8 @@
         "server_file": "server.lua",
         "route_options": {
             "serve_folder": "public",
-            "force_html_extension": false,
-            "force_index_html_file": false
+            "force_html_extension": true,
+            "force_index_html_file": true
         }
     }]
 }
