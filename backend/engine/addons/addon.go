@@ -12,7 +12,7 @@ type LazyData interface {
 
 type AddOn interface {
 	Name() string
-	Handle(ctx *gin.Context) error
+	Handle(ctx *gin.Context)
 	List() ([]string, error)
 	GetMeta(name string) (map[string]any, error)
 	Execute(method string, params LazyData) (map[string]any, error)

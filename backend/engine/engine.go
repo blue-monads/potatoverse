@@ -79,23 +79,12 @@ func (e *Engine) Start(app xtypes.App) error {
 	return e.LoadRoutingIndex()
 }
 
-// s-12.example.com
-
-var spaceIdPattern = regexp.MustCompile(`^s-(\d+)\.`)
-
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
 	pp.Println("@ServeSpaceFile/1")
 
 	spaceKey := ctx.Param("space_key")
-	spaceId := int64(0)
-
-	pp.Println("@ServeSpaceFile/2")
-
-	if matches := spaceIdPattern.FindStringSubmatch(ctx.Request.URL.Host); matches != nil {
-		sid, _ := strconv.ParseInt(matches[1], 10, 64)
-		spaceId = sid
-	}
+	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
 
 	pp.Println("@ServeSpaceFile/3")
 
@@ -114,7 +103,7 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 		e.serveSimpleRoute(ctx, sIndex)
 	case "dynamic":
 		pp.Println("@ServeSpaceFile/6")
-		e.serveDynamicRoute(ctx, spaceKey, sIndex)
+		e.serveDynamicRoute(ctx, sIndex)
 	default:
 		httpx.WriteErrString(ctx, "router type not supported")
 		return
@@ -123,6 +112,23 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 }
 
 func (e *Engine) ServePluginFile(ctx *gin.Context) {
+
+}
+
+func (e *Engine) ServeAddon(ctx *gin.Context) {
+	spaceKey := ctx.Param("space_key")
+	addonName := ctx.Param("addon_name")
+
+	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
+
+	index := e.getIndex(spaceKey, spaceId)
+
+	if index == nil {
+		httpx.WriteErr(ctx, errors.New("space not found"))
+		return
+	}
+
+	e.addons.Handle(spaceId, addonName, ctx)
 
 }
 
@@ -185,6 +191,19 @@ func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 		PackageInfo:   pkg.Info,
 	}, nil
 
+}
+
+// private
+
+// s-12.example.com
+var spaceIdPattern = regexp.MustCompile(`^s-(\d+)\.`)
+
+func extractDomainSpaceId(domain string) int64 {
+	if matches := spaceIdPattern.FindStringSubmatch(domain); matches != nil {
+		sid, _ := strconv.ParseInt(matches[1], 10, 64)
+		return sid
+	}
+	return 0
 }
 
 func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {

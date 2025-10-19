@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/engine/addons"
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,13 +30,14 @@ func (gh *AddOnHub) Init() error {
 	return nil
 }
 
-func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) error {
+func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) {
 	gs, err := gh.get(name, spaceId)
 	if err != nil {
-		return err
+		httpx.WriteErr(ctx, err)
+		return
 	}
 
-	return gs.Handle(ctx)
+	gs.Handle(ctx)
 }
 
 func (gh *AddOnHub) List(spaceId int64) ([]string, error) {

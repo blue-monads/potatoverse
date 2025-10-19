@@ -9,7 +9,7 @@ func (e *Engine) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIndexIt
 
 	pp.Println("@indexItem", indexItem)
 
-	filePath := ctx.Param("files")
+	filePath := ctx.Param("subpath")
 
 	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
 

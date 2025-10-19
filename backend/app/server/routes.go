@@ -132,14 +132,16 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
 
-	zg.GET("/space/:space_key/*files", spaceFile)
+	zg.Any("/space/:space_key/*subpath", spaceFile)
+	zg.Any("/plugin/:space_key/:plugin_id/*subpath", pluginFile)
+	zg.Any("/addons/:space_key/:addon_name/*subpath", a.handleAddons)
 
-	zg.GET("/plugin/:space_key/:plugin_id/*files", pluginFile)
-
-	zg.GET("/api/space/:space_key", a.handleSpaceApi)
-	zg.GET("/api/space/:space_key/*subpath", a.handleSpaceApi)
-	zg.GET("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
-	zg.GET("/api/plugin/:space_key/:plugin_id/*subpath", a.handlePluginApi)
+	zg.Any("/api/space/:space_key", a.handleSpaceApi)
+	zg.Any("/api/space/:space_key/*subpath", a.handleSpaceApi)
+	zg.Any("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
+	zg.Any("/api/plugin/:space_key/:plugin_id/*subpath", a.handlePluginApi)
+	zg.Any("/api/addons/:space_key/:addon_name", a.handleAddons)
+	zg.Any("/api/addons/:space_key/:addon_name/*subpath", a.handleAddons)
 
 }
 

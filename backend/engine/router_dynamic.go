@@ -48,10 +48,10 @@ EXAMPLE
 
 */
 
-func (e *Engine) serveDynamicRoute(ctx *gin.Context, spaceKey string, indexItem *SpaceRouteIndexItem) {
+func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem) {
 
 	// Get the request path and method
-	requestPath := strings.TrimPrefix(ctx.Request.URL.Path, fmt.Sprintf("/zz/space/%s/", spaceKey))
+	requestPath := ctx.Param("subpath")
 	requestMethod := ctx.Request.Method
 
 	pp.Println("@requestPath", requestPath)

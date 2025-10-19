@@ -247,3 +247,7 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 		"message":    "package upgraded successfully",
 	}, nil)
 }
+
+func (a *Server) handleAddons(ctx *gin.Context) {
+	a.engine.ServeAddon(ctx)
+}
