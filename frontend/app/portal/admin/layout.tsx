@@ -60,7 +60,7 @@ const Sidebar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-14 h-full border-r bg-white space-y-8">
+      <nav className="fixed top-0 left-0 w-14 h-full border-r border-gray-200 bg-white space-y-8">
         <div className="flex flex-col h-full">
           <div className="h-16 flex items-center justify-center mx-auto">
             <a href="/zz/pages/portal/admin" className="flex-none">
