@@ -68,9 +68,12 @@ func (e *Engine) LoadRoutingIndex() error {
 			nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
 		}
 
-		if indexItem.routeOption.RouterType != "dynamic" && space.NamespaceKey == "example2" {
-			pp.Println("@router", indexItem.routeOption)
-			os.Exit(1)
+		if indexItem.routeOption.RouterType == "" {
+			indexItem.routeOption.RouterType = "simple"
+			indexItem.routeOption.ForceHtmlExtension = true
+			indexItem.routeOption.ForceIndexHtmlFile = true
+			indexItem.routeOption.ServeFolder = "public"
+
 		}
 
 		if routeOptions.RouterType == "dynamic" {
