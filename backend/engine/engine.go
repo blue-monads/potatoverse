@@ -224,12 +224,12 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 		path = strings.TrimPrefix(path, ropt.TrimPathPrefix)
 	}
 
-	if ropt.ForceHtmlExtension && !strings.Contains(name, ".") {
-		name = name + ".html"
-	}
-
 	if ropt.ForceIndexHtmlFile && name == "" {
 		name = "index.html"
+	}
+
+	if ropt.ForceHtmlExtension && !strings.Contains(name, ".") {
+		name = name + ".html"
 	}
 
 	pp.Println("@ropt", ropt)
