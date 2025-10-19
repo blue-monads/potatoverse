@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/engine/addons"
+	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +24,21 @@ func (gh *AddOnHub) Init() error {
 
 	app.Logger().Info("Initializing AddOnHub")
 
+	builderFactories, err := registry.GetAddOnBuilderFactories()
+	if err != nil {
+		return err
+	}
+
 	gh.builders = make(map[string]addons.Builder)
+	for name, factory := range builderFactories {
+		builder, err := factory(app)
+		if err != nil {
+			return err
+		}
+
+		gh.builders[name] = builder
+
+	}
 
 	app.Logger().Info("AddOnHub initialized")
 
