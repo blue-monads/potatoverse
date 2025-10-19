@@ -5,6 +5,32 @@ import React, { useEffect, useRef, useState } from 'react';
 
 // /portal/admin/exec?nskey=test&space_id=1
 
+const buildIframeSrc = (nskey: string, space_id: string) => {
+    const attrs = (window as any).__potato_attrs__ || {};
+    let host = attrs.site_host || '';
+    let src = '';
+    if (host) {
+        const origin = window.location.origin;
+        const isSecure = origin.startsWith("https//");
+        const hasPort = origin.includes(":");
+        const port = hasPort ? origin.split(":").at(-1) : "";
+        if (host === "*") {
+            host = `*.${window.location.host.split(":")[0]}`;
+        }
+
+        if (host.includes('*')) {
+            src = `${isSecure ? "https://" : "http://"}${host.replace('*', "s-" + space_id) }${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
+        } else {
+            src = `${isSecure ? "https://" : "http://"}${host}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
+        }
+    } else {
+        src = `/zz/space/${nskey}`;
+    }
+
+    return src;
+}
+
+
 export default function Page() {
     const searchParams = useSearchParams();
     const nskey = searchParams.get('nskey');
@@ -23,25 +49,7 @@ export default function Page() {
             setIsLoading(false);
         }, 300);
 
-        const attrs = (window as any).__potato_attrs__ || {};
-        let host = attrs.site_host || '';
-        if (host) {
-            const origin = window.location.origin;
-            const isSecure = origin.startsWith("https//");
-            const hasPort = origin.includes(":");
-            const port = hasPort ? origin.split(":").at(-1) : "";
-            if (host === "*") {
-                host = `*.${window.location.host.split(":")[0]}`;
-            }
-
-            if (host.includes('*')) {
-                setIframeSrc(`${isSecure ? "https://" : "http://"}${host.replace('*', "s-" + space_id) }${hasPort ? ":" + port : ""}/zz/space/${nskey}`);
-            } else {
-                setIframeSrc(`${isSecure ? "https://" : "http://"}${host}${hasPort ? ":" + port : ""}/zz/space/${nskey}`);
-            }
-        } else {
-            setIframeSrc(`/zz/space/${nskey}`);
-        }
+        setIframeSrc(buildIframeSrc(nskey, space_id));
 
 
         return () => clearTimeout(timer);
@@ -52,18 +60,25 @@ export default function Page() {
     return (
         <div className='p-1'>
             <div className='p-1 rounded-md w-full min-h-[99vh] border border-primary-100 flex flex-col'>
-                {isLoading ? (
+
+               {isLoading && (
                     <div className='flex items-center justify-center h-full'>
                         <Loader2 className='w-12 h-12 animate-spin my-20' />
                     </div>
-                ) : (
+                )} 
+
+                {iframeRef && (<>
                     <iframe
+
                         ref={iframeRef}
                         src={iframeSrc}
                         // src={`/zz/test_page.html`}
-                        className='w-full h-full flex-grow'
-                    ></iframe>
-                )}
+                        className={isLoading ? 'h-[1px] w-[1px]' : 'w-full h-full flex-grow'}
+                    ></iframe>                
+                </>)}
+
+
+
             </div>
         </div>
     );
