@@ -5,33 +5,16 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/engine/addons"
 	"github.com/gin-gonic/gin"
 )
 
-type LazyData interface {
-	AsMap() (map[string]any, error)
-	AsJson(target any) error
-}
-
-type AddOn interface {
-	Name() string
-	Handle(ctx *gin.Context) error
-	List() ([]string, error)
-	GetMeta(name string) (map[string]any, error)
-	Execute(method string, params LazyData) (map[string]any, error)
-}
-
-type AddOnBuilderFactory func(app xtypes.App) (AddOnBuilder, error)
-
-type AddOnBuilder func(spaceId int64) (AddOn, error)
-
 type AddOnHub struct {
 	parent  *Engine
-	goodies map[string]AddOn
+	goodies map[string]addons.AddOn
 	glock   sync.RWMutex
 
-	builders map[string]AddOnBuilder
+	builders map[string]addons.Builder
 }
 
 func (gh *AddOnHub) Init() error {
@@ -39,7 +22,7 @@ func (gh *AddOnHub) Init() error {
 
 	app.Logger().Info("Initializing AddOnHub")
 
-	gh.builders = make(map[string]AddOnBuilder)
+	gh.builders = make(map[string]addons.Builder)
 
 	app.Logger().Info("AddOnHub initialized")
 
@@ -74,7 +57,7 @@ func (gh *AddOnHub) GetMeta(spaceId int64, gname, method string) (map[string]any
 	return gs.GetMeta(method)
 }
 
-func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params LazyData) (map[string]any, error) {
+func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params addons.LazyData) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
@@ -85,7 +68,7 @@ func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params LazyData
 
 // private
 
-func (gh *AddOnHub) get(name string, spaceId int64) (AddOn, error) {
+func (gh *AddOnHub) get(name string, spaceId int64) (addons.AddOn, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.RLock()

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/blue-monads/turnix/backend/engine/addons"
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
@@ -44,9 +45,9 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 		},
 		logger: slog.Default().With("module", "engine"),
 		addons: AddOnHub{
-			goodies:  make(map[string]AddOn),
+			goodies:  make(map[string]addons.AddOn),
 			glock:    sync.RWMutex{},
-			builders: make(map[string]AddOnBuilder),
+			builders: make(map[string]addons.Builder),
 		},
 	}
 
