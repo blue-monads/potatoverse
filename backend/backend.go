@@ -36,7 +36,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		Signer:   signer.New([]byte(options.MasterSecret)),
 		AppOpts: &xtypes.AppOptions{
 			Port:         options.Port,
-			Host:         options.Host,
+			Hosts:        options.Hosts,
 			MasterSecret: options.MasterSecret,
 			Debug:        options.Debug,
 			WorkingDir:   options.WorkingDir,

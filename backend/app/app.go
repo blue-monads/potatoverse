@@ -26,7 +26,7 @@ func NewApp(happ *HeadLess) *App {
 			Ctrl:        happ.Controller().(*actions.Controller),
 			Signer:      happ.Signer(),
 			Engine:      happ.Engine().(*engine.Engine),
-			Host:        happ.AppOpts.Host,
+			Hosts:       happ.AppOpts.Hosts,
 			LocalSocket: happ.AppOpts.SocketFile,
 			SiteName:    "Demo",
 		}),

@@ -29,7 +29,7 @@ type Option struct {
 	Ctrl        *actions.Controller
 	Signer      *signer.Signer
 	Engine      *engine.Engine
-	Host        string
+	Hosts       []string
 	GlobalJS    string
 	SiteName    string
 	LocalSocket string
@@ -94,7 +94,7 @@ func (s *Server) listenUnixSocket() error {
 
 				out, err := json.Marshal(map[string]any{
 					"port": s.opt.Port,
-					"host": s.opt.Host,
+					"host": s.opt.Hosts,
 				})
 
 				if err != nil {
