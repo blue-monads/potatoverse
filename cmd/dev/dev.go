@@ -12,7 +12,7 @@ func main() {
 	app, err := backend.NewDevApp(&xtypes.AppOptions{
 		WorkingDir:   "./tmp",
 		Port:         7777,
-		Host:         "*.localhost",
+		Hosts:        []string{"*.localhost"},
 		Name:         "PotatoVerse",
 		MasterSecret: "default-master-secret",
 		Debug:        true,

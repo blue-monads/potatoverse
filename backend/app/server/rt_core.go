@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
@@ -18,8 +19,8 @@ func (s *Server) buildGlobalJS() error {
 	finalJS.WriteString(s.opt.GlobalJS)
 
 	siteAttr := map[string]string{
-		"site_name": s.opt.SiteName,
-		"site_host": s.opt.Host,
+		"site_name":  s.opt.SiteName,
+		"site_hosts": strings.Join(s.opt.Hosts, ","),
 	}
 
 	siteAttrJSON, err := json.Marshal(siteAttr)

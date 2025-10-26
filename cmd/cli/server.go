@@ -19,7 +19,7 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 
 	config.Name = c.Name
 	config.Port = c.Port
-	config.Host = c.Host
+	config.Hosts = []string{c.Host}
 	config.SocketFile = c.SocketFile
 	config.MasterSecret = c.MasterSecret
 	config.Debug = c.Debug
