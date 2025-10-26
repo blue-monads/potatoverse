@@ -1,0 +1,27 @@
+CREATE TABLE IF NOT EXISTS FileMeta (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id INTEGER NOT NULL,
+  name TEXT NOT NULL DEFAULT '', 
+  is_folder BOOLEAN NOT NULL DEFAULT FALSE,
+  path TEXT NOT NULL DEFAULT '', 
+  size INTEGER NOT NULL DEFAULT 0, 
+  mime TEXT NOT NULL DEFAULT '', 
+  hash TEXT NOT NULL DEFAULT '',
+  -- 0: inline_blob, 1: mulit_part_blob, 2: mulit_part_blob_with_preview
+  store_type INTEGER NOT NULL DEFAULT 0, 
+  blob BLOB,
+  preview BLOB,
+  created_by INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_by INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (owner_id, path, name)
+);
+
+CREATE TABLE IF NOT EXISTS FileBlob (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  file_id INTEGER NOT NULL,
+  size INTEGER NOT NULL,
+  part_id INTEGER NOT NULL,
+  blob BLOB NOT NULL
+);
