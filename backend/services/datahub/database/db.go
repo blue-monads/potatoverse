@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/database/operations/user"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -18,6 +19,8 @@ type DB struct {
 	sess                 upperdb.Session
 	externalFileMode     bool
 	minFileMultiPartSize int64
+
+	userOps *user.UserOperations
 }
 
 const (
@@ -49,6 +52,7 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 		sess:                 sess,
 		externalFileMode:     false,
 		minFileMultiPartSize: 1024 * 1024 * 8,
+		userOps:              user.NewUserOperations(sess),
 	}, nil
 }
 
