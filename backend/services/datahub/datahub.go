@@ -1,6 +1,9 @@
 package datahub
 
 import (
+	"io"
+	"net/http"
+
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
@@ -12,6 +15,8 @@ type Database interface {
 	GetSpaceOps() SpaceOps
 	GetSpaceKVOps() SpaceKVOps
 	GetPackageInstallOps() PackageInstallOps
+	GetFileOps() FileOps
+	GetPackageFileOps() FileOps
 }
 
 type Core interface {
@@ -118,30 +123,32 @@ type SpaceKVOps interface {
 	UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error
 }
 
-/*
-
-type SpaceFileOps interface {
-	StreamAddSpaceFile(spaceId int64, uid int64, path string, name string, stream io.Reader) (id int64, err error)
-	AddSpaceFolder(spaceId int64, uid int64, path string, name string) (int64, error)
-
-	GetSpaceFileMetaByPath(spaceId int64, path string) (*dbmodels.File, error)
-	GetSpaceFileMetaByPathAndName(spaceId int64, path string, name string) (*dbmodels.File, error)
-	GetSpaceFileMetaById(id int64) (*dbmodels.File, error)
-	GetSpaceFile(spaceId int64, id int64) ([]byte, error)
-	StreamGetSpaceFile(spaceId int64, uid int64, id int64, w http.ResponseWriter) error
-	StreamGetSpaceFileByPath(spaceId int64, uid int64, path string, name string, w http.ResponseWriter) error
-
-	RemoveSpaceFile(spaceId, id int64) error
-	UpdateSpaceFile(spaceId, id int64, data map[string]any) error
-	StreamUpdateSpaceFile(spaceId, id int64, stream io.Reader) (int64, error)
-	ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File, error)
-
-	// File Shares
-
-	AddFileShare(fileId int64, userId int64, spaceId int64) (string, error)
-	GetSharedFile(id string, w http.ResponseWriter) error
-	ListFileShares(fileId int64) ([]dbmodels.FileShare, error)
-	RemoveFileShare(userId int64, id string) error
+type CreateFileRequest struct {
+	OwnerID   int64  `json:"owner_id"`
+	Name      string `json:"name"`
+	Path      string `json:"path"`
+	StoreType int64  `json:"store_type"`
+	CreatedBy int64  `json:"created_by"`
+	IsFolder  bool   `json:"is_folder"`
 }
 
-*/
+type FileOps interface {
+	CreateFile(req *CreateFileRequest, stream io.Reader) (int64, error)
+	CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error)
+	GetFileContent(ownerID int64, id int64) ([]byte, error)
+	GetFileContentByPath(ownerID int64, path, name string) ([]byte, error)
+	GetFileMeta(id int64) (*dbmodels.FileMeta, error)
+	GetFileMetaByPath(ownerID int64, path, name string) (*dbmodels.FileMeta, error)
+	ListFiles(ownerID int64, path string) ([]dbmodels.FileMeta, error)
+	RemoveFile(ownerID int64, id int64) error
+	StreamFile(ownerID int64, id int64, w io.Writer) error
+	StreamFileByPath(ownerID int64, path, name string, w io.Writer) error
+	StreamFileToHTTP(ownerID int64, path, name string, w http.ResponseWriter) error
+	UpdateFile(ownerID int64, id int64, stream io.Reader) error
+	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
+
+	AddFileShare(ownerID int64, fileId int64, userId int64) (string, error)
+	GetSharedFile(ownerID int64, id string, w http.ResponseWriter) error
+	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
+	RemoveFileShare(ownerID int64, userId int64, id string) error
+}

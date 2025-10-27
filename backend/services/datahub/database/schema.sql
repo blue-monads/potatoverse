@@ -188,12 +188,3 @@ CREATE TABLE IF NOT EXISTS SpaceResources (
 -- files
 
 
-CREATE TABLE IF NOT EXISTS FileShares (
-  id TEXT PRIMARY KEY,
-  file_id INTEGER NOT NULL,
-  user_id INTEGER NOT NULL,
-  space_id INTEGER NOT NULL default 0,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-

@@ -167,3 +167,11 @@ func (db *DB) GetSpaceKVOps() datahub.SpaceKVOps {
 func (db *DB) GetPackageInstallOps() datahub.PackageInstallOps {
 	return nil
 }
+
+func (db *DB) GetFileOps() datahub.FileOps {
+	return nil
+}
+
+func (db *DB) GetPackageFileOps() datahub.FileOps {
+	return nil
+}

@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	nanoid "github.com/jaevor/go-nanoid"
+
 	"github.com/upper/db/v4"
 )
 
@@ -23,15 +26,6 @@ type FileBlobLite struct {
 	FileID int64 `db:"file_id"`
 	Size   int64 `db:"size"`
 	PartID int64 `db:"part_id"`
-}
-
-type CreateFileRequest struct {
-	OwnerID   int64  `json:"owner_id"`
-	Name      string `json:"name"`
-	Path      string `json:"path"`
-	StoreType int64  `json:"store_type"`
-	CreatedBy int64  `json:"created_by"`
-	IsFolder  bool   `json:"is_folder"`
 }
 
 type FileOperations struct {
@@ -60,7 +54,7 @@ func NewFileOperations(opts Options) *FileOperations {
 	}
 }
 
-func (f *FileOperations) CreateFile(req *CreateFileRequest, stream io.Reader) (int64, error) {
+func (f *FileOperations) CreateFile(req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
 	exists, err := f.fileExists(req.OwnerID, req.Path, req.Name)
 	if err != nil {
 		return 0, err
@@ -119,7 +113,7 @@ func (f *FileOperations) CreateFile(req *CreateFileRequest, stream io.Reader) (i
 }
 
 func (f *FileOperations) CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error) {
-	req := &CreateFileRequest{
+	req := &datahub.CreateFileRequest{
 		OwnerID:   ownerID,
 		Name:      name,
 		Path:      path,
@@ -256,4 +250,53 @@ func (f *FileOperations) UpdateFileMeta(ownerID int64, id int64, data map[string
 		"id":       id,
 		"owner_id": ownerID,
 	}).Update(data)
+}
+
+var idgen, _ = nanoid.ASCII(10)
+
+func (f *FileOperations) AddFileShare(ownerID int64, fileId int64, userId int64) (string, error) {
+
+	now := time.Now()
+	id := idgen()
+	_, err := f.fileShareTable().Insert(dbmodels.FileShare{
+		ID:        id,
+		FileID:    fileId,
+		UserID:    userId,
+		CreatedAt: &now,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+func (f *FileOperations) GetSharedFile(ownerID int64, id string, w http.ResponseWriter) error {
+	fileShare := &dbmodels.FileShare{}
+	err := f.fileShareTable().Find(db.Cond{
+		"id": id,
+	}).One(fileShare)
+	if err != nil {
+		return err
+	}
+
+	return f.StreamFileToHTTP(ownerID, fileShare.FileID, w)
+}
+
+func (f *FileOperations) ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error) {
+	shares := make([]dbmodels.FileShare, 0)
+	err := f.fileShareTable().Find(db.Cond{
+		"file_id": fileId,
+	}).All(&shares)
+	if err != nil {
+		return nil, err
+	}
+	return shares, nil
+}
+
+func (f *FileOperations) RemoveFileShare(ownerID int64, userId int64, id string) error {
+	return f.fileShareTable().Find(db.Cond{
+		"id":      id,
+		"user_id": userId,
+	}).Delete()
 }

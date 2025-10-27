@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
@@ -50,7 +51,7 @@ func (f *FileOperations) streamFileByMeta(file *dbmodels.FileMeta, w io.Writer) 
 	}
 }
 
-func (f *FileOperations) processFileContent(fileID int64, req *CreateFileRequest, stream io.Reader) (int64, string, error) {
+func (f *FileOperations) processFileContent(fileID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, string, error) {
 	hash := sha1.New()
 	sizeTotal := int64(0)
 

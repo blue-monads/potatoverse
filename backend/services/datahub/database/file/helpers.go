@@ -23,12 +23,20 @@ func (f *FileOperations) fileBlobTable() db.Collection {
 	return f.db.Collection(f.getBlobTableName())
 }
 
+func (f *FileOperations) fileShareTable() db.Collection {
+	return f.db.Collection(f.getShareTableName())
+}
+
 func (f *FileOperations) getTableName() string {
 	return f.prefix + "FileMeta"
 }
 
 func (f *FileOperations) getBlobTableName() string {
 	return f.prefix + "FileBlob"
+}
+
+func (f *FileOperations) getShareTableName() string {
+	return f.prefix + "FileShares"
 }
 
 func (f *FileOperations) readFileHash(file *os.File, hash hash.Hash) error {
