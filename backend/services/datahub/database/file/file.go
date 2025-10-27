@@ -34,6 +34,7 @@ type FileOperations struct {
 	externalFileMode  bool
 	externalFilesPath string
 	prefix            string
+	storeType         int64
 }
 
 type Options struct {
@@ -42,6 +43,7 @@ type Options struct {
 	ExternalFileMode  bool
 	ExternalFilesPath string
 	Prefix            string
+	StoreType         int64
 }
 
 func NewFileOperations(opts Options) *FileOperations {
@@ -51,11 +53,12 @@ func NewFileOperations(opts Options) *FileOperations {
 		externalFileMode:  opts.ExternalFileMode,
 		externalFilesPath: opts.ExternalFilesPath,
 		prefix:            opts.Prefix,
+		storeType:         opts.StoreType,
 	}
 }
 
-func (f *FileOperations) CreateFile(req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
-	exists, err := f.fileExists(req.OwnerID, req.Path, req.Name)
+func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
+	exists, err := f.fileExists(ownerID, req.Path, req.Name)
 	if err != nil {
 		return 0, err
 	}
@@ -65,17 +68,17 @@ func (f *FileOperations) CreateFile(req *datahub.CreateFileRequest, stream io.Re
 
 	now := time.Now()
 	fileMeta := &dbmodels.FileMeta{
-		OwnerID:   req.OwnerID,
+		OwnerID:   ownerID,
 		Name:      req.Name,
 		Path:      req.Path,
-		StoreType: req.StoreType,
+		StoreType: f.storeType,
 		CreatedBy: req.CreatedBy,
-		IsFolder:  req.IsFolder,
+		IsFolder:  false,
 		CreatedAt: &now,
 		Size:      0,
 	}
 
-	if req.StoreType == 0 && !req.IsFolder {
+	if f.storeType == 0 {
 		if f.externalFileMode {
 			fileMeta.StoreType = StoreTypeExternal
 		} else {
@@ -95,11 +98,7 @@ func (f *FileOperations) CreateFile(req *datahub.CreateFileRequest, stream io.Re
 		}
 	}()
 
-	if req.IsFolder {
-		return fileID, nil
-	}
-
-	sizeTotal, hashSumStr, err := f.processFileContent(fileID, req, stream)
+	sizeTotal, hashSumStr, err := f.processFileContent(ownerID, fileID, req, stream)
 	if err != nil {
 		return 0, err
 	}
@@ -114,14 +113,11 @@ func (f *FileOperations) CreateFile(req *datahub.CreateFileRequest, stream io.Re
 
 func (f *FileOperations) CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error) {
 	req := &datahub.CreateFileRequest{
-		OwnerID:   ownerID,
 		Name:      name,
 		Path:      path,
 		CreatedBy: createdBy,
-		IsFolder:  true,
-		StoreType: 0,
 	}
-	return f.CreateFile(req, nil)
+	return f.CreateFile(ownerID, req, nil)
 }
 
 func (f *FileOperations) GetFileMeta(id int64) (*dbmodels.FileMeta, error) {

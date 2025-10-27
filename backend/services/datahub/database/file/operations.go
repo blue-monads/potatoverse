@@ -51,11 +51,11 @@ func (f *FileOperations) streamFileByMeta(file *dbmodels.FileMeta, w io.Writer) 
 	}
 }
 
-func (f *FileOperations) processFileContent(fileID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, string, error) {
+func (f *FileOperations) processFileContent(ownerID, fileID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, string, error) {
 	hash := sha1.New()
 	sizeTotal := int64(0)
 
-	switch req.StoreType {
+	switch f.storeType {
 	case StoreTypeInline:
 		size, err := f.storeInlineBlob(fileID, stream, hash)
 		if err != nil {
@@ -63,7 +63,7 @@ func (f *FileOperations) processFileContent(fileID int64, req *datahub.CreateFil
 		}
 		sizeTotal = size
 	case StoreTypeExternal:
-		size, err := f.storeExternalFile(fileID, req.OwnerID, req.CreatedBy, req.Path, req.Name, stream, hash)
+		size, err := f.storeExternalFile(fileID, ownerID, req.CreatedBy, req.Path, req.Name, stream, hash)
 		if err != nil {
 			return 0, "", err
 		}
@@ -75,7 +75,7 @@ func (f *FileOperations) processFileContent(fileID int64, req *datahub.CreateFil
 		}
 		sizeTotal = size
 	default:
-		return 0, "", fmt.Errorf("unknown storage type: %d", req.StoreType)
+		return 0, "", fmt.Errorf("unknown storage type: %d", f.storeType)
 	}
 
 	hashSum := hash.Sum(nil)

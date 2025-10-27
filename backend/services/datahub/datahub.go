@@ -124,16 +124,13 @@ type SpaceKVOps interface {
 }
 
 type CreateFileRequest struct {
-	OwnerID   int64  `json:"owner_id"`
 	Name      string `json:"name"`
 	Path      string `json:"path"`
-	StoreType int64  `json:"store_type"`
 	CreatedBy int64  `json:"created_by"`
-	IsFolder  bool   `json:"is_folder"`
 }
 
 type FileOps interface {
-	CreateFile(req *CreateFileRequest, stream io.Reader) (int64, error)
+	CreateFile(ownerID int64, req *CreateFileRequest, stream io.Reader) (int64, error)
 	CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error)
 	GetFileContent(ownerID int64, id int64) ([]byte, error)
 	GetFileContentByPath(ownerID int64, path, name string) ([]byte, error)
