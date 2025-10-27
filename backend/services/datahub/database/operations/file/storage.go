@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
@@ -63,6 +64,14 @@ func (f *FileOperations) storeExternalFile(fileID int64, ownerID int64, createdB
 	return written, nil
 }
 
+type FileBlob struct {
+	Id     int64  `db:"id" json:"id"`
+	FileID int64  `db:"file_id" json:"file_id"`
+	Size   int64  `db:"size" json:"size"`
+	PartID int64  `db:"part_id" json:"part_id"`
+	Blob   []byte `db:"blob" json:"blob"`
+}
+
 func (f *FileOperations) storeMultipartBlob(fileID int64, stream io.Reader, hash hash.Hash) (int64, error) {
 	partID := 0
 	sizeTotal := int64(0)
@@ -86,6 +95,7 @@ func (f *FileOperations) storeMultipartBlob(fileID int64, stream io.Reader, hash
 			PartID: int64(partID),
 			Blob:   currBytes,
 		})
+
 		if err != nil {
 			return 0, err
 		}
@@ -168,7 +178,7 @@ func (f *FileOperations) streamMultipartBlob(fileID int64, w io.Writer) error {
 	return nil
 }
 
-func (f *FileOperations) getExternalFile(file *FileMeta, w io.Writer) error {
+func (f *FileOperations) getExternalFile(file *dbmodels.FileMeta, w io.Writer) error {
 	filePath := fmt.Sprintf("%s/%d/%d/%s/%s", f.externalFilesPath, file.OwnerID, file.CreatedBy, file.Path, file.Name)
 	ofile, err := os.Open(filePath)
 	if err != nil {
@@ -185,7 +195,7 @@ func (f *FileOperations) getExternalFile(file *FileMeta, w io.Writer) error {
 	return nil
 }
 
-func (f *FileOperations) removeFileContent(file *FileMeta) error {
+func (f *FileOperations) removeFileContent(file *dbmodels.FileMeta) error {
 	switch file.StoreType {
 	case StoreTypeExternal:
 		filePath := fmt.Sprintf("%s/%d/%d/%s/%s", f.externalFilesPath, file.OwnerID, file.CreatedBy, file.Path, file.Name)

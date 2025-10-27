@@ -97,11 +97,11 @@ func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	pp.Println("@static name", name)
 	pp.Println("@static path", path)
 
-	err := e.db.GetPackageFileStreamingByPath(indexItem.packageId, path, name, ctx.Writer)
-	if err != nil {
-		ctx.JSON(404, gin.H{"error": "file not found"})
-		return
-	}
+	// err := e.db.GetPackageFileStreamingByPath(indexItem.packageId, path, name, ctx.Writer)
+	// if err != nil {
+	// 	ctx.JSON(404, gin.H{"error": "file not found"})
+	// 	return
+	// }
 }
 
 func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
@@ -115,12 +115,13 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 	}
 
 	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		PackageName: spaceKey,
-		PackageId:   indexItem.packageId,
-		SpaceId:     indexItem.spaceId,
-		HandlerName: routeMatch.Handler,
-		HttpContext: ctx,
-		Params:      pathParams,
+		PackageName:      spaceKey,
+		PackageVersionId: indexItem.packageVersionId,
+		InstalledId:      indexItem.installedId,
+		SpaceId:          indexItem.spaceId,
+		HandlerName:      routeMatch.Handler,
+		HttpContext:      ctx,
+		Params:           pathParams,
 	})
 
 	tmpl, ok := indexItem.compiledTemplates[routeMatch.File]
@@ -153,12 +154,13 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 	// Execute the handler
 	spaceKey := ctx.Param("space_key")
 	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		PackageName: spaceKey,
-		PackageId:   indexItem.packageId,
-		SpaceId:     indexItem.spaceId,
-		HandlerName: routeMatch.Handler,
-		HttpContext: ctx,
-		Params:      pathParams,
+		PackageName:      spaceKey,
+		PackageVersionId: indexItem.packageVersionId,
+		InstalledId:      indexItem.installedId,
+		SpaceId:          indexItem.spaceId,
+		HandlerName:      routeMatch.Handler,
+		HttpContext:      ctx,
+		Params:           pathParams,
 	})
 
 	if err != nil {

@@ -17,7 +17,8 @@ import (
 )
 
 type SpaceRouteIndexItem struct {
-	packageId         int64
+	installedId       int64
+	packageVersionId  int64
 	spaceId           int64
 	overlayForSpaceId int64
 	routeOption       models.PotatoRouteOptions
@@ -26,10 +27,11 @@ type SpaceRouteIndexItem struct {
 }
 
 type PluginRouteIndexItem struct {
-	pluginId    int64
-	packageId   int64
-	spaceId     int64
-	routeOption models.PotatoRouteOptions
+	pluginId         int64
+	installedId      int64
+	packageVersionId int64
+	spaceId          int64
+	routeOption      models.PotatoRouteOptions
 }
 
 func (e *Engine) LoadRoutingIndex() error {
@@ -57,15 +59,18 @@ func (e *Engine) LoadRoutingIndex() error {
 		}
 
 		indexItem := &SpaceRouteIndexItem{
-			packageId:   space.PackageID,
+			installedId: space.InstalledId,
 			spaceId:     space.ID,
 			routeOption: routeOptions,
 		}
 
-		if space.OwnsNamespace {
-			nextRoutingIndex[space.NamespaceKey] = indexItem
-		} else {
-			nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
+		nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
+
+		if space.OverlayForSpaceID != 0 {
+			exist := nextRoutingIndex[fmt.Sprintf("%s", space.NamespaceKey)]
+			if exist == nil {
+				nextRoutingIndex[space.NamespaceKey] = indexItem
+			}
 		}
 
 		if indexItem.routeOption.RouterType == "" {
@@ -79,7 +84,7 @@ func (e *Engine) LoadRoutingIndex() error {
 		if routeOptions.RouterType == "dynamic" {
 			indexItem.compiledTemplates = make(map[string]*template.Template)
 
-			tempFolder, err := e.copyFolderToTemp(space.PackageID, routeOptions.TemplateFolder)
+			tempFolder, err := e.copyFolderToTemp(space.InstalledId, routeOptions.TemplateFolder)
 			if err != nil {
 				return err
 			}
@@ -120,9 +125,9 @@ func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
 	return e.RoutingIndex[spaceKey]
 }
 
-func (e *Engine) copyFolderToTemp(packageId int64, folder string) (string, error) {
+func (e *Engine) copyFolderToTemp(installedId int64, folder string) (string, error) {
 
-	tempFolder := path.Join(os.TempDir(), "turnix", "packages", strconv.FormatInt(packageId, 10))
+	tempFolder := path.Join(os.TempDir(), "turnix", "packages", strconv.FormatInt(installedId, 10))
 
 	os.MkdirAll(tempFolder, 0755)
 
@@ -139,75 +144,75 @@ func (e *Engine) copyFolderToTemp(packageId int64, folder string) (string, error
 	pp.Println("@folderName", folderName)
 	pp.Println("@pathName", pathName)
 
-	folderFile, err := e.db.GetPackageFileMetaByPath(packageId, pathName, folderName)
-	if err != nil {
-		pp.Println("@err/1", err)
-		return "", err
-	}
+	// folderFile, err := e.db.GetPackageFileMetaByPath(packageId, pathName, folderName)
+	// if err != nil {
+	// 	pp.Println("@err/1", err)
+	// 	return "", err
+	// }
 
-	err = copyFolder(e.db, tempFolder, folderFile)
-	if err != nil {
-		pp.Println("@err/2", err)
-		return "", err
-	}
+	// err = copyFolder(e.db, tempFolder, folderFile)
+	// if err != nil {
+	// 	pp.Println("@err/2", err)
+	// 	return "", err
+	// }
 
-	return path.Join(tempFolder, folder), nil
+	return path.Join(tempFolder, folderName), nil
 }
 
-func copyFolder(db datahub.Database, basePath string, folder *dbmodels.PackageFile) error {
+func copyFolder(db datahub.Database, basePath string, folder *dbmodels.FileMeta) error {
 
 	pp.Println("@copyFolder/1", basePath, folder.Path)
 
-	files, err := db.ListPackageFilesByPath(folder.PackageID, folder.Name)
-	if err != nil {
-		pp.Println("@err/3", err)
-		return err
-	}
+	// files, err := db.ListPackageFilesByPath(folder.OwnerID, folder.Name)
+	// if err != nil {
+	// 	pp.Println("@err/3", err)
+	// 	return err
+	// }
 
-	pp.Println("@copyFolder/2", files)
+	// pp.Println("@copyFolder/2", files)
 
-	for _, file := range files {
-		pp.Println("@file", file.Name)
-		if file.IsFolder {
-			continue
-		}
+	// for _, file := range files {
+	// 	pp.Println("@file", file.Name)
+	// 	if file.IsFolder {
+	// 		continue
+	// 	}
 
-		pp.Println("@file/2", file.Path, file.Name)
+	// 	pp.Println("@file/2", file.Path, file.Name)
 
-		filePath := path.Join(basePath, file.Path, file.Name)
-		//basePath + "/" + file.Path + "/" + file.Name
+	// 	filePath := path.Join(basePath, file.Path, file.Name)
+	// 	//basePath + "/" + file.Path + "/" + file.Name
 
-		prePath := path.Join(basePath, file.Path)
-		err = os.MkdirAll(prePath, 0755)
-		if err != nil {
-			pp.Println("@err/4", err)
-			return err
-		}
+	// 	prePath := path.Join(basePath, file.Path)
+	// 	err = os.MkdirAll(prePath, 0755)
+	// 	if err != nil {
+	// 		pp.Println("@err/4", err)
+	// 		return err
+	// 	}
 
-		pp.Println("@prePath", prePath)
+	// 	pp.Println("@prePath", prePath)
 
-		tfile, err := os.Create(filePath)
-		if err != nil {
-			pp.Println("@err/5", err)
-			pp.Println("@err/5", err.Error())
-			return err
-		}
-		pp.Println("@file/3", filePath)
+	// 	tfile, err := os.Create(filePath)
+	// 	if err != nil {
+	// 		pp.Println("@err/5", err)
+	// 		pp.Println("@err/5", err.Error())
+	// 		return err
+	// 	}
+	// 	pp.Println("@file/3", filePath)
 
-		defer tfile.Close()
+	// 	defer tfile.Close()
 
-		pp.Println("@file/4", file.PackageID, file.ID)
+	// 	pp.Println("@file/4", file.PackageID, file.ID)
 
-		err = db.GetPackageFileStreaming(file.PackageID, file.ID, tfile)
-		if err != nil {
-			return err
-		}
+	// 	err = db.GetPackageFileStreaming(file.PackageID, file.ID, tfile)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		pp.Println("@file/5", err)
+	// 	pp.Println("@file/5", err)
 
-	}
+	// }
 
-	pp.Println("@copyFolder/3")
+	// pp.Println("@copyFolder/3")
 
 	return nil
 

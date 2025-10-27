@@ -54,9 +54,9 @@ type SpaceFilePresignedClaim struct {
 }
 
 type PackageDevClaim struct {
-	Typeid     uint8  `json:"t,omitempty"`
-	PackageXID string `json:"p,omitempty"`
-	UserId     int64  `json:"u,omitempty"`
+	Typeid           uint8 `json:"t,omitempty"`
+	InstallPackageId int64 `json:"p,omitempty"`
+	UserId           int64 `json:"u,omitempty"`
 }
 
 // fixme => add expiry

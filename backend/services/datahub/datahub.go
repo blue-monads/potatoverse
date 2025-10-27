@@ -1,9 +1,6 @@
 package datahub
 
 import (
-	"io"
-	"net/http"
-
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
@@ -12,10 +9,9 @@ type Database interface {
 	Core
 	GlobalOps
 	UserOps
-	SpaceFileOps
 	SpaceOps
 	SpaceKVOps
-	PackageOps
+	PackageInstallOps
 }
 
 type Core interface {
@@ -70,57 +66,19 @@ type UserOps interface {
 	DeleteUserInvite(id int64) error
 }
 
-type PackageOps interface {
-	InstallPackage(userId int64, file, xid string) (int64, error)
-
-	GetPackage(id int64) (*dbmodels.Package, error)
+type PackageInstallOps interface {
+	InstallPackage(userId int64, file string) (int64, error)
+	GetPackage(id int64) (*dbmodels.InstalledPackage, error)
 	DeletePackage(id int64) error
-	UpdatePackage(id int64, data map[string]any) error
+	UpdatePackage(id int64, file string) (int64, error)
+	ListPackages() ([]dbmodels.InstalledPackage, error)
+	ListPackagesByIds(ids []int64) ([]dbmodels.InstalledPackage, error)
 
-	ListPackages() ([]dbmodels.Package, error)
-	ListPackagesByXID(xid string) ([]dbmodels.Package, error)
-
-	ListPackagesByIds(ids []int64) ([]dbmodels.Package, error)
-
-	ListPackageFiles(packageId int64) ([]dbmodels.PackageFile, error)
-	ListPackageFilesByPath(packageId int64, path string) ([]dbmodels.PackageFile, error)
-
-	GetPackageFileMeta(packageId, id int64) (*dbmodels.PackageFile, error)
-	GetPackageFileMetaByPath(packageId int64, path, name string) (*dbmodels.PackageFile, error)
-
-	GetPackageFileStreaming(packageId, id int64, w io.Writer) error
-	GetPackageFileStreamingByPath(packageId int64, path, name string, w io.Writer) error
-	GetPackageFile(packageId, id int64) ([]byte, error)
-	AddPackageFile(packageId int64, name string, path string, data []byte) (int64, error)
-	AddPackageFileStreaming(packageId int64, name string, path string, stream io.Reader) (int64, error)
-	UpdatePackageFile(packageId, id int64, data []byte) error
-	UpdatePackageFileStreaming(packageId, id int64, stream io.Reader) error
-
-	DeletePackageFile(packageId, id int64) error
-}
-
-type SpaceFileOps interface {
-	StreamAddSpaceFile(spaceId int64, uid int64, path string, name string, stream io.Reader) (id int64, err error)
-	AddSpaceFolder(spaceId int64, uid int64, path string, name string) (int64, error)
-
-	GetSpaceFileMetaByPath(spaceId int64, path string) (*dbmodels.File, error)
-	GetSpaceFileMetaByPathAndName(spaceId int64, path string, name string) (*dbmodels.File, error)
-	GetSpaceFileMetaById(id int64) (*dbmodels.File, error)
-	GetSpaceFile(spaceId int64, id int64) ([]byte, error)
-	StreamGetSpaceFile(spaceId int64, uid int64, id int64, w http.ResponseWriter) error
-	StreamGetSpaceFileByPath(spaceId int64, uid int64, path string, name string, w http.ResponseWriter) error
-
-	RemoveSpaceFile(spaceId, id int64) error
-	UpdateSpaceFile(spaceId, id int64, data map[string]any) error
-	StreamUpdateSpaceFile(spaceId, id int64, stream io.Reader) (int64, error)
-	ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File, error)
-
-	// File Shares
-
-	AddFileShare(fileId int64, userId int64, spaceId int64) (string, error)
-	GetSharedFile(id string, w http.ResponseWriter) error
-	ListFileShares(fileId int64) ([]dbmodels.FileShare, error)
-	RemoveFileShare(userId int64, id string) error
+	ListPackageVersionByIds(ids []int64) ([]dbmodels.PackageVersion, error)
+	ListPackagesByInstallId(installId int64) ([]dbmodels.PackageVersion, error)
+	GetPackageVersion(id int64) (*dbmodels.PackageVersion, error)
+	DeletePackageVersion(id int64) error
+	AddPackageVersion(installId int64, file string) (int64, error)
 }
 
 type SpaceOps interface {
@@ -159,3 +117,31 @@ type SpaceKVOps interface {
 	UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error
 	UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error
 }
+
+/*
+
+type SpaceFileOps interface {
+	StreamAddSpaceFile(spaceId int64, uid int64, path string, name string, stream io.Reader) (id int64, err error)
+	AddSpaceFolder(spaceId int64, uid int64, path string, name string) (int64, error)
+
+	GetSpaceFileMetaByPath(spaceId int64, path string) (*dbmodels.File, error)
+	GetSpaceFileMetaByPathAndName(spaceId int64, path string, name string) (*dbmodels.File, error)
+	GetSpaceFileMetaById(id int64) (*dbmodels.File, error)
+	GetSpaceFile(spaceId int64, id int64) ([]byte, error)
+	StreamGetSpaceFile(spaceId int64, uid int64, id int64, w http.ResponseWriter) error
+	StreamGetSpaceFileByPath(spaceId int64, uid int64, path string, name string, w http.ResponseWriter) error
+
+	RemoveSpaceFile(spaceId, id int64) error
+	UpdateSpaceFile(spaceId, id int64, data map[string]any) error
+	StreamUpdateSpaceFile(spaceId, id int64, stream io.Reader) (int64, error)
+	ListSpaceFiles(spaceId int64, path string) ([]dbmodels.File, error)
+
+	// File Shares
+
+	AddFileShare(fileId int64, userId int64, spaceId int64) (string, error)
+	GetSharedFile(id string, w http.ResponseWriter) error
+	ListFileShares(fileId int64) ([]dbmodels.FileShare, error)
+	RemoveFileShare(userId int64, id string) error
+}
+
+*/

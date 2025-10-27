@@ -100,22 +100,22 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 
 	source := Code
 
-	if !ByPassPackageCode {
-		file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
-		if err != nil {
-			r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
-			return nil, err
-		}
+	// if !ByPassPackageCode {
+	// 	file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
+	// 	if err != nil {
+	// 		r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
+	// 		return nil, err
+	// 	}
 
-		sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
-		if err != nil {
-			r.parent.app.Logger().Error("error getting package file", "error", err)
-			return nil, err
-		}
+	// 	sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
+	// 	if err != nil {
+	// 		r.parent.app.Logger().Error("error getting package file", "error", err)
+	// 		return nil, err
+	// 	}
 
-		source = string(sourceBytes)
+	// 	source = string(sourceBytes)
 
-	}
+	// }
 
 	e = luaz.New(luaz.Options{
 		BuilderOpts: xtypes.BuilderOption{
@@ -137,17 +137,18 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 }
 
 type ExecuteOptions struct {
-	PackageName string
-	PackageId   int64
-	SpaceId     int64
-	HandlerName string
-	HttpContext *gin.Context
-	Params      map[string]string
+	PackageName      string
+	PackageVersionId int64
+	InstalledId      int64
+	SpaceId          int64
+	HandlerName      string
+	HttpContext      *gin.Context
+	Params           map[string]string
 }
 
 func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
-	e, err := r.GetExec(opts.PackageName, opts.PackageId, opts.SpaceId)
+	e, err := r.GetExec(opts.PackageName, opts.InstalledId, opts.SpaceId)
 	if err != nil {
 		pp.Println("@exec_http/1", "error getting exec", err)
 		httpx.WriteErr(opts.HttpContext, err)
@@ -171,7 +172,7 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 		}
 
 		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
-		params["package_id"] = fmt.Sprintf("%d", opts.PackageId)
+		params["installed_id"] = fmt.Sprintf("%d", opts.InstalledId)
 		params["subpath"] = subpath
 
 		err := e.Handle(luaz.HttpEvent{
@@ -194,10 +195,10 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
 }
 
-func (r *Runtime) ExecHttp(packageName string, packageId, spaceId int64, ctx *gin.Context) {
+func (r *Runtime) ExecHttp(packageName string, installedId, spaceId int64, ctx *gin.Context) {
 	err := r.ExecuteHttp(ExecuteOptions{
 		PackageName: packageName,
-		PackageId:   packageId,
+		InstalledId: installedId,
 		SpaceId:     spaceId,
 		HandlerName: "on_http",
 		HttpContext: ctx,

@@ -28,10 +28,8 @@ func CoreModule(handle *executors.EHandle) func(L *lua.LState) int {
 				return pushError(L, err)
 			}
 
-			token, err := handle.GetSpaceFilePresigned(opts)
-			if err != nil {
-				return pushError(L, err)
-			}
+			token := "fixme"
+
 			L.Push(lua.LString(token))
 			return 1
 		}

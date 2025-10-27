@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
@@ -16,36 +17,6 @@ const (
 	StoreTypeExternal  = 1
 	StoreTypeMultipart = 2
 )
-
-type FileContext struct {
-	Type      string
-	OwnerID   int64
-	CreatedBy int64
-}
-
-type FileMeta struct {
-	ID        int64      `db:"id" json:"id,omitempty"`
-	OwnerID   int64      `db:"owner_id" json:"owner_id,omitempty"`
-	Name      string     `db:"name" json:"name,omitempty"`
-	IsFolder  bool       `db:"is_folder" json:"is_folder,omitempty"`
-	Path      string     `db:"path" json:"path,omitempty"`
-	Size      int64      `db:"size" json:"size,omitempty"`
-	Mime      string     `db:"mime" json:"mime,omitempty"`
-	Hash      string     `db:"hash" json:"hash,omitempty"`
-	StoreType int64      `db:"store_type" json:"store_type,omitempty"`
-	CreatedAt *time.Time `db:"created_at" json:"created_at,omitempty"`
-	CreatedBy int64      `db:"created_by" json:"created_by,omitempty"`
-	UpdatedAt *time.Time `db:"updated_at" json:"updated_at,omitempty"`
-	UpdatedBy int64      `db:"updated_by" json:"updated_by,omitempty"`
-}
-
-type FileBlob struct {
-	ID     int64  `db:"id"`
-	FileID int64  `db:"file_id"`
-	Size   int64  `db:"size"`
-	PartID int64  `db:"part_id"`
-	Blob   []byte `db:"blob"`
-}
 
 type FileBlobLite struct {
 	ID     int64 `db:"id"`
@@ -99,7 +70,7 @@ func (f *FileOperations) CreateFile(req *CreateFileRequest, stream io.Reader) (i
 	}
 
 	now := time.Now()
-	fileMeta := &FileMeta{
+	fileMeta := &dbmodels.FileMeta{
 		OwnerID:   req.OwnerID,
 		Name:      req.Name,
 		Path:      req.Path,
@@ -159,8 +130,8 @@ func (f *FileOperations) CreateFolder(ownerID int64, path string, name string, c
 	return f.CreateFile(req, nil)
 }
 
-func (f *FileOperations) GetFileMeta(id int64) (*FileMeta, error) {
-	file := &FileMeta{}
+func (f *FileOperations) GetFileMeta(id int64) (*dbmodels.FileMeta, error) {
+	file := &dbmodels.FileMeta{}
 	err := f.fileMetaTable().Find(db.Cond{"id": id}).One(file)
 	if err != nil {
 		return nil, err
@@ -168,8 +139,8 @@ func (f *FileOperations) GetFileMeta(id int64) (*FileMeta, error) {
 	return file, nil
 }
 
-func (f *FileOperations) GetFileMetaByPath(ownerID int64, path string, name string) (*FileMeta, error) {
-	file := &FileMeta{}
+func (f *FileOperations) GetFileMetaByPath(ownerID int64, path string, name string) (*dbmodels.FileMeta, error) {
+	file := &dbmodels.FileMeta{}
 	err := f.fileMetaTable().Find(db.Cond{
 		"owner_id": ownerID,
 		"path":     path,
@@ -181,8 +152,8 @@ func (f *FileOperations) GetFileMetaByPath(ownerID int64, path string, name stri
 	return file, nil
 }
 
-func (f *FileOperations) ListFiles(ownerID int64, path string) ([]FileMeta, error) {
-	files := make([]FileMeta, 0)
+func (f *FileOperations) ListFiles(ownerID int64, path string) ([]dbmodels.FileMeta, error) {
+	files := make([]dbmodels.FileMeta, 0)
 	err := f.fileMetaTable().Find(db.Cond{
 		"owner_id": ownerID,
 		"path":     path,

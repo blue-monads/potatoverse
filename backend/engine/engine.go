@@ -154,7 +154,7 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 		return
 	}
 
-	e.runtime.ExecHttp(spaceKey, sIndex.packageId, sIndex.spaceId, ctx)
+	e.runtime.ExecHttp(spaceKey, sIndex.installedId, sIndex.spaceId, ctx)
 
 }
 
@@ -183,17 +183,16 @@ func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 		return nil, err
 	}
 
-	pkg, err := e.db.GetPackage(space.PackageID)
+	pkg, err := e.db.GetPackageVersion(space.InstalledId)
 	if err != nil {
 		return nil, err
 	}
 
 	return &SpaceInfo{
-		ID:            space.ID,
-		NamespaceKey:  space.NamespaceKey,
-		OwnsNamespace: space.OwnsNamespace,
-		PackageName:   pkg.Name,
-		PackageInfo:   pkg.Info,
+		ID:           space.ID,
+		NamespaceKey: space.NamespaceKey,
+		PackageName:  pkg.Name,
+		PackageInfo:  pkg.Info,
 	}, nil
 
 }

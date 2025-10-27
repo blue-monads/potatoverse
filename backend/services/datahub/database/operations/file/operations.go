@@ -9,10 +9,11 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
-func (f *FileOperations) getFileContentByMeta(file *FileMeta) ([]byte, error) {
+func (f *FileOperations) getFileContentByMeta(file *dbmodels.FileMeta) ([]byte, error) {
 	switch file.StoreType {
 	case StoreTypeInline:
 		return f.getInlineBlob(file.ID)
@@ -31,7 +32,7 @@ func (f *FileOperations) getFileContentByMeta(file *FileMeta) ([]byte, error) {
 	}
 }
 
-func (f *FileOperations) streamFileByMeta(file *FileMeta, w io.Writer) error {
+func (f *FileOperations) streamFileByMeta(file *dbmodels.FileMeta, w io.Writer) error {
 	switch file.StoreType {
 	case StoreTypeInline:
 		data, err := f.getInlineBlob(file.ID)
@@ -82,7 +83,7 @@ func (f *FileOperations) processFileContent(fileID int64, req *CreateFileRequest
 	return sizeTotal, hashSumStr, nil
 }
 
-func (f *FileOperations) updateFileContent(file *FileMeta, stream io.Reader) error {
+func (f *FileOperations) updateFileContent(file *dbmodels.FileMeta, stream io.Reader) error {
 	err := f.removeFileContent(file)
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func (f *FileOperations) updateFileContent(file *FileMeta, stream io.Reader) err
 	})
 }
 
-func (f *FileOperations) removeFileRecursively(ownerID int64, file *FileMeta) error {
+func (f *FileOperations) removeFileRecursively(ownerID int64, file *dbmodels.FileMeta) error {
 	if file.IsFolder {
 		childFiles, err := f.ListFiles(ownerID, filepath.Join(file.Path, file.Name))
 		if err == nil {
@@ -136,14 +137,14 @@ func (f *FileOperations) removeFileRecursively(ownerID int64, file *FileMeta) er
 	return f.fileMetaTable().Find(db.Cond{"id": file.ID}).Delete()
 }
 
-func (f *FileOperations) validateFileOwnership(file *FileMeta, ownerID int64) error {
+func (f *FileOperations) validateFileOwnership(file *dbmodels.FileMeta, ownerID int64) error {
 	if file.OwnerID != ownerID {
 		return fmt.Errorf("file does not belong to the specified owner")
 	}
 	return nil
 }
 
-func (f *FileOperations) setupHTTPHeaders(w http.ResponseWriter, file *FileMeta) {
+func (f *FileOperations) setupHTTPHeaders(w http.ResponseWriter, file *dbmodels.FileMeta) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", file.Size))
 }

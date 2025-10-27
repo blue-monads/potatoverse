@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"bytes"
+	"archive/zip"
 	"encoding/json"
 	"errors"
 	"io"
@@ -14,7 +14,6 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
-	"github.com/jaevor/go-nanoid"
 )
 
 func (c *Controller) ListEPackages() ([]models.PotatoPackage, error) {
@@ -22,8 +21,8 @@ func (c *Controller) ListEPackages() ([]models.PotatoPackage, error) {
 }
 
 type InstalledSpace struct {
-	Spaces   []dbmodels.Space   `json:"spaces"`
-	Packages []dbmodels.Package `json:"packages"`
+	Spaces   []dbmodels.Space          `json:"spaces"`
+	Packages []dbmodels.PackageVersion `json:"packages"`
 }
 
 func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
@@ -38,16 +37,16 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		return nil, err
 	}
 
-	packageIds := make([]int64, 0, len(ownspaces)+len(tpSpaces))
+	installedIds := make([]int64, 0, len(ownspaces)+len(tpSpaces))
 	for _, space := range ownspaces {
-		packageIds = append(packageIds, space.PackageID)
+		installedIds = append(installedIds, space.InstalledId)
 	}
 
 	for _, space := range tpSpaces {
-		packageIds = append(packageIds, space.PackageID)
+		installedIds = append(installedIds, space.InstalledId)
 	}
 
-	packages, err := c.database.ListPackagesByIds(packageIds)
+	packages, err := c.database.ListPackageVersionByIds(installedIds)
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +59,13 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 	}
 
 	for _, space := range ownspaces {
-		if _, ok := hasPackageMap[space.PackageID]; ok {
+		if _, ok := hasPackageMap[space.InstalledId]; ok {
 			finalSpaces = append(finalSpaces, space)
 		}
 	}
 
 	for _, space := range tpSpaces {
-		if _, ok := hasPackageMap[space.PackageID]; ok {
+		if _, ok := hasPackageMap[space.InstalledId]; ok {
 			finalSpaces = append(finalSpaces, space)
 		}
 	}
@@ -148,7 +147,7 @@ func (c *Controller) InstallPackageByUrl(userId int64, url string) (int64, error
 
 }
 
-func (c *Controller) GetPackage(packageId int64) (*dbmodels.Package, error) {
+func (c *Controller) GetPackage(packageId int64) (*dbmodels.InstalledPackage, error) {
 	return c.database.GetPackage(packageId)
 }
 
@@ -165,9 +164,9 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 
 	// Generate the dev token
 	return c.signer.SignPackageDev(&signer.PackageDevClaim{
-		PackageXID: pkg.XID,
-		UserId:     userId,
-		Typeid:     signer.ToekenPackageDev,
+		InstallPackageId: packageId,
+		UserId:           userId,
+		Typeid:           signer.ToekenPackageDev,
 	})
 }
 
@@ -194,17 +193,14 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 
 }
 
-var packageXIDGenerator, _ = nanoid.CustomUnicode("0123456789abcdefghijklmnopqrstuvwxyz", 12)
-
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
-	pxid := packageXIDGenerator()
 
-	packageId, err := database.InstallPackage(userId, file, pxid)
+	installedId, err := database.InstallPackage(userId, file)
 	if err != nil {
 		return 0, err
 	}
 
-	pkg, err := readPackagePotatoManifest(database, packageId)
+	pkg, err := readPackagePotatoManifestFromZip(file)
 	if err != nil {
 		return 0, err
 	}
@@ -215,7 +211,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			continue
 		}
 
-		spaceId, err := installArtifact(database, userId, packageId, pxid, artifact)
+		spaceId, err := installArtifact(database, userId, installedId, artifact)
 		if err != nil {
 			return 0, err
 		}
@@ -224,10 +220,10 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 
 	}
 
-	return packageId, nil
+	return installedId, nil
 }
 
-func installArtifact(database datahub.Database, userId, packageId int64, pxid string, artifact models.PotatoArtifact) (int64, error) {
+func installArtifact(database datahub.Database, userId, installedId int64, artifact models.PotatoArtifact) (int64, error) {
 	routeOptions, err := json.Marshal(artifact.RouteOptions)
 	if err != nil {
 		return 0, err
@@ -239,10 +235,8 @@ func installArtifact(database datahub.Database, userId, packageId int64, pxid st
 	}
 
 	return database.AddSpace(&dbmodels.Space{
-		PackageID:         packageId,
-		PackageXID:        pxid,
+		InstalledId:       installedId,
 		NamespaceKey:      artifact.Namespace,
-		OwnsNamespace:     true,
 		ExecutorType:      artifact.ExecutorType,
 		SubType:           artifact.SubType,
 		RouteOptions:      string(routeOptions),
@@ -256,49 +250,46 @@ func installArtifact(database datahub.Database, userId, packageId int64, pxid st
 	})
 }
 
-func readPackagePotatoManifest(database datahub.Database, packageId int64) (*models.PotatoPackage, error) {
-
-	buf := bytes.Buffer{}
-	err := database.GetPackageFileStreamingByPath(packageId, "", "potato.json", &buf)
+func readPackagePotatoManifestFromZip(zipFile string) (*models.PotatoPackage, error) {
+	zipReader, err := zip.OpenReader(zipFile)
 	if err != nil {
 		return nil, err
 	}
+	defer zipReader.Close()
 
-	pkg := &models.PotatoPackage{}
-	err = json.Unmarshal(buf.Bytes(), pkg)
-	if err != nil {
-		return nil, err
-	}
+	for _, file := range zipReader.File {
+		if file.Name == "potato.json" {
+			jsonFile, err := file.Open()
+			if err != nil {
+				return nil, err
+			}
 
-	return pkg, nil
-}
+			pkg := &models.PotatoPackage{}
+			json.NewDecoder(jsonFile).Decode(&pkg)
+			if err != nil {
+				return nil, err
+			}
 
-func (c *Controller) UpgradePackage(userId int64, file, pxid string, recreateArtifacts bool) (int64, error) {
-
-	packages, err := c.database.ListPackagesByXID(pxid)
-	if err != nil {
-		return 0, err
-	}
-
-	oldPackageId := packages[0].ID
-
-	for _, pkg := range packages {
-		if oldPackageId > pkg.ID {
-			oldPackageId = pkg.ID
+			return pkg, nil
 		}
 	}
 
-	packageId, err := c.database.InstallPackage(userId, file, pxid)
+	return nil, errors.New("potato.json not found")
+}
+
+func (c *Controller) UpgradePackage(userId int64, file string, installedId int64, recreateArtifacts bool) (int64, error) {
+
+	pvid, err := c.database.UpdatePackage(installedId, file)
 	if err != nil {
 		return 0, err
 	}
 
-	pkg, err := readPackagePotatoManifest(c.database, packageId)
+	pkg, err := readPackagePotatoManifestFromZip(file)
 	if err != nil {
 		return 0, err
 	}
 
-	oldSpaces, err := c.database.ListSpacesByPackageId(oldPackageId)
+	oldSpaces, err := c.database.ListSpacesByPackageId(installedId)
 	if err != nil {
 		return 0, err
 	}
@@ -318,7 +309,7 @@ func (c *Controller) UpgradePackage(userId int64, file, pxid string, recreateArt
 		}
 
 		if currentArtifactIndex == -1 {
-			spaceId, err := installArtifact(c.database, userId, packageId, pxid, artifact)
+			spaceId, err := installArtifact(c.database, userId, installedId, artifact)
 			if err != nil {
 				return 0, err
 			}
@@ -341,7 +332,6 @@ func (c *Controller) UpgradePackage(userId int64, file, pxid string, recreateArt
 				}
 
 				c.database.UpdateSpace(oldSpace.ID, map[string]any{
-					"package_id":          packageId,
 					"namespace_key":       artifact.Namespace,
 					"executor_type":       artifact.ExecutorType,
 					"sub_type":            artifact.SubType,
@@ -353,7 +343,7 @@ func (c *Controller) UpgradePackage(userId int64, file, pxid string, recreateArt
 
 			} else {
 				err = c.database.UpdateSpace(oldSpace.ID, map[string]any{
-					"package_id": packageId,
+					"installed_id": installedId,
 				})
 				if err != nil {
 					return 0, err
@@ -367,6 +357,6 @@ func (c *Controller) UpgradePackage(userId int64, file, pxid string, recreateArt
 
 	c.engine.LoadRoutingIndex()
 
-	return packageId, nil
+	return pvid, nil
 
 }

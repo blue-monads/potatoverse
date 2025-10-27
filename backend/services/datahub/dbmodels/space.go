@@ -3,11 +3,8 @@ package dbmodels
 import "time"
 
 type Space struct {
-	ID            int64  `json:"id" db:"id,omitempty"`
-	PackageID     int64  `json:"package_id" db:"package_id,omitempty"`
-	PackageXID    string `json:"package_xid" db:"package_xid,omitempty"`
-	OwnsNamespace bool   `json:"owns_namespace" db:"owns_namespace,omitempty"`
-
+	ID                int64  `json:"id" db:"id,omitempty"`
+	InstalledId       int64  `json:"installed_id" db:"installed_id,omitempty"`
 	NamespaceKey      string `json:"namespace_key" db:"namespace_key,omitempty"`
 	ExecutorType      string `json:"executor_type" db:"executor_type,omitempty"`
 	SubType           string `json:"sub_type" db:"sub_type,omitempty"`

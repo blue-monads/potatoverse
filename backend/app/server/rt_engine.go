@@ -236,15 +236,15 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	tempFile.Close()
 
 	// Upgrade the package
-	packageId, err := a.ctrl.UpgradePackage(claim.UserId, claim.PackageXID, tempFile.Name(), recreateArtifacts)
+	packageId, err := a.ctrl.UpgradePackage(claim.UserId, tempFile.Name(), claim.InstallPackageId, recreateArtifacts)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
 	httpx.WriteJSON(ctx, gin.H{
-		"package_id": packageId,
-		"message":    "package upgraded successfully",
+		"package_version_id": packageId,
+		"message":            "package upgraded successfully",
 	}, nil)
 }
 
