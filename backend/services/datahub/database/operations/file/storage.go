@@ -168,9 +168,21 @@ func (f *FileOperations) streamMultipartBlob(fileID int64, w io.Writer) error {
 	return nil
 }
 
-func (f *FileOperations) getExternalFile(file *FileMeta) ([]byte, error) {
+func (f *FileOperations) getExternalFile(file *FileMeta, w io.Writer) error {
 	filePath := fmt.Sprintf("%s/%d/%d/%s/%s", f.externalFilesPath, file.OwnerID, file.CreatedBy, file.Path, file.Name)
-	return os.ReadFile(filePath)
+	ofile, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+
+	defer ofile.Close()
+
+	_, err = io.Copy(w, ofile)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (f *FileOperations) removeFileContent(file *FileMeta) error {

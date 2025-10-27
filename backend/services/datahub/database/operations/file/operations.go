@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
@@ -16,7 +17,13 @@ func (f *FileOperations) getFileContentByMeta(file *FileMeta) ([]byte, error) {
 	case StoreTypeInline:
 		return f.getInlineBlob(file.ID)
 	case StoreTypeExternal:
-		return f.getExternalFile(file)
+		buf := make([]byte, file.Size)
+		bufWriter := bytes.NewBuffer(buf)
+		err := f.getExternalFile(file, bufWriter)
+		if err != nil {
+			return nil, err
+		}
+		return buf, nil
 	case StoreTypeMultipart:
 		return f.getMultipartBlob(file.ID)
 	default:
@@ -34,12 +41,7 @@ func (f *FileOperations) streamFileByMeta(file *FileMeta, w io.Writer) error {
 		_, err = w.Write(data)
 		return err
 	case StoreTypeExternal:
-		data, err := f.getExternalFile(file)
-		if err != nil {
-			return err
-		}
-		_, err = w.Write(data)
-		return err
+		return f.getExternalFile(file, w)
 	case StoreTypeMultipart:
 		return f.streamMultipartBlob(file.ID, w)
 	default:
