@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS SpaceKV (
   tag1 TEXT NOT NULL DEFAULT '',
   tag2 TEXT NOT NULL DEFAULT '',
   tag3 TEXT NOT NULL DEFAULT '',
-  unique(space_id, "group", key)
+  unique(install_id, "group", key)
 );
 
 

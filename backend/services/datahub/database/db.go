@@ -1,12 +1,15 @@
 package database
 
 import (
+	"bytes"
 	"database/sql"
 	_ "embed"
 	"errors"
 	"log/slog"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/database/file"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/global"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/space"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/user"
@@ -67,7 +70,24 @@ func AutoMigrate(sess upperdb.Session) error {
 
 	if !exists {
 		driver := sess.Driver().(*sql.DB)
-		_, err := driver.Exec(schema)
+
+		buf := bytes.Buffer{}
+
+		pschema := strings.Replace(file.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
+		pschema = strings.Replace(pschema, "FileBlob", "PFileBlob", 1)
+		pschema = strings.Replace(pschema, "FileShares", "PFileShares", 1)
+
+		buf.WriteString(schema)
+		buf.WriteString("\n")
+		buf.WriteString(file.FileSchemaSQL)
+		buf.WriteString("\n")
+		buf.WriteString(pschema)
+
+		fileSchema := buf.String()
+
+		// os.WriteFile("file_schema_patched.sql", []byte(fileSchema), 0644)
+
+		_, err := driver.Exec(fileSchema)
 		if err != nil {
 			sess.Close()
 			return err

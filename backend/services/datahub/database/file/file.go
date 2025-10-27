@@ -1,6 +1,7 @@
 package file
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,9 @@ import (
 
 	"github.com/upper/db/v4"
 )
+
+//go:embed file_schema.sql
+var FileSchemaSQL string
 
 const BlobSizeLimit = 1024 * 1024 * 1
 
