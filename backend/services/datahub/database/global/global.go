@@ -1,15 +1,16 @@
-package database
+package global
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/k0kubun/pp"
 	"github.com/upper/db/v4"
 )
 
-var _ datahub.GlobalOps = (*DB)(nil)
+type GlobalOperations struct {
+	db db.Session
+}
 
-func (d *DB) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) {
+func (d *GlobalOperations) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
 	pp.Println("@1", key, group)
 	var config dbmodels.GlobalConfig
@@ -20,7 +21,7 @@ func (d *DB) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) 
 	return &config, nil
 }
 
-func (d *DB) ListGlobalConfigs(group string, offset int, limit int) ([]dbmodels.GlobalConfig, error) {
+func (d *GlobalOperations) ListGlobalConfigs(group string, offset int, limit int) ([]dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
 	var configs []dbmodels.GlobalConfig
 	err := table.Find(db.Cond{"group": group}).Offset(offset).Limit(limit).All(&configs)
@@ -31,7 +32,7 @@ func (d *DB) ListGlobalConfigs(group string, offset int, limit int) ([]dbmodels.
 	return configs, nil
 }
 
-func (d *DB) AddGlobalConfig(data *dbmodels.GlobalConfig) (int64, error) {
+func (d *GlobalOperations) AddGlobalConfig(data *dbmodels.GlobalConfig) (int64, error) {
 	table := d.globalConfigTable()
 	res, err := table.Insert(data)
 	if err != nil {
@@ -40,23 +41,23 @@ func (d *DB) AddGlobalConfig(data *dbmodels.GlobalConfig) (int64, error) {
 	return res.ID().(int64), nil
 }
 
-func (d *DB) UpdateGlobalConfig(id int64, data map[string]any) error {
+func (d *GlobalOperations) UpdateGlobalConfig(id int64, data map[string]any) error {
 	table := d.globalConfigTable()
 	return table.Find(db.Cond{"id": id}).Update(data)
 }
 
-func (d *DB) UpdateGlobalConfigByKey(key, group string, data map[string]any) error {
+func (d *GlobalOperations) UpdateGlobalConfigByKey(key, group string, data map[string]any) error {
 	table := d.globalConfigTable()
 	return table.Find(db.Cond{"key": key, "group": group}).Update(data)
 }
 
-func (d *DB) DeleteGlobalConfig(id int64) error {
+func (d *GlobalOperations) DeleteGlobalConfig(id int64) error {
 	table := d.globalConfigTable()
 	return table.Find(db.Cond{"id": id}).Delete()
 }
 
 // private
 
-func (d *DB) globalConfigTable() db.Collection {
-	return d.Table("GlobalConfig")
+func (d *GlobalOperations) globalConfigTable() db.Collection {
+	return d.db.Collection("GlobalConfig")
 }

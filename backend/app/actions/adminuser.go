@@ -12,15 +12,15 @@ import (
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]dbmodels.User, error) {
-	return c.database.ListUser(offset, limit)
+	return c.database.GetUserOps().ListUser(offset, limit)
 }
 
 func (c *Controller) AddUser(user *dbmodels.User) (int64, error) {
-	return c.database.AddUser(user)
+	return c.database.GetUserOps().AddUser(user)
 }
 
 func (c *Controller) GetUser(id int64) (*dbmodels.User, error) {
-	usr, err := c.database.GetUser(id)
+	usr, err := c.database.GetUserOps().GetUser(id)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (c *Controller) GetUser(id int64) (*dbmodels.User, error) {
 
 func (c *Controller) ResetUserPassword(id int64) (string, error) {
 
-	user, err := c.database.GetUser(id)
+	user, err := c.database.GetUserOps().GetUser(id)
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +51,7 @@ func (c *Controller) ResetUserPassword(id int64) (string, error) {
 
 	user.Password = password
 
-	err = c.database.UpdateUser(id, map[string]any{
+	err = c.database.GetUserOps().UpdateUser(id, map[string]any{
 		"password": password,
 	})
 	if err != nil {
@@ -62,24 +62,24 @@ func (c *Controller) ResetUserPassword(id int64) (string, error) {
 }
 
 func (c *Controller) DeactivateUser(id int64) error {
-	return c.database.UpdateUser(id, map[string]any{
+	return c.database.GetUserOps().UpdateUser(id, map[string]any{
 		"disabled": true,
 	})
 }
 
 func (c *Controller) ActivateUser(id int64) error {
-	return c.database.UpdateUser(id, map[string]any{
+	return c.database.GetUserOps().UpdateUser(id, map[string]any{
 		"disabled": false,
 	})
 }
 
 func (c *Controller) DeleteUser(id int64) error {
-	return c.database.DeleteUser(id)
+	return c.database.GetUserOps().DeleteUser(id)
 }
 
 func (c *Controller) UpdateUser(id int64, user *dbmodels.User) error {
 
-	return c.database.UpdateUser(id, map[string]any{
+	return c.database.GetUserOps().UpdateUser(id, map[string]any{
 		"name": user.Name,
 		"bio":  user.Bio,
 	})
@@ -88,11 +88,11 @@ func (c *Controller) UpdateUser(id int64, user *dbmodels.User) error {
 // User Invites
 
 func (c *Controller) ListUserInvites(offset int, limit int) ([]dbmodels.UserInvite, error) {
-	return c.database.ListUserInvites(offset, limit)
+	return c.database.GetUserOps().ListUserInvites(offset, limit)
 }
 
 func (c *Controller) GetUserInvite(id int64) (*dbmodels.UserInvite, error) {
-	return c.database.GetUserInvite(id)
+	return c.database.GetUserOps().GetUserInvite(id)
 }
 
 type UserInviteResponse struct {
@@ -101,12 +101,12 @@ type UserInviteResponse struct {
 }
 
 func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy int64) (*UserInviteResponse, error) {
-	existingUser, err := c.database.GetUserByEmail(email)
+	existingUser, err := c.database.GetUserOps().GetUserByEmail(email)
 	if err == nil && existingUser != nil {
 		return nil, easyerr.Error("User with this email already exists")
 	}
 
-	existingInvite, err := c.database.GetUserInviteByEmail(email)
+	existingInvite, err := c.database.GetUserOps().GetUserInviteByEmail(email)
 	if err == nil && existingInvite != nil {
 		return nil, easyerr.Error("Invite for this email already exists")
 	}
@@ -122,7 +122,7 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 		ExpiresOn:     &expiresOn,
 	}
 
-	id, err := c.database.AddUserInvite(invite)
+	id, err := c.database.GetUserOps().AddUserInvite(invite)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 		return nil, err
 	}
 
-	inviteData, err := c.database.GetUserInvite(id)
+	inviteData, err := c.database.GetUserOps().GetUserInvite(id)
 	if err != nil {
 		return nil, err
 	}
@@ -164,15 +164,15 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 }
 
 func (c *Controller) UpdateUserInvite(id int64, data map[string]any) error {
-	return c.database.UpdateUserInvite(id, data)
+	return c.database.GetUserOps().UpdateUserInvite(id, data)
 }
 
 func (c *Controller) DeleteUserInvite(id int64) error {
-	return c.database.DeleteUserInvite(id)
+	return c.database.GetUserOps().DeleteUserInvite(id)
 }
 
 func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
-	invite, err := c.database.GetUserInvite(id)
+	invite, err := c.database.GetUserOps().GetUserInvite(id)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 	// Update expiration to 7 days from now
 	expiresOn := time.Now().Add(7 * 24 * time.Hour)
 
-	err = c.database.UpdateUserInvite(id, map[string]any{
+	err = c.database.GetUserOps().UpdateUserInvite(id, map[string]any{
 		"expires_on": expiresOn,
 		"status":     "pending",
 	})
@@ -212,7 +212,7 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 		return nil, err
 	}
 
-	updatedInvite, err := c.database.GetUserInvite(id)
+	updatedInvite, err := c.database.GetUserOps().GetUserInvite(id)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 
 func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password string) (*dbmodels.User, error) {
 	// Get the invite
-	invite, err := c.database.GetUserInvite(inviteId)
+	invite, err := c.database.GetUserOps().GetUserInvite(inviteId)
 	if err != nil {
 		return nil, easyerr.Error("Invalid invite")
 	}
@@ -241,13 +241,13 @@ func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password s
 	}
 
 	// Check if user already exists by email
-	existingUser, err := c.database.GetUserByEmail(invite.Email)
+	existingUser, err := c.database.GetUserOps().GetUserByEmail(invite.Email)
 	if err == nil && existingUser != nil {
 		return nil, easyerr.Error("User with this email already exists")
 	}
 
 	// Check if username is already taken
-	existingUserByUsername, err := c.database.GetUserByUsername(username)
+	existingUserByUsername, err := c.database.GetUserOps().GetUserByUsername(username)
 	if err == nil && existingUserByUsername != nil {
 		return nil, easyerr.Error("Username is already taken")
 	}
@@ -266,27 +266,27 @@ func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password s
 		OwnerUserId: invite.InvitedBy,
 	}
 
-	userId, err := c.database.AddUser(user)
+	userId, err := c.database.GetUserOps().AddUser(user)
 	if err != nil {
 		return nil, err
 	}
 
 	// Update invite status to accepted
-	err = c.database.UpdateUserInvite(inviteId, map[string]any{
+	err = c.database.GetUserOps().UpdateUserInvite(inviteId, map[string]any{
 		"status": "accepted",
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return c.database.GetUser(userId)
+	return c.database.GetUserOps().GetUser(userId)
 }
 
 // Create User Directly
 
 func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup string, createdBy int64) (*dbmodels.User, error) {
 	// Check if user already exists by email
-	existingUser, err := c.database.GetUserByEmail(email)
+	existingUser, err := c.database.GetUserOps().GetUserByEmail(email)
 	if err == nil && existingUser != nil {
 		return nil, easyerr.Error("User with this email already exists")
 	}
@@ -313,13 +313,13 @@ func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup str
 		IsDeleted:   false,
 	}
 
-	id, err := c.database.AddUser(user)
+	id, err := c.database.GetUserOps().AddUser(user)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the created user
-	createdUser, err := c.database.GetUser(id)
+	createdUser, err := c.database.GetUserOps().GetUser(id)
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@ import (
 
 // GetSelfInfo returns the current user's information
 func (c *Controller) GetSelfInfo(userId int64) (*dbmodels.User, error) {
-	user, err := c.database.GetUser(userId)
+	user, err := c.database.GetUserOps().GetUser(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func (c *Controller) GetSelfInfo(userId int64) (*dbmodels.User, error) {
 
 // UpdateSelfBio updates the current user's bio
 func (c *Controller) UpdateSelfBio(userId int64, bio string) error {
-	return c.database.UpdateUser(userId, map[string]any{
+	return c.database.GetUserOps().UpdateUser(userId, map[string]any{
 		"bio": bio,
 	})
 }

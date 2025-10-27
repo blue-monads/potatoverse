@@ -21,7 +21,7 @@ func (c *Controller) AddNormalUserDirect(name, password, email string) (*dbmodel
 
 func (c *Controller) AddUserDirect(name, password, email, utype string) (*dbmodels.User, error) {
 
-	uid, err := c.database.AddUser(&dbmodels.User{
+	uid, err := c.database.GetUserOps().AddUser(&dbmodels.User{
 		ID:         0,
 		Name:       name,
 		Bio:        "This is a normal user.",
@@ -36,7 +36,7 @@ func (c *Controller) AddUserDirect(name, password, email, utype string) (*dbmode
 		return nil, err
 	}
 
-	return c.database.GetUser(uid)
+	return c.database.GetUserOps().GetUser(uid)
 }
 
 // app fingerprint
@@ -50,7 +50,7 @@ type AppFingerPrint struct {
 
 func (c *Controller) HasFingerprint() (bool, error) {
 
-	config, err := c.database.GetGlobalConfig("fingerprint", "CORE")
+	config, err := c.database.GetGlobalOps().GetGlobalConfig("fingerprint", "CORE")
 	if err != nil {
 		pp.Println(err)
 		if errorMessage := err.Error(); strings.Contains(errorMessage, "upper: no more rows in this result set") {
@@ -77,7 +77,7 @@ func (c *Controller) HasFingerprint() (bool, error) {
 }
 
 func (c *Controller) GetAppFingerPrint() (*AppFingerPrint, error) {
-	config, err := c.database.GetGlobalConfig("fingerprint", "CORE")
+	config, err := c.database.GetGlobalOps().GetGlobalConfig("fingerprint", "CORE")
 	if err != nil {
 
 		return nil, err
@@ -105,7 +105,7 @@ func (c *Controller) SetAppFingerPrint(fingerPrint *AppFingerPrint) error {
 		Value:     string(data),
 	}
 
-	_, err = c.database.AddGlobalConfig(config)
+	_, err = c.database.GetGlobalOps().AddGlobalConfig(config)
 	if err != nil {
 		return err
 	}

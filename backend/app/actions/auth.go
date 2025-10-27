@@ -27,7 +27,7 @@ func (c *Controller) Login(opts *LoginOpts) (*LoginResponse, error) {
 	var user *dbmodels.User
 
 	if strings.Contains(opts.Username, "@") {
-		_user, err := c.database.GetUserByEmail(opts.Username)
+		_user, err := c.database.GetUserOps().GetUserByEmail(opts.Username)
 		if err != nil {
 			return nil, err
 		}

@@ -178,12 +178,12 @@ func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
 		return nil, errors.New("space not found")
 	}
 
-	space, err := e.db.GetSpace(ri.spaceId)
+	space, err := e.db.GetSpaceOps().GetSpace(ri.spaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	pkg, err := e.db.GetPackageVersion(space.InstalledId)
+	pkg, err := e.db.GetPackageInstallOps().GetPackageVersion(space.InstalledId)
 	if err != nil {
 		return nil, err
 	}

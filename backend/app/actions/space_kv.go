@@ -38,13 +38,13 @@ func (c *Controller) CreateSpaceKV(spaceId int64, data map[string]any) (*dbmodel
 		Tag3:    tag3,
 	}
 
-	err := c.database.AddSpaceKV(spaceId, kv)
+	err := c.database.GetSpaceKVOps().AddSpaceKV(spaceId, kv)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the created KV entry
-	return c.database.GetSpaceKV(spaceId, groupName, key)
+	return c.database.GetSpaceKVOps().GetSpaceKV(spaceId, groupName, key)
 }
 
 func (c *Controller) UpdateSpaceKVByID(spaceId, kvId int64, data map[string]any) (*dbmodels.SpaceKV, error) {
@@ -55,13 +55,13 @@ func (c *Controller) UpdateSpaceKVByID(spaceId, kvId int64, data map[string]any)
 	}
 
 	// Update using group and key
-	err = c.database.UpdateSpaceKV(spaceId, kv.Group, kv.Key, data)
+	err = c.database.GetSpaceKVOps().UpdateSpaceKV(spaceId, kv.Group, kv.Key, data)
 	if err != nil {
 		return nil, err
 	}
 
 	// Return updated entry
-	return c.database.GetSpaceKV(spaceId, kv.Group, kv.Key)
+	return c.database.GetSpaceKVOps().GetSpaceKV(spaceId, kv.Group, kv.Key)
 }
 
 func (c *Controller) DeleteSpaceKVByID(spaceId, kvId int64) error {
@@ -71,20 +71,20 @@ func (c *Controller) DeleteSpaceKVByID(spaceId, kvId int64) error {
 		return err
 	}
 
-	return c.database.RemoveSpaceKV(spaceId, kv.Group, kv.Key)
+	return c.database.GetSpaceKVOps().RemoveSpaceKV(spaceId, kv.Group, kv.Key)
 }
 
 func (c *Controller) GetSpace(spaceId int64) (*dbmodels.Space, error) {
-	return c.database.GetSpace(spaceId)
+	return c.database.GetSpaceOps().GetSpace(spaceId)
 }
 
 func (c *Controller) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error) {
-	return c.database.QuerySpaceKV(spaceId, cond)
+	return c.database.GetSpaceKVOps().QuerySpaceKV(spaceId, cond)
 }
 
 func (c *Controller) GetSpaceKVByID(spaceId, kvId int64) (*dbmodels.SpaceKV, error) {
 	// First get all KV entries for the space and find by ID
-	kvEntries, err := c.database.QuerySpaceKV(spaceId, map[any]any{})
+	kvEntries, err := c.database.GetSpaceKVOps().QuerySpaceKV(spaceId, map[any]any{})
 	if err != nil {
 		return nil, err
 	}

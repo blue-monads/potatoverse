@@ -151,5 +151,5 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 }
 
 func BindsKV(spaceId int64, handle *executors.EHandle) func(L *lua.LState) int {
-	return bindsKV(spaceId, handle.App.Database())
+	return bindsKV(spaceId, handle.App.Database().GetSpaceKVOps())
 }

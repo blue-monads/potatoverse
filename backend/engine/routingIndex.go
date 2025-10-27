@@ -38,7 +38,7 @@ func (e *Engine) LoadRoutingIndex() error {
 
 	nextRoutingIndex := make(map[string]*SpaceRouteIndexItem)
 
-	spaces, err := e.db.ListSpaces()
+	spaces, err := e.db.GetSpaceOps().ListSpaces()
 	if err != nil {
 		return err
 	}

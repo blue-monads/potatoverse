@@ -1,11 +1,11 @@
-package database
+package space
 
 import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
-func (d *DB) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error) {
+func (d *SpaceOperations) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
 
@@ -18,7 +18,7 @@ func (d *DB) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, 
 	return datas, nil
 }
 
-func (d *DB) AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) error {
+func (d *SpaceOperations) AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) error {
 	table := d.spaceKVTable()
 	_, err := table.Insert(data)
 	if err != nil {
@@ -27,7 +27,7 @@ func (d *DB) AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) error {
 	return nil
 }
 
-func (d *DB) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.SpaceKV, error) {
+func (d *SpaceOperations) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	data := &dbmodels.SpaceKV{}
 	err := table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).One(data)
@@ -37,7 +37,7 @@ func (d *DB) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.Spac
 	return data, nil
 }
 
-func (d *DB) GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error) {
+func (d *SpaceOperations) GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
 	err := table.Find(db.Cond{"space_id": spaceId, "group": group}).Offset(offset).Limit(limit).All(&datas)
@@ -47,12 +47,12 @@ func (d *DB) GetSpaceKVByGroup(spaceId int64, group string, offset int, limit in
 	return datas, nil
 }
 
-func (d *DB) UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error {
+func (d *SpaceOperations) UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
 	return table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).Update(data)
 }
 
-func (d *DB) UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error {
+func (d *SpaceOperations) UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
 	cond := db.Cond{"space_id": spaceId, "group": group, "key": key}
 
@@ -79,11 +79,11 @@ func (d *DB) UpsertSpaceKV(spaceId int64, group, key string, data map[string]any
 
 }
 
-func (d *DB) RemoveSpaceKV(spaceId int64, group string, key string) error {
+func (d *SpaceOperations) RemoveSpaceKV(spaceId int64, group string, key string) error {
 	table := d.spaceKVTable()
 	return table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).Delete()
 }
 
-func (d *DB) spaceKVTable() db.Collection {
-	return d.Table("SpaceKV")
+func (d *SpaceOperations) spaceKVTable() db.Collection {
+	return d.db.Collection("SpaceKV")
 }

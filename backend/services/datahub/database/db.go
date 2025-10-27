@@ -6,7 +6,10 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/database/operations/user"
+	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/database/global"
+	"github.com/blue-monads/turnix/backend/services/datahub/database/space"
+	"github.com/blue-monads/turnix/backend/services/datahub/database/user"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -20,7 +23,9 @@ type DB struct {
 	externalFileMode     bool
 	minFileMultiPartSize int64
 
-	userOps *user.UserOperations
+	userOps   *user.UserOperations
+	globalOps *global.GlobalOperations
+	spaceOps  *space.SpaceOperations
 }
 
 const (
@@ -141,4 +146,24 @@ const ErrText = "upper: no more rows in this result set"
 
 func (db *DB) IsEmptyRowsError(err error) bool {
 	return err.Error() == ErrText
+}
+
+func (db *DB) GetGlobalOps() datahub.GlobalOps {
+	return nil
+}
+
+func (db *DB) GetUserOps() datahub.UserOps {
+	return db.userOps
+}
+
+func (db *DB) GetSpaceOps() datahub.SpaceOps {
+	return db.spaceOps
+}
+
+func (db *DB) GetSpaceKVOps() datahub.SpaceKVOps {
+	return nil
+}
+
+func (db *DB) GetPackageInstallOps() datahub.PackageInstallOps {
+	return nil
 }

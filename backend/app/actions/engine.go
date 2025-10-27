@@ -27,12 +27,12 @@ type InstalledSpace struct {
 
 func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
 
-	ownspaces, err := c.database.ListOwnSpaces(userId, "")
+	ownspaces, err := c.database.GetSpaceOps().ListOwnSpaces(userId, "")
 	if err != nil {
 		return nil, err
 	}
 
-	tpSpaces, err := c.database.ListThirdPartySpaces(userId, "")
+	tpSpaces, err := c.database.GetSpaceOps().ListThirdPartySpaces(userId, "")
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		installedIds = append(installedIds, space.InstalledId)
 	}
 
-	packages, err := c.database.ListPackageVersionByIds(installedIds)
+	packages, err := c.database.GetPackageInstallOps().ListPackageVersionByIds(installedIds)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *Controller) GetEngineDebugData() map[string]any {
 }
 
 func (c *Controller) DeletePackage(userId int64, packageId int64) error {
-	pkg, err := c.database.GetPackage(packageId)
+	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (c *Controller) DeletePackage(userId int64, packageId int64) error {
 		return errors.New("you are not the owner of this package")
 	}
 
-	return c.database.DeletePackage(packageId)
+	return c.database.GetPackageInstallOps().DeletePackage(packageId)
 
 }
 
@@ -102,13 +102,13 @@ type SpaceAuth struct {
 
 func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error) {
 
-	space, err := c.database.GetSpace(req.SpaceId)
+	space, err := c.database.GetSpaceOps().GetSpace(req.SpaceId)
 	if err != nil {
 		return "", err
 	}
 
 	if space.OwnerID != userId {
-		_, err := c.database.GetSpaceUserScope(userId, req.SpaceId)
+		_, err := c.database.GetSpaceOps().GetSpaceUserScope(userId, req.SpaceId)
 		if err != nil {
 			return "", errors.New("you are not authorized to access this space")
 		}
@@ -148,12 +148,12 @@ func (c *Controller) InstallPackageByUrl(userId int64, url string) (int64, error
 }
 
 func (c *Controller) GetPackage(packageId int64) (*dbmodels.InstalledPackage, error) {
-	return c.database.GetPackage(packageId)
+	return c.database.GetPackageInstallOps().GetPackage(packageId)
 }
 
 func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (string, error) {
 	// Verify the user owns the package
-	pkg, err := c.database.GetPackage(packageId)
+	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
 	if err != nil {
 		return "", err
 	}
@@ -195,7 +195,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
 
-	installedId, err := database.InstallPackage(userId, file)
+	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, file)
 	if err != nil {
 		return 0, err
 	}
@@ -234,7 +234,7 @@ func installArtifact(database datahub.Database, userId, installedId int64, artif
 		return 0, err
 	}
 
-	return database.AddSpace(&dbmodels.Space{
+	return database.GetSpaceOps().AddSpace(&dbmodels.Space{
 		InstalledId:       installedId,
 		NamespaceKey:      artifact.Namespace,
 		ExecutorType:      artifact.ExecutorType,
@@ -279,7 +279,7 @@ func readPackagePotatoManifestFromZip(zipFile string) (*models.PotatoPackage, er
 
 func (c *Controller) UpgradePackage(userId int64, file string, installedId int64, recreateArtifacts bool) (int64, error) {
 
-	pvid, err := c.database.UpdatePackage(installedId, file)
+	pvid, err := c.database.GetPackageInstallOps().UpdatePackage(installedId, file)
 	if err != nil {
 		return 0, err
 	}
@@ -289,7 +289,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return 0, err
 	}
 
-	oldSpaces, err := c.database.ListSpacesByPackageId(installedId)
+	oldSpaces, err := c.database.GetSpaceOps().ListSpacesByPackageId(installedId)
 	if err != nil {
 		return 0, err
 	}
@@ -331,7 +331,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					return 0, err
 				}
 
-				c.database.UpdateSpace(oldSpace.ID, map[string]any{
+				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
 					"namespace_key":       artifact.Namespace,
 					"executor_type":       artifact.ExecutorType,
 					"sub_type":            artifact.SubType,
@@ -342,7 +342,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 				})
 
 			} else {
-				err = c.database.UpdateSpace(oldSpace.ID, map[string]any{
+				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
 					"installed_id": installedId,
 				})
 				if err != nil {

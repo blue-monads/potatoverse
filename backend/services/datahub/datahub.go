@@ -7,11 +7,11 @@ import (
 
 type Database interface {
 	Core
-	GlobalOps
-	UserOps
-	SpaceOps
-	SpaceKVOps
-	PackageInstallOps
+	GetGlobalOps() GlobalOps
+	GetUserOps() UserOps
+	GetSpaceOps() SpaceOps
+	GetSpaceKVOps() SpaceKVOps
+	GetPackageInstallOps() PackageInstallOps
 }
 
 type Core interface {
