@@ -44,9 +44,11 @@ func (d *UserOperations) ListUserGroups() ([]dbmodels.UserGroup, error) {
 }
 
 func (d *UserOperations) UpdateUserGroup(name string, info string) error {
-	return d.userGroupTable().Find(db.Cond{"name": name}).Update(map[string]any{
-		"info": info,
-	})
+	return d.userGroupTable().
+		Find(db.Cond{"name": name}).
+		Update(map[string]any{
+			"info": info,
+		})
 }
 
 func (d *UserOperations) DeleteUserGroup(name string) error {
