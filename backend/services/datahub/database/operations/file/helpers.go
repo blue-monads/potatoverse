@@ -16,31 +16,19 @@ func (f *FileOperations) fileExists(ownerID int64, path string, name string) (bo
 }
 
 func (f *FileOperations) fileMetaTable() db.Collection {
-	if f.context.Type == "space" {
-		return f.db.Collection("Files")
-	}
-	return f.db.Collection("PackageFiles")
+	return f.db.Collection(f.getTableName())
 }
 
 func (f *FileOperations) fileBlobTable() db.Collection {
-	if f.context.Type == "space" {
-		return f.db.Collection("FilePartedBlobs")
-	}
-	return f.db.Collection("PackageFileBlobs")
+	return f.db.Collection(f.getBlobTableName())
 }
 
 func (f *FileOperations) getTableName() string {
-	if f.context.Type == "space" {
-		return "Files"
-	}
-	return "PackageFiles"
+	return f.prefix + "FileMeta"
 }
 
 func (f *FileOperations) getBlobTableName() string {
-	if f.context.Type == "space" {
-		return "FilePartedBlobs"
-	}
-	return "PackageFileBlobs"
+	return f.prefix + "FileBlob"
 }
 
 func (f *FileOperations) readFileHash(file *os.File, hash hash.Hash) error {

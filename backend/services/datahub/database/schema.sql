@@ -165,35 +165,6 @@ CREATE TABLE IF NOT EXISTS SpaceResources (
 
 -- files
 
-CREATE TABLE IF NOT EXISTS Files (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, 
-  name TEXT NOT NULL DEFAULT '', 
-  is_folder BOOLEAN NOT NULL DEFAULT FALSE,
-  path TEXT NOT NULL DEFAULT '', 
-  size INTEGER NOT NULL DEFAULT 0, 
-  mime TEXT NOT NULL DEFAULT '', 
-  hash TEXT NOT NULL DEFAULT '',
-  storeType INTEGER NOT NULL DEFAULT 0, -- 0: inline_blob, 1: external_blob, 2: mulit_part_blob
-  preview BLOB, 
-  blob BLOB,
-  external BOOLEAN NOT NULL DEFAULT FALSE,
-  owner_space_id INTEGER NOT NULL DEFAULT 0,
-  created_by INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (owner_space_id, path, name)
-);
-
-
-
-CREATE TABLE IF NOT EXISTS FilePartedBlobs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  file_id INTEGER NOT NULL,
-  size INTEGER NOT NULL,
-  part_id INTEGER NOT NULL,
-  blob BLOB NOT NULL
-);
-
-
 
 CREATE TABLE IF NOT EXISTS FileShares (
   id TEXT PRIMARY KEY,
@@ -203,58 +174,3 @@ CREATE TABLE IF NOT EXISTS FileShares (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- packages
-
-
-
-
-
-CREATE TABLE IF NOT EXISTS Packages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  xid TEXT NOT NULL DEFAULT '',
-  name TEXT NOT NULL DEFAULT '',
-  slug TEXT NOT NULL DEFAULT '',
-  info TEXT NOT NULL DEFAULT '',
-  tags TEXT NOT NULL DEFAULT '',
-  format_version TEXT NOT NULL DEFAULT '',
-  author_name TEXT NOT NULL DEFAULT '',
-  author_email TEXT NOT NULL DEFAULT '',
-  author_site TEXT NOT NULL DEFAULT '',
-  source_code TEXT NOT NULL DEFAULT '',
-  license TEXT NOT NULL DEFAULT '',
-  version TEXT NOT NULL DEFAULT '',
-  update_url TEXT NOT NULL DEFAULT '',
-
-  storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
-  installed_by INTEGER NOT NULL DEFAULT 0,
-  installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP  
-
-);
-
-
-CREATE TABLE IF NOT EXISTS PackageFiles (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  package_id INTEGER NOT NULL,
-  name TEXT NOT NULL DEFAULT '', 
-  is_folder BOOLEAN NOT NULL DEFAULT FALSE,
-  path TEXT NOT NULL DEFAULT '', 
-  size INTEGER NOT NULL DEFAULT 0, 
-  mime TEXT NOT NULL DEFAULT '', 
-  hash TEXT NOT NULL DEFAULT '',
-  store_type INTEGER NOT NULL DEFAULT 0, -- 0: inline_blob, 1: external_blob, 2: mulit_part_blob
-  blob BLOB,
-  created_by INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (package_id, path, name)
-);
-
-
-CREATE TABLE IF NOT EXISTS PackageFileBlobs (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  file_id INTEGER NOT NULL,
-  size INTEGER NOT NULL,
-  part_id INTEGER NOT NULL,
-  blob BLOB NOT NULL
-);
-
---  events

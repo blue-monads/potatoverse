@@ -65,19 +65,27 @@ type CreateFileRequest struct {
 
 type FileOperations struct {
 	db                db.Session
-	context           FileContext
 	minMultiPartSize  int64
 	externalFileMode  bool
 	externalFilesPath string
+	prefix            string
 }
 
-func NewFileOperations(db db.Session, context FileContext, minMultiPartSize int64, externalFileMode bool, externalFilesPath string) *FileOperations {
+type Options struct {
+	DbSess            db.Session
+	MinMultiPartSize  int64
+	ExternalFileMode  bool
+	ExternalFilesPath string
+	Prefix            string
+}
+
+func NewFileOperations(opts Options) *FileOperations {
 	return &FileOperations{
-		db:                db,
-		context:           context,
-		minMultiPartSize:  minMultiPartSize,
-		externalFileMode:  externalFileMode,
-		externalFilesPath: externalFilesPath,
+		db:                opts.DbSess,
+		minMultiPartSize:  opts.MinMultiPartSize,
+		externalFileMode:  opts.ExternalFileMode,
+		externalFilesPath: opts.ExternalFilesPath,
+		prefix:            opts.Prefix,
 	}
 }
 
@@ -277,20 +285,4 @@ func (f *FileOperations) UpdateFileMeta(ownerID int64, id int64, data map[string
 		"id":       id,
 		"owner_id": ownerID,
 	}).Update(data)
-}
-
-type FileOperationInterface interface {
-	CreateFile(req *CreateFileRequest, stream io.Reader) (int64, error)
-	CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error)
-	GetFileMeta(id int64) (*FileMeta, error)
-	GetFileMetaByPath(ownerID int64, path string, name string) (*FileMeta, error)
-	ListFiles(ownerID int64, path string) ([]FileMeta, error)
-	GetFileContent(ownerID int64, id int64) ([]byte, error)
-	GetFileContentByPath(ownerID int64, path string, name string) ([]byte, error)
-	StreamFile(ownerID int64, id int64, w io.Writer) error
-	StreamFileByPath(ownerID int64, path string, name string, w io.Writer) error
-	StreamFileToHTTP(ownerID int64, id int64, w http.ResponseWriter) error
-	UpdateFile(ownerID int64, id int64, stream io.Reader) error
-	RemoveFile(ownerID int64, id int64) error
-	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
 }
