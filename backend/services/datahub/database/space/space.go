@@ -204,24 +204,6 @@ func (d *SpaceOperations) RemoveSpaceConfig(spaceId int64, uid int64, id int64) 
 	return d.spaceConfigsTable().Find(db.Cond{"space_id": spaceId, "id": id}).Delete()
 }
 
-// space ops
-
-func (d *SpaceOperations) ListSpaceTables(spaceId int64) ([]string, error) {
-	return nil, nil
-}
-
-func (d *SpaceOperations) ListSpaceTableColumns(spaceId int64, table string) ([]dbmodels.SpaceTableColumn, error) {
-	return nil, nil
-}
-
-func (d *SpaceOperations) RunSpaceSQLQuery(spaceId int64, query string, data []any) ([]map[string]any, error) {
-	return nil, nil
-}
-
-func (d *SpaceOperations) RunSpaceDDL(spaceId int64, ddl string) error {
-	return nil
-}
-
 // private
 
 func (d *SpaceOperations) spaceConfigsTable() db.Collection {
