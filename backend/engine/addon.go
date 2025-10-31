@@ -75,6 +75,15 @@ func (gh *AddOnHub) List(spaceId int64) ([]string, error) {
 	return keys, nil
 }
 
+func (gh *AddOnHub) Methods(spaceId int64, gname string) ([]string, error) {
+	gs, err := gh.get(gname, spaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	return gs.List()
+}
+
 func (gh *AddOnHub) GetMeta(spaceId int64, gname, method string) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {

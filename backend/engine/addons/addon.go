@@ -5,6 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Hub interface {
+	List(spaceId int64) ([]string, error)
+	GetMeta(spaceId int64, gname, method string) (map[string]any, error)
+	Execute(spaceId int64, gname, method string, params LazyData) (map[string]any, error)
+	Methods(spaceId int64, gname string) ([]string, error)
+}
+
 type LazyData interface {
 	AsMap() (map[string]any, error)
 	// AsJSON struct target
