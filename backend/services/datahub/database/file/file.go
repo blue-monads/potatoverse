@@ -34,7 +34,6 @@ type FileBlobLite struct {
 type FileOperations struct {
 	db                db.Session
 	minMultiPartSize  int64
-	externalFileMode  bool
 	externalFilesPath string
 	prefix            string
 	storeType         int64
@@ -43,7 +42,6 @@ type FileOperations struct {
 type Options struct {
 	DbSess            db.Session
 	MinMultiPartSize  int64
-	ExternalFileMode  bool
 	ExternalFilesPath string
 	Prefix            string
 	StoreType         int64
@@ -53,7 +51,6 @@ func NewFileOperations(opts Options) *FileOperations {
 	return &FileOperations{
 		db:                opts.DbSess,
 		minMultiPartSize:  opts.MinMultiPartSize,
-		externalFileMode:  opts.ExternalFileMode,
 		externalFilesPath: opts.ExternalFilesPath,
 		prefix:            opts.Prefix,
 		storeType:         opts.StoreType,
@@ -81,13 +78,7 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 		Size:      0,
 	}
 
-	if f.storeType == 0 {
-		if f.externalFileMode {
-			fileMeta.StoreType = StoreTypeExternal
-		} else {
-			fileMeta.StoreType = StoreTypeInline
-		}
-	}
+	fileMeta.StoreType = StoreTypeInline
 
 	rid, err := f.fileMetaTable().Insert(fileMeta)
 	if err != nil {

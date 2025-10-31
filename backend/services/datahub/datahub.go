@@ -72,7 +72,7 @@ type UserOps interface {
 }
 
 type PackageInstallOps interface {
-	InstallPackage(userId int64, file string) (int64, error)
+	InstallPackage(userId int64, repo, filePath string) (int64, error)
 	GetPackage(id int64) (*dbmodels.InstalledPackage, error)
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, file string) (int64, error)

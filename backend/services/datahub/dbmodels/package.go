@@ -15,6 +15,7 @@ type InstalledPackage struct {
 
 type PackageVersion struct {
 	ID            int64  `json:"id" db:"id,omitempty"`
+	InstallId     int64  `json:"install_id" db:"install_id"`
 	Name          string `json:"name" db:"name"`
 	Slug          string `json:"slug" db:"slug"`
 	Info          string `json:"info" db:"info,omitempty"`

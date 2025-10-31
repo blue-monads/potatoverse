@@ -24,7 +24,6 @@ var schema string
 
 type DB struct {
 	sess                 upperdb.Session
-	externalFileMode     bool
 	minFileMultiPartSize int64
 
 	userOps           *user.UserOperations
@@ -67,24 +66,20 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 	fileOps := fileops.NewFileOperations(fileops.Options{
 		DbSess:           sess,
 		MinMultiPartSize: 1024 * 1024 * 8,
-		ExternalFileMode: false,
-		Prefix:           "file",
-		StoreType:        0,
+		StoreType:        fileops.StoreTypeMultipart,
 	})
 
 	packageFileOps := fileops.NewFileOperations(fileops.Options{
 		DbSess:           sess,
 		MinMultiPartSize: 1024 * 1024 * 8,
-		ExternalFileMode: false,
 		Prefix:           "P",
-		StoreType:        2,
+		StoreType:        fileops.StoreTypeMultipart,
 	})
 
 	packageInstallOps := ppackage.NewPackageInstallOperations(sess)
 
 	return &DB{
 		sess:                 sess,
-		externalFileMode:     false,
 		minFileMultiPartSize: 1024 * 1024 * 8,
 		userOps:              user.NewUserOperations(sess),
 		globalOps:            globalOps,
@@ -141,17 +136,14 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 	fileOps := fileops.NewFileOperations(fileops.Options{
 		DbSess:           sess,
 		MinMultiPartSize: 1024 * 1024 * 8,
-		ExternalFileMode: false,
-		Prefix:           "file",
-		StoreType:        0,
+		StoreType:        fileops.StoreTypeMultipart,
 	})
 
 	packageFileOps := fileops.NewFileOperations(fileops.Options{
 		DbSess:           sess,
 		MinMultiPartSize: 1024 * 1024 * 8,
-		ExternalFileMode: false,
-		Prefix:           "package",
-		StoreType:        2,
+		Prefix:           "P",
+		StoreType:        fileops.StoreTypeMultipart,
 	})
 
 	packageInstallOps := ppackage.NewPackageInstallOperations(sess)
@@ -162,7 +154,6 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 
 	return &DB{
 		sess:                 sess,
-		externalFileMode:     false,
 		minFileMultiPartSize: 1024 * 1024 * 8,
 		userOps:              user.NewUserOperations(sess),
 		globalOps:            globalOps,

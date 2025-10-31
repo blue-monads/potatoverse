@@ -3,9 +3,12 @@ package ppackage
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/database/file"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/upper/db/v4"
 )
 
@@ -19,29 +22,22 @@ func NewPackageInstallOperations(db db.Session) *PackageInstallOperations {
 	}
 }
 
-func (d *PackageInstallOperations) InstallPackage(userId int64, filePath string) (int64, error) {
-	_ = time.Now()
-
-	// Read file and calculate size
-	_, err := os.Stat(filePath)
+func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath string) (int64, error) {
+	pkgManifest, err := xutils.ReadPackageManifestFromZip(filePath)
 	if err != nil {
 		return 0, err
 	}
 
-	// Read file content
-	content, err := os.ReadFile(filePath)
-	if err != nil {
-		return 0, err
-	}
+	t := time.Now()
 
 	// Create InstalledPackage record
 	installedPackage := &dbmodels.InstalledPackage{
-		Name:            filepath.Base(filePath),
-		InstallRepo:     "",
-		UpdateUrl:       "",
-		StorageType:     "file-zip",
-		ActiveInstallID: 0,
+		Name:            pkgManifest.Name,
+		InstallRepo:     repo,
+		UpdateUrl:       pkgManifest.UpdateUrl,
+		ActiveInstallID: userId,
 		InstalledBy:     userId,
+		InstalledAt:     &t,
 	}
 
 	// Insert package
@@ -50,15 +46,22 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, filePath string)
 		return 0, err
 	}
 
-	packageId := result.ID().(int64)
+	installId := result.ID().(int64)
 
 	// Create a version entry
 	version := &dbmodels.PackageVersion{
-		Name:    filepath.Base(filePath),
-		Slug:    "",
-		Info:    "",
-		Tags:    "",
-		Version: "1.0.0",
+		InstallId:     installId,
+		Name:          pkgManifest.Name,
+		Slug:          pkgManifest.Slug,
+		Info:          pkgManifest.Info,
+		Tags:          strings.Join(pkgManifest.Tags, ","),
+		Version:       pkgManifest.Version,
+		FormatVersion: pkgManifest.FormatVersion,
+		AuthorName:    pkgManifest.AuthorName,
+		AuthorEmail:   pkgManifest.AuthorEmail,
+		AuthorSite:    pkgManifest.AuthorSite,
+		SourceCode:    pkgManifest.SourceCode,
+		License:       pkgManifest.License,
 	}
 
 	versionResult, err := d.packageVersionsTable().Insert(version)
@@ -68,21 +71,23 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, filePath string)
 
 	versionId := versionResult.ID().(int64)
 
-	// Update the package with active install id
-	err = d.installedPackagesTable().Find(db.Cond{"id": packageId}).Update(map[string]any{
+	pFileOps := file.NewFileOperations(file.Options{
+		DbSess:           d.db,
+		MinMultiPartSize: 1024 * 1024 * 8,
+		Prefix:           "P",
+		StoreType:        2,
+	})
+
+	_ = pFileOps
+
+	err = d.installedPackagesTable().Find(db.Cond{"id": installId}).Update(map[string]any{
 		"active_install_id": versionId,
 	})
 	if err != nil {
 		return 0, err
 	}
 
-	// Store the file content if needed (in a file storage system)
-	// For now, we'll just return the package ID
-	_ = content
-
-	// TODO: Store actual file content in package file storage
-
-	return packageId, nil
+	return installId, nil
 }
 
 func (d *PackageInstallOperations) GetPackage(id int64) (*dbmodels.InstalledPackage, error) {
