@@ -97,11 +97,12 @@ func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	pp.Println("@static name", name)
 	pp.Println("@static path", path)
 
-	// err := e.db.GetPackageFileStreamingByPath(indexItem.packageId, path, name, ctx.Writer)
-	// if err != nil {
-	// 	ctx.JSON(404, gin.H{"error": "file not found"})
-	// 	return
-	// }
+	pFileOps := e.db.GetPackageFileOps()
+	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx.Writer)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
 }
 
 func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
