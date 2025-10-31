@@ -109,7 +109,7 @@ func (e *Engine) LoadRoutingIndex() error {
 		if routeOptions.RouterType == "dynamic" {
 			indexItem.compiledTemplates = make(map[string]*template.Template)
 
-			tempFolder, err := e.copyFolderToTemp(space.InstalledId, routeOptions.TemplateFolder)
+			tempFolder, err := e.copyFolderToTemp(packageVersion.ID, routeOptions.TemplateFolder)
 			if err != nil {
 				return err
 			}
@@ -153,94 +153,176 @@ func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
 	return e.RoutingIndex[spaceKey]
 }
 
-func (e *Engine) copyFolderToTemp(installedId int64, folder string) (string, error) {
+func (e *Engine) copyFolderToTemp(packageVersionId int64, folder string) (string, error) {
 
-	tempFolder := path.Join(os.TempDir(), "turnix", "packages", strconv.FormatInt(installedId, 10))
+	tempFolder := path.Join(os.TempDir(), "turnix", "packages", strconv.FormatInt(packageVersionId, 10))
 
 	os.MkdirAll(tempFolder, 0755)
 
-	folderName := ""
-	pathName := ""
-	if strings.Contains(folder, "/") {
-		folderName = filepath.Base(folder)
-		pathName = filepath.Dir(folder)
-	} else {
-		folderName = folder
-		pathName = ""
+	// Normalize the folder path
+	folder = strings.TrimSuffix(folder, "/")
+	folder = strings.TrimPrefix(folder, "/")
+
+	pp.Println("@folder", folder)
+
+	fileOps := e.db.GetPackageFileOps()
+
+	// List all files in this folder path
+	// Note: folders aren't explicitly stored, so we list files by path
+	files, err := fileOps.ListFiles(packageVersionId, folder)
+	if err != nil {
+		pp.Println("@err/1", err)
+		return "", fmt.Errorf("failed to list files: %w", err)
 	}
 
-	pp.Println("@folderName", folderName)
-	pp.Println("@pathName", pathName)
+	if len(files) == 0 {
+		e.logger.Warn("no files found in template folder", "package_version_id", packageVersionId, "folder", folder)
+	}
 
-	// folderFile, err := e.db.GetPackageFileMetaByPath(packageId, pathName, folderName)
-	// if err != nil {
-	// 	pp.Println("@err/1", err)
-	// 	return "", err
-	// }
+	// Create target directory
+	folderName := filepath.Base(folder)
+	if folderName == "." || folderName == "" {
+		folderName = folder
+		if folderName == "" {
+			folderName = "root"
+		}
+	}
+	targetPath := path.Join(tempFolder, folderName)
+	os.MkdirAll(targetPath, 0755)
 
-	// err = copyFolder(e.db, tempFolder, folderFile)
-	// if err != nil {
-	// 	pp.Println("@err/2", err)
-	// 	return "", err
-	// }
+	// Copy all files (handle recursive copying for subdirectories)
+	err = e.copyFilesRecursive(fileOps, packageVersionId, files, folder, targetPath)
+	if err != nil {
+		pp.Println("@err/2", err)
+		return "", fmt.Errorf("failed to copy files: %w", err)
+	}
 
-	return path.Join(tempFolder, folderName), nil
+	return targetPath, nil
 }
 
-func copyFolder(db datahub.Database, basePath string, folder *dbmodels.FileMeta) error {
+func (e *Engine) copyFilesRecursive(fileOps datahub.FileOps, packageVersionId int64, files []dbmodels.FileMeta, sourceFolderPath string, targetBasePath string) error {
 
-	pp.Println("@copyFolder/1", basePath, folder.Path)
+	pp.Println("@copyFilesRecursive/1", targetBasePath, "sourceFolder:", sourceFolderPath, "files:", len(files))
 
-	// files, err := db.ListPackageFilesByPath(folder.OwnerID, folder.Name)
-	// if err != nil {
-	// 	pp.Println("@err/3", err)
-	// 	return err
-	// }
+	for _, file := range files {
+		pp.Println("@file", file.Name, "path:", file.Path, "is_folder:", file.IsFolder)
 
-	// pp.Println("@copyFolder/2", files)
+		// Skip folder entries (if any exist)
+		if file.IsFolder {
+			// Recurse into subfolder by listing files in it
+			subfolderPath := path.Join(file.Path, file.Name)
+			subfiles, err := fileOps.ListFiles(packageVersionId, subfolderPath)
+			if err != nil {
+				e.logger.Warn("failed to list subfolder files", "error", err, "subfolder_path", subfolderPath)
+				continue
+			}
+			targetSubfolderPath := path.Join(targetBasePath, file.Name)
+			err = e.copyFilesRecursive(fileOps, packageVersionId, subfiles, subfolderPath, targetSubfolderPath)
+			if err != nil {
+				return err
+			}
+			continue
+		}
 
-	// for _, file := range files {
-	// 	pp.Println("@file", file.Name)
-	// 	if file.IsFolder {
-	// 		continue
-	// 	}
+		// Calculate target file path
+		// Files in the source folder will have Path == sourceFolderPath
+		// We need to preserve any subdirectory structure
+		var targetFilePath string
+		if file.Path == sourceFolderPath {
+			// File is directly in the source folder
+			targetFilePath = path.Join(targetBasePath, file.Name)
+		} else if strings.HasPrefix(file.Path, sourceFolderPath+"/") {
+			// File is in a subdirectory
+			// Get the relative path from sourceFolderPath
+			relPath := strings.TrimPrefix(file.Path, sourceFolderPath+"/")
+			targetFilePath = path.Join(targetBasePath, relPath, file.Name)
+		} else {
+			// This shouldn't happen, but handle it
+			targetFilePath = path.Join(targetBasePath, file.Name)
+		}
 
-	// 	pp.Println("@file/2", file.Path, file.Name)
+		// Create parent directories
+		targetDir := filepath.Dir(targetFilePath)
+		err := os.MkdirAll(targetDir, 0755)
+		if err != nil {
+			pp.Println("@err/4", err)
+			return fmt.Errorf("failed to create directory %s: %w", targetDir, err)
+		}
 
-	// 	filePath := path.Join(basePath, file.Path, file.Name)
-	// 	//basePath + "/" + file.Path + "/" + file.Name
+		// Create the file
+		tfile, err := os.Create(targetFilePath)
+		if err != nil {
+			pp.Println("@err/5", err)
+			return fmt.Errorf("failed to create file %s: %w", targetFilePath, err)
+		}
 
-	// 	prePath := path.Join(basePath, file.Path)
-	// 	err = os.MkdirAll(prePath, 0755)
-	// 	if err != nil {
-	// 		pp.Println("@err/4", err)
-	// 		return err
-	// 	}
+		pp.Println("@copying file", targetFilePath, "file.ID:", file.ID, "file.Size:", file.Size, "file.Path:", file.Path, "file.Name:", file.Name, "file.StoreType:", file.StoreType)
 
-	// 	pp.Println("@prePath", prePath)
+		// Try getting file content as bytes first to verify it exists
+		content, err := fileOps.GetFileContentByPath(packageVersionId, file.Path, file.Name)
+		if err != nil {
+			tfile.Close()
+			os.Remove(targetFilePath) // Clean up empty file
+			pp.Println("@err/getcontent", err)
+			return fmt.Errorf("failed to get file content %s (path: %s, name: %s): %w", targetFilePath, file.Path, file.Name, err)
+		}
 
-	// 	tfile, err := os.Create(filePath)
-	// 	if err != nil {
-	// 		pp.Println("@err/5", err)
-	// 		pp.Println("@err/5", err.Error())
-	// 		return err
-	// 	}
-	// 	pp.Println("@file/3", filePath)
+		pp.Println("@got file content", "size:", len(content), "bytes")
 
-	// 	defer tfile.Close()
+		if len(content) == 0 && file.Size > 0 {
+			tfile.Close()
+			os.Remove(targetFilePath)
+			pp.Println("@warn", "file content is empty but size is", file.Size)
+			return fmt.Errorf("file content is empty but file size is %d bytes", file.Size)
+		}
 
-	// 	pp.Println("@file/4", file.PackageID, file.ID)
+		// Write content to file
+		bytesWritten, err := tfile.Write(content)
+		if err != nil {
+			tfile.Close()
+			os.Remove(targetFilePath)
+			pp.Println("@err/write", err)
+			return fmt.Errorf("failed to write file %s: %w", targetFilePath, err)
+		}
 
-	// 	err = db.GetPackageFileStreaming(file.PackageID, file.ID, tfile)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+		if bytesWritten != len(content) {
+			tfile.Close()
+			os.Remove(targetFilePath)
+			pp.Println("@err/write", "incomplete write")
+			return fmt.Errorf("incomplete write: wrote %d of %d bytes", bytesWritten, len(content))
+		}
 
-	// 	pp.Println("@file/5", err)
+		pp.Println("@wrote", bytesWritten, "bytes to file")
 
-	// }
+		// Ensure data is written to disk
+		err = tfile.Sync()
+		if err != nil {
+			tfile.Close()
+			pp.Println("@err/sync", err)
+			return fmt.Errorf("failed to sync file %s: %w", targetFilePath, err)
+		}
 
-	// pp.Println("@copyFolder/3")
+		err = tfile.Close()
+		if err != nil {
+			pp.Println("@err/7", err)
+			return fmt.Errorf("failed to close file %s: %w", targetFilePath, err)
+		}
+
+		// Verify file was written correctly
+		info, err := os.Stat(targetFilePath)
+		if err != nil {
+			pp.Println("@err/stat", err)
+			return fmt.Errorf("failed to stat copied file %s: %w", targetFilePath, err)
+		}
+
+		pp.Println("@file copied successfully", targetFilePath, "size:", info.Size(), "expected:", len(content))
+
+		if info.Size() != int64(len(content)) {
+			return fmt.Errorf("file size mismatch: expected %d bytes, got %d bytes", len(content), info.Size())
+		}
+	}
+
+	pp.Println("@copyFilesRecursive/2", "done")
 
 	return nil
 

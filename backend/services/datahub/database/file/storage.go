@@ -30,7 +30,7 @@ func (f *FileOperations) storeInlineBlob(fileID int64, stream io.Reader, hash ha
 	return sizeTotal, nil
 }
 
-func (f *FileOperations) storeExternalFile(fileID int64, ownerID int64, createdBy int64, path string, name string, stream io.Reader, hash hash.Hash) (int64, error) {
+func (f *FileOperations) storeExternalFile(_ int64, ownerID int64, createdBy int64, path string, name string, stream io.Reader, hash hash.Hash) (int64, error) {
 	dirPath := fmt.Sprintf("%s/%d/%d", f.externalFilesPath, ownerID, createdBy)
 	err := os.MkdirAll(dirPath, 0755)
 	if err != nil {

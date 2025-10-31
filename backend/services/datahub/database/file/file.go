@@ -130,7 +130,7 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 		UpdatedAt: &now,
 	}
 
-	fileMeta.StoreType = StoreTypeInline
+	fileMeta.StoreType = int64(f.storeType)
 
 	rid, err := f.fileMetaTable().Insert(fileMeta)
 	if err != nil {
