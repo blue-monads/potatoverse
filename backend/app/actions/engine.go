@@ -195,7 +195,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
 
-	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, file)
+	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, "embed", file)
 	if err != nil {
 		return 0, err
 	}

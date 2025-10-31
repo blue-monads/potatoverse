@@ -130,6 +130,7 @@ type CreateFileRequest struct {
 }
 
 type FileOps interface {
+	ApplyZipToFile(ownerID int64, zipPath string) error
 	CreateFile(ownerID int64, req *CreateFileRequest, stream io.Reader) (int64, error)
 	CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error)
 	GetFileContent(ownerID int64, id int64) ([]byte, error)

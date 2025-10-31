@@ -64,14 +64,6 @@ func (f *FileOperations) storeExternalFile(fileID int64, ownerID int64, createdB
 	return written, nil
 }
 
-type FileBlob struct {
-	Id     int64  `db:"id" json:"id"`
-	FileID int64  `db:"file_id" json:"file_id"`
-	Size   int64  `db:"size" json:"size"`
-	PartID int64  `db:"part_id" json:"part_id"`
-	Blob   []byte `db:"blob" json:"blob"`
-}
-
 func (f *FileOperations) storeMultipartBlob(fileID int64, stream io.Reader, hash hash.Hash) (int64, error) {
 	partID := 0
 	sizeTotal := int64(0)
@@ -89,7 +81,7 @@ func (f *FileOperations) storeMultipartBlob(fileID int64, stream io.Reader, hash
 		currBytes := buf[:n]
 		hash.Write(currBytes)
 
-		_, err = f.fileBlobTable().Insert(FileBlob{
+		_, err = f.fileBlobTable().Insert(&dbmodels.FileBlob{
 			FileID: fileID,
 			Size:   int64(n),
 			PartID: int64(partID),

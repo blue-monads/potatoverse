@@ -1,14 +1,18 @@
 package file
 
 import (
+	"archive/zip"
 	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/k0kubun/pp"
 
 	"github.com/upper/db/v4"
 )
@@ -57,6 +61,51 @@ func NewFileOperations(opts Options) *FileOperations {
 	}
 }
 
+// "@fPath" "" "@fName" "potato.json"
+// "@fPath" "public/" "@fName" "readme.txt"
+
+func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
+
+	zipReader, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+
+	defer zipReader.Close()
+
+	for _, file := range zipReader.File {
+		fileReader, err := file.Open()
+		if err != nil {
+			return err
+		}
+
+		fPath, fName := path.Split(file.Name)
+
+		pp.Println("@fPath", fPath, "@fName", fName)
+
+		fPath = strings.TrimPrefix(fPath, "/")
+		fPath = strings.TrimSuffix(fPath, "/")
+
+		if fPath == "" || fPath == "." {
+			fPath = ""
+		}
+
+		req := &datahub.CreateFileRequest{
+			Name:      fName,
+			Path:      fPath,
+			CreatedBy: ownerID,
+		}
+		_, err = f.CreateFile(ownerID, req, fileReader)
+		if err != nil {
+			return err
+		}
+
+		defer fileReader.Close()
+	}
+
+	return nil
+}
+
 func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
 	exists, err := f.fileExists(ownerID, req.Path, req.Name)
 	if err != nil {
@@ -67,6 +116,7 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 	}
 
 	now := time.Now()
+
 	fileMeta := &dbmodels.FileMeta{
 		OwnerID:   ownerID,
 		Name:      req.Name,
@@ -76,6 +126,8 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 		IsFolder:  false,
 		CreatedAt: &now,
 		Size:      0,
+		UpdatedBy: req.CreatedBy,
+		UpdatedAt: &now,
 	}
 
 	fileMeta.StoreType = StoreTypeInline

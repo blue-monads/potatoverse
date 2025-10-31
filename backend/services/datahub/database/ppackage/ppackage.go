@@ -78,7 +78,10 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 		StoreType:        2,
 	})
 
-	_ = pFileOps
+	err = pFileOps.ApplyZipToFile(userId, filePath)
+	if err != nil {
+		return 0, err
+	}
 
 	err = d.installedPackagesTable().Find(db.Cond{"id": installId}).Update(map[string]any{
 		"active_install_id": versionId,
