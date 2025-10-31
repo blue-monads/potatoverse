@@ -100,8 +100,7 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 }
 
 func (l *LuaH) registerModules() error {
-	l.L.PreloadModule("pkv", binds.BindsKV(l.parent.handle.SpaceId, l.parent.handle))
-	l.L.PreloadModule("kv", binds.BindsKV(l.parent.handle.RootSpaceId, l.parent.handle))
+	l.L.PreloadModule("kv", binds.BindsKV(l.parent.handle.InstalledId, l.parent.handle))
 	l.L.PreloadModule("mcp", binds.BindMCP)
 	l.L.PreloadModule("addon", binds.AddOnModule(l.parent.handle))
 

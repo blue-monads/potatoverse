@@ -19,11 +19,12 @@ type Luaz struct {
 }
 
 type Options struct {
-	BuilderOpts   xtypes.BuilderOption
-	Code          string
-	WorkingFolder string
-	SpaceId       int64
-	PackageId     int64
+	BuilderOpts      xtypes.BuilderOption
+	Code             string
+	WorkingFolder    string
+	SpaceId          int64
+	PackageVersionId int64
+	InstalledId      int64
 }
 
 func New(opts Options) *Luaz {
@@ -38,13 +39,13 @@ func New(opts Options) *Luaz {
 	lz := &Luaz{
 		pool: nil,
 		handle: &executors.EHandle{
-			Logger:      opts.BuilderOpts.Logger,
-			FsRoot:      rfs,
-			SpaceId:     opts.SpaceId,
-			PackageId:   opts.PackageId,
-			App:         opts.BuilderOpts.App,
-			Database:    opts.BuilderOpts.App.Database(),
-			RootSpaceId: opts.SpaceId,
+			Logger:           opts.BuilderOpts.Logger,
+			FsRoot:           rfs,
+			SpaceId:          opts.SpaceId,
+			PackageVersionId: opts.PackageVersionId,
+			InstalledId:      opts.InstalledId,
+			App:              opts.BuilderOpts.App,
+			Database:         opts.BuilderOpts.App.Database(),
 		},
 	}
 
