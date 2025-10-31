@@ -9,7 +9,6 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	nanoid "github.com/jaevor/go-nanoid"
 
 	"github.com/upper/db/v4"
 )
@@ -202,8 +201,8 @@ func (f *FileOperations) StreamFileByPath(ownerID int64, path string, name strin
 	return f.streamFileByMeta(file, w)
 }
 
-func (f *FileOperations) StreamFileToHTTP(ownerID int64, id int64, w http.ResponseWriter) error {
-	file, err := f.GetFileMeta(id)
+func (f *FileOperations) StreamFileToHTTP(ownerID int64, path, name string, w http.ResponseWriter) error {
+	file, err := f.GetFileMetaByPath(ownerID, path, name)
 	if err != nil {
 		return err
 	}
@@ -250,53 +249,4 @@ func (f *FileOperations) UpdateFileMeta(ownerID int64, id int64, data map[string
 		"id":       id,
 		"owner_id": ownerID,
 	}).Update(data)
-}
-
-var idgen, _ = nanoid.ASCII(10)
-
-func (f *FileOperations) AddFileShare(ownerID int64, fileId int64, userId int64) (string, error) {
-
-	now := time.Now()
-	id := idgen()
-	_, err := f.fileShareTable().Insert(dbmodels.FileShare{
-		ID:        id,
-		FileID:    fileId,
-		UserID:    userId,
-		CreatedAt: &now,
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return id, nil
-}
-func (f *FileOperations) GetSharedFile(ownerID int64, id string, w http.ResponseWriter) error {
-	fileShare := &dbmodels.FileShare{}
-	err := f.fileShareTable().Find(db.Cond{
-		"id": id,
-	}).One(fileShare)
-	if err != nil {
-		return err
-	}
-
-	return f.StreamFileToHTTP(ownerID, fileShare.FileID, w)
-}
-
-func (f *FileOperations) ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error) {
-	shares := make([]dbmodels.FileShare, 0)
-	err := f.fileShareTable().Find(db.Cond{
-		"file_id": fileId,
-	}).All(&shares)
-	if err != nil {
-		return nil, err
-	}
-	return shares, nil
-}
-
-func (f *FileOperations) RemoveFileShare(ownerID int64, userId int64, id string) error {
-	return f.fileShareTable().Find(db.Cond{
-		"id":      id,
-		"user_id": userId,
-	}).Delete()
 }

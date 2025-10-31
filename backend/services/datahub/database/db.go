@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/database/file"
+	fileops "github.com/blue-monads/turnix/backend/services/datahub/database/file"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/global"
+	ppackage "github.com/blue-monads/turnix/backend/services/datahub/database/ppackage"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/space"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/user"
 	"github.com/upper/db/v4"
@@ -26,9 +27,12 @@ type DB struct {
 	externalFileMode     bool
 	minFileMultiPartSize int64
 
-	userOps   *user.UserOperations
-	globalOps *global.GlobalOperations
-	spaceOps  *space.SpaceOperations
+	userOps           *user.UserOperations
+	globalOps         *global.GlobalOperations
+	spaceOps          *space.SpaceOperations
+	fileOps           *fileops.FileOperations
+	packageFileOps    *fileops.FileOperations
+	packageInstallOps *ppackage.PackageInstallOperations
 }
 
 const (
@@ -56,11 +60,38 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 		return nil, err
 	}
 
+	// Initialize operations
+	globalOps := global.NewGlobalOperations(sess)
+	spaceOps := space.NewSpaceOperations(sess)
+
+	fileOps := fileops.NewFileOperations(fileops.Options{
+		DbSess:           sess,
+		MinMultiPartSize: 1024 * 1024 * 8,
+		ExternalFileMode: false,
+		Prefix:           "file",
+		StoreType:        0,
+	})
+
+	packageFileOps := fileops.NewFileOperations(fileops.Options{
+		DbSess:           sess,
+		MinMultiPartSize: 1024 * 1024 * 8,
+		ExternalFileMode: false,
+		Prefix:           "P",
+		StoreType:        2,
+	})
+
+	packageInstallOps := ppackage.NewPackageInstallOperations(sess)
+
 	return &DB{
 		sess:                 sess,
 		externalFileMode:     false,
 		minFileMultiPartSize: 1024 * 1024 * 8,
 		userOps:              user.NewUserOperations(sess),
+		globalOps:            globalOps,
+		spaceOps:             spaceOps,
+		fileOps:              fileOps,
+		packageFileOps:       packageFileOps,
+		packageInstallOps:    packageInstallOps,
 	}, nil
 }
 
@@ -73,13 +104,13 @@ func AutoMigrate(sess upperdb.Session) error {
 
 		buf := bytes.Buffer{}
 
-		pschema := strings.Replace(file.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
+		pschema := strings.Replace(fileops.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
 		pschema = strings.Replace(pschema, "FileBlob", "PFileBlob", 1)
 		pschema = strings.Replace(pschema, "FileShares", "PFileShares", 1)
 
 		buf.WriteString(schema)
 		buf.WriteString("\n")
-		buf.WriteString(file.FileSchemaSQL)
+		buf.WriteString(fileops.FileSchemaSQL)
 		buf.WriteString("\n")
 		buf.WriteString(pschema)
 
@@ -103,17 +134,43 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 		return nil, err
 	}
 
-	db := &DB{
-		sess:                 sess,
-		externalFileMode:     false,
-		minFileMultiPartSize: 1024 * 1024 * 8,
-	}
+	// Initialize operations
+	globalOps := global.NewGlobalOperations(sess)
+	spaceOps := space.NewSpaceOperations(sess)
+
+	fileOps := fileops.NewFileOperations(fileops.Options{
+		DbSess:           sess,
+		MinMultiPartSize: 1024 * 1024 * 8,
+		ExternalFileMode: false,
+		Prefix:           "file",
+		StoreType:        0,
+	})
+
+	packageFileOps := fileops.NewFileOperations(fileops.Options{
+		DbSess:           sess,
+		MinMultiPartSize: 1024 * 1024 * 8,
+		ExternalFileMode: false,
+		Prefix:           "package",
+		StoreType:        2,
+	})
+
+	packageInstallOps := ppackage.NewPackageInstallOperations(sess)
 
 	if err := AutoMigrate(sess); err != nil {
 		return nil, err
 	}
 
-	return db, nil
+	return &DB{
+		sess:                 sess,
+		externalFileMode:     false,
+		minFileMultiPartSize: 1024 * 1024 * 8,
+		userOps:              user.NewUserOperations(sess),
+		globalOps:            globalOps,
+		spaceOps:             spaceOps,
+		fileOps:              fileOps,
+		packageFileOps:       packageFileOps,
+		packageInstallOps:    packageInstallOps,
+	}, nil
 }
 
 func (db *DB) Init() error {
@@ -169,7 +226,7 @@ func (db *DB) IsEmptyRowsError(err error) bool {
 }
 
 func (db *DB) GetGlobalOps() datahub.GlobalOps {
-	return nil
+	return db.globalOps
 }
 
 func (db *DB) GetUserOps() datahub.UserOps {
@@ -181,17 +238,17 @@ func (db *DB) GetSpaceOps() datahub.SpaceOps {
 }
 
 func (db *DB) GetSpaceKVOps() datahub.SpaceKVOps {
-	return nil
+	return db.spaceOps
 }
 
 func (db *DB) GetPackageInstallOps() datahub.PackageInstallOps {
-	return nil
+	return db.packageInstallOps
 }
 
 func (db *DB) GetFileOps() datahub.FileOps {
-	return nil
+	return db.fileOps
 }
 
 func (db *DB) GetPackageFileOps() datahub.FileOps {
-	return nil
+	return db.packageFileOps
 }

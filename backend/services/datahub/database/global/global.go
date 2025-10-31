@@ -10,6 +10,10 @@ type GlobalOperations struct {
 	db db.Session
 }
 
+func NewGlobalOperations(db db.Session) *GlobalOperations {
+	return &GlobalOperations{db: db}
+}
+
 func (d *GlobalOperations) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
 	pp.Println("@1", key, group)
