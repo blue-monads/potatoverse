@@ -23,7 +23,7 @@ func ReadPackageManifestFromZip(zipFile string) (*models.PotatoPackage, error) {
 			}
 
 			pkg := &models.PotatoPackage{}
-			json.NewDecoder(jsonFile).Decode(&pkg)
+			err = json.NewDecoder(jsonFile).Decode(&pkg)
 			if err != nil {
 				return nil, err
 			}
