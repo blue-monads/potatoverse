@@ -13,12 +13,14 @@ import (
 )
 
 type PackageInstallOperations struct {
-	db db.Session
+	db      db.Session
+	fileOps *file.FileOperations
 }
 
-func NewPackageInstallOperations(db db.Session) *PackageInstallOperations {
+func NewPackageInstallOperations(db db.Session, pfileOps *file.FileOperations) *PackageInstallOperations {
 	return &PackageInstallOperations{
-		db: db,
+		db:      db,
+		fileOps: pfileOps,
 	}
 }
 
@@ -71,14 +73,7 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 
 	versionId := versionResult.ID().(int64)
 
-	pFileOps := file.NewFileOperations(file.Options{
-		DbSess:           d.db,
-		MinMultiPartSize: 1024 * 1024 * 8,
-		Prefix:           "P",
-		StoreType:        2,
-	})
-
-	err = pFileOps.ApplyZipToFile(userId, filePath)
+	err = d.fileOps.ApplyZipToFile(versionId, filePath)
 	if err != nil {
 		return 0, err
 	}

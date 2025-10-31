@@ -54,40 +54,7 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 		return nil, err
 	}
 
-	if err := AutoMigrate(sess); err != nil {
-		logger.Error("AutoMigrate() failed", "err", err)
-		return nil, err
-	}
-
-	// Initialize operations
-	globalOps := global.NewGlobalOperations(sess)
-	spaceOps := space.NewSpaceOperations(sess)
-
-	fileOps := fileops.NewFileOperations(fileops.Options{
-		DbSess:           sess,
-		MinMultiPartSize: 1024 * 1024 * 8,
-		StoreType:        fileops.StoreTypeMultipart,
-	})
-
-	packageFileOps := fileops.NewFileOperations(fileops.Options{
-		DbSess:           sess,
-		MinMultiPartSize: 1024 * 1024 * 8,
-		Prefix:           "P",
-		StoreType:        fileops.StoreTypeMultipart,
-	})
-
-	packageInstallOps := ppackage.NewPackageInstallOperations(sess)
-
-	return &DB{
-		sess:                 sess,
-		minFileMultiPartSize: 1024 * 1024 * 8,
-		userOps:              user.NewUserOperations(sess),
-		globalOps:            globalOps,
-		spaceOps:             spaceOps,
-		fileOps:              fileOps,
-		packageFileOps:       packageFileOps,
-		packageInstallOps:    packageInstallOps,
-	}, nil
+	return fromSqlHandle(sess)
 }
 
 func AutoMigrate(sess upperdb.Session) error {
@@ -129,6 +96,11 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 		return nil, err
 	}
 
+	return fromSqlHandle(sess)
+}
+
+func fromSqlHandle(sess upperdb.Session) (*DB, error) {
+
 	// Initialize operations
 	globalOps := global.NewGlobalOperations(sess)
 	spaceOps := space.NewSpaceOperations(sess)
@@ -146,7 +118,7 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 		StoreType:        fileops.StoreTypeMultipart,
 	})
 
-	packageInstallOps := ppackage.NewPackageInstallOperations(sess)
+	packageInstallOps := ppackage.NewPackageInstallOperations(sess, packageFileOps)
 
 	if err := AutoMigrate(sess); err != nil {
 		return nil, err

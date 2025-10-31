@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 	"github.com/k0kubun/pp"
 )
@@ -16,10 +17,11 @@ func (e *Engine) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIndexIt
 	pp.Println("@simple_route/name", name)
 	pp.Println("@simple_route/path", path)
 
-	// err := e.db.GetPackageFileStreamingByPath(indexItem.packageId, path, name, ctx.Writer)
-	// if err != nil {
-	// 	ctx.JSON(404, gin.H{"error": "file not found"})
-	// 	return
-	// }
+	pFileOps := e.db.GetPackageFileOps()
+	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx.Writer)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
 
 }

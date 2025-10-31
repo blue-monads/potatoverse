@@ -4,15 +4,21 @@ import (
 	"hash"
 	"os"
 
+	"github.com/k0kubun/pp"
 	"github.com/upper/db/v4"
 )
 
 func (f *FileOperations) fileExists(ownerID int64, path string, name string) (bool, error) {
-	return f.fileMetaTable().Find(db.Cond{
+
+	cond := db.Cond{
 		"owner_id": ownerID,
 		"path":     path,
 		"name":     name,
-	}).Exists()
+	}
+
+	pp.Println("@fileExists/1", cond)
+
+	return f.fileMetaTable().Find(cond).Exists()
 }
 
 func (f *FileOperations) fileMetaTable() db.Collection {

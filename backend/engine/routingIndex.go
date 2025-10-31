@@ -43,7 +43,33 @@ func (e *Engine) LoadRoutingIndex() error {
 		return err
 	}
 
+	installs, err := e.db.GetPackageInstallOps().ListPackages()
+	if err != nil {
+		return err
+	}
+
+	pversionIds := make([]int64, 0, len(installs))
+	for _, install := range installs {
+		pversionIds = append(pversionIds, install.ActiveInstallID)
+	}
+
+	packageVersions, err := e.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
+	if err != nil {
+		return err
+	}
+
+	pversionMap := make(map[int64]*dbmodels.PackageVersion)
+	for _, pversion := range packageVersions {
+		pversionMap[pversion.ID] = &pversion
+	}
+
 	for _, space := range spaces {
+
+		packageVersion := pversionMap[space.InstalledId]
+		if packageVersion == nil {
+			e.logger.Warn("package version not found, skipping space", "space_id", space.ID, "installed_id", space.InstalledId)
+			continue
+		}
 
 		routeOptions := models.PotatoRouteOptions{}
 		err = json.Unmarshal([]byte(space.RouteOptions), &routeOptions)
@@ -59,18 +85,17 @@ func (e *Engine) LoadRoutingIndex() error {
 		}
 
 		indexItem := &SpaceRouteIndexItem{
-			installedId: space.InstalledId,
-			spaceId:     space.ID,
-			routeOption: routeOptions,
+			installedId:      space.InstalledId,
+			spaceId:          space.ID,
+			routeOption:      routeOptions,
+			packageVersionId: packageVersion.ID,
 		}
 
 		nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
 
-		if space.OverlayForSpaceID != 0 {
-			exist := nextRoutingIndex[fmt.Sprintf("%s", space.NamespaceKey)]
-			if exist == nil {
-				nextRoutingIndex[space.NamespaceKey] = indexItem
-			}
+		exist := nextRoutingIndex[fmt.Sprintf("%s", space.NamespaceKey)]
+		if exist == nil {
+			nextRoutingIndex[space.NamespaceKey] = indexItem
 		}
 
 		if indexItem.routeOption.RouterType == "" {
@@ -119,7 +144,10 @@ func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
 	defer e.riLock.RUnlock()
 
 	if spaceId != 0 {
-		spaceKey = fmt.Sprintf("%d|_|%s", spaceId, spaceKey)
+		key := fmt.Sprintf("%d|_|%s", spaceId, spaceKey)
+		pp.Println("@getIndex/1", key)
+
+		return e.RoutingIndex[key]
 	}
 
 	return e.RoutingIndex[spaceKey]

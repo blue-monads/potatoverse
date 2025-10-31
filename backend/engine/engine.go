@@ -91,6 +91,12 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	sIndex := e.getIndex(spaceKey, spaceId)
 
 	if sIndex == nil {
+		keys := make([]string, 0)
+		for key := range e.RoutingIndex {
+			keys = append(keys, key)
+		}
+
+		pp.Println("@ServeSpaceFile/4", keys)
 		pp.Println("@ServeSpaceFile/4")
 		httpx.WriteErrString(ctx, "space not found")
 		return

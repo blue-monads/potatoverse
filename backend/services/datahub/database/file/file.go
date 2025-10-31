@@ -177,11 +177,16 @@ func (f *FileOperations) GetFileMeta(id int64) (*dbmodels.FileMeta, error) {
 
 func (f *FileOperations) GetFileMetaByPath(ownerID int64, path string, name string) (*dbmodels.FileMeta, error) {
 	file := &dbmodels.FileMeta{}
-	err := f.fileMetaTable().Find(db.Cond{
+
+	cond := db.Cond{
 		"owner_id": ownerID,
 		"path":     path,
 		"name":     name,
-	}).One(file)
+	}
+
+	pp.Println("@GetFileMetaByPath/1", cond)
+
+	err := f.fileMetaTable().Find(cond).One(file)
 	if err != nil {
 		return nil, err
 	}
