@@ -243,6 +243,7 @@ export const listEPackages = async () => {
 
 export interface Package {
     id: number;
+    install_id: number;
     name: string;
     description: string;
     info: string;
