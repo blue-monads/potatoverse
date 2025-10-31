@@ -172,7 +172,7 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 		}
 
 		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
-		params["installed_id"] = fmt.Sprintf("%d", opts.InstalledId)
+		params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
 		params["subpath"] = subpath
 
 		err := e.Handle(luaz.HttpEvent{

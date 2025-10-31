@@ -343,7 +343,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 
 			} else {
 				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
-					"installed_id": installedId,
+					"install_id": installedId,
 				})
 				if err != nil {
 					return 0, err
