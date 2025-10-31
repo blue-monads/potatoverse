@@ -258,7 +258,7 @@ export interface Space {
     name: string;
     namespace_key: string;
     owns_namespace: boolean;
-    package_id: number;
+    install_id: number;
     executor_type: string;
     sub_type: string;
     owned_by: number;

@@ -45,7 +45,7 @@ const SpacesDirectory = () => {
     useEffect(() => {
         if (loader.data && loader.data.packages) {
             const nextPackageIndex = loader.data.packages.reduce((acc, pkg) => {
-                acc[pkg.id] = pkg;
+                acc[pkg.install_id] = pkg;
                 return acc;
             }, {} as Record<number, Package>);
 
@@ -138,7 +138,7 @@ const SpacesDirectory = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {loader.data?.spaces.map((space) => {
 
-                            const pkg = packageIndex[space.package_id] || { name: "Unknown", description: "Unknown" };
+                            const pkg = packageIndex[space.install_id] || { name: "Unknown", description: "Unknown" };
                             const gradient = staticGradients[space.id % staticGradients.length];
 
 
@@ -208,7 +208,7 @@ const SpacesDirectory = () => {
                                     } else if (action === "run") {
                                         router.push(`/portal/admin/exec?nskey=${space.namespace_key}&space_id=${space.id}`);
                                     } else if (action === "tools") {
-                                        router.push(`/portal/admin/spaces/tools/about?id=${space.id}&packageId=${space.package_id}`);
+                                        router.push(`/portal/admin/spaces/tools/about?id=${space.id}&packageId=${space.install_id}`);
                                     }
                                     
                                 }}
