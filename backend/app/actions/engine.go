@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"archive/zip"
 	"encoding/json"
 	"errors"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
@@ -211,7 +211,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return 0, err
 	}
 
-	pkg, err := readPackagePotatoManifestFromZip(file)
+	pkg, err := xutils.ReadPackageManifestFromZip(file)
 	if err != nil {
 		return 0, err
 	}
@@ -262,33 +262,6 @@ func installArtifact(database datahub.Database, userId, installedId int64, artif
 	})
 }
 
-func readPackagePotatoManifestFromZip(zipFile string) (*models.PotatoPackage, error) {
-	zipReader, err := zip.OpenReader(zipFile)
-	if err != nil {
-		return nil, err
-	}
-	defer zipReader.Close()
-
-	for _, file := range zipReader.File {
-		if file.Name == "potato.json" {
-			jsonFile, err := file.Open()
-			if err != nil {
-				return nil, err
-			}
-
-			pkg := &models.PotatoPackage{}
-			json.NewDecoder(jsonFile).Decode(&pkg)
-			if err != nil {
-				return nil, err
-			}
-
-			return pkg, nil
-		}
-	}
-
-	return nil, errors.New("potato.json not found")
-}
-
 func (c *Controller) UpgradePackage(userId int64, file string, installedId int64, recreateArtifacts bool) (int64, error) {
 
 	pvid, err := c.database.GetPackageInstallOps().UpdatePackage(installedId, file)
@@ -296,7 +269,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return 0, err
 	}
 
-	pkg, err := readPackagePotatoManifestFromZip(file)
+	pkg, err := xutils.ReadPackageManifestFromZip(file)
 	if err != nil {
 		return 0, err
 	}
