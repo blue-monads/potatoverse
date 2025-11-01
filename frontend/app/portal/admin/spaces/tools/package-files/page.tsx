@@ -138,7 +138,7 @@ const FileManager = ({ packageId }: FileManagerProps) => {
         <WithAdminBodyLayout
             Icon={Folder}
             name="Package Files"
-            description={`Managing files for package ${packageId}`}
+            description={`Managing files for package`}
             rightContent={
                 <div className="flex items-center gap-2">
                     <button
