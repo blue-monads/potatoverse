@@ -39,9 +39,8 @@ export default function PortalLayout({
 
 
 const Sidebar = () => {
-  const [showMenu, setShowMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const pathname = usePathname();
+
   const gapp = useGApp();
   const router = useRouter();
 
