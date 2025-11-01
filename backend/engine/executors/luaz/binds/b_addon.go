@@ -1,21 +1,17 @@
 package binds
 
 import (
-	"github.com/blue-monads/turnix/backend/engine/addons"
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
-
-type Engine interface {
-	GetAddonHub() addons.Hub
-}
 
 func AddOnModule(handle *executors.EHandle) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 
-		engine := handle.App.Engine().(Engine)
-		addons := engine.GetAddonHub()
+		engine := handle.App.Engine().(xtypes.Engine)
+		addons := engine.GetAddonHub().(xtypes.AddOnHub)
 
 		listAddons := func(L *lua.LState) int {
 			addons, err := addons.List(handle.SpaceId)

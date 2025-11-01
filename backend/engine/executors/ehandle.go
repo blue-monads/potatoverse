@@ -9,11 +9,11 @@ import (
 )
 
 type EHandle struct {
-	Logger      *slog.Logger
-	App         xtypes.App
-	FsRoot      *os.Root
-	RootSpaceId int64
-	SpaceId     int64
-	PackageId   int64
-	Database    datahub.Database
+	Logger           *slog.Logger
+	App              xtypes.App
+	FsRoot           *os.Root
+	SpaceId          int64
+	PackageVersionId int64
+	InstalledId      int64
+	Database         datahub.Database
 }

@@ -122,10 +122,11 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 			App:    r.parent.app,
 			Logger: r.parent.app.Logger().With("package_id", packageId),
 		},
-		Code:          source, // code,
-		WorkingFolder: path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
-		SpaceId:       spaceid,
-		PackageId:     packageId,
+		Code:             source, // code,
+		WorkingFolder:    path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
+		SpaceId:          spaceid,
+		PackageVersionId: 0,
+		InstalledId:      0,
 	})
 
 	r.execsLock.Lock()

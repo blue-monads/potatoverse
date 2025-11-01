@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/addons"
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
 
 type AddOnHub struct {
 	parent  *Engine
-	goodies map[string]addons.AddOn
+	goodies map[string]xtypes.AddOn
 	glock   sync.RWMutex
 
-	builders map[string]addons.Builder
+	builders map[string]xtypes.AddOnBuilder
 }
 
 func (gh *AddOnHub) Init() error {
@@ -29,7 +29,7 @@ func (gh *AddOnHub) Init() error {
 		return err
 	}
 
-	gh.builders = make(map[string]addons.Builder)
+	gh.builders = make(map[string]xtypes.AddOnBuilder)
 	for name, factory := range builderFactories {
 		builder, err := factory(app)
 		if err != nil {
@@ -93,7 +93,7 @@ func (gh *AddOnHub) GetMeta(spaceId int64, gname, method string) (map[string]any
 	return gs.GetMeta(method)
 }
 
-func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params addons.LazyData) (map[string]any, error) {
+func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params addons.L
 
 // private
 
-func (gh *AddOnHub) get(name string, spaceId int64) (addons.AddOn, error) {
+func (gh *AddOnHub) get(name string, spaceId int64) (xtypes.AddOn, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.RLock()

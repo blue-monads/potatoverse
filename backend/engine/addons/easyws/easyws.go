@@ -3,7 +3,6 @@ package easyws
 import (
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/addons"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
@@ -43,6 +42,6 @@ func (e *EasyWsAddon) List() ([]string, error) {
 func (e *EasyWsAddon) GetMeta(name string) (map[string]any, error) {
 	return nil, nil
 }
-func (e *EasyWsAddon) Execute(method string, params addons.LazyData) (map[string]any, error) {
+func (e *EasyWsAddon) Execute(method string, params xtypes.LazyData) (map[string]any, error) {
 	return nil, nil
 }
