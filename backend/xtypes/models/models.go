@@ -23,15 +23,15 @@ type PotatoPackage struct {
 }
 
 type PotatoArtifact struct {
-	Namespace    string             `json:"namespace" toml:"namespace"`
-	Kind         string             `json:"kind" toml:"kind"`
-	ExecutorType string             `json:"executor_type" toml:"executor_type"`
-	SubType      string             `json:"sub_type" toml:"sub_type"`
-	ServerFile   string             `json:"server_file" toml:"server_file"`
-	RouteOptions PotatoRouteOptions `json:"route_options" toml:"route_options"`
-	McpOptions   PotatoMcpOptions   `json:"mcp_options" toml:"mcp_options"`
-	DevServePort int                `json:"dev_serve_port" toml:"dev_serve_port"`
-	DevOptions   PotatoDevOptions   `json:"dev_options" toml:"dev_options"`
+	Namespace       string             `json:"namespace" toml:"namespace"`
+	Kind            string             `json:"kind" toml:"kind"`
+	ExecutorType    string             `json:"executor_type" toml:"executor_type"`
+	ExecutorSubType string             `json:"executor_sub_type" toml:"executor_sub_type"`
+	ServerFile      string             `json:"server_file" toml:"server_file"`
+	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
+	McpOptions      PotatoMcpOptions   `json:"mcp_options" toml:"mcp_options"`
+	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
+	DevOptions      PotatoDevOptions   `json:"dev_options" toml:"dev_options"`
 }
 
 type PotatoRouteOptions struct {
