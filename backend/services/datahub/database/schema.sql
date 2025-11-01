@@ -117,7 +117,6 @@ CREATE TABLE IF NOT EXISTS PackageVersion (
   name TEXT NOT NULL DEFAULT '',
   slug TEXT NOT NULL DEFAULT '',
   info TEXT NOT NULL DEFAULT '',
-  server_file TEXT NOT NULL DEFAULT '',
   tags TEXT NOT NULL DEFAULT '',
   format_version TEXT NOT NULL DEFAULT '',
   author_name TEXT NOT NULL DEFAULT '',
@@ -140,6 +139,7 @@ CREATE TABLE IF NOT EXISTS Spaces (
   mcp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   mcp_definition_file TEXT NOT NULL DEFAULT '',
   mcp_options JSON NOT NULL DEFAULT '{}',
+  server_file TEXT NOT NULL DEFAULT '',
   
   overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  
   owned_by INTEGER NOT NULL, 
