@@ -146,6 +146,19 @@ const SpacesDirectory = () => {
                                 key={space.id}
                                 actionHandler={async (action: string) => {
 
+                                    const installId = space.install_id;
+                                    const spaceId = space.id;
+                                    const namespaceKey = space.namespace_key;
+                                    const packageVersionId = pkg.id;
+
+                                    const params = new URLSearchParams();
+                                    params.set("install_id", installId.toString());
+                                    params.set("space_id", spaceId.toString());
+                                    params.set("namespace_key", namespaceKey);
+                                    params.set("nskey", namespaceKey);
+                                    params.set("package_version_id", packageVersionId.toString());                   
+
+
                                     if (action === "delete") {
                                         // Show confirmation modal
                                         gapp.modal.openModal({
@@ -205,10 +218,10 @@ const SpacesDirectory = () => {
                                             ),
                                             size: "md"
                                         });
-                                    } else if (action === "run") {
-                                        router.push(`/portal/admin/exec?nskey=${space.namespace_key}&space_id=${space.id}`);
+                                    } else if (action === "run") {                                
+                                        router.push(`/portal/admin/exec?${params.toString()}`);
                                     } else if (action === "tools") {
-                                        router.push(`/portal/admin/spaces/tools/about?id=${space.id}&packageId=${space.install_id}`);
+                                        router.push(`/portal/admin/spaces/tools/about?${params.toString()}`);
                                     }
                                     
                                 }}
