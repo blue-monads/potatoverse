@@ -57,7 +57,6 @@ const FileManager = ({ installId }: FileManagerProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
     const [uploading, setUploading] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const gapp = useGApp();
     const { modal } = gapp;
@@ -118,17 +117,60 @@ const FileManager = ({ installId }: FileManagerProps) => {
         }
     };
 
-    const handleCreateFolder = async () => {
-        if (!newFolderName.trim()) return;
+    const handleCreateFolder = async (folderName: string) => {
+        if (!folderName.trim()) return;
 
         try {
-            await createSpaceFolder(installId, newFolderName.trim(), currentPath);
-            setNewFolderName('');
+            await createSpaceFolder(installId, folderName.trim(), currentPath);
             modal.closeModal();
             loader.reload();
         } catch (error) {
             console.error('Create folder failed:', error);
         }
+    };
+
+    const CreateFolderModalContent = () => {
+        const [folderName, setFolderName] = useState('');
+
+        return (
+            <div className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Folder Name
+                    </label>
+                    <input
+                        type="text"
+                        value={folderName}
+                        onChange={(e) => setFolderName(e.target.value)}
+                        placeholder="Enter folder name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        autoFocus
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && folderName.trim()) {
+                                handleCreateFolder(folderName);
+                            } else if (e.key === 'Escape') {
+                                modal.closeModal();
+                            }
+                        }}
+                    />
+                </div>
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={() => modal.closeModal()}
+                        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => handleCreateFolder(folderName)}
+                        disabled={!folderName.trim()}
+                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+                    >
+                        Create Folder
+                    </button>
+                </div>
+            </div>
+        );
     };
 
     const UploadModalContent = () => {
@@ -498,54 +540,10 @@ print(response.json())`}
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => {
-                            setNewFolderName('');
                             modal.openModal({
                                 title: "Create New Folder",
-                                content: (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Folder Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={newFolderName}
-                                                onChange={(e) => setNewFolderName(e.target.value)}
-                                                placeholder="Enter folder name"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                autoFocus
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        handleCreateFolder();
-                                                    } else if (e.key === 'Escape') {
-                                                        modal.closeModal();
-                                                        setNewFolderName('');
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    modal.closeModal();
-                                                    setNewFolderName('');
-                                                }}
-                                                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                onClick={handleCreateFolder}
-                                                disabled={!newFolderName.trim()}
-                                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
-                                            >
-                                                Create Folder
-                                            </button>
-                                        </div>
-                                    </div>
-                                ),
+                                content: <CreateFolderModalContent />,
                                 size: "md",
-                                onClose: () => setNewFolderName('')
                             });
                         }}
                         className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
