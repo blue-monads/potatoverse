@@ -13,7 +13,6 @@ import {
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
 export default function Page() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
@@ -31,20 +30,15 @@ export default function Page() {
 const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: number; spaceId?: number }) => {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedScope, setSelectedScope] = useState<'all' | 'package' | 'space'>('all');
 
     const loader = useSimpleDataLoader<EventSubscription[]>({
         loader: () => {
             const params: { space_id?: number } = {};
-            if (selectedScope === 'package') {
-                params.space_id = 0;
-            } else if (selectedScope === 'space' && spaceId) {
-                params.space_id = spaceId;
-            }
+            
             return listEventSubscriptions(installId, params.space_id);
         },
         ready: true,
-        dependencies: [selectedScope, installId, spaceId],
+        dependencies: [installId, spaceId],
     });
 
     // Filter data based on search term
@@ -100,22 +94,7 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
             />
 
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">
-                {/* Filters */}
-                <div className="mb-6 flex gap-4 items-center">
-                    <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4" />
-                        <span className="text-sm font-medium">Filter by Scope:</span>
-                    </div>
-                    <select
-                        value={selectedScope}
-                        onChange={(e) => setSelectedScope(e.target.value as 'all' | 'package' | 'space')}
-                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="all">All</option>
-                        <option value="package">Package Level (Root)</option>
-                        {spaceId && <option value="space">Space Level</option>}
-                    </select>
-                </div>
+                
 
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
