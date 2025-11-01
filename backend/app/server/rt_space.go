@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -15,15 +14,7 @@ func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, 
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	// Get query parameters for filtering
 	groupName := ctx.Query("group")
@@ -70,15 +61,7 @@ func (a *Server) GetSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, e
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	kvEntry, err := a.ctrl.GetSpaceKVByID(installId, kvId)
 	if err != nil {
@@ -95,15 +78,7 @@ func (a *Server) CreateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	var kvData map[string]any
 	if err := ctx.ShouldBindJSON(&kvData); err != nil {
@@ -130,15 +105,7 @@ func (a *Server) UpdateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	var updateData map[string]any
 	if err := ctx.ShouldBindJSON(&updateData); err != nil {
@@ -165,15 +132,7 @@ func (a *Server) DeleteSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	err = a.ctrl.DeleteSpaceKVByID(installId, kvId)
 	if err != nil {

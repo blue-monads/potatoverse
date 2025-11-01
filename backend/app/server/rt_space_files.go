@@ -15,15 +15,7 @@ func (a *Server) ListSpaceFiles(claim *signer.AccessClaim, ctx *gin.Context) (an
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	path := ctx.Query("path")
 
@@ -46,15 +38,7 @@ func (a *Server) GetSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any,
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	file, err := a.ctrl.GetSpaceFile(installId, fileId)
 	if err != nil {
@@ -75,15 +59,7 @@ func (a *Server) DownloadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) 
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	// Get file metadata first
 	file, err := a.ctrl.GetSpaceFile(installId, fileId)
@@ -115,15 +91,7 @@ func (a *Server) DeleteSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (a
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	err = a.ctrl.DeleteSpaceFile(installId, fileId)
 	if err != nil {
@@ -139,15 +107,7 @@ func (a *Server) UploadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (a
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
+	// fixme => permission check
 
 	// Parse multipart form
 	err = ctx.Request.ParseMultipartForm(32 << 20) // 32 MB max
@@ -180,16 +140,6 @@ func (a *Server) CreateSpaceFolder(claim *signer.AccessClaim, ctx *gin.Context) 
 		return nil, err
 	}
 
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
-	}
-
 	// Parse request body
 	var req struct {
 		Name string `json:"name" binding:"required"`
@@ -212,16 +162,6 @@ func (a *Server) CreatePresignedUploadURL(claim *signer.AccessClaim, ctx *gin.Co
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(installId)
-	if err != nil {
-		return nil, err
-	}
-
-	if space.OwnerID != claim.UserId {
-		return nil, fmt.Errorf("you are not authorized to access this space")
 	}
 
 	// Parse request body
