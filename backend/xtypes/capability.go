@@ -10,7 +10,22 @@ type Capability interface {
 	ExecuteAction(name string, params LazyData) (map[string]any, error)
 }
 
-type CapabilityBuilderFactory func(app App) (CapabilityBuilder, error)
+type CapabilityBuilderFactory struct {
+	Builder      func(app App) (CapabilityBuilder, error)
+	Name         string
+	Icon         string
+	OptionFields []CapabilityOptionField
+}
+
+type CapabilityOptionField struct {
+	Name        string   `json:"name"`
+	Key         string   `json:"key"`
+	Description string   `json:"description"`
+	Type        string   `json:"type"` // text, number, date, api_key, boolean, select, multi_select, textarea
+	Default     string   `json:"default"`
+	Options     []string `json:"options"`
+	Required    bool     `json:"required"`
+}
 
 type CapabilityBuilder interface {
 	Build(spaceId int64) (Capability, error)

@@ -112,6 +112,16 @@ type SpaceOps interface {
 	ListSpaceTableColumns(spaceId int64, table string) ([]dbmodels.SpaceTableColumn, error)
 	RunSpaceSQLQuery(spaceId int64, query string, data []any) ([]map[string]any, error)
 	RunSpaceDDL(spaceId int64, ddl string) error
+
+	// Space Capabilities
+	QuerySpaceCapabilities(installId int64, cond map[any]any) ([]dbmodels.SpaceCapability, error)
+	AddSpaceCapability(installId int64, data *dbmodels.SpaceCapability) error
+	GetSpaceCapability(installId int64, name string) (*dbmodels.SpaceCapability, error)
+	GetSpaceCapabilityByID(installId int64, id int64) (*dbmodels.SpaceCapability, error)
+	UpdateSpaceCapability(installId int64, name string, data map[string]any) error
+	UpdateSpaceCapabilityByID(installId int64, id int64, data map[string]any) error
+	RemoveSpaceCapability(installId int64, name string) error
+	RemoveSpaceCapabilityByID(installId int64, id int64) error
 }
 
 type SpaceKVOps interface {

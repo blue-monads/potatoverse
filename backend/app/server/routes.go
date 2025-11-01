@@ -128,6 +128,16 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
 	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
 
+	// Space Capabilities API
+	coreApi.GET("/space/:install_id/capabilities", a.withAccessTokenFn(a.ListSpaceCapabilities))
+	coreApi.GET("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.GetSpaceCapability))
+	coreApi.POST("/space/:install_id/capabilities", a.withAccessTokenFn(a.CreateSpaceCapability))
+	coreApi.PUT("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.UpdateSpaceCapability))
+	coreApi.DELETE("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.DeleteSpaceCapability))
+
+	// Capability Types API
+	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))
+
 	zg.POST("/file/upload-presigned", a.UploadFileWithPresigned)
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)

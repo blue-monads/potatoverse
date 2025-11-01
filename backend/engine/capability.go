@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	_ "github.com/blue-monads/turnix/backend/engine/capabilities/ping"
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -16,7 +17,8 @@ type CapabilityHub struct {
 	goodies map[string]xtypes.Capability
 	glock   sync.RWMutex
 
-	builders map[string]xtypes.CapabilityBuilder
+	builders         map[string]xtypes.CapabilityBuilder
+	builderFactories map[string]xtypes.CapabilityBuilderFactory
 }
 
 func (gh *CapabilityHub) Init() error {
@@ -29,9 +31,11 @@ func (gh *CapabilityHub) Init() error {
 		return err
 	}
 
+	gh.builderFactories = builderFactories
+
 	gh.builders = make(map[string]xtypes.CapabilityBuilder)
 	for name, factory := range builderFactories {
-		builder, err := factory(app)
+		builder, err := factory.Builder(app)
 		if err != nil {
 			return err
 		}
@@ -100,6 +104,28 @@ func (gh *CapabilityHub) Execute(spaceId int64, gname, method string, params xty
 	}
 
 	return gs.ExecuteAction(method, params)
+}
+
+func (gh *CapabilityHub) Definations() []CapabilityDefination {
+	definations := make([]CapabilityDefination, 0)
+	for _, factory := range gh.builderFactories {
+		definations = append(definations, CapabilityDefination{
+			Name:         factory.Name,
+			Icon:         factory.Icon,
+			OptionFields: factory.OptionFields,
+		})
+	}
+	return definations
+}
+
+func (e *Engine) GetCapabilityDefinitions() []CapabilityDefination {
+	return e.capabilities.Definations()
+}
+
+type CapabilityDefination struct {
+	Name         string                         `json:"name"`
+	Icon         string                         `json:"icon"`
+	OptionFields []xtypes.CapabilityOptionField `json:"option_fields"`
 }
 
 // private

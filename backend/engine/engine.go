@@ -73,6 +73,12 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
 
+	// Initialize capabilities hub
+	err := e.capabilities.Init()
+	if err != nil {
+		return err
+	}
+
 	go e.runtime.cleanupExecs()
 
 	return e.LoadRoutingIndex()

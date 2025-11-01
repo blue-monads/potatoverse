@@ -495,3 +495,66 @@ export const uploadFileWithPresignedToken = async (presignedKey: string, file: F
         },
     });
 }
+
+// Capability Types API
+export interface CapabilityOptionField {
+    name: string;
+    key: string;
+    description: string;
+    type: string; // text, number, date, api_key, boolean, select, multi_select, textarea
+    default: string;
+    options: string[];
+    required: boolean;
+}
+
+export interface CapabilityDefinition {
+    name: string;
+    icon: string;
+    option_fields: CapabilityOptionField[];
+}
+
+export const listCapabilityTypes = async () => {
+    return iaxios.get<CapabilityDefinition[]>(`/core/capability/types`);
+}
+
+// Space Capabilities API
+export interface SpaceCapability {
+    id: number;
+    name: string;
+    capability_type: string;
+    install_id: number;
+    space_id: number;
+    options: string; // JSON string
+    extrameta: string; // JSON string
+}
+
+export const listSpaceCapabilities = async (installId: number, spaceId?: number, capabilityType?: string) => {
+    return iaxios.get<SpaceCapability[]>(`/core/space/${installId}/capabilities`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+            ...(capabilityType && { capability_type: capabilityType }),
+        },
+    });
+}
+
+export const getSpaceCapability = async (installId: number, capabilityId: number) => {
+    return iaxios.get<SpaceCapability>(`/core/space/${installId}/capabilities/${capabilityId}`);
+}
+
+export const createSpaceCapability = async (installId: number, data: {
+    name: string;
+    capability_type: string;
+    space_id?: number; // 0 or omitted for package-level, >0 for space-level
+    options?: any; // Will be JSON stringified
+    extrameta?: any; // Will be JSON stringified
+}) => {
+    return iaxios.post<SpaceCapability>(`/core/space/${installId}/capabilities`, data);
+}
+
+export const updateSpaceCapability = async (installId: number, capabilityId: number, data: Partial<SpaceCapability>) => {
+    return iaxios.put<SpaceCapability>(`/core/space/${installId}/capabilities/${capabilityId}`, data);
+}
+
+export const deleteSpaceCapability = async (installId: number, capabilityId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/capabilities/${capabilityId}`);
+}
