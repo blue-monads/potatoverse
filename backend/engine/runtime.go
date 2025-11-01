@@ -90,9 +90,9 @@ func (r *Runtime) GetDebugData() map[int64]any {
 
 }
 
-func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.Luaz, error) {
+func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Luaz, error) {
 	r.execsLock.RLock()
-	e := r.execs[packageId]
+	e := r.execs[spaceid]
 	r.execsLock.RUnlock()
 	if e != nil {
 		return e, nil
@@ -100,37 +100,41 @@ func (r *Runtime) GetExec(packageName string, packageId, spaceid int64) (*luaz.L
 
 	source := Code
 
-	// if !ByPassPackageCode {
-	// 	file, err := r.parent.db.GetPackageFileMetaByPath(packageId, "", "server.lua")
-	// 	if err != nil {
-	// 		r.parent.app.Logger().Error("error getting package file meta by path", "error", err)
-	// 		return nil, err
-	// 	}
+	if !ByPassPackageCode {
 
-	// 	sourceBytes, err := r.parent.db.GetPackageFile(packageId, file.ID)
-	// 	if err != nil {
-	// 		r.parent.app.Logger().Error("error getting package file", "error", err)
-	// 		return nil, err
-	// 	}
+		sOps := r.parent.db.GetSpaceOps()
+		s, err := sOps.GetSpace(spaceid)
+		if err != nil {
+			return nil, err
+		}
 
-	// 	source = string(sourceBytes)
+		if s.ServerFile == "" {
+			s.ServerFile = "server.lua"
+		}
 
-	// }
+		pfops := r.parent.db.GetPackageFileOps()
+		packageFile, err := pfops.GetFileContentByPath(pVersionId, "", s.ServerFile)
+		if err != nil {
+			return nil, err
+		}
+
+		source = string(packageFile)
+	}
 
 	e = luaz.New(luaz.Options{
 		BuilderOpts: xtypes.BuilderOption{
 			App:    r.parent.app,
-			Logger: r.parent.app.Logger().With("package_id", packageId),
+			Logger: r.parent.app.Logger().With("package_id", pVersionId),
 		},
 		Code:             source, // code,
-		WorkingFolder:    path.Join(r.parent.workingFolder, packageName, fmt.Sprintf("%d", packageId)),
+		WorkingFolder:    path.Join(r.parent.workingFolder, spaceKey, fmt.Sprintf("%d", pVersionId)),
 		SpaceId:          spaceid,
 		PackageVersionId: 0,
 		InstalledId:      0,
 	})
 
 	r.execsLock.Lock()
-	r.execs[packageId] = e
+	r.execs[spaceid] = e
 	r.execsLock.Unlock()
 
 	return e, nil

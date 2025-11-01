@@ -13,6 +13,7 @@ type Space struct {
 	McpDefinitionFile string `json:"mcp_definition_file" db:"mcp_definition_file,omitempty"`
 	McpOptions        string `json:"mcp_options" db:"mcp_options,omitempty"`
 	DevServePort      int64  `json:"dev_serve_port" db:"dev_serve_port,omitempty"`
+	ServerFile        string `json:"server_file" db:"server_file,omitempty"`
 
 	DevMode bool `json:"dev_mode" db:"dev_mode,omitempty"`
 
