@@ -105,11 +105,11 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))
 
 	// Package Files API
-	coreApi.GET("/package/:id/files", a.withAccessTokenFn(a.ListPackageFiles))
-	coreApi.GET("/package/:id/files/:fileId", a.withAccessTokenFn(a.GetPackageFile))
-	coreApi.GET("/package/:id/files/:fileId/download", a.withAccessTokenFn(a.DownloadPackageFile))
-	coreApi.DELETE("/package/:id/files/:fileId", a.withAccessTokenFn(a.DeletePackageFile))
-	coreApi.POST("/package/:id/files/upload", a.withAccessTokenFn(a.UploadPackageFile))
+	coreApi.GET("/vpackage/:id/files", a.withAccessTokenFn(a.ListPackageFiles))
+	coreApi.GET("/vpackage/:id/files/:fileId", a.withAccessTokenFn(a.GetPackageFile))
+	coreApi.GET("/vpackage/:id/files/:fileId/download", a.withAccessTokenFn(a.DownloadPackageFile))
+	coreApi.DELETE("vpackage/:id/files/:fileId", a.withAccessTokenFn(a.DeletePackageFile))
+	coreApi.POST("/vpackage/:id/files/upload", a.withAccessTokenFn(a.UploadPackageFile))
 
 	// Space KV API
 	coreApi.GET("/space/:id/kv", a.withAccessTokenFn(a.ListSpaceKV))

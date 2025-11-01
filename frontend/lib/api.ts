@@ -309,8 +309,10 @@ export interface PackageFile {
     created_at: string;
 }
 
+
+
 export const listPackageFiles = async (packageId: number, path: string = '' ) => {
-    return iaxios.get<PackageFile[]>(`/core/package/${packageId}/files`, {
+    return iaxios.get<PackageFile[]>(`/core/vpackage/${packageId}/files`, {
         params: {
             path,
         },
@@ -318,17 +320,17 @@ export const listPackageFiles = async (packageId: number, path: string = '' ) =>
 }
 
 export const getPackageFile = async (packageId: number, fileId: number) => {
-    return iaxios.get<PackageFile>(`/core/package/${packageId}/files/${fileId}`);
+    return iaxios.get<PackageFile>(`/core/vpackage/${packageId}/files/${fileId}`);
 }
 
 export const downloadPackageFile = async (packageId: number, fileId: number) => {
-    return iaxios.get(`/core/package/${packageId}/files/${fileId}/download`, {
+    return iaxios.get(`/core/vpackage/${packageId}/files/${fileId}/download`, {
         responseType: 'blob'
     });
 }
 
 export const deletePackageFile = async (packageId: number, fileId: number) => {
-    return iaxios.delete(`/core/package/${packageId}/files/${fileId}`);
+    return iaxios.delete(`/core/vpackage/${packageId}/files/${fileId}`);
 }
 
 export const uploadPackageFile = async (packageId: number, file: File, path: string = '') => {
@@ -336,7 +338,7 @@ export const uploadPackageFile = async (packageId: number, file: File, path: str
     formData.append('file', file);
     formData.append('path', path);
     
-    return iaxios.post(`/core/package/${packageId}/files/upload`, formData, {
+    return iaxios.post(`/core/vpackage/${packageId}/files/upload`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
