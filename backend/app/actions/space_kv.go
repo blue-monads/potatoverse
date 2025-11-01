@@ -79,17 +79,5 @@ func (c *Controller) QuerySpaceKV(installId int64, cond map[any]any) ([]dbmodels
 }
 
 func (c *Controller) GetSpaceKVByID(installId int64, kvId int64) (*dbmodels.SpaceKV, error) {
-	// First get all KV entries for the space and find by ID
-	kvEntries, err := c.database.GetSpaceKVOps().QuerySpaceKV(installId, map[any]any{})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, kv := range kvEntries {
-		if kv.ID == kvId {
-			return &kv, nil
-		}
-	}
-
-	return nil, errors.New("KV entry not found")
+	return c.database.GetSpaceKVOps().GetSpaceKVByID(installId, kvId)
 }

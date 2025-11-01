@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ListSpaceKV lists all KV entries for a space
 func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {

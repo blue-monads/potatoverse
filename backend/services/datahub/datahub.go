@@ -142,6 +142,7 @@ type SpaceKVOps interface {
 	QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error)
 	AddSpaceKV(installId int64, data *dbmodels.SpaceKV) error
 	GetSpaceKV(installId int64, group string, key string) (*dbmodels.SpaceKV, error)
+	GetSpaceKVByID(installId int64, id int64) (*dbmodels.SpaceKV, error)
 	GetSpaceKVByGroup(installId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error)
 	RemoveSpaceKV(installId int64, group string, key string) error
 	UpdateSpaceKV(installId int64, group, key string, data map[string]any) error

@@ -11,7 +11,10 @@ func (d *SpaceOperations) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmod
 
 	cond["install_id"] = spaceId
 
-	err := table.Find(db.Cond(cond)).All(&datas)
+	err := table.Find(db.Cond(cond)).
+		Select("id", "key", "group", "tag1", "tag2", "tag3").
+		OrderBy("id ASC").
+		All(&datas)
 	if err != nil {
 		return nil, err
 	}
@@ -25,6 +28,16 @@ func (d *SpaceOperations) AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) erro
 		return err
 	}
 	return nil
+}
+
+func (d *SpaceOperations) GetSpaceKVByID(spaceId int64, id int64) (*dbmodels.SpaceKV, error) {
+	table := d.spaceKVTable()
+	data := &dbmodels.SpaceKV{}
+	err := table.Find(db.Cond{"install_id": spaceId, "id": id}).One(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (d *SpaceOperations) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.SpaceKV, error) {

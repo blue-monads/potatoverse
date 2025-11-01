@@ -387,11 +387,12 @@ export interface SpaceKV {
     id: number;
     key: string;
     group: string;
-    value: string;
-    space_id: number;
-    tag1: string;
-    tag2: string;
-    tag3: string;
+    value?: string; // Optional - not included in list responses to reduce payload size
+    space_id?: number;
+    install_id?: number;
+    tag1?: string;
+    tag2?: string;
+    tag3?: string;
 }
 
 export const listSpaceKV = async (installId: number) => {

@@ -1,12 +1,11 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Plus, Edit, Trash2, Eye, EyeOff, Key, Tag, Database, Grid2x2Plus } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Filter, Edit, Trash2, Key, Tag, Database, Grid2x2Plus } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
-import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
-import { listSpaceKV, SpaceKV, createSpaceKV, updateSpaceKV, deleteSpaceKV } from '@/lib';
+import { listSpaceKV, SpaceKV, createSpaceKV, updateSpaceKV, deleteSpaceKV, getSpaceKV } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
 export default function Page() {
@@ -23,25 +22,22 @@ export default function Page() {
 const KVListingPage = ({ spaceId }: { spaceId: number }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedGroup, setSelectedGroup] = useState('');
-    const [showValue, setShowValue] = useState<Record<number, boolean>>({});
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const gapp = useGApp();
 
     const loader = useSimpleDataLoader<SpaceKV[]>({
         loader: () => listSpaceKV(spaceId),
         ready: true,
     });
 
-    // Filter data based on search term and group
+    // Filter data based on search term and group (exclude value from search)
     const filteredData = loader.data?.filter(kv => {
         const matchesSearch = searchTerm === '' || 
             kv.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            kv.value.toLowerCase().includes(searchTerm.toLowerCase()) ||
             kv.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            kv.tag1.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            kv.tag2.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            kv.tag3.toLowerCase().includes(searchTerm.toLowerCase());
+            (kv.tag1 && kv.tag1.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (kv.tag2 && kv.tag2.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (kv.tag3 && kv.tag3.toLowerCase().includes(searchTerm.toLowerCase()));
         
         const matchesGroup = selectedGroup === '' || kv.group === selectedGroup;
         
@@ -92,13 +88,6 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
         } catch (error) {
             console.error('Failed to delete KV entry:', error);
         }
-    };
-
-    const toggleValueVisibility = (id: number) => {
-        setShowValue(prev => ({
-            ...prev,
-            [id]: !prev[id]
-        }));
     };
 
     return (
@@ -156,9 +145,6 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                         </div>
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Value
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <div className="flex items-center gap-2">
                                             <Tag className="w-4 h-4" />
                                             Tags
@@ -172,19 +158,29 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loader.loading ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                        <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
                                             Loading...
                                         </td>
                                     </tr>
                                 ) : filteredData.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                        <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
                                             No KV entries found
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredData.map((kv) => (
-                                        <tr key={kv.id} className="hover:bg-gray-50">
+                                        <tr 
+                                            key={kv.id} 
+                                            className="hover:bg-gray-50 cursor-pointer"
+                                            onClick={(e) => {
+                                                // Don't trigger row click if clicking on action buttons
+                                                if ((e.target as HTMLElement).closest('button')) {
+                                                    return;
+                                                }
+                                                setEditingId(kv.id);
+                                            }}
+                                        >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900">
                                                     {kv.key}
@@ -197,19 +193,6 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                     {kv.group}
                                                 </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="text-sm text-gray-900 max-w-xs truncate">
-                                                        {showValue[kv.id] ? kv.value : '••••••••'}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => toggleValueVisibility(kv.id)}
-                                                        className="text-gray-400 hover:text-gray-600"
-                                                    >
-                                                        {showValue[kv.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                    </button>
-                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex flex-wrap gap-1">
@@ -231,7 +214,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => setEditingId(kv.id)}
                                                         className="text-blue-600 hover:text-blue-900"
@@ -270,7 +253,8 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
             {/* Edit Modal */}
             {editingId && (
                 <EditKVModal
-                    kv={filteredData.find(kv => kv.id === editingId)!}
+                    spaceId={spaceId}
+                    kvId={editingId}
                     onClose={() => setEditingId(null)}
                     onSubmit={(data) => handleUpdate(editingId, data)}
                 />
@@ -379,24 +363,65 @@ const CreateKVModal = ({ onClose, onSubmit }: { onClose: () => void; onSubmit: (
     );
 };
 
-const EditKVModal = ({ kv, onClose, onSubmit }: { kv: SpaceKV; onClose: () => void; onSubmit: (data: any) => void }) => {
-    const [formData, setFormData] = useState({
-        key: kv.key,
-        group: kv.group,
-        value: kv.value,
-        tag1: kv.tag1,
-        tag2: kv.tag2,
-        tag3: kv.tag3,
-    });
+const EditKVModal = ({ spaceId, kvId, onClose, onSubmit }: { spaceId: number; kvId: number; onClose: () => void; onSubmit: (data: any) => void }) => {
+    const [formData, setFormData] = useState<{
+        key: string;
+        group: string;
+        value: string;
+        tag1: string;
+        tag2: string;
+        tag3: string;
+    } | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadKVData = async () => {
+            try {
+                setLoading(true);
+                console.log('Loading KV entry:', { spaceId, kvId });
+                const response = await getSpaceKV(spaceId, kvId);
+                console.log('KV entry loaded:', response.data);
+                const kv = response.data;
+                setFormData({
+                    key: kv.key,
+                    group: kv.group,
+                    value: kv.value || '',
+                    tag1: kv.tag1 || '',
+                    tag2: kv.tag2 || '',
+                    tag3: kv.tag3 || '',
+                });
+            } catch (error) {
+                console.error('Failed to load KV entry:', error);
+                alert('Failed to load KV entry. Please try again.');
+                onClose();
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadKVData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [spaceId, kvId]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit(formData);
+        if (formData) {
+            onSubmit(formData);
+        }
     };
+
+    if (loading || !formData) {
+        return (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 w-full max-w-md">
+                    <div className="text-center text-gray-500">Loading...</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <h3 className="text-lg font-semibold mb-4">Edit KV Entry</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -424,8 +449,8 @@ const EditKVModal = ({ kv, onClose, onSubmit }: { kv: SpaceKV; onClose: () => vo
                         <textarea
                             value={formData.value}
                             onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                            rows={12}
                             required
                         />
                     </div>
