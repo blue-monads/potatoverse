@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 )
 
@@ -40,9 +41,18 @@ func (c *Controller) DeleteSpaceFile(spaceId, fileId int64) error {
 }
 
 func (c *Controller) UploadSpaceFile(spaceId int64, name, path string, stream io.Reader, createdBy int64) (int64, error) {
-	return 0, nil
+	fops := c.database.GetFileOps()
+
+	return fops.CreateFile(spaceId, &datahub.CreateFileRequest{
+		Name:      name,
+		Path:      path,
+		CreatedBy: createdBy,
+	}, stream)
 }
 
 func (c *Controller) CreateSpaceFolder(spaceId int64, name, path string, createdBy int64) (int64, error) {
-	return 0, nil
+
+	fops := c.database.GetFileOps()
+
+	return fops.CreateFolder(spaceId, path, name, createdBy)
 }
