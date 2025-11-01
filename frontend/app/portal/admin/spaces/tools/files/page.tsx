@@ -22,11 +22,11 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 export default function Page() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const spaceId = searchParams.get('id');
+    const installId = searchParams.get('install_id');
     const gapp = useGApp();
     const { modal } = gapp;
 
-    if (!spaceId) {
+    if (!installId) {
         return (
             <WithAdminBodyLayout Icon={Folder} name="Space Files" description="Select a space to view files">
                 <div className="flex items-center justify-center h-64">
@@ -45,14 +45,14 @@ export default function Page() {
         );
     }
 
-    return <FileManager spaceId={parseInt(spaceId)} />;
+    return <FileManager installId={parseInt(installId)} />;
 }
 
 interface FileManagerProps {
-    spaceId: number;
+    installId: number;
 }
 
-const FileManager = ({ spaceId }: FileManagerProps) => {
+const FileManager = ({ installId }: FileManagerProps) => {
     const [currentPath, setCurrentPath] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -63,7 +63,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
     const { modal } = gapp;
 
     const loader = useSimpleDataLoader<SpaceFile[]>({
-        loader: () => listSpaceFiles(spaceId, currentPath),
+        loader: () => listSpaceFiles(installId, currentPath),
         ready: gapp.isInitialized,
         dependencies: [currentPath, searchTerm],
     });
@@ -93,7 +93,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
 
     const handleFileDownload = async (file: SpaceFile) => {
         try {
-            const response = await downloadSpaceFile(spaceId, file.id);
+            const response = await downloadSpaceFile(installId, file.id);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -111,7 +111,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
         if (!confirm(`Are you sure you want to delete "${file.name}"?`)) return;
 
         try {
-            await deleteSpaceFile(spaceId, file.id);
+            await deleteSpaceFile(installId, file.id);
             loader.reload();
         } catch (error) {
             console.error('Delete failed:', error);
@@ -122,7 +122,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
         if (!newFolderName.trim()) return;
 
         try {
-            await createSpaceFolder(spaceId, newFolderName.trim(), currentPath);
+            await createSpaceFolder(installId, newFolderName.trim(), currentPath);
             setNewFolderName('');
             modal.closeModal();
             loader.reload();
@@ -141,7 +141,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
             if (!presignedFileName.trim()) return;
 
             try {
-                const response = await createPresignedUploadURL(spaceId, presignedFileName.trim(), currentPath, 3600);
+                const response = await createPresignedUploadURL(installId, presignedFileName.trim(), currentPath, 3600);
                 setPresignedData(response.data);
             } catch (error) {
                 console.error('Generate presigned URL failed:', error);
@@ -199,7 +199,7 @@ const FileManager = ({ spaceId }: FileManagerProps) => {
                                         setUploading(true);
                                         try {
                                             for (const file of Array.from(files)) {
-                                                await uploadSpaceFile(spaceId, file, currentPath);
+                                                await uploadSpaceFile(installId, file, currentPath);
                                             }
                                             loader.reload();
                                             modal.closeModal();
@@ -493,7 +493,7 @@ print(response.json())`}
         <WithAdminBodyLayout
             Icon={Folder}
             name="Space Files"
-            description={`Managing files for space ${spaceId}`}
+            description={`Managing files for install ID ${installId}`}
             rightContent={
                 <div className="flex items-center gap-2">
                     <button
