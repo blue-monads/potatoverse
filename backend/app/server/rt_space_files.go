@@ -7,6 +7,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
+	"github.com/k0kubun/pp"
 )
 
 func (a *Server) ListSpaceFiles(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
@@ -49,29 +50,22 @@ func (a *Server) GetSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any,
 }
 
 func (a *Server) DownloadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	pp.Println("@DownloadSpaceFile/1", claim.UserId)
+
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
+
+	pp.Println("@DownloadSpaceFile/2", installId)
 
 	fileId, err := strconv.ParseInt(ctx.Param("fileId"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	// fixme => permission check
+	pp.Println("@DownloadSpaceFile/3", fileId)
 
-	// Get file metadata first
-	file, err := a.ctrl.GetSpaceFile(installId, fileId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set headers for file download
-	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file.Name))
-	ctx.Header("Content-Length", fmt.Sprintf("%d", file.Size))
-
-	// Stream the file content
 	err = a.ctrl.DownloadSpaceFile(installId, fileId, ctx.Writer)
 	if err != nil {
 		return nil, err
