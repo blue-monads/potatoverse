@@ -10,9 +10,11 @@ export const initHttpClient = () => {
 
     const data = getLoginData();
 
+    
+
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "X-Overhead": "Aaron Swartz",
+        "X-Clacks-Overhead": "Aaron Swartz",
     }
 
     if (data?.accessToken) {
