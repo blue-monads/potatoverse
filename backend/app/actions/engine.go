@@ -90,6 +90,10 @@ func (c *Controller) GetPackage(packageId int64) (*dbmodels.InstalledPackage, er
 	return c.database.GetPackageInstallOps().GetPackage(packageId)
 }
 
+func (c *Controller) GetPackageVersion(packageVersionId int64) (*dbmodels.PackageVersion, error) {
+	return c.database.GetPackageInstallOps().GetPackageVersion(packageVersionId)
+}
+
 func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (string, error) {
 	// Verify the user owns the package
 	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)

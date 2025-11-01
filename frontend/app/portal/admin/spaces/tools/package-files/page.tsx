@@ -21,10 +21,10 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 export default function Page() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const packageId = searchParams.get('packageId');
+    const packageVersionId = searchParams.get('package_version_id');
     const gapp = useGApp();
 
-    if (!packageId) {
+    if (!packageVersionId) {
         return (
             <WithAdminBodyLayout Icon={Folder} name="Package Files" description="Select a package to view files">
                 <div className="flex items-center justify-center h-64">
@@ -43,7 +43,7 @@ export default function Page() {
         );
     }
 
-    return <FileManager packageId={parseInt(packageId)} />;
+    return <FileManager packageId={parseInt(packageVersionId)} />;
 }
 
 interface FileManagerProps {

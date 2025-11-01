@@ -10,13 +10,19 @@ import (
 )
 
 func (a *Server) ListPackageFiles(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	packageVersionId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get package version to find the installed package
+	version, err := a.ctrl.GetPackageVersion(packageVersionId)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check if user has access to this package
-	pkg, err := a.ctrl.GetPackage(packageId)
+	pkg, err := a.ctrl.GetPackage(version.InstallId)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +33,7 @@ func (a *Server) ListPackageFiles(claim *signer.AccessClaim, ctx *gin.Context) (
 
 	path := ctx.Query("path")
 
-	files, err := a.ctrl.ListPackageFiles(packageId, path)
+	files, err := a.ctrl.ListPackageFiles(packageVersionId, path)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +42,7 @@ func (a *Server) ListPackageFiles(claim *signer.AccessClaim, ctx *gin.Context) (
 }
 
 func (a *Server) GetPackageFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	packageVersionId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +52,14 @@ func (a *Server) GetPackageFile(claim *signer.AccessClaim, ctx *gin.Context) (an
 		return nil, err
 	}
 
+	// Get package version to find the installed package
+	version, err := a.ctrl.GetPackageVersion(packageVersionId)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check if user has access to this package
-	pkg, err := a.ctrl.GetPackage(packageId)
+	pkg, err := a.ctrl.GetPackage(version.InstallId)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +68,7 @@ func (a *Server) GetPackageFile(claim *signer.AccessClaim, ctx *gin.Context) (an
 		return nil, fmt.Errorf("you are not authorized to access this package")
 	}
 
-	file, err := a.ctrl.GetPackageFile(packageId, fileId)
+	file, err := a.ctrl.GetPackageFile(packageVersionId, fileId)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +77,7 @@ func (a *Server) GetPackageFile(claim *signer.AccessClaim, ctx *gin.Context) (an
 }
 
 func (a *Server) DownloadPackageFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	packageVersionId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +87,14 @@ func (a *Server) DownloadPackageFile(claim *signer.AccessClaim, ctx *gin.Context
 		return nil, err
 	}
 
+	// Get package version to find the installed package
+	version, err := a.ctrl.GetPackageVersion(packageVersionId)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check if user has access to this package
-	pkg, err := a.ctrl.GetPackage(packageId)
+	pkg, err := a.ctrl.GetPackage(version.InstallId)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +104,7 @@ func (a *Server) DownloadPackageFile(claim *signer.AccessClaim, ctx *gin.Context
 	}
 
 	// Get file metadata first
-	file, err := a.ctrl.GetPackageFile(packageId, fileId)
+	file, err := a.ctrl.GetPackageFile(packageVersionId, fileId)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +114,7 @@ func (a *Server) DownloadPackageFile(claim *signer.AccessClaim, ctx *gin.Context
 	ctx.Header("Content-Length", fmt.Sprintf("%d", file.Size))
 
 	// Stream the file content
-	err = a.ctrl.DownloadPackageFile(packageId, fileId, ctx.Writer)
+	err = a.ctrl.DownloadPackageFile(packageVersionId, fileId, ctx.Writer)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +123,7 @@ func (a *Server) DownloadPackageFile(claim *signer.AccessClaim, ctx *gin.Context
 }
 
 func (a *Server) DeletePackageFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	packageVersionId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +133,14 @@ func (a *Server) DeletePackageFile(claim *signer.AccessClaim, ctx *gin.Context) 
 		return nil, err
 	}
 
+	// Get package version to find the installed package
+	version, err := a.ctrl.GetPackageVersion(packageVersionId)
+	if err != nil {
+		return nil, err
+	}
+
 	// Check if user has access to this package
-	pkg, err := a.ctrl.GetPackage(packageId)
+	pkg, err := a.ctrl.GetPackage(version.InstallId)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +149,7 @@ func (a *Server) DeletePackageFile(claim *signer.AccessClaim, ctx *gin.Context) 
 		return nil, fmt.Errorf("you are not authorized to access this package")
 	}
 
-	err = a.ctrl.DeletePackageFile(packageId, fileId)
+	err = a.ctrl.DeletePackageFile(packageVersionId, fileId)
 	if err != nil {
 		return nil, err
 	}
@@ -134,13 +158,19 @@ func (a *Server) DeletePackageFile(claim *signer.AccessClaim, ctx *gin.Context) 
 }
 
 func (a *Server) UploadPackageFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	packageVersionId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get package version to find the installed package
+	version, err := a.ctrl.GetPackageVersion(packageVersionId)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check if user has access to this package
-	pkg, err := a.ctrl.GetPackage(packageId)
+	pkg, err := a.ctrl.GetPackage(version.InstallId)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +196,7 @@ func (a *Server) UploadPackageFile(claim *signer.AccessClaim, ctx *gin.Context) 
 	path = strings.TrimPrefix(path, "/")
 	path = strings.TrimSuffix(path, "/")
 
-	fileId, err := a.ctrl.UploadPackageFile(packageId, claim.UserId, header.Filename, path, file)
+	fileId, err := a.ctrl.UploadPackageFile(packageVersionId, claim.UserId, header.Filename, path, file)
 	if err != nil {
 		return nil, err
 	}
