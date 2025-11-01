@@ -26,11 +26,16 @@ import { staticGradients } from '@/app/utils';
 export default function Page() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const packageId = searchParams.get('packageId');
-    const spaceId = searchParams.get('id');
+    const installId = searchParams.get('install_id');
+    const spaceId = searchParams.get('space_id');
+    const namespaceKey = searchParams.get('namespace_key');
+    const packageVersionId = searchParams.get('package_version_id');
+
+
+
     const gapp = useGApp();
 
-    if (!packageId) {
+    if (!installId) {
         return (
             <WithAdminBodyLayout Icon={PackageIcon} name="Package About" description="Select a package to view details">
                 <div className="flex items-center justify-center h-64">
@@ -49,7 +54,7 @@ export default function Page() {
         );
     }
 
-    return <PackageAbout packageId={parseInt(packageId)} spaceId={spaceId ? parseInt(spaceId) : undefined} />;
+    return <PackageAbout packageId={parseInt(installId)} spaceId={spaceId ? parseInt(spaceId) : undefined} />;
 }
 
 interface PackageAboutProps {
@@ -69,7 +74,7 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
     });
 
     const packageData = loader.data?.packages.find(pkg => pkg.id === packageId);
-    const packageSpaces = loader.data?.spaces.filter(space => space.package_id === packageId) || [];
+    const packageSpaces = loader.data?.spaces.filter(space => space.install_id === packageId) || [];
 
     const handleGenerateDevToken = async () => {
         try {
