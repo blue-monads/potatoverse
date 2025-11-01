@@ -9,7 +9,7 @@ func (d *SpaceOperations) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmod
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
 
-	cond["space_id"] = spaceId
+	cond["install_id"] = spaceId
 
 	err := table.Find(db.Cond(cond)).All(&datas)
 	if err != nil {
@@ -30,7 +30,7 @@ func (d *SpaceOperations) AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) erro
 func (d *SpaceOperations) GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	data := &dbmodels.SpaceKV{}
-	err := table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).One(data)
+	err := table.Find(db.Cond{"install_id": spaceId, "group": group, "key": key}).One(data)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (d *SpaceOperations) GetSpaceKV(spaceId int64, group string, key string) (*
 func (d *SpaceOperations) GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
-	err := table.Find(db.Cond{"space_id": spaceId, "group": group}).Offset(offset).Limit(limit).All(&datas)
+	err := table.Find(db.Cond{"install_id": spaceId, "group": group}).Offset(offset).Limit(limit).All(&datas)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func (d *SpaceOperations) GetSpaceKVByGroup(spaceId int64, group string, offset 
 
 func (d *SpaceOperations) UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
-	return table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).Update(data)
+	return table.Find(db.Cond{"install_id": spaceId, "group": group, "key": key}).Update(data)
 }
 
 func (d *SpaceOperations) UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
-	cond := db.Cond{"space_id": spaceId, "group": group, "key": key}
+	cond := db.Cond{"install_id": spaceId, "group": group, "key": key}
 
 	exists, err := table.Find(cond).Exists()
 	if err != nil {
@@ -62,11 +62,11 @@ func (d *SpaceOperations) UpsertSpaceKV(spaceId int64, group, key string, data m
 	}
 
 	if exists {
-		delete(data, "space_id")
+		delete(data, "install_id")
 		return table.Find(cond).Update(data)
 	}
 
-	data["space_id"] = spaceId
+	data["install_id"] = spaceId
 	data["group"] = group
 	data["key"] = key
 
@@ -81,7 +81,7 @@ func (d *SpaceOperations) UpsertSpaceKV(spaceId int64, group, key string, data m
 
 func (d *SpaceOperations) RemoveSpaceKV(spaceId int64, group string, key string) error {
 	table := d.spaceKVTable()
-	return table.Find(db.Cond{"space_id": spaceId, "group": group, "key": key}).Delete()
+	return table.Find(db.Cond{"install_id": spaceId, "group": group, "key": key}).Delete()
 }
 
 func (d *SpaceOperations) spaceKVTable() db.Collection {

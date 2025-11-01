@@ -11,13 +11,13 @@ import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
 export default function Page() {
     const searchParams = useSearchParams();
-    const spaceId = searchParams.get('id');
+    const installId = searchParams.get('install_id');
     
-    if (!spaceId) {
-        return <div>Space ID not provided</div>;
+    if (!installId) {
+        return <div>Install ID not provided</div>;
     }
 
-    return <KVListingPage spaceId={parseInt(spaceId)} />;
+    return <KVListingPage spaceId={parseInt(installId)} />;
 }
 
 const KVListingPage = ({ spaceId }: { spaceId: number }) => {
