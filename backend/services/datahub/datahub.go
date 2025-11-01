@@ -129,6 +129,13 @@ type SpaceOps interface {
 	GetSpaceUser(installId int64, id int64) (*dbmodels.SpaceUser, error)
 	UpdateSpaceUser(installId int64, id int64, data map[string]any) error
 	RemoveSpaceUser(installId int64, id int64) error
+
+	// Event Subscriptions
+	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error)
+	AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error)
+	GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error)
+	UpdateEventSubscription(installId int64, id int64, data map[string]any) error
+	RemoveEventSubscription(installId int64, id int64) error
 }
 
 type SpaceKVOps interface {

@@ -189,6 +189,21 @@ CREATE TABLE IF NOT EXISTS SpaceCapabilities (
 );
 
 
--- files
-
+CREATE TABLE IF NOT EXISTS EventSubscriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  install_id INTEGER NOT NULL,
+  space_id INTEGER NOT NULL DEFAULT 0,
+  event_key TEXT NOT NULL DEFAULT '',
+  target_type TEXT NOT NULL DEFAULT '', -- push, email, sms, webhook, script
+  target_endpoint TEXT NOT NULL DEFAULT '',
+  target_options JSON NOT NULL DEFAULT '{}', -- it has creds, api keys and other options
+  target_code TEXT NOT NULL DEFAULT '',
+  rules JSON NOT NULL DEFAULT '{}',
+  transform JSON NOT NULL DEFAULT '{}',
+  extrameta JSON NOT NULL DEFAULT '{}',
+  created_by INTEGER NOT NULL DEFAULT 0,
+  disabled BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 

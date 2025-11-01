@@ -274,3 +274,134 @@ func (a *Server) DeleteSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (a
 
 	return gin.H{"message": "Space user deleted successfully"}, nil
 }
+
+// ListEventSubscriptions lists all event subscriptions for a space/package
+func (a *Server) ListEventSubscriptions(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	// Get query parameters for filtering
+	spaceIdParam := ctx.Query("space_id")
+	eventKeyParam := ctx.Query("event_key")
+
+	// Build condition map
+	cond := make(map[any]any)
+	if spaceIdParam != "" {
+		spaceId, err := strconv.ParseInt(spaceIdParam, 10, 64)
+		if err == nil {
+			cond["space_id"] = spaceId
+		}
+	}
+	if eventKeyParam != "" {
+		cond["event_key"] = eventKeyParam
+	}
+
+	subscriptions, err := a.ctrl.QueryEventSubscriptions(installId, cond)
+	if err != nil {
+		return nil, err
+	}
+
+	return subscriptions, nil
+}
+
+// GetEventSubscription gets a specific event subscription by ID
+func (a *Server) GetEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	subscriptionId, err := strconv.ParseInt(ctx.Param("subscriptionId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	subscription, err := a.ctrl.GetEventSubscriptionByID(installId, subscriptionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return subscription, nil
+}
+
+// CreateEventSubscription creates a new event subscription
+func (a *Server) CreateEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	var subscriptionData map[string]any
+	if err := ctx.ShouldBindJSON(&subscriptionData); err != nil {
+		return nil, err
+	}
+
+	// Set created_by from claim if available
+	if claim != nil && claim.UserId > 0 {
+		subscriptionData["created_by"] = float64(claim.UserId)
+	}
+
+	subscription, err := a.ctrl.CreateEventSubscription(installId, subscriptionData)
+	if err != nil {
+		return nil, err
+	}
+
+	return subscription, nil
+}
+
+// UpdateEventSubscription updates an existing event subscription
+func (a *Server) UpdateEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	subscriptionId, err := strconv.ParseInt(ctx.Param("subscriptionId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	var updateData map[string]any
+	if err := ctx.ShouldBindJSON(&updateData); err != nil {
+		return nil, err
+	}
+
+	subscription, err := a.ctrl.UpdateEventSubscriptionByID(installId, subscriptionId, updateData)
+	if err != nil {
+		return nil, err
+	}
+
+	return subscription, nil
+}
+
+// DeleteEventSubscription deletes an event subscription
+func (a *Server) DeleteEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	subscriptionId, err := strconv.ParseInt(ctx.Param("subscriptionId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	err = a.ctrl.DeleteEventSubscriptionByID(installId, subscriptionId)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{"message": "Event subscription deleted successfully"}, nil
+}

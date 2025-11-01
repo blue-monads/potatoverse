@@ -343,3 +343,52 @@ func (d *SpaceOperations) RemoveSpaceUser(installId int64, id int64) error {
 	table := d.spaceUserTable()
 	return table.Find(db.Cond{"install_id": installId, "id": id}).Delete()
 }
+
+// Event Subscriptions
+
+func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error) {
+	table := d.eventSubscriptionTable()
+	datas := make([]dbmodels.EventSubscription, 0)
+
+	cond["install_id"] = installId
+
+	err := table.Find(db.Cond(cond)).All(&datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
+}
+
+func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error) {
+	data.InstallID = installId
+	table := d.eventSubscriptionTable()
+	r, err := table.Insert(data)
+	if err != nil {
+		return 0, err
+	}
+	return r.ID().(int64), nil
+}
+
+func (d *SpaceOperations) GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error) {
+	table := d.eventSubscriptionTable()
+	data := &dbmodels.EventSubscription{}
+	err := table.Find(db.Cond{"install_id": installId, "id": id}).One(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (d *SpaceOperations) UpdateEventSubscription(installId int64, id int64, data map[string]any) error {
+	table := d.eventSubscriptionTable()
+	return table.Find(db.Cond{"install_id": installId, "id": id}).Update(data)
+}
+
+func (d *SpaceOperations) RemoveEventSubscription(installId int64, id int64) error {
+	table := d.eventSubscriptionTable()
+	return table.Find(db.Cond{"install_id": installId, "id": id}).Delete()
+}
+
+func (d *SpaceOperations) eventSubscriptionTable() db.Collection {
+	return d.db.Collection("EventSubscriptions")
+}

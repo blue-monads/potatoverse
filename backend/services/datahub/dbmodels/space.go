@@ -87,3 +87,21 @@ type SpaceKV struct {
 	Tag2      string `json:"tag2" db:"tag2,omitempty"`
 	Tag3      string `json:"tag3" db:"tag3,omitempty"`
 }
+
+type EventSubscription struct {
+	ID            int64      `json:"id" db:"id,omitempty"`
+	InstallID     int64      `json:"install_id" db:"install_id"`
+	SpaceID       int64      `json:"space_id" db:"space_id"`
+	EventKey      string     `json:"event_key" db:"event_key"`
+	TargetType    string     `json:"target_type" db:"target_type"` // push, email, sms, webhook, script
+	TargetEndpoint string    `json:"target_endpoint" db:"target_endpoint"`
+	TargetOptions  string     `json:"target_options" db:"target_options"` // JSON
+	TargetCode     string     `json:"target_code" db:"target_code"`
+	Rules          string     `json:"rules" db:"rules"` // JSON
+	Transform      string     `json:"transform" db:"transform"` // JSON
+	ExtraMeta      string     `json:"extrameta" db:"extrameta,omitempty"` // JSON
+	CreatedBy      int64      `json:"created_by" db:"created_by"`
+	Disabled       bool       `json:"disabled" db:"disabled"`
+	CreatedAt      *time.Time `json:"created_at" db:"created_at,omitempty"`
+	UpdatedAt      *time.Time `json:"updated_at" db:"updated_at,omitempty"`
+}

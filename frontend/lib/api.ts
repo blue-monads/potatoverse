@@ -601,3 +601,85 @@ export const updateSpaceUser = async (installId: number, spaceUserId: number, da
 export const deleteSpaceUser = async (installId: number, spaceUserId: number) => {
     return iaxios.delete<void>(`/core/space/${installId}/users/${spaceUserId}`);
 }
+
+// Event Subscriptions API
+export interface EventSubscription {
+    id: number;
+    install_id: number;
+    space_id: number;
+    event_key: string;
+    target_type: string; // push, email, sms, webhook, script
+    target_endpoint: string;
+    target_options: string; // JSON string
+    target_code: string;
+    rules: string; // JSON string
+    transform: string; // JSON string
+    extrameta: string; // JSON string
+    created_by: number;
+    disabled: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export const listEventSubscriptions = async (installId: number, spaceId?: number, eventKey?: string) => {
+    return iaxios.get<EventSubscription[]>(`/core/space/${installId}/events`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+            ...(eventKey && { event_key: eventKey }),
+        },
+    });
+}
+
+export const getEventSubscription = async (installId: number, subscriptionId: number) => {
+    return iaxios.get<EventSubscription>(`/core/space/${installId}/events/${subscriptionId}`);
+}
+
+export const createEventSubscription = async (installId: number, data: {
+    event_key: string;
+    target_type: string;
+    space_id?: number; // 0 or omitted for package-level, >0 for space-level
+    target_endpoint?: string;
+    target_options?: any; // Will be JSON stringified
+    target_code?: string;
+    rules?: any; // Will be JSON stringified
+    transform?: any; // Will be JSON stringified
+    extrameta?: any; // Will be JSON stringified
+    disabled?: boolean;
+}) => {
+    // Stringify JSON fields
+    const payload: any = {
+        event_key: data.event_key,
+        target_type: data.target_type,
+        ...(data.space_id !== undefined && { space_id: data.space_id }),
+        ...(data.target_endpoint && { target_endpoint: data.target_endpoint }),
+        ...(data.target_options && { target_options: typeof data.target_options === 'string' ? data.target_options : JSON.stringify(data.target_options) }),
+        ...(data.target_code && { target_code: data.target_code }),
+        ...(data.rules && { rules: typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules) }),
+        ...(data.transform && { transform: typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform) }),
+        ...(data.extrameta && { extrameta: typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta) }),
+        ...(data.disabled !== undefined && { disabled: data.disabled }),
+    };
+    
+    return iaxios.post<EventSubscription>(`/core/space/${installId}/events`, payload);
+}
+
+export const updateEventSubscription = async (installId: number, subscriptionId: number, data: Partial<EventSubscription>) => {
+    // Stringify JSON fields if they're objects
+    const payload: any = {};
+    if (data.event_key !== undefined) payload.event_key = data.event_key;
+    if (data.target_type !== undefined) payload.target_type = data.target_type;
+    if (data.space_id !== undefined) payload.space_id = data.space_id;
+    if (data.target_endpoint !== undefined) payload.target_endpoint = data.target_endpoint;
+    if (data.target_options !== undefined) payload.target_options = typeof data.target_options === 'string' ? data.target_options : JSON.stringify(data.target_options);
+    if (data.target_code !== undefined) payload.target_code = data.target_code;
+    if (data.rules !== undefined) payload.rules = typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules);
+    if (data.transform !== undefined) payload.transform = typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform);
+    if (data.extrameta !== undefined) payload.extrameta = typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta);
+    if (data.disabled !== undefined) payload.disabled = data.disabled;
+    
+    return iaxios.put<EventSubscription>(`/core/space/${installId}/events/${subscriptionId}`, payload);
+}
+
+export const deleteEventSubscription = async (installId: number, subscriptionId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/events/${subscriptionId}`);
+}
