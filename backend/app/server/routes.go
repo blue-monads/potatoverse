@@ -135,6 +135,13 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.PUT("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.UpdateSpaceCapability))
 	coreApi.DELETE("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.DeleteSpaceCapability))
 
+	// Space Users API
+	coreApi.GET("/space/:install_id/users", a.withAccessTokenFn(a.ListSpaceUsers))
+	coreApi.GET("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.GetSpaceUser))
+	coreApi.POST("/space/:install_id/users", a.withAccessTokenFn(a.CreateSpaceUser))
+	coreApi.PUT("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.UpdateSpaceUser))
+	coreApi.DELETE("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.DeleteSpaceUser))
+
 	// Capability Types API
 	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))
 

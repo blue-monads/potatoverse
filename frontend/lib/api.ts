@@ -558,3 +558,46 @@ export const updateSpaceCapability = async (installId: number, capabilityId: num
 export const deleteSpaceCapability = async (installId: number, capabilityId: number) => {
     return iaxios.delete<void>(`/core/space/${installId}/capabilities/${capabilityId}`);
 }
+
+// Space Users API
+export interface SpaceUser {
+    id: number;
+    user_id: number;
+    install_id: number;
+    space_id: number;
+    scope: string;
+    token: string;
+    extrameta: string;
+}
+
+export const listSpaceUsers = async (installId: number, spaceId?: number, userId?: number, scope?: string) => {
+    return iaxios.get<SpaceUser[]>(`/core/space/${installId}/users`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+            ...(userId !== undefined && { user_id: userId }),
+            ...(scope && { scope }),
+        },
+    });
+}
+
+export const getSpaceUser = async (installId: number, spaceUserId: number) => {
+    return iaxios.get<SpaceUser>(`/core/space/${installId}/users/${spaceUserId}`);
+}
+
+export const createSpaceUser = async (installId: number, data: {
+    user_id: number;
+    space_id?: number; // 0 or omitted for package-level, >0 for space-level
+    scope?: string;
+    token?: string;
+    extrameta?: string;
+}) => {
+    return iaxios.post<SpaceUser>(`/core/space/${installId}/users`, data);
+}
+
+export const updateSpaceUser = async (installId: number, spaceUserId: number, data: Partial<SpaceUser>) => {
+    return iaxios.put<SpaceUser>(`/core/space/${installId}/users/${spaceUserId}`, data);
+}
+
+export const deleteSpaceUser = async (installId: number, spaceUserId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/users/${spaceUserId}`);
+}

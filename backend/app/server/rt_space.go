@@ -141,3 +141,136 @@ func (a *Server) DeleteSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 
 	return gin.H{"message": "KV entry deleted successfully"}, nil
 }
+
+// ListSpaceUsers lists all users for a space/package
+func (a *Server) ListSpaceUsers(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	// Get query parameters for filtering
+	spaceIdParam := ctx.Query("space_id")
+	userIdParam := ctx.Query("user_id")
+	scopeParam := ctx.Query("scope")
+
+	// Build condition map
+	cond := make(map[any]any)
+	if spaceIdParam != "" {
+		spaceId, err := strconv.ParseInt(spaceIdParam, 10, 64)
+		if err == nil {
+			cond["space_id"] = spaceId
+		}
+	}
+	if userIdParam != "" {
+		userId, err := strconv.ParseInt(userIdParam, 10, 64)
+		if err == nil {
+			cond["user_id"] = userId
+		}
+	}
+	if scopeParam != "" {
+		cond["scope"] = scopeParam
+	}
+
+	users, err := a.ctrl.QuerySpaceUsers(installId, cond)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+// GetSpaceUser gets a specific space user by ID
+func (a *Server) GetSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceUserId, err := strconv.ParseInt(ctx.Param("spaceUserId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	spaceUser, err := a.ctrl.GetSpaceUserByID(installId, spaceUserId)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaceUser, nil
+}
+
+// CreateSpaceUser creates a new space user
+func (a *Server) CreateSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	var userData map[string]any
+	if err := ctx.ShouldBindJSON(&userData); err != nil {
+		return nil, err
+	}
+
+	spaceUser, err := a.ctrl.CreateSpaceUser(installId, userData)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaceUser, nil
+}
+
+// UpdateSpaceUser updates an existing space user
+func (a *Server) UpdateSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceUserId, err := strconv.ParseInt(ctx.Param("spaceUserId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	var updateData map[string]any
+	if err := ctx.ShouldBindJSON(&updateData); err != nil {
+		return nil, err
+	}
+
+	spaceUser, err := a.ctrl.UpdateSpaceUserByID(installId, spaceUserId, updateData)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaceUser, nil
+}
+
+// DeleteSpaceUser deletes a space user
+func (a *Server) DeleteSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceUserId, err := strconv.ParseInt(ctx.Param("spaceUserId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	err = a.ctrl.DeleteSpaceUserByID(installId, spaceUserId)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{"message": "Space user deleted successfully"}, nil
+}

@@ -122,6 +122,13 @@ type SpaceOps interface {
 	UpdateSpaceCapabilityByID(installId int64, id int64, data map[string]any) error
 	RemoveSpaceCapability(installId int64, name string) error
 	RemoveSpaceCapabilityByID(installId int64, id int64) error
+
+	// Space Users
+	QuerySpaceUsers(installId int64, cond map[any]any) ([]dbmodels.SpaceUser, error)
+	AddSpaceUser(installId int64, data *dbmodels.SpaceUser) (int64, error)
+	GetSpaceUser(installId int64, id int64) (*dbmodels.SpaceUser, error)
+	UpdateSpaceUser(installId int64, id int64, data map[string]any) error
+	RemoveSpaceUser(installId int64, id int64) error
 }
 
 type SpaceKVOps interface {
