@@ -22,7 +22,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 			condMap := luaplus.TableToMapAny(L, cond)
 
-			datas, err := db.QuerySpaceKV(spaceId, condMap)
+			datas, err := db.QuerySpaceKV(spaceId, condMap, 0, 100)
 			if err != nil {
 				return pushError(L, err)
 			}

@@ -5,15 +5,21 @@ import (
 	"github.com/upper/db/v4"
 )
 
-func (d *SpaceOperations) QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error) {
+func (d *SpaceOperations) QuerySpaceKV(installId int64, cond map[any]any, offset int, limit int) ([]dbmodels.SpaceKV, error) {
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
 
-	cond["install_id"] = spaceId
+	cond["install_id"] = installId
+
+	if limit > 1000 || limit <= 0 {
+		limit = 100
+	}
 
 	err := table.Find(db.Cond(cond)).
 		Select("id", "key", "group", "tag1", "tag2", "tag3").
 		OrderBy("id ASC").
+		Offset(offset).
+		Limit(limit).
 		All(&datas)
 	if err != nil {
 		return nil, err

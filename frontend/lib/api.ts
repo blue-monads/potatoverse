@@ -395,8 +395,13 @@ export interface SpaceKV {
     tag3?: string;
 }
 
-export const listSpaceKV = async (installId: number) => {
-    return iaxios.get<SpaceKV[]>(`/core/space/${installId}/kv`);
+export const listSpaceKV = async (installId: number, offset: number = 0, limit: number = 100) => {
+    return iaxios.get<SpaceKV[]>(`/core/space/${installId}/kv`, {
+        params: {
+            offset,
+            limit,
+        },
+    });
 }
 
 export const getSpaceKV = async (installId: number, id: number) => {

@@ -74,8 +74,8 @@ func (c *Controller) DeleteSpaceKVByID(installId int64, kvId int64) error {
 	return c.database.GetSpaceKVOps().RemoveSpaceKV(installId, kv.Group, kv.Key)
 }
 
-func (c *Controller) QuerySpaceKV(installId int64, cond map[any]any) ([]dbmodels.SpaceKV, error) {
-	return c.database.GetSpaceKVOps().QuerySpaceKV(installId, cond)
+func (c *Controller) QuerySpaceKV(installId int64, cond map[any]any, offset int, limit int) ([]dbmodels.SpaceKV, error) {
+	return c.database.GetSpaceKVOps().QuerySpaceKV(installId, cond, offset, limit)
 }
 
 func (c *Controller) GetSpaceKVByID(installId int64, kvId int64) (*dbmodels.SpaceKV, error) {

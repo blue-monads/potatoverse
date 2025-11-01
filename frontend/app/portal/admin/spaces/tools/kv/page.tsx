@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Filter, Edit, Trash2, Key, Tag, Database, Grid2x2Plus } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { Filter, Edit, Trash2, Key, Tag, Database, Grid2x2Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { listSpaceKV, SpaceKV, createSpaceKV, updateSpaceKV, deleteSpaceKV, getSpaceKV } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
+
+const PAGE_LIMIT = 100;
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -20,13 +22,19 @@ export default function Page() {
 }
 
 const KVListingPage = ({ spaceId }: { spaceId: number }) => {
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedGroup, setSelectedGroup] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    
+    // Get offset from URL params, default to 0
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
+    const currentOffset = isNaN(offset) || offset < 0 ? 0 : offset;
 
     const loader = useSimpleDataLoader<SpaceKV[]>({
-        loader: () => listSpaceKV(spaceId),
+        loader: () => listSpaceKV(spaceId, currentOffset, PAGE_LIMIT),
         ready: true,
     });
 
@@ -46,6 +54,38 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
 
     // Get unique groups for filter dropdown
     const uniqueGroups = Array.from(new Set(loader.data?.map(kv => kv.group) || []));
+    
+    // Check if there might be more results (simple approach: if we got exactly the limit, there might be more)
+    const hasNext = loader.data?.length === PAGE_LIMIT;
+    const hasPrevious = currentOffset > 0;
+    
+    const handleNext = () => {
+        const newOffset = currentOffset + PAGE_LIMIT;
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('offset', newOffset.toString());
+        router.push(`?${params.toString()}`);
+    };
+    
+    const handlePrevious = () => {
+        const newOffset = Math.max(0, currentOffset - PAGE_LIMIT);
+        const params = new URLSearchParams(searchParams.toString());
+        if (newOffset === 0) {
+            params.delete('offset');
+        } else {
+            params.set('offset', newOffset.toString());
+        }
+        router.push(`?${params.toString()}`);
+    };
+    
+    // Reset offset when filters change
+    useEffect(() => {
+        if (currentOffset > 0 && (searchTerm || selectedGroup)) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete('offset');
+            router.push(`?${params.toString()}`);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, selectedGroup]);
 
     const handleCreate = async (data: {
         key: string;
@@ -239,6 +279,41 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                             </tbody>
                         </table>
                     </div>
+                    
+                    {/* Pagination Controls */}
+                    {(hasPrevious || hasNext) && (
+                        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                            <div className="text-sm text-gray-700">
+                                Showing {currentOffset + 1} - {currentOffset + (loader.data?.length || 0)} entries
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handlePrevious}
+                                    disabled={!hasPrevious || loader.loading}
+                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                        hasPrevious && !loader.loading
+                                            ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                    Previous
+                                </button>
+                                <button
+                                    onClick={handleNext}
+                                    disabled={!hasNext || loader.loading}
+                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                        hasNext && !loader.loading
+                                            ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    Next
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

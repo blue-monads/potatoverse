@@ -40,7 +40,22 @@ func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, 
 		cond["tag3"] = tag3
 	}
 
-	kvEntries, err := a.ctrl.QuerySpaceKV(installId, cond)
+	// Parse pagination parameters
+	offset := 0
+	if offsetStr := ctx.Query("offset"); offsetStr != "" {
+		if parsedOffset, err := strconv.Atoi(offsetStr); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	limit := 100 // default limit
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		}
+	}
+
+	kvEntries, err := a.ctrl.QuerySpaceKV(installId, cond, offset, limit)
 	if err != nil {
 		return nil, err
 	}

@@ -139,7 +139,7 @@ type SpaceOps interface {
 }
 
 type SpaceKVOps interface {
-	QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error)
+	QuerySpaceKV(installId int64, cond map[any]any, offset int, limit int) ([]dbmodels.SpaceKV, error)
 	AddSpaceKV(installId int64, data *dbmodels.SpaceKV) error
 	GetSpaceKV(installId int64, group string, key string) (*dbmodels.SpaceKV, error)
 	GetSpaceKVByID(installId int64, id int64) (*dbmodels.SpaceKV, error)
