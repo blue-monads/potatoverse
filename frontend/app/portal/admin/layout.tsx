@@ -40,10 +40,14 @@ export default function PortalLayout({
 
 const Sidebar = () => {
   const [showMenu, setShowMenu] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const gapp = useGApp();
   const router = useRouter();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!gapp.loaded) {
@@ -99,7 +103,7 @@ const Sidebar = () => {
 
               <ul className="px-4 pb-4 text-sm font-medium gap-4 flex flex-col">
 
-                {gapp.isAuthenticated && gapp.userInfo && (
+                {mounted && gapp.loaded && gapp.isAuthenticated && gapp.userInfo && (
 
                   <li>
 
