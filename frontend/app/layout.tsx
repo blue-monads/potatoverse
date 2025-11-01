@@ -22,6 +22,7 @@ export default function RootLayout({
     >
       <body
         className={`antialiased`}
+        // suppressHydrationWarning
       >
         <script src="/zz/api/core/global.js" />
 
