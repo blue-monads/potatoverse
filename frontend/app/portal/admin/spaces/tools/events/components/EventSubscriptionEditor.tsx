@@ -458,7 +458,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                         <h3 className="text-lg font-semibold text-gray-900">Target</h3>
                     </div>
 
-                    <div className="border-2 border-green-300 rounded-lg p-4">
+                    <div className="rounded-lg p-4">
                         <div className="mb-3">
                             <span className="text-sm font-medium text-gray-700">When rule matches</span>
                         </div>
