@@ -165,7 +165,7 @@ func (a *Server) UploadPackageFile(claim *signer.AccessClaim, ctx *gin.Context) 
 		path = "/"
 	}
 
-	fileId, err := a.ctrl.UploadPackageFile(packageId, header.Filename, path, file)
+	fileId, err := a.ctrl.UploadPackageFile(packageId, claim.UserId, header.Filename, path, file)
 	if err != nil {
 		return nil, err
 	}
