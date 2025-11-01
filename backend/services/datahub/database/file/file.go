@@ -196,12 +196,35 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 }
 
 func (f *FileOperations) CreateFolder(ownerID int64, path string, name string, createdBy int64) (int64, error) {
-	req := &datahub.CreateFileRequest{
+
+	exists, err := f.fileExists(ownerID, path, name)
+	if err != nil {
+		return 0, err
+	}
+	if exists {
+		return 0, fmt.Errorf("file already exists")
+	}
+
+	now := time.Now()
+
+	fileMeta := &dbmodels.FileMeta{
+		OwnerID:   ownerID,
 		Name:      name,
 		Path:      path,
+		IsFolder:  true,
 		CreatedBy: createdBy,
+		CreatedAt: &now,
+		UpdatedBy: createdBy,
+		UpdatedAt: &now,
 	}
-	return f.CreateFile(ownerID, req, nil)
+
+	rid, err := f.fileMetaTable().Insert(fileMeta)
+	if err != nil {
+		return 0, err
+	}
+	fileID := rid.ID().(int64)
+
+	return fileID, nil
 }
 
 func (f *FileOperations) GetFileMeta(id int64) (*dbmodels.FileMeta, error) {

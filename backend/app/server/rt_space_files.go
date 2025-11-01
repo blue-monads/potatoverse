@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
@@ -161,6 +162,9 @@ func (a *Server) UploadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (a
 	defer file.Close()
 
 	path := ctx.Request.FormValue("path")
+
+	path = strings.TrimPrefix(path, "/")
+	path = strings.TrimSuffix(path, "/")
 
 	fileId, err := a.ctrl.UploadSpaceFile(installId, header.Filename, path, file, claim.UserId)
 	if err != nil {
