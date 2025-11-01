@@ -46,7 +46,18 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		installedIds = append(installedIds, space.InstalledId)
 	}
 
-	packages, err := c.database.GetPackageInstallOps().ListPackageVersionByIds(installedIds)
+	packages, err := c.database.GetPackageInstallOps().ListPackagesByIds(installedIds)
+	if err != nil {
+		return nil, err
+	}
+
+	packageVersions := make([]int64, 0, len(packages))
+
+	for _, pkg := range packages {
+		packageVersions = append(packageVersions, pkg.ActiveInstallID)
+	}
+
+	pversions, err := c.database.GetPackageInstallOps().ListPackageVersionByIds(packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +83,7 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 
 	return &InstalledSpace{
 		Spaces:   finalSpaces,
-		Packages: packages,
+		Packages: pversions,
 	}, nil
 
 }
