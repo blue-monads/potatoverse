@@ -357,24 +357,24 @@ export interface SpaceKV {
     tag3: string;
 }
 
-export const listSpaceKV = async (spaceId: number) => {
-    return iaxios.get<SpaceKV[]>(`/core/space/${spaceId}/kv`);
+export const listSpaceKV = async (installId: number) => {
+    return iaxios.get<SpaceKV[]>(`/core/space/${installId}/kv`);
 }
 
-export const getSpaceKV = async (spaceId: number, id: number) => {
-    return iaxios.get<SpaceKV>(`/core/space/${spaceId}/kv/${id}`);
+export const getSpaceKV = async (installId: number, id: number) => {
+    return iaxios.get<SpaceKV>(`/core/space/${installId}/kv/${id}`);
 }
 
-export const createSpaceKV = async (spaceId: number, data: Partial<SpaceKV>) => {
-    return iaxios.post<SpaceKV>(`/core/space/${spaceId}/kv`, data);
+export const createSpaceKV = async (installId: number, data: Partial<SpaceKV>) => {
+    return iaxios.post<SpaceKV>(`/core/space/${installId}/kv`, data);
 }
 
-export const updateSpaceKV = async (spaceId: number, id: number, data: Partial<SpaceKV>) => {
-    return iaxios.put<SpaceKV>(`/core/space/${spaceId}/kv/${id}`, data);
+export const updateSpaceKV = async (installId: number, id: number, data: Partial<SpaceKV>) => {
+    return iaxios.put<SpaceKV>(`/core/space/${installId}/kv/${id}`, data);
 }
 
-export const deleteSpaceKV = async (spaceId: number, id: number) => {
-    return iaxios.delete<void>(`/core/space/${spaceId}/kv/${id}`);
+export const deleteSpaceKV = async (installId: number, id: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/kv/${id}`);
 }
 
 // Space Files API
@@ -392,42 +392,42 @@ export interface SpaceFile {
     created_at: string;
 }
 
-export const listSpaceFiles = async (spaceId: number, path: string = '') => {
-    return iaxios.get<SpaceFile[]>(`/core/space/${spaceId}/files`, {
+export const listSpaceFiles = async (installId: number, path: string = '') => {
+    return iaxios.get<SpaceFile[]>(`/core/space/${installId}/files`, {
         params: {
             path,
         },
     });
 }
 
-export const getSpaceFile = async (spaceId: number, fileId: number) => {
-    return iaxios.get<SpaceFile>(`/core/space/${spaceId}/files/${fileId}`);
+export const getSpaceFile = async (installId: number, fileId: number) => {
+    return iaxios.get<SpaceFile>(`/core/space/${installId}/files/${fileId}`);
 }
 
-export const downloadSpaceFile = async (spaceId: number, fileId: number) => {
-    return iaxios.get(`/core/space/${spaceId}/files/${fileId}/download`, {
+export const downloadSpaceFile = async (installId: number, fileId: number) => {
+    return iaxios.get(`/core/space/${installId}/files/${fileId}/download`, {
         responseType: 'blob'
     });
 }
 
-export const deleteSpaceFile = async (spaceId: number, fileId: number) => {
-    return iaxios.delete(`/core/space/${spaceId}/files/${fileId}`);
+export const deleteSpaceFile = async (installId: number, fileId: number) => {
+    return iaxios.delete(`/core/space/${installId}/files/${fileId}`);
 }
 
-export const uploadSpaceFile = async (spaceId: number, file: File, path: string = '') => {
+export const uploadSpaceFile = async (installId: number, file: File, path: string = '') => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('path', path);
     
-    return iaxios.post(`/core/space/${spaceId}/files/upload`, formData, {
+    return iaxios.post(`/core/space/${installId}/files/upload`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
         },
     });
 }
 
-export const createSpaceFolder = async (spaceId: number, name: string, path: string = '') => {
-    return iaxios.post(`/core/space/${spaceId}/files/folder`, {
+export const createSpaceFolder = async (installId: number, name: string, path: string = '') => {
+    return iaxios.post(`/core/space/${installId}/files/folder`, {
         name,
         path,
     });
@@ -440,8 +440,8 @@ export interface PresignedUploadResponse {
     expiry: number;
 }
 
-export const createPresignedUploadURL = async (spaceId: number, fileName: string, path: string = '', expiry?: number) => {
-    return iaxios.post<PresignedUploadResponse>(`/core/space/${spaceId}/files/presigned`, {
+export const createPresignedUploadURL = async (installId: number, fileName: string, path: string = '', expiry?: number) => {
+    return iaxios.post<PresignedUploadResponse>(`/core/space/${installId}/files/presigned`, {
         file_name: fileName,
         path,
         expiry,

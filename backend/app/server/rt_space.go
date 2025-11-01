@@ -10,13 +10,13 @@ import (
 
 // ListSpaceKV lists all KV entries for a space
 func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	spaceId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(spaceId)
+	space, err := a.ctrl.GetSpace(installId)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, 
 		cond["tag3"] = tag3
 	}
 
-	kvEntries, err := a.ctrl.QuerySpaceKV(spaceId, cond)
+	kvEntries, err := a.ctrl.QuerySpaceKV(installId, cond)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (a *Server) ListSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, 
 
 // GetSpaceKV gets a specific KV entry by ID
 func (a *Server) GetSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	spaceId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (a *Server) GetSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, e
 	}
 
 	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(spaceId)
+	space, err := a.ctrl.GetSpace(installId)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (a *Server) GetSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, e
 		return nil, fmt.Errorf("you are not authorized to access this space")
 	}
 
-	kvEntry, err := a.ctrl.GetSpaceKVByID(spaceId, kvId)
+	kvEntry, err := a.ctrl.GetSpaceKVByID(installId, kvId)
 	if err != nil {
 		return nil, err
 	}
@@ -90,13 +90,13 @@ func (a *Server) GetSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, e
 
 // CreateSpaceKV creates a new KV entry
 func (a *Server) CreateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	spaceId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(spaceId)
+	space, err := a.ctrl.GetSpace(installId)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (a *Server) CreateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, err
 	}
 
-	kvEntry, err := a.ctrl.CreateSpaceKV(spaceId, kvData)
+	kvEntry, err := a.ctrl.CreateSpaceKV(installId, kvData)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (a *Server) CreateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 
 // UpdateSpaceKV updates an existing KV entry
 func (a *Server) UpdateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	spaceId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func (a *Server) UpdateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 	}
 
 	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(spaceId)
+	space, err := a.ctrl.GetSpace(installId)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func (a *Server) UpdateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, err
 	}
 
-	kvEntry, err := a.ctrl.UpdateSpaceKVByID(spaceId, kvId, updateData)
+	kvEntry, err := a.ctrl.UpdateSpaceKVByID(installId, kvId, updateData)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (a *Server) UpdateSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 
 // DeleteSpaceKV deletes a KV entry
 func (a *Server) DeleteSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	spaceId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func (a *Server) DeleteSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 	}
 
 	// Check if user has access to this space
-	space, err := a.ctrl.GetSpace(spaceId)
+	space, err := a.ctrl.GetSpace(installId)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (a *Server) DeleteSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 		return nil, fmt.Errorf("you are not authorized to access this space")
 	}
 
-	err = a.ctrl.DeleteSpaceKVByID(spaceId, kvId)
+	err = a.ctrl.DeleteSpaceKVByID(installId, kvId)
 	if err != nil {
 		return nil, err
 	}

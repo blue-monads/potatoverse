@@ -45,12 +45,12 @@ type SpaceAdvisieryClaim struct {
 }
 
 type SpaceFilePresignedClaim struct {
-	Typeid   uint8  `json:"t,omitempty"`
-	SpaceId  int64  `json:"s,omitempty"`
-	UserId   int64  `json:"u,omitempty"`
-	PathName string `json:"pn,omitempty"`
-	FileName string `json:"fn,omitempty"`
-	Expiry   int64  `json:"e,omitempty"`
+	Typeid    uint8  `json:"t,omitempty"`
+	InstallId int64  `json:"i,omitempty"`
+	UserId    int64  `json:"u,omitempty"`
+	PathName  string `json:"pn,omitempty"`
+	FileName  string `json:"fn,omitempty"`
+	Expiry    int64  `json:"e,omitempty"`
 }
 
 type PackageDevClaim struct {

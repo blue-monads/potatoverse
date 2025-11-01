@@ -115,12 +115,12 @@ type SpaceOps interface {
 
 type SpaceKVOps interface {
 	QuerySpaceKV(spaceId int64, cond map[any]any) ([]dbmodels.SpaceKV, error)
-	AddSpaceKV(spaceId int64, data *dbmodels.SpaceKV) error
-	GetSpaceKV(spaceId int64, group string, key string) (*dbmodels.SpaceKV, error)
-	GetSpaceKVByGroup(spaceId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error)
-	RemoveSpaceKV(spaceId int64, group string, key string) error
-	UpdateSpaceKV(spaceId int64, group, key string, data map[string]any) error
-	UpsertSpaceKV(spaceId int64, group, key string, data map[string]any) error
+	AddSpaceKV(installId int64, data *dbmodels.SpaceKV) error
+	GetSpaceKV(installId int64, group string, key string) (*dbmodels.SpaceKV, error)
+	GetSpaceKVByGroup(installId int64, group string, offset int, limit int) ([]dbmodels.SpaceKV, error)
+	RemoveSpaceKV(installId int64, group string, key string) error
+	UpdateSpaceKV(installId int64, group, key string, data map[string]any) error
+	UpsertSpaceKV(installId int64, group, key string, data map[string]any) error
 }
 
 type CreateFileRequest struct {

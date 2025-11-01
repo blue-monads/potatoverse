@@ -104,7 +104,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
 	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))
 
-	// Package Files API
+	// Package Version Files API
 	coreApi.GET("/vpackage/:id/files", a.withAccessTokenFn(a.ListPackageFiles))
 	coreApi.GET("/vpackage/:id/files/:fileId", a.withAccessTokenFn(a.GetPackageFile))
 	coreApi.GET("/vpackage/:id/files/:fileId/download", a.withAccessTokenFn(a.DownloadPackageFile))
@@ -112,20 +112,20 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/vpackage/:id/files/upload", a.withAccessTokenFn(a.UploadPackageFile))
 
 	// Space KV API
-	coreApi.GET("/space/:id/kv", a.withAccessTokenFn(a.ListSpaceKV))
-	coreApi.GET("/space/:id/kv/:kvId", a.withAccessTokenFn(a.GetSpaceKV))
-	coreApi.POST("/space/:id/kv", a.withAccessTokenFn(a.CreateSpaceKV))
-	coreApi.PUT("/space/:id/kv/:kvId", a.withAccessTokenFn(a.UpdateSpaceKV))
-	coreApi.DELETE("/space/:id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
+	coreApi.GET("/space/:install_id/kv", a.withAccessTokenFn(a.ListSpaceKV))
+	coreApi.GET("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.GetSpaceKV))
+	coreApi.POST("/space/:install_id/kv", a.withAccessTokenFn(a.CreateSpaceKV))
+	coreApi.PUT("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.UpdateSpaceKV))
+	coreApi.DELETE("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
 
 	// Space Files API
-	coreApi.GET("/space/:id/files", a.withAccessTokenFn(a.ListSpaceFiles))
-	coreApi.GET("/space/:id/files/:fileId", a.withAccessTokenFn(a.GetSpaceFile))
-	coreApi.GET("/space/:id/files/:fileId/download", a.withAccessTokenFn(a.DownloadSpaceFile))
-	coreApi.DELETE("/space/:id/files/:fileId", a.withAccessTokenFn(a.DeleteSpaceFile))
-	coreApi.POST("/space/:id/files/upload", a.withAccessTokenFn(a.UploadSpaceFile))
-	coreApi.POST("/space/:id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
-	coreApi.POST("/space/:id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
+	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.ListSpaceFiles))
+	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.GetSpaceFile))
+	coreApi.GET("/space/:install_id/files/:fileId/download", a.withAccessTokenFn(a.DownloadSpaceFile))
+	coreApi.DELETE("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.DeleteSpaceFile))
+	coreApi.POST("/space/:install_id/files/upload", a.withAccessTokenFn(a.UploadSpaceFile))
+	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
+	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
 
 	zg.POST("/file/upload-presigned", a.UploadFileWithPresigned)
 
