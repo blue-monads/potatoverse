@@ -20,7 +20,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import { useGApp } from '@/hooks';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
-import { listInstalledSpaces, InstalledSpace, generatePackageDevToken, Package, Space } from '@/lib';
+import { getInstalledPackageInfo, InstalledPackageInfo, generatePackageDevToken, Space, PackageVersion } from '@/lib';
 import { staticGradients } from '@/app/utils';
 
 export default function Page() {
@@ -68,13 +68,15 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
     const [copied, setCopied] = useState(false);
     const [generatingToken, setGeneratingToken] = useState(false);
 
-    const loader = useSimpleDataLoader<InstalledSpace>({
-        loader: listInstalledSpaces,
+    const loader = useSimpleDataLoader<InstalledPackageInfo>({
+        loader: () => getInstalledPackageInfo(packageId),
         ready: gapp.isInitialized,
     });
 
-    const packageData = loader.data?.packages.find(pkg => pkg.id === packageId);
-    const packageSpaces = loader.data?.spaces.filter(space => space.install_id === packageId) || [];
+    const packageData = loader.data?.installed_package;
+    const packageVersions = loader.data?.package_versions || [];
+    const packageSpaces = loader.data?.spaces || [];
+    const activeVersion = packageData ? packageVersions.find(v => v.id === packageData.active_install_id) : null;
 
     const handleGenerateDevToken = async () => {
         try {
@@ -147,11 +149,15 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
                                 <PackageIcon className="w-8 h-8" />
                                 <h1 className="text-3xl font-bold">{packageData.name}</h1>
                             </div>
-                            <p className="text-blue-100 mb-4">{packageData.info || 'No description available'}</p>
+                            {activeVersion && (
+                                <p className="text-blue-100 mb-4">{activeVersion.info || 'No description available'}</p>
+                            )}
                             <div className="flex items-center gap-4">
-                                <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
-                                    v{packageData.version}
-                                </span>
+                                {activeVersion && (
+                                    <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                                        v{activeVersion.version}
+                                    </span>
+                                )}
                                 <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
                                     ID: {packageData.id}
                                 </span>
@@ -161,39 +167,75 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
                 </div>
 
                 {/* Package Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Left Column */}
-                    <div className="space-y-4">
-                        <DetailCard
-                            icon={<Code2 className="w-5 h-5" />}
-                            label="Slug"
-                            value={packageData.slug || 'N/A'}
-                        />
-                        <DetailCard
-                            icon={<Tag className="w-5 h-5" />}
-                            label="Tags"
-                            value={packageData.tags || 'No tags'}
-                        />
-                        <DetailCard
-                            icon={<Scale className="w-5 h-5" />}
-                            label="License"
-                            value={packageData.type || 'N/A'}
-                        />
-                    </div>
+                {activeVersion && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Left Column */}
+                        <div className="space-y-4">
+                            <DetailCard
+                                icon={<Code2 className="w-5 h-5" />}
+                                label="Slug"
+                                value={activeVersion.slug || 'N/A'}
+                            />
+                            <DetailCard
+                                icon={<Tag className="w-5 h-5" />}
+                                label="Tags"
+                                value={activeVersion.tags || 'No tags'}
+                            />
+                            <DetailCard
+                                icon={<Scale className="w-5 h-5" />}
+                                label="License"
+                                value={activeVersion.license || 'N/A'}
+                            />
+                        </div>
 
-                    {/* Right Column */}
-                    <div className="space-y-4">
-                        <DetailCard
-                            icon={<Calendar className="w-5 h-5" />}
-                            label="Format Version"
-                            value={packageData.version || 'N/A'}
-                        />
-                        <DetailCard
-                            icon={<Info className="w-5 h-5" />}
-                            label="Description"
-                            value={packageData.description || packageData.info || 'No description'}
-                        />
+                        {/* Right Column */}
+                        <div className="space-y-4">
+                            <DetailCard
+                                icon={<Calendar className="w-5 h-5" />}
+                                label="Format Version"
+                                value={activeVersion.format_version || 'N/A'}
+                            />
+                            <DetailCard
+                                icon={<Info className="w-5 h-5" />}
+                                label="Description"
+                                value={activeVersion.info || 'No description'}
+                            />
+                            {activeVersion.author_name && (
+                                <DetailCard
+                                    icon={<Mail className="w-5 h-5" />}
+                                    label="Author"
+                                    value={`${activeVersion.author_name}${activeVersion.author_email ? ` (${activeVersion.author_email})` : ''}`}
+                                />
+                            )}
+                        </div>
                     </div>
+                )}
+
+                {/* Package Versions Section */}
+                <div className="border-t pt-6">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        <Tag className="w-6 h-6" />
+                        Package Versions ({packageVersions.length})
+                    </h2>
+                    {packageVersions.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                            <Tag className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                            <p>No versions found for this package</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {packageVersions.map((version) => {
+                                const isActive = version.id === packageData.active_install_id;
+                                return (
+                                    <VersionCard
+                                        key={version.id}
+                                        version={version}
+                                        isActive={isActive}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Artifacts Section */}
@@ -327,6 +369,63 @@ interface ArtifactCardProps {
     gradient: string;
     isActive: boolean;
 }
+
+interface VersionCardProps {
+    version: PackageVersion;
+    isActive: boolean;
+}
+
+const VersionCard = ({ version, isActive }: VersionCardProps) => {
+    return (
+        <div className={`relative overflow-hidden rounded-lg bg-gray-50 dark:bg-gray-800 p-4 border-2 ${isActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">#{version.id}</span>
+                    {isActive && (
+                        <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                            Active
+                        </span>
+                    )}
+                </div>
+                
+                <div>
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{version.name}</h3>
+                    <div className="flex items-center gap-2 mt-2">
+                        <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs">
+                            v{version.version}
+                        </span>
+                        {version.format_version && (
+                            <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
+                                Format: {version.format_version}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {version.info && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
+                        {version.info}
+                    </p>
+                )}
+
+                <div className="flex items-center gap-4 text-xs mt-2">
+                    {version.slug && (
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                            <Code2 className="w-3 h-3" />
+                            <span>{version.slug}</span>
+                        </div>
+                    )}
+                    {version.license && (
+                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                            <Scale className="w-3 h-3" />
+                            <span>{version.license}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const ArtifactCard = ({ space, gradient, isActive }: ArtifactCardProps) => {
     return (

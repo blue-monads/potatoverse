@@ -81,6 +81,7 @@ type PackageInstallOps interface {
 
 	ListPackageVersionByIds(ids []int64) ([]dbmodels.PackageVersion, error)
 	ListPackagesByInstallId(installId int64) ([]dbmodels.PackageVersion, error)
+	ListPackageVersionsByPackageId(packageId int64) ([]dbmodels.PackageVersion, error)
 	GetPackageVersion(id int64) (*dbmodels.PackageVersion, error)
 	DeletePackageVersion(id int64) error
 	AddPackageVersion(installId int64, file string) (int64, error)

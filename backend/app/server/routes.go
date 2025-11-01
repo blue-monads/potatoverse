@@ -103,6 +103,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.GET("/package/list", a.withAccessTokenFn(a.ListEPackages))
 	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
 	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))
+	coreApi.GET("/package/:id/info", a.withAccessTokenFn(a.GetInstalledPackageInfo))
 
 	// Package Version Files API
 	coreApi.GET("/vpackage/:id/files", a.withAccessTokenFn(a.ListPackageFiles))

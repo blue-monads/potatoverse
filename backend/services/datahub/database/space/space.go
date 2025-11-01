@@ -152,10 +152,10 @@ func (d *SpaceOperations) ListThirdPartySpaces(userId int64, spaceType string) (
 	return datas, nil
 }
 
-func (d *SpaceOperations) ListSpacesByPackageId(packageId int64) ([]dbmodels.Space, error) {
+func (d *SpaceOperations) ListSpacesByPackageId(installedId int64) ([]dbmodels.Space, error) {
 	datas := make([]dbmodels.Space, 0)
 
-	err := d.spaceTable().Find(db.Cond{"package_id": packageId}).All(&datas)
+	err := d.spaceTable().Find(db.Cond{"install_id": installedId}).All(&datas)
 	if err != nil {
 		return nil, err
 	}

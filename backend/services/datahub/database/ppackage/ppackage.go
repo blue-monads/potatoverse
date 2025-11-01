@@ -178,6 +178,15 @@ func (d *PackageInstallOperations) ListPackagesByInstallId(installId int64) ([]d
 	return versions, nil
 }
 
+func (d *PackageInstallOperations) ListPackageVersionsByPackageId(packageId int64) ([]dbmodels.PackageVersion, error) {
+	var versions []dbmodels.PackageVersion
+	err := d.packageVersionsTable().Find(db.Cond{"install_id": packageId}).All(&versions)
+	if err != nil {
+		return nil, err
+	}
+	return versions, nil
+}
+
 func (d *PackageInstallOperations) GetPackageVersion(id int64) (*dbmodels.PackageVersion, error) {
 	var version dbmodels.PackageVersion
 	err := d.packageVersionsTable().Find(db.Cond{"id": id}).One(&version)

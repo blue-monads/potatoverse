@@ -276,6 +276,41 @@ export const listInstalledSpaces = async () => {
     return iaxios.get<InstalledSpace>(`/core/space/installed`);
 }
 
+export interface InstalledPackageInfo {
+    installed_package: {
+        id: number;
+        name: string;
+        install_repo: string;
+        update_url: string;
+        storage_type: string;
+        active_install_id: number;
+        installed_by: number;
+        installed_at?: string;
+    };
+    spaces: Space[];
+    package_versions: PackageVersion[];
+}
+
+export interface PackageVersion {
+    id: number;
+    install_id: number;
+    name: string;
+    slug: string;
+    info: string;
+    tags: string;
+    format_version: string;
+    author_name: string;
+    author_email: string;
+    author_site: string;
+    source_code: string;
+    license: string;
+    version: string;
+}
+
+export const getInstalledPackageInfo = async (packageId: number) => {
+    return iaxios.get<InstalledPackageInfo>(`/core/package/${packageId}/info`);
+}
+
 
 export interface SpaceInfo {
     id: number;
