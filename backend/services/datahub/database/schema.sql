@@ -133,8 +133,9 @@ CREATE TABLE IF NOT EXISTS Spaces (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   install_id INTEGER NOT NULL,  
   namespace_key TEXT NOT NULL DEFAULT '',
+  space_type TEXT NOT NULL DEFAULT '', -- App, AppOverlay, AppPlugin
   executor_type TEXT NOT NULL DEFAULT '', 
-  sub_type TEXT NOT NULL DEFAULT '',
+  executor_sub_type TEXT NOT NULL DEFAULT '',
   route_options JSON NOT NULL DEFAULT '{}',
   mcp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
   mcp_definition_file TEXT NOT NULL DEFAULT '',
