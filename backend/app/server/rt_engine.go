@@ -248,10 +248,10 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	}, nil)
 }
 
-func (a *Server) handleAddons(ctx *gin.Context) {
-	a.engine.ServeAddon(ctx)
+func (a *Server) handleCapabilities(ctx *gin.Context) {
+	a.engine.ServeCapability(ctx)
 }
 
-func (a *Server) handleAddonsRoot(ctx *gin.Context) {
-	a.engine.ServeAddonRoot(ctx)
+func (a *Server) handleCapabilitiesRoot(ctx *gin.Context) {
+	a.engine.ServeCapabilityRoot(ctx)
 }

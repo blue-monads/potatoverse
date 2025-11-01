@@ -11,25 +11,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type AddOnHub struct {
+type CapabilityHub struct {
 	parent  *Engine
-	goodies map[string]xtypes.AddOn
+	goodies map[string]xtypes.Capability
 	glock   sync.RWMutex
 
-	builders map[string]xtypes.AddOnBuilder
+	builders map[string]xtypes.CapabilityBuilder
 }
 
-func (gh *AddOnHub) Init() error {
+func (gh *CapabilityHub) Init() error {
 	app := gh.parent.app
 
-	app.Logger().Info("Initializing AddOnHub")
+	app.Logger().Info("Initializing CapabilityHub")
 
-	builderFactories, err := registry.GetAddOnBuilderFactories()
+	builderFactories, err := registry.GetCapabilityBuilderFactories()
 	if err != nil {
 		return err
 	}
 
-	gh.builders = make(map[string]xtypes.AddOnBuilder)
+	gh.builders = make(map[string]xtypes.CapabilityBuilder)
 	for name, factory := range builderFactories {
 		builder, err := factory(app)
 		if err != nil {
@@ -40,12 +40,12 @@ func (gh *AddOnHub) Init() error {
 
 	}
 
-	app.Logger().Info("AddOnHub initialized")
+	app.Logger().Info("CapabilityHub initialized")
 
 	return nil
 }
 
-func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) {
+func (gh *CapabilityHub) Handle(spaceId int64, name string, ctx *gin.Context) {
 	gs, err := gh.get(name, spaceId)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
@@ -55,17 +55,17 @@ func (gh *AddOnHub) Handle(spaceId int64, name string, ctx *gin.Context) {
 	gs.Handle(ctx)
 }
 
-func (gh *AddOnHub) HandleRoot(name string, ctx *gin.Context) {
+func (gh *CapabilityHub) HandleRoot(name string, ctx *gin.Context) {
 	builder, ok := gh.builders[name]
 	if !ok {
-		httpx.WriteErr(ctx, errors.New("addon builder not found"))
+		httpx.WriteErr(ctx, errors.New("capability builder not found"))
 		return
 	}
 
 	builder.Serve(ctx)
 }
 
-func (gh *AddOnHub) List(spaceId int64) ([]string, error) {
+func (gh *CapabilityHub) List(spaceId int64) ([]string, error) {
 	keys := make([]string, 0)
 
 	for key := range gh.builders {
@@ -75,36 +75,36 @@ func (gh *AddOnHub) List(spaceId int64) ([]string, error) {
 	return keys, nil
 }
 
-func (gh *AddOnHub) Methods(spaceId int64, gname string) ([]string, error) {
+func (gh *CapabilityHub) Methods(spaceId int64, gname string) ([]string, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gs.List()
+	return gs.ListActions()
 }
 
-func (gh *AddOnHub) GetMeta(spaceId int64, gname, method string) (map[string]any, error) {
+func (gh *CapabilityHub) GetMeta(spaceId int64, gname, method string) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gs.GetMeta(method)
+	return gs.GetActionMeta(method)
 }
 
-func (gh *AddOnHub) Execute(spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
+func (gh *CapabilityHub) Execute(spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gs.Execute(method, params)
+	return gs.ExecuteAction(method, params)
 }
 
 // private
 
-func (gh *AddOnHub) get(name string, spaceId int64) (xtypes.AddOn, error) {
+func (gh *CapabilityHub) get(name string, spaceId int64) (xtypes.Capability, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.RLock()
@@ -114,7 +114,7 @@ func (gh *AddOnHub) get(name string, spaceId int64) (xtypes.AddOn, error) {
 	if !ok {
 		gbFactory, ok := gh.builders[name]
 		if !ok {
-			return nil, errors.New("goodies builder not found")
+			return nil, errors.New("capability builder not found")
 		}
 
 		instance, err := gbFactory.Build(spaceId)
@@ -136,3 +136,16 @@ func (gh *AddOnHub) get(name string, spaceId int64) (xtypes.AddOn, error) {
 
 	return gs, nil
 }
+
+/*
+
+CapabilityResolver
+
+-- user group
+-- system
+-- install
+
+
+
+
+*/

@@ -7,29 +7,29 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func AddOnModule(handle *executors.EHandle) func(L *lua.LState) int {
+func CapabilityModule(handle *executors.EHandle) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 
 		engine := handle.App.Engine().(xtypes.Engine)
-		addons := engine.GetAddonHub().(xtypes.AddOnHub)
+		capabilities := engine.GetCapabilityHub().(xtypes.CapabilityHub)
 
-		listAddons := func(L *lua.LState) int {
-			addons, err := addons.List(handle.SpaceId)
+		listCapabilities := func(L *lua.LState) int {
+			caps, err := capabilities.List(handle.SpaceId)
 			if err != nil {
 				return pushError(L, err)
 			}
 			table := L.NewTable()
-			for _, addon := range addons {
-				table.Append(lua.LString(addon))
+			for _, cap := range caps {
+				table.Append(lua.LString(cap))
 			}
 			L.Push(table)
 			return 1
 		}
 
-		getAddonMeta := func(L *lua.LState) int {
-			addOnName := L.CheckString(1)
+		getCapabilityMeta := func(L *lua.LState) int {
+			capabilityName := L.CheckString(1)
 			method := L.CheckString(2)
-			meta, err := addons.GetMeta(handle.SpaceId, addOnName, method)
+			meta, err := capabilities.GetMeta(handle.SpaceId, capabilityName, method)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -39,15 +39,15 @@ func AddOnModule(handle *executors.EHandle) func(L *lua.LState) int {
 			return 1
 		}
 
-		executeAddon := func(L *lua.LState) int {
-			addOnName := L.CheckString(1)
+		executeCapability := func(L *lua.LState) int {
+			capabilityName := L.CheckString(1)
 			method := L.CheckString(2)
 			params := L.CheckTable(3)
 			paramsLazyData := &LuaLazyData{
 				L:     L,
 				table: params,
 			}
-			result, err := addons.Execute(handle.SpaceId, addOnName, method, paramsLazyData)
+			result, err := capabilities.Execute(handle.SpaceId, capabilityName, method, paramsLazyData)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -56,9 +56,9 @@ func AddOnModule(handle *executors.EHandle) func(L *lua.LState) int {
 			return 1
 		}
 
-		getAddonMethods := func(L *lua.LState) int {
-			addOnName := L.CheckString(1)
-			methods, err := addons.Methods(handle.SpaceId, addOnName)
+		getCapabilityMethods := func(L *lua.LState) int {
+			capabilityName := L.CheckString(1)
+			methods, err := capabilities.Methods(handle.SpaceId, capabilityName)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -72,10 +72,10 @@ func AddOnModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 		table := L.NewTable()
 		L.SetFuncs(table, map[string]lua.LGFunction{
-			"list":    listAddons,
-			"meta":    getAddonMeta,
-			"execute": executeAddon,
-			"methods": getAddonMethods,
+			"list":    listCapabilities,
+			"meta":    getCapabilityMeta,
+			"execute": executeCapability,
+			"methods": getCapabilityMethods,
 		})
 		L.Push(table)
 		return 1

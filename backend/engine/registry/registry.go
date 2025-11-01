@@ -8,20 +8,20 @@ import (
 )
 
 var (
-	AddOnBuilderFactories = make(map[string]xtypes.AddOnBuilderFactory)
-	mLock                 = sync.RWMutex{}
+	CapabilityBuilderFactories = make(map[string]xtypes.CapabilityBuilderFactory)
+	mLock                      = sync.RWMutex{}
 )
 
-func RegisterAddOn(name string, factory xtypes.AddOnBuilderFactory) {
-	AddOnBuilderFactories[name] = factory
+func RegisterCapability(name string, factory xtypes.CapabilityBuilderFactory) {
+	CapabilityBuilderFactories[name] = factory
 }
 
-func GetAddOnBuilderFactories() (map[string]xtypes.AddOnBuilderFactory, error) {
+func GetCapabilityBuilderFactories() (map[string]xtypes.CapabilityBuilderFactory, error) {
 	mLock.RLock()
 	defer mLock.RUnlock()
 
-	copy := make(map[string]xtypes.AddOnBuilderFactory)
-	maps.Copy(copy, AddOnBuilderFactories)
+	copy := make(map[string]xtypes.CapabilityBuilderFactory)
+	maps.Copy(copy, CapabilityBuilderFactories)
 
 	return copy, nil
 }

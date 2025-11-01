@@ -24,7 +24,7 @@ type Engine struct {
 	riLock        sync.RWMutex
 	workingFolder string
 
-	addons AddOnHub
+	capabilities CapabilityHub
 
 	runtime Runtime
 
@@ -43,14 +43,14 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			execsLock: sync.RWMutex{},
 		},
 		logger: slog.Default().With("module", "engine"),
-		addons: AddOnHub{
-			goodies:  make(map[string]xtypes.AddOn),
+		capabilities: CapabilityHub{
+			goodies:  make(map[string]xtypes.Capability),
 			glock:    sync.RWMutex{},
-			builders: make(map[string]xtypes.AddOnBuilder),
+			builders: make(map[string]xtypes.CapabilityBuilder),
 		},
 	}
 
-	e.addons.parent = e
+	e.capabilities.parent = e
 
 	return e
 }
@@ -120,9 +120,9 @@ func (e *Engine) ServePluginFile(ctx *gin.Context) {
 
 }
 
-func (e *Engine) ServeAddon(ctx *gin.Context) {
+func (e *Engine) ServeCapability(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
-	addonName := ctx.Param("addon_name")
+	capabilityName := ctx.Param("capability_name")
 
 	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
 
@@ -133,13 +133,13 @@ func (e *Engine) ServeAddon(ctx *gin.Context) {
 		return
 	}
 
-	e.addons.Handle(spaceId, addonName, ctx)
+	e.capabilities.Handle(spaceId, capabilityName, ctx)
 
 }
 
-func (e *Engine) ServeAddonRoot(ctx *gin.Context) {
-	addonName := ctx.Param("addon_name")
-	e.addons.HandleRoot(addonName, ctx)
+func (e *Engine) ServeCapabilityRoot(ctx *gin.Context) {
+	capabilityName := ctx.Param("capability_name")
+	e.capabilities.HandleRoot(capabilityName, ctx)
 }
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
@@ -243,6 +243,6 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 	return name, path
 }
 
-func (e *Engine) GetAddonHub() *AddOnHub {
-	return &e.addons
+func (e *Engine) GetCapabilityHub() *CapabilityHub {
+	return &e.capabilities
 }

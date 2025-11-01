@@ -102,7 +102,7 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 func (l *LuaH) registerModules() error {
 	l.L.PreloadModule("kv", binds.BindsKV(l.parent.handle.InstalledId, l.parent.handle))
 	l.L.PreloadModule("mcp", binds.BindMCP)
-	l.L.PreloadModule("addon", binds.AddOnModule(l.parent.handle))
+	l.L.PreloadModule("capability", binds.CapabilityModule(l.parent.handle))
 
 	return nil
 }

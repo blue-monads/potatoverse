@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type EasyWsAddon struct {
+type EasyWsCapability struct {
 	app     xtypes.App
 	spaceId int64
 
@@ -27,21 +27,22 @@ type Conn interface {
 	Read() ([]byte, error)
 }
 
-func (e *EasyWsAddon) Name() string {
+func (e *EasyWsCapability) Name() string {
 	return "easyws"
 }
 
-func (e *EasyWsAddon) Handle(ctx *gin.Context) error {
-
-	return nil
+func (e *EasyWsCapability) Handle(ctx *gin.Context) {
+	// TODO: implement capability handling
 }
 
-func (e *EasyWsAddon) List() ([]string, error) {
+func (e *EasyWsCapability) ListActions() ([]string, error) {
 	return nil, nil
 }
-func (e *EasyWsAddon) GetMeta(name string) (map[string]any, error) {
+
+func (e *EasyWsCapability) GetActionMeta(name string) (map[string]any, error) {
 	return nil, nil
 }
-func (e *EasyWsAddon) Execute(method string, params xtypes.LazyData) (map[string]any, error) {
+
+func (e *EasyWsCapability) ExecuteAction(name string, params xtypes.LazyData) (map[string]any, error) {
 	return nil, nil
 }
