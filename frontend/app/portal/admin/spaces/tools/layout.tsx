@@ -9,23 +9,19 @@ const tabs = [
         value: 'about',
         url: '/portal/admin/spaces/tools/about',
     },
-    {
-        label: 'Logs',
-        value: 'logs',
-        url: '/portal/admin/spaces/tools/logs',
-    },
+
     {
         label: 'Files',
         value: 'files',
         url: '/portal/admin/spaces/tools/files',
     },
     {
-        label: 'KV',
+        label: 'Key-Value',
         value: 'kv',
         url: '/portal/admin/spaces/tools/kv',
     },
     {
-        label: 'Package',
+        label: 'Package Files',
         value: 'package-files',
         url: '/portal/admin/spaces/tools/package-files',
     },
@@ -39,11 +35,30 @@ const tabs = [
         value: 'users',
         url: '/portal/admin/spaces/tools/users',
     },
+
     {
-        label: 'Plugins',
-        value: 'plugins',
-        url: '/portal/admin/spaces/tools/plugins',
+        label: 'Events',
+        value: 'events',
+        url: '/portal/admin/spaces/tools/events',
     },
+
+    // {
+    //     label: 'Data Tables',
+    //     value: 'data-tables',
+    //     url: '/portal/admin/spaces/tools/data-tables',
+    // },
+
+    // {
+    //     label: 'Plugins',
+    //     value: 'plugins',
+    //     url: '/portal/admin/spaces/tools/plugins',
+    // },
+
+        // {
+    //     label: 'Logs',
+    //     value: 'logs',
+    //     url: '/portal/admin/spaces/tools/logs',
+    // },
 ]
 
 
@@ -71,7 +86,7 @@ const WithTabbedToolsLayout = (props: PropsType) => {
                 }}>
                 <Tabs.List>
                     {tabs.map((tab) => (
-                        <Tabs.Control key={tab.value} value={tab.value}>{tab.label}</Tabs.Control>
+                        <Tabs.Control classes='uppercase' key={tab.value} value={tab.value}>{tab.label}</Tabs.Control>
                     ))}
                 </Tabs.List>
                 <Tabs.Content>
