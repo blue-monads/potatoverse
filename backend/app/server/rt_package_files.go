@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
@@ -161,9 +162,9 @@ func (a *Server) UploadPackageFile(claim *signer.AccessClaim, ctx *gin.Context) 
 	defer file.Close()
 
 	path := ctx.Request.FormValue("path")
-	if path == "" {
-		path = "/"
-	}
+
+	path = strings.TrimPrefix(path, "/")
+	path = strings.TrimSuffix(path, "/")
 
 	fileId, err := a.ctrl.UploadPackageFile(packageId, claim.UserId, header.Filename, path, file)
 	if err != nil {

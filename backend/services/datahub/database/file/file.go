@@ -62,7 +62,7 @@ func NewFileOperations(opts Options) *FileOperations {
 }
 
 // "@fPath" "" "@fName" "potato.json"
-// "@fPath" "public/" "@fName" "readme.txt"
+// "@fPath" "public" "@fName" "readme.txt"
 
 func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 
@@ -73,12 +73,10 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 
 	defer zipReader.Close()
 
-	for _, file := range zipReader.File {
-		fileReader, err := file.Open()
-		if err != nil {
-			return err
-		}
+	// Track created folders to avoid duplicates
+	createdFolders := make(map[string]bool)
 
+	for _, file := range zipReader.File {
 		fPath, fName := path.Split(file.Name)
 
 		pp.Println("@fPath", fPath, "@fName", fName)
@@ -90,6 +88,45 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 			fPath = ""
 		}
 
+		// Create parent folders if needed
+		if fPath != "" {
+			parts := strings.Split(fPath, "/")
+			parentPath := ""
+			for _, part := range parts {
+				if part == "" {
+					continue
+				}
+				var folderKey string
+				if parentPath == "" {
+					folderKey = part
+				} else {
+					folderKey = parentPath + "/" + part
+				}
+				if !createdFolders[folderKey] {
+					_, err = f.CreateFolder(ownerID, parentPath, part, ownerID)
+					if err != nil && err.Error() != "file already exists" {
+						pp.Println("@CreateFolder error", err, "parentPath", parentPath, "name", part)
+					}
+					createdFolders[folderKey] = true
+				}
+				if parentPath == "" {
+					parentPath = part
+				} else {
+					parentPath = parentPath + "/" + part
+				}
+			}
+		}
+
+		// Skip directory entries (they end with /)
+		if file.FileInfo().IsDir() {
+			continue
+		}
+
+		fileReader, err := file.Open()
+		if err != nil {
+			return err
+		}
+
 		req := &datahub.CreateFileRequest{
 			Name:      fName,
 			Path:      fPath,
@@ -97,10 +134,11 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 		}
 		_, err = f.CreateFile(ownerID, req, fileReader)
 		if err != nil {
+			fileReader.Close()
 			return err
 		}
 
-		defer fileReader.Close()
+		fileReader.Close()
 	}
 
 	return nil
