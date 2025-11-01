@@ -113,8 +113,19 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 	})
 }
 
-func (c *Controller) InstallPackageEmbed(userId int64, name string) (int64, error) {
-	file, err := engine.ZipEPackage(name)
+func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug string) (int64, error) {
+	var file string
+	var err error
+
+	repoHub := c.engine.GetRepoHub()
+	if repoHub != nil && repoSlug != "" {
+		// Use RepoHub to get package from specific repo
+		file, err = engine.ZipEPackageFromRepo(repoHub, repoSlug, name)
+	} else {
+		// Fallback to default behavior for backward compatibility
+		file, err = engine.ZipEPackage(name)
+	}
+	
 	if err != nil {
 		return 0, err
 	}

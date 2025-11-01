@@ -6,7 +6,7 @@ import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import AddButton from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { EPackage, getUsers, installPackage, installPackageEmbed, installPackageZip, listEPackages, User } from '@/lib';
+import { EPackage, getUsers, installPackage, installPackageEmbed, installPackageZip, listEPackages, listRepos, Repo, User } from '@/lib';
 import { staticGradients } from '@/app/utils';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
@@ -21,12 +21,12 @@ export default function Page() {
 
 
 const StoreDirectory = () => {
-    const [searchTerm, setSearchTerm] = useState('');    
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-    const [selectedType, setSelectedType] = useState('Embed');
-    const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
-
+    const [selectedRepo, setSelectedRepo] = useState<string>('');
+    const [isRepoDropdownOpen, setIsRepoDropdownOpen] = useState(false);
+    const [repos, setRepos] = useState<Repo[]>([]);
 
     
     const gapp = useGApp();
@@ -41,9 +41,27 @@ const StoreDirectory = () => {
         { name: 'Social', icon: SquareUserRound },
     ];
 
+    // Load repos on mount
+    useEffect(() => {
+        if (gapp.isInitialized) {
+            listRepos().then(res => {
+                if (res.status === 200 && res.data) {
+                    setRepos(res.data);
+                    // Set default to first repo or empty string for default behavior
+                    if (res.data.length > 0 && !selectedRepo) {
+                        setSelectedRepo(res.data[0].slug || '');
+                    }
+                }
+            }).catch(err => {
+                console.error('Failed to load repos:', err);
+            });
+        }
+    }, [gapp.isInitialized]);
+
     const loader = useSimpleDataLoader<EPackage[]>({
-        loader: listEPackages,
+        loader: () => listEPackages(selectedRepo || undefined),
         ready: gapp.isInitialized,
+        dependencies: [selectedRepo],
       });
 
 
@@ -166,26 +184,35 @@ const StoreDirectory = () => {
 
                             <div className="relative">
                                 <button
-                                    onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                                    onClick={() => setIsRepoDropdownOpen(!isRepoDropdownOpen)}
                                     className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
                                 >
                                     <GlobeIcon className="w-4 h-4" />
-                                    <span>Source: {selectedType}</span>
+                                    <span>Repo: {selectedRepo ? repos.find(r => r.slug === selectedRepo)?.name || selectedRepo : 'Default'}</span>
                                 </button>
 
-                                {isTypeDropdownOpen && (
-                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-                                        {["Embed", "Official", "Community"].map((option) => (
+                                {isRepoDropdownOpen && (
+                                    <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedRepo('');
+                                                setIsRepoDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg ${selectedRepo === '' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
+                                        >
+                                            Default
+                                        </button>
+                                        {repos.map((repo) => (
                                             <button
-                                                key={option}
+                                                key={repo.slug}
                                                 onClick={() => {
-                                                    setSelectedType(option);
-                                                    setIsTypeDropdownOpen(false);
+                                                    setSelectedRepo(repo.slug);
+                                                    setIsRepoDropdownOpen(false);
                                                 }}
-                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${selectedFilter === option ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                                                    }`}
+                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 last:rounded-b-lg ${selectedRepo === repo.slug ? 'bg-blue-50 text-blue-600' : 'text-gray-700'}`}
                                             >
-                                                {option}
+                                                <div className="font-medium">{repo.name}</div>
+                                                <div className="text-xs text-gray-500">{repo.slug}</div>
                                             </button>
                                         ))}
                                     </div>
@@ -196,7 +223,7 @@ const StoreDirectory = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {loader.data?.map((item, index) => (
-                            <StoreItemCard key={item.name} item={item} index={index} />
+                            <StoreItemCard key={item.name} item={item} index={index} selectedRepo={selectedRepo} />
                         ))}
 
                         {loader.loading && (
@@ -214,7 +241,7 @@ const StoreDirectory = () => {
     );
 };
 
-const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
+const StoreItemCard = ({ item, index, selectedRepo }: { item: any, index: number, selectedRepo: string }) => {
     const gapp = useGApp();
     const gradient = staticGradients[index % staticGradients.length];
     item.gradient = item.gradient || gradient;
@@ -264,10 +291,10 @@ const StoreItemCard = ({ item, index }: { item: any, index: number }) => {
                         onClick={() => {
                             gapp.modal.openModal({
                                 title: "Install Package",
-                                content: <InstallPackageModal slug={item.slug} gapp={gapp} />,
+                                content: <InstallPackageModal slug={item.slug} repoSlug={selectedRepo || undefined} gapp={gapp} />,
                                 size: "lg"
                             });
-                             
+                            
 
                         }}
                         
@@ -435,7 +462,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 };
 
 
-const InstallPackageModal = ({ slug, gapp }: { slug: string, gapp: GAppStateHandle }) => {
+const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?: string, gapp: GAppStateHandle }) => {
     const [mode, setMode] = useState<'verify' | 'importing' | 'success' | 'error'>('verify');
 
 
@@ -445,13 +472,18 @@ const InstallPackageModal = ({ slug, gapp }: { slug: string, gapp: GAppStateHand
                 <p className="text-gray-600 dark:text-gray-300">
                     Are you sure you want to install this package?
                 </p>
+                {repoSlug && (
+                    <p className="text-sm text-gray-500">
+                        Installing from repo: {repoSlug}
+                    </p>
+                )}
             </div>
 
             <div className="flex gap-2 justify-end">
                 <button
                     onClick={async () => {
                         setMode('importing');
-                        const resp = await installPackageEmbed(slug);
+                        const resp = await installPackageEmbed(slug, repoSlug);
                         if (resp.status !== 200) {
                             setMode('error');
                             return;

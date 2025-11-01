@@ -57,7 +57,8 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 }
 
 type InstallPackageEmbedRequest struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
+	RepoSlug string `json:"repo_slug,omitempty"`
 }
 
 func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
@@ -66,7 +67,7 @@ func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context
 		return nil, err
 	}
 
-	packageId, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name)
+	packageId, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +76,22 @@ func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context
 }
 
 func (a *Server) ListEPackages(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	epackages, err := a.ctrl.ListEPackages()
+	repoSlug := ctx.Query("repo")
+	epackages, err := a.ctrl.ListEPackages(repoSlug)
 	if err != nil {
 		return nil, err
 	}
 
 	return epackages, nil
+}
+
+func (a *Server) ListRepos(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	repos, err := a.ctrl.ListRepos()
+	if err != nil {
+		return nil, err
+	}
+
+	return repos, nil
 }
 
 func (a *Server) ListInstalledSpaces(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {

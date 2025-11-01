@@ -3,11 +3,25 @@ package actions
 import (
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
-func (c *Controller) ListEPackages() ([]models.PotatoPackage, error) {
-	return engine.ListEPackages()
+func (c *Controller) ListEPackages(repoSlug string) ([]models.PotatoPackage, error) {
+	repoHub := c.engine.GetRepoHub()
+	if repoHub == nil || repoSlug == "" {
+		// Fallback to default behavior for backward compatibility
+		return engine.ListEPackages()
+	}
+	return engine.ListEPackagesFromRepo(repoHub, repoSlug)
+}
+
+func (c *Controller) ListRepos() ([]xtypes.RepoOptions, error) {
+	repoHub := c.engine.GetRepoHub()
+	if repoHub == nil {
+		return []xtypes.RepoOptions{}, nil
+	}
+	return repoHub.ListRepos(), nil
 }
 
 type InstalledSpace struct {

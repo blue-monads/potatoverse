@@ -101,6 +101,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/package/:id/dev-token", a.withAccessTokenFn(a.GeneratePackageDevToken))
 	coreApi.POST("/package/push", a.PushPackage)
 	coreApi.GET("/package/list", a.withAccessTokenFn(a.ListEPackages))
+	coreApi.GET("/repo/list", a.withAccessTokenFn(a.ListRepos))
 	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
 	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))
 	coreApi.GET("/package/:id/info", a.withAccessTokenFn(a.GetInstalledPackageInfo))

@@ -209,8 +209,11 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
     });
 }
 
-export const installPackageEmbed = async (name: string) => {
-    return iaxios.post<{ package_id: number }>(`/core/package/install/embed`, { name });
+export const installPackageEmbed = async (name: string, repoSlug?: string) => {
+    return iaxios.post<{ package_id: number }>(`/core/package/install/embed`, { 
+        name,
+        repo_slug: repoSlug
+    });
 }
 
 export const deletePackage = async (id: number) => {
@@ -238,8 +241,20 @@ export interface EPackage {
 
 }
 
-export const listEPackages = async () => {
-    return iaxios.get<EPackage[]>(`/core/package/list`);
+export const listEPackages = async (repoSlug?: string) => {
+    const params = repoSlug ? `?repo=${encodeURIComponent(repoSlug)}` : '';
+    return iaxios.get<EPackage[]>(`/core/package/list${params}`);
+}
+
+export interface Repo {
+    url: string;
+    type: string; // http, embeded
+    slug: string;
+    name: string;
+}
+
+export const listRepos = async () => {
+    return iaxios.get<Repo[]>(`/core/repo/list`);
 }
 
 

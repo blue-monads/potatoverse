@@ -31,6 +31,8 @@ type Engine struct {
 	logger *slog.Logger
 
 	app xtypes.App
+
+	repoHub *RepoHub
 }
 
 func NewEngine(db datahub.Database, workingFolder string) *Engine {
@@ -72,6 +74,15 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
+
+	// Initialize repo hub
+	opts := app.Config().(*xtypes.AppOptions)
+	if opts != nil {
+		e.repoHub = NewRepoHub(opts.Repos, e.logger)
+	} else {
+		// Fallback: create empty repo hub
+		e.repoHub = NewRepoHub([]xtypes.RepoOptions{}, e.logger)
+	}
 
 	// Initialize capabilities hub
 	err := e.capabilities.Init()
@@ -251,4 +262,8 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 
 func (e *Engine) GetCapabilityHub() *CapabilityHub {
 	return &e.capabilities
+}
+
+func (e *Engine) GetRepoHub() *RepoHub {
+	return e.repoHub
 }
