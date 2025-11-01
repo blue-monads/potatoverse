@@ -10,7 +10,12 @@ import (
 )
 
 func (c *Controller) ListSpaceFiles(spaceId int64, path string) ([]dbmodels.FileMeta, error) {
-	return []dbmodels.FileMeta{}, nil
+	fops := c.database.GetFileOps()
+	files, err := fops.ListFiles(spaceId, path)
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
 }
 
 func (c *Controller) GetSpaceFileByPath(spaceId int64, path, name string) (*dbmodels.FileMeta, error) {
