@@ -176,14 +176,14 @@ CREATE TABLE IF NOT EXISTS SpaceUsers (
 );
 
 
-CREATE TABLE IF NOT EXISTS SpaceResources (
+CREATE TABLE IF NOT EXISTS SpaceCapabilities (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL DEFAULT '',
   install_id INTEGER NOT NULL,
   space_id INTEGER NOT NULL DEFAULT 0,
-  resource_type TEXT NOT NULL DEFAULT '', -- 
-  resource_target TEXT NOT NULL DEFAULT '',
-  attrs JSON NOT NULL DEFAULT '{}',
+  capability_type TEXT NOT NULL DEFAULT '',
+  options JSON NOT NULL DEFAULT '{}',
+  extrameta JSON NOT NULL DEFAULT '{}',
   unique(install_id, space_id, name)
 
 );
