@@ -20,6 +20,10 @@ func (a *Server) withAccessTokenFn(fn AuthedFunc) func(ctx *gin.Context) {
 		}
 
 		resp, err := fn(claim, ctx)
+		if resp == nil && err == nil {
+			return
+		}
+
 		httpx.WriteJSON(ctx, resp, err)
 	}
 
