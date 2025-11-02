@@ -9,6 +9,7 @@ import (
 	"github.com/blue-monads/turnix/backend/app"
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/mailer/stdio"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -70,6 +71,26 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			_, err = ctrl.AddAdminUserDirect("batman", "ilikebats_123", "batman@example.com")
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = ctrl.SendUserMessage(&dbmodels.UserMessage{
+				Title:         "Welcome to PotatoVerse",
+				Contents:      "Welcome to PotatoVerse",
+				ToUser:        1,
+				IsRead:        false,
+				FromUserId:    0,
+				FromSpaceId:   0,
+				CallbackToken: "",
+				WarnLevel:     0,
+			})
+			if err != nil {
+				return nil, err
+			}
+
 		}
 
 	}
