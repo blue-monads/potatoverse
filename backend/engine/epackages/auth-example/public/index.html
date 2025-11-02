@@ -77,28 +77,88 @@
 
         // Todo app functionality
         function initializeTodoApp() {
-            // Load tasks from localStorage
-            const STORAGE_KEY = 'auth-example-tasks';
-            
-            function loadTasks() {
+            // Get API base URL
+            const getApiUrl = () => {
+                const url = new URL("/zz/api/space/auth-example", window.location);
+                return url.toString();
+            };
+
+            // Get auth token for API requests
+            const getAuthToken = () => {
+                return window.spaceGetToken ? window.spaceGetToken('auth-example') : null;
+            };
+
+            // Make authenticated API request
+            async function apiRequest(method, path, body = null) {
+                const token = getAuthToken();
+                if (!token) {
+                    throw new Error('No auth token available');
+                }
+
+                const url = getApiUrl() + path;
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    }
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                return data;
+            }
+
+            // Load tasks from API
+            async function loadTasks() {
                 try {
-                    const stored = localStorage.getItem(STORAGE_KEY);
-                    return stored ? JSON.parse(stored) : [];
+                    const response = await apiRequest('GET', '/api/tasks');
+                    return response.tasks || [];
                 } catch (e) {
                     console.error("Error loading tasks", e);
+                    // Show error to user
+                    const taskList = document.getElementById('task-list');
+                    taskList.innerHTML = `<li class="text-red-500 text-center py-4">Error loading tasks: ${e.message}</li>`;
                     return [];
                 }
             }
 
-            function saveTasks(tasks) {
+            // Save task via API
+            async function saveTask(taskText) {
                 try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+                    const response = await apiRequest('POST', '/api/tasks', { task: taskText });
+                    return response.tasks || [];
                 } catch (e) {
-                    console.error("Error saving tasks", e);
+                    console.error("Error saving task", e);
+                    alert(`Error adding task: ${e.message}`);
+                    throw e;
                 }
             }
 
-            let tasks = loadTasks();
+            // Delete task via API
+            async function deleteTask(index) {
+                try {
+                    // API uses 1-based indexing, but we need to adjust for 0-based array
+                    const apiIndex = index + 1;
+                    const response = await apiRequest('DELETE', `/api/tasks/${apiIndex}`);
+                    return response.tasks || [];
+                } catch (e) {
+                    console.error("Error deleting task", e);
+                    alert(`Error deleting task: ${e.message}`);
+                    throw e;
+                }
+            }
+
+            let tasks = [];
 
             function renderTasks() {
                 const taskList = document.getElementById('task-list');
@@ -120,10 +180,13 @@
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'text-red-500 hover:text-red-700 font-bold text-xl px-2';
                     deleteBtn.textContent = '×';
-                    deleteBtn.onclick = () => {
-                        tasks.splice(index, 1);
-                        saveTasks(tasks);
-                        renderTasks();
+                    deleteBtn.onclick = async () => {
+                        try {
+                            tasks = await deleteTask(index);
+                            renderTasks();
+                        } catch (e) {
+                            // Error already shown in deleteTask
+                        }
                     };
                     
                     li.appendChild(span);
@@ -136,19 +199,25 @@
             const addForm = document.getElementById('add-task-form');
             const newTaskInput = document.getElementById('new-task-input');
             
-            addForm.addEventListener('submit', (e) => {
+            addForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const taskText = newTaskInput.value.trim();
                 if (taskText) {
-                    tasks.push(taskText);
-                    saveTasks(tasks);
-                    renderTasks();
-                    newTaskInput.value = '';
+                    try {
+                        tasks = await saveTask(taskText);
+                        renderTasks();
+                        newTaskInput.value = '';
+                    } catch (e) {
+                        // Error already shown in saveTask
+                    }
                 }
             });
 
-            // Initial render
-            renderTasks();
+            // Initial load and render
+            (async () => {
+                tasks = await loadTasks();
+                renderTasks();
+            })();
         }
 
         // Check auth on page load
