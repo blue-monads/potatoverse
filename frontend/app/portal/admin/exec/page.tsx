@@ -5,9 +5,57 @@ import React, { useEffect, useRef, useState } from 'react';
 
 // /portal/admin/exec?nskey=test&space_id=1
 
+const findBestHost = (hosts: string[], currHost: string) => {
+    let bestHost = null;
+    for (let host of hosts) {
+        if (host.includes('*')) {
+            const maybe = host.replace('*.', "");
+            if (currHost.startsWith(maybe)) {
+                bestHost = host;
+                break;
+            }
+        }
+    }
+
+    if (!bestHost) {
+        for (let host of hosts) {
+            if (host.includes('*')) {
+                bestHost = host;
+                break
+            }
+        }
+    }
+
+    return bestHost;
+}
+
+/*
+
+
+const currUrl = new URL("http://localhost:3000/");
+
+
+findBestHost([
+    "*.eeeee.com", 
+    "aa.localhost", 
+    "specific.com", 
+    "*.localhost", 
+    "*.example.com"], 
+    currUrl.host
+)
+
+*/ 
+
+
 const buildIframeSrc = (nskey: string, space_id: string) => {
     const attrs = (window as any).__potato_attrs__ || {};
-    let host = attrs.site_host || '';
+    let hostsRaw = attrs.site_hosts || '';
+    let hosts = hostsRaw.split(',') as string[];
+
+    let bestHost = findBestHost(hosts, window.location.host);
+
+    let host = bestHost || hosts[0];
+
     let src = '';
     if (host) {
         const origin = window.location.origin;
@@ -19,7 +67,7 @@ const buildIframeSrc = (nskey: string, space_id: string) => {
         }
 
         if (host.includes('*')) {
-            src = `${isSecure ? "https://" : "http://"}${host.replace('*', "s-" + space_id) }${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
+            src = `${isSecure ? "https://" : "http://"}${host.replace('*', "s-" + space_id)}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
         } else {
             src = `${isSecure ? "https://" : "http://"}${host}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
         }
@@ -61,11 +109,11 @@ export default function Page() {
         <div className='p-1'>
             <div className='p-1 rounded-md w-full min-h-[99vh] border border-primary-100 flex flex-col'>
 
-               {isLoading && (
+                {isLoading && (
                     <div className='flex items-center justify-center h-full'>
                         <Loader2 className='w-12 h-12 animate-spin my-20' />
                     </div>
-                )} 
+                )}
 
                 {iframeRef && (<>
                     <iframe
@@ -74,7 +122,7 @@ export default function Page() {
                         src={iframeSrc}
                         // src={`/zz/test_page.html`}
                         className={isLoading ? 'h-[1px] w-[1px]' : 'w-full h-full flex-grow'}
-                    ></iframe>                
+                    ></iframe>
                 </>)}
 
 
