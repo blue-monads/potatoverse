@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Example - Simple Todo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/zz/static/libspace.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <header class="text-center my-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Auth Example - Simple Todo</h1>
+        </header>
+
+        <!-- Pre-login content (shown when not authenticated) -->
+        <div id="login-section" class="hidden bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Please login to continue</h2>
+            <p class="text-gray-600 mb-6">You need to be logged in to use this todo app.</p>
+            <button 
+                onclick="window.spaceRedirrectToAuth('/zz/space/auth-example')"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-md shadow-md transition-colors"
+            >
+                Login
+            </button>
+        </div>
+
+        <!-- Main todo content (shown when authenticated) -->
+        <div id="todo-section" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <!-- Task list -->
+                <ul id="task-list" class="mb-6 space-y-2">
+                    <!-- Tasks will be dynamically added here -->
+                </ul>
+
+                <!-- Add task form -->
+                <form id="add-task-form" class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="new-task-input" 
+                        placeholder="Add a new task..." 
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        required
+                    />
+                    <button 
+                        type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-md shadow-md transition-colors"
+                    >
+                        Add
+                    </button>
+                </form>
+            </div>
+
+            <!-- User info (optional - shows auth is working) -->
+            <div class="mt-4 text-center text-sm text-gray-500">
+                <p>Logged in ✓</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check authentication status
+        function checkAuth() {
+            const token = window.spaceGetToken ? window.spaceGetToken('auth-example') : null;
+            
+            if (token) {
+                // User is authenticated - show todo app
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('todo-section').classList.remove('hidden');
+                initializeTodoApp();
+            } else {
+                // User is not authenticated - show login
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('todo-section').classList.add('hidden');
+            }
+        }
+
+        // Todo app functionality
+        function initializeTodoApp() {
+            // Load tasks from localStorage
+            const STORAGE_KEY = 'auth-example-tasks';
+            
+            function loadTasks() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    return stored ? JSON.parse(stored) : [];
+                } catch (e) {
+                    console.error("Error loading tasks", e);
+                    return [];
+                }
+            }
+
+            function saveTasks(tasks) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+                } catch (e) {
+                    console.error("Error saving tasks", e);
+                }
+            }
+
+            let tasks = loadTasks();
+
+            function renderTasks() {
+                const taskList = document.getElementById('task-list');
+                taskList.innerHTML = '';
+
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<li class="text-gray-500 text-center py-4">No tasks yet. Add one above!</li>';
+                    return;
+                }
+
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md hover:bg-gray-100 transition-colors';
+                    
+                    const span = document.createElement('span');
+                    span.className = 'flex-1 text-gray-800';
+                    span.textContent = task;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'text-red-500 hover:text-red-700 font-bold text-xl px-2';
+                    deleteBtn.textContent = '×';
+                    deleteBtn.onclick = () => {
+                        tasks.splice(index, 1);
+                        saveTasks(tasks);
+                        renderTasks();
+                    };
+                    
+                    li.appendChild(span);
+                    li.appendChild(deleteBtn);
+                    taskList.appendChild(li);
+                });
+            }
+
+            // Add new task
+            const addForm = document.getElementById('add-task-form');
+            const newTaskInput = document.getElementById('new-task-input');
+            
+            addForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const taskText = newTaskInput.value.trim();
+                if (taskText) {
+                    tasks.push(taskText);
+                    saveTasks(tasks);
+                    renderTasks();
+                    newTaskInput.value = '';
+                }
+            });
+
+            // Initial render
+            renderTasks();
+        }
+
+        // Check auth on page load
+        // Wait a bit for libspace.js to load if it's loaded asynchronously
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAuth);
+        } else {
+            // If DOM is already loaded, check immediately and also after a short delay
+            // to handle async script loading
+            checkAuth();
+            setTimeout(checkAuth, 100);
+        }
+    </script>
+</body>
+</html>

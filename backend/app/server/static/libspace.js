@@ -6,8 +6,8 @@ const spaceRedirrectToAuth = (redirectBackUrl) => {
     window.location.href = prePageUrl.toString();
 }
 
-const spaceGetToken = () => {
-    return localStorage.getItem(`${spaceInfo.namespace_key}_space_token`);
+const spaceGetToken = (key) => {
+    return localStorage.getItem(`${key}_space_token`);
 }
 
 window.spaceRedirrectToAuth = spaceRedirrectToAuth;
