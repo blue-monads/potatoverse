@@ -9,11 +9,12 @@ import {
     ArrowLeft,
     Search,
     Grid3X3,
-    List
+    List,
+    Edit
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import { listPackageFiles, PackageFile, deletePackageFile, downloadPackageFile, uploadPackageFile } from '@/lib';
+import { listPackageFiles, PackageFile, deletePackageFile, downloadPackageFile, uploadPackageFile, updatePackageFileContent } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { useGApp } from '@/hooks';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -111,6 +112,42 @@ const FileManager = ({ packageId }: FileManagerProps) => {
             loader.reload();
         } catch (error) {
             console.error('Delete failed:', error);
+        }
+    };
+
+    const handleFileEdit = async (file: PackageFile) => {
+        try {
+            // Download file content
+            const response = await downloadPackageFile(packageId, file.id);
+            
+            // Ensure we're getting a blob response
+            if (!(response.data instanceof Blob)) {
+                throw new Error('Expected blob response but got something else');
+            }
+            
+            let content = await response.data.text();
+
+            // Open modal with editor
+            gapp.modal.openModal({
+                title: `Edit ${file.name}`,
+                content: (
+                    <FileEditor
+                        packageId={packageId}
+                        file={file}
+                        initialContent={content}
+                        currentPath={currentPath}
+                        onSave={() => {
+                            loader.reload();
+                            gapp.modal.closeModal();
+                        }}
+                        onCancel={() => gapp.modal.closeModal()}
+                    />
+                ),
+                size: 'xl'
+            });
+        } catch (error) {
+            console.error('Failed to load file for editing:', error);
+            alert('Failed to load file for editing. The file might be too large, not a text file, or corrupted.');
         }
     };
 
@@ -259,6 +296,7 @@ const FileManager = ({ packageId }: FileManagerProps) => {
                                 viewMode={viewMode}
                                 onDoubleClick={() => handleFolderClick(folder)}
                                 onDownload={() => { }}
+                                onEdit={() => { }}
                                 onDelete={() => handleFileDelete(folder)}
                             />
                         ))}
@@ -271,6 +309,7 @@ const FileManager = ({ packageId }: FileManagerProps) => {
                                 viewMode={viewMode}
                                 onDoubleClick={() => handleFileDownload(file)}
                                 onDownload={() => handleFileDownload(file)}
+                                onEdit={() => handleFileEdit(file)}
                                 onDelete={() => handleFileDelete(file)}
                             />
                         ))}
@@ -287,10 +326,11 @@ interface FileItemProps {
     viewMode: 'list' | 'grid';
     onDoubleClick: () => void;
     onDownload: () => void;
+    onEdit: () => void;
     onDelete: () => void;
 }
 
-const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onDelete }: FileItemProps) => {
+const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onEdit, onDelete }: FileItemProps) => {
     const [showActions, setShowActions] = useState(false);
 
     if (viewMode === 'grid') {
@@ -320,9 +360,20 @@ const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onDelete }: FileI
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
+                                onEdit();
+                            }}
+                            className="p-1 bg-white rounded shadow-sm hover:bg-gray-100"
+                            title="Edit file"
+                        >
+                            <Edit className="w-3 h-3" />
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 onDownload();
                             }}
                             className="p-1 bg-white rounded shadow-sm hover:bg-gray-100"
+                            title="Download file"
                         >
                             <Download className="w-3 h-3" />
                         </button>
@@ -332,6 +383,7 @@ const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onDelete }: FileI
                                 onDelete();
                             }}
                             className="p-1 bg-white rounded shadow-sm hover:bg-gray-100 text-red-500"
+                            title="Delete file"
                         >
                             <Trash2 className="w-3 h-3" />
                         </button>
@@ -368,9 +420,20 @@ const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onDelete }: FileI
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
+                            onEdit();
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded"
+                        title="Edit file"
+                    >
+                        <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
                             onDownload();
                         }}
                         className="p-1 hover:bg-gray-200 rounded"
+                        title="Download file"
                     >
                         <Download className="w-4 h-4" />
                     </button>
@@ -380,6 +443,7 @@ const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onDelete }: FileI
                             onDelete();
                         }}
                         className="p-1 hover:bg-gray-200 rounded text-red-500"
+                        title="Delete file"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
@@ -399,4 +463,76 @@ const formatFileSize = (bytes: number) => {
 
 const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+};
+
+interface FileEditorProps {
+    packageId: number;
+    file: PackageFile;
+    initialContent: string;
+    currentPath: string;
+    onSave: () => void;
+    onCancel: () => void;
+}
+
+const FileEditor = ({ packageId, file, initialContent, currentPath, onSave, onCancel }: FileEditorProps) => {
+    const [content, setContent] = useState(initialContent);
+    const [saving, setSaving] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        // Focus the textarea when component mounts
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+        }
+    }, []);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+    
+            await updatePackageFileContent(packageId, file.id, content, file.name, currentPath);
+            onSave();
+        } catch (error) {
+            console.error('Failed to save file:', error);
+            alert('Failed to save file. Please try again.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full max-h-[80vh]">
+            <div className="flex-1 mb-4">
+                <textarea
+                    ref={textareaRef}
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    className="w-full h-full p-4 border border-gray-300 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ minHeight: '400px' }}
+                    spellCheck={false}
+                />
+            </div>
+            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="text-sm text-gray-500">
+                    {content.length} characters
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={onCancel}
+                        disabled={saving}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving || content === initialContent}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {saving ? 'Saving...' : 'Save'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };

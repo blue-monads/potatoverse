@@ -397,6 +397,26 @@ export const uploadPackageFile = async (packageId: number, file: File, path: str
     });
 }
 
+export const updatePackageFileContent = async (packageId: number, fileId: number, content: string, fileName: string, path: string = '') => {
+    // Delete the old file first
+    await deletePackageFile(packageId, fileId);
+    
+    // Create a blob from the content string
+    const blob = new Blob([content], { type: 'text/plain' });
+    const file = new File([blob], fileName, { type: 'text/plain' });
+    
+    // Upload the new file with the same path and name
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+    
+    return iaxios.post(`/core/vpackage/${packageId}/files/upload`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
 // Space KV API
 export interface SpaceKV {
     id: number;
@@ -473,6 +493,26 @@ export const deleteSpaceFile = async (installId: number, fileId: number) => {
 }
 
 export const uploadSpaceFile = async (installId: number, file: File, path: string = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+    
+    return iaxios.post(`/core/space/${installId}/files/upload`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
+export const updateSpaceFileContent = async (installId: number, fileId: number, content: string, fileName: string, path: string = '') => {
+    // Delete the old file first
+    await deleteSpaceFile(installId, fileId);
+    
+    // Create a blob from the content string
+    const blob = new Blob([content], { type: 'text/plain' });
+    const file = new File([blob], fileName, { type: 'text/plain' });
+    
+    // Upload the new file with the same path and name
     const formData = new FormData();
     formData.append('file', file);
     formData.append('path', path);
