@@ -79,6 +79,8 @@ const InSpaceAuthorizerWrapper = () => {
 
 
 
+
+
         }
 
         fetchSpaceInfo();
@@ -152,7 +154,7 @@ const InSpaceAuthorizerWrapper = () => {
             if (resp.status === 200) {
                 setSpaceToken(resp.data.token);
 
-                localStorage.setItem(`${spaceInfo.namespace_key}_space_token`, resp.data.token);
+                // localStorage.setItem(`${spaceInfo.namespace_key}_space_token`, resp.data.token);
 
                 setMode('space_token_loaded');
             } else {
@@ -215,7 +217,7 @@ const InSpaceAuthorizerWrapper = () => {
         </>)}
 
         {mode === "space_token_loaded" && (<>
-            <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+            <div className="flex items-center justify-center min-h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                     <div className="flex mb-6 space-x-4 items-center justify-center">
                         <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
@@ -232,7 +234,15 @@ const InSpaceAuthorizerWrapper = () => {
                                 console.log("@redirect_back_url is not set");
                                 return;
                             }
-                            const redirect_back_url_url = new URL(redirect_back_url);
+
+
+                            
+
+                            const redirect_back_url_url = new URL("/zz/pages/auth/space/in_space/post_page", redirect_back_url);
+                            //const redirect_back_url_url = new URL("/zz/pages/auth/space/in_space/post_page", window.origin);
+                            redirect_back_url_url.searchParams.set("redirect_back_url", redirect_back_url);
+                            redirect_back_url_url.searchParams.set("space_token", spaceToken!);
+                            redirect_back_url_url.searchParams.set("nskey", spaceInfo!.namespace_key);
                             window.location.href = redirect_back_url_url.toString();
                         }}>
                             Redirect to space
@@ -263,7 +273,7 @@ interface PromptCardProps {
 
 const AuthorizePromptCard = (props: PromptCardProps) => {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+        <div className="flex items-center justify-center h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
                     <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
@@ -313,7 +323,7 @@ interface NotAuthorizedPromptCardProps {
 const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
+        <div className="flex items-center justify-center h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
                     <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
