@@ -109,7 +109,7 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
 
 
 
-              <ul className="px-4 pb-4 text-sm font-medium gap-4 flex flex-col">
+              <ul className="px-2 pb-4 text-sm font-medium gap-4 flex flex-col">
 
                 {mounted && gapp.loaded && gapp.isAuthenticated && gapp.userInfo && (
                   <>
@@ -118,9 +118,10 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
                     <button 
                     className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group p-2"
                     onClick={onMessageClick}
+                    title="Notifications"
                     >
                       <MessageCircleIcon className="w-6 h-6" />
-                      {notifier.unreadCount > 0 && (
+                      { notifier.unreadCount > 0 && (
                         <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
                       )}
                       {notifier.unreadCount > 9 && (
@@ -136,6 +137,7 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
 
                     <a
                       href={`/zz/pages/portal/admin/profile`}
+                      title="Profile"
                       className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
                     >
                       <img src={`/zz/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
@@ -155,6 +157,7 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
                       router.push("/auth/login");
                     }}
                     className="relative flex items-center justify-center p-0.5 text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
+                    title="Logout"
                   >
                     <LogOut className="w-6 h-6" />
                   </a>
