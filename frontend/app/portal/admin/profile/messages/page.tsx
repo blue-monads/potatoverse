@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, CheckCheck, Trash2, Filter, Search, ArrowLeft, MoreVertical } from 'lucide-react';
 import { 
@@ -30,13 +30,18 @@ const MessagesPage = () => {
     const [lastMessageId, setLastMessageId] = useState<number | null>(null);
     const [hasMore, setHasMore] = useState(true);
     const limit = 50;
+    const hasLoadedRef = useRef(false);
 
     useEffect(() => {
         if (!gapp.isInitialized || !gapp.isAuthenticated) {
             router.push('/auth/login');
             return;
         }
-        loadMessages();
+        // Only load once when initialized and authenticated
+        if (!hasLoadedRef.current) {
+            hasLoadedRef.current = true;
+            loadMessages(true);
+        }
     }, [gapp.isInitialized, gapp.isAuthenticated]);
 
     useEffect(() => {
@@ -44,6 +49,10 @@ const MessagesPage = () => {
     }, [messages, filter, searchQuery]);
 
     const loadMessages = async (reset = false) => {
+        if (loading && !reset) {
+            // Prevent concurrent loads unless resetting
+            return;
+        }
         try {
             setLoading(true);
             // Use last message ID as cursor for pagination
