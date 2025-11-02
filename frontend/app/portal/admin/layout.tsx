@@ -3,7 +3,9 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGApp } from "@/hooks";
-import { LogOut, Search } from "lucide-react";
+import { LogOut, MessageCircleIcon, Search } from "lucide-react";
+import useUserNotification from "@/hooks/useUserNotification";
+import MessagePanel from "@/contain/MessagePanel/MessagePanel";
 
 
 
@@ -14,16 +16,22 @@ export default function PortalLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isMessagePanelOpen, setIsMessagePanelOpen] = useState(false);
 
   return (
     <>
       <Suspense fallback={<SkeletonLoader />}>
         <div className="flex">
-          <Sidebar />
+          <Sidebar onMessageClick={() => setIsMessagePanelOpen(!isMessagePanelOpen)} />
 
           <div className="ml-14 w-full">
             {children}
           </div>
+
+          <MessagePanel 
+            isOpen={isMessagePanelOpen} 
+            onClose={() => setIsMessagePanelOpen(false)} 
+          />
 
         </div>
 
@@ -38,11 +46,12 @@ export default function PortalLayout({
 
 
 
-const Sidebar = () => {
+const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
   const [mounted, setMounted] = useState(false);
 
   const gapp = useGApp();
   const router = useRouter();
+  const notifier = useUserNotification(gapp);
 
   useEffect(() => {
     setMounted(true);
@@ -103,8 +112,27 @@ const Sidebar = () => {
               <ul className="px-4 pb-4 text-sm font-medium gap-4 flex flex-col">
 
                 {mounted && gapp.loaded && gapp.isAuthenticated && gapp.userInfo && (
+                  <>
 
                   <li>
+                    <button 
+                    className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group p-2"
+                    onClick={onMessageClick}
+                    >
+                      <MessageCircleIcon className="w-6 h-6" />
+                      {notifier.unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                      )}
+                      {notifier.unreadCount > 9 && (
+                        <span className="absolute top-0 right-0 text-[10px] font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                          {notifier.unreadCount > 99 ? '99+' : notifier.unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+
+                  <li>
+
 
                     <a
                       href={`/zz/pages/portal/admin/profile`}
@@ -115,6 +143,7 @@ const Sidebar = () => {
 
 
                   </li>
+                  </>
                 )}
 
 

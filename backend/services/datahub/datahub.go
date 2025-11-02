@@ -69,6 +69,17 @@ type UserOps interface {
 	ListUserInvitesByInviter(inviterId int64) ([]dbmodels.UserInvite, error)
 	UpdateUserInvite(id int64, data map[string]any) error
 	DeleteUserInvite(id int64) error
+
+	// User Messages
+	AddUserMessage(data *dbmodels.UserMessage) (int64, error)
+	GetUserMessage(id int64) (*dbmodels.UserMessage, error)
+	ListUserMessages(toUserId int64, afterId int64, limit int) ([]dbmodels.UserMessage, error)
+	QueryNewMessages(toUserId int64, readHead int64) ([]dbmodels.UserMessage, error)
+	QueryMessageHistory(toUserId int64, limit int) ([]dbmodels.UserMessage, error)
+	SetMessageAsRead(id int64, toUserId int64) error
+	SetAllMessagesAsRead(toUserId int64, readHead int64) error
+	UpdateUserMessage(id int64, data map[string]any) error
+	DeleteUserMessage(id int64) error
 }
 
 type PackageInstallOps interface {

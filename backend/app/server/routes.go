@@ -75,6 +75,16 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 	g.PUT("/groups/:name", a.withAccessTokenFn(a.updateUserGroup))
 	g.DELETE("/groups/:name", a.withAccessTokenFn(a.deleteUserGroup))
 
+	g.GET("/messages", a.withAccessTokenFn(a.listUserMessages))
+	g.GET("/messages/new", a.withAccessTokenFn(a.queryNewMessages))
+	g.GET("/messages/history", a.withAccessTokenFn(a.queryMessageHistory))
+	g.POST("/messages/read-all", a.withAccessTokenFn(a.setAllMessagesAsRead))
+	g.POST("/messages", a.withAccessTokenFn(a.sendUserMessage))
+	g.GET("/messages/:id", a.withAccessTokenFn(a.getUserMessage))
+	g.PUT("/messages/:id", a.withAccessTokenFn(a.updateUserMessage))
+	g.DELETE("/messages/:id", a.withAccessTokenFn(a.deleteUserMessage))
+	g.POST("/messages/:id/read", a.withAccessTokenFn(a.setMessageAsRead))
+
 }
 
 func (a *Server) selfUserRoutes(g *gin.RouterGroup) {

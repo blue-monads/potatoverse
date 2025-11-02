@@ -704,3 +704,70 @@ export const updateEventSubscription = async (installId: number, subscriptionId:
 export const deleteEventSubscription = async (installId: number, subscriptionId: number) => {
     return iaxios.delete<void>(`/core/space/${installId}/events/${subscriptionId}`);
 }
+
+// User Messages API
+export interface UserMessage {
+    id: number;
+    title: string;
+    is_read: boolean;
+    type: string;
+    contents: string;
+    to_user: number;
+    from_user_id: number;
+    from_space_id: number;
+    callback_token: string;
+    warn_level: number;
+    created_at?: string;
+}
+
+export const listUserMessages = async (afterId?: number, limit: number = 100) => {
+    const params: any = { limit };
+    if (afterId !== undefined && afterId !== null) {
+        params.after_id = afterId;
+    }
+    return iaxios.get<UserMessage[]>(`/core/user/messages`, { params });
+}
+
+export const queryNewMessages = async () => {
+    return iaxios.get<UserMessage[]>(`/core/user/messages/new`);
+}
+
+export const queryMessageHistory = async (limit: number = 100) => {
+    return iaxios.get<UserMessage[]>(`/core/user/messages/history`, {
+        params: {
+            limit,
+        },
+    });
+}
+
+export const getUserMessage = async (id: number) => {
+    return iaxios.get<UserMessage>(`/core/user/messages/${id}`);
+}
+
+export const sendUserMessage = async (data: {
+    title: string;
+    type: string;
+    contents: string;
+    to_user: number;
+    from_space_id?: number;
+    callback_token?: string;
+    warn_level?: number;
+}) => {
+    return iaxios.post<UserMessage>(`/core/user/messages`, data);
+}
+
+export const updateUserMessage = async (id: number, data: Partial<UserMessage>) => {
+    return iaxios.put<UserMessage>(`/core/user/messages/${id}`, data);
+}
+
+export const deleteUserMessage = async (id: number) => {
+    return iaxios.delete<void>(`/core/user/messages/${id}`);
+}
+
+export const setMessageAsRead = async (id: number) => {
+    return iaxios.post<{ message: string }>(`/core/user/messages/${id}/read`);
+}
+
+export const setAllMessagesAsRead = async () => {
+    return iaxios.post<{ message: string; read_head: number }>(`/core/user/messages/read-all`);
+}

@@ -31,16 +31,16 @@ type User struct {
 
 type UserMessage struct {
 	ID            int64      `json:"id" db:"id,omitempty"`
-	Name          string     `json:"title" db:"title"`
+	Title         string     `json:"title" db:"title"`
+	IsRead        bool       `json:"is_read" db:"is_read"`
 	Type          string     `json:"type" db:"type"`
 	Contents      string     `json:"contents" db:"contents"`
 	ToUser        int64      `json:"to_user" db:"to_user"`
-	FromUser      int64      `json:"from_user" db:"from_user_id"`
-	FromProject   int64      `json:"from_project" db:"from_project_id"`
-	IsRead        bool       `json:"is_read" db:"is_read,omitempty"`
+	FromUserId    int64      `json:"from_user_id" db:"from_user_id"`
+	FromSpaceId   int64      `json:"from_space_id" db:"from_space_id"`
+	CallbackToken string     `json:"callback_token" db:"callback_token"`
+	WarnLevel     int        `json:"warn_level" db:"warn_level"`
 	CreatedAt     *time.Time `json:"created_at" db:"created_at,omitempty"`
-	CallbackToken string     `json:"callback_token" db:"callback_token,omitempty"`
-	Disabled      bool       `json:"disabled" db:"disabled,omitempty"`
 }
 
 type UserDevice struct {
