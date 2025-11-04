@@ -1,3 +1,4 @@
 - dev/cli
 - repo system
 - user_system_ws
+- sugify things (check validate entitity names if key has "<a>|<b>" then it has to disallow |) 
