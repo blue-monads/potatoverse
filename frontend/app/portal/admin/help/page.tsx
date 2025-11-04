@@ -17,12 +17,10 @@ export default function Page() {
                 title: 'API Documentation',
                 description: 'Complete API reference for all available endpoints and methods.',
                 items: [
-                    { title: 'Core', description: 'Reference for all available endpoints and methods in the Core API.' },
                     { title: 'Space', description: 'Reference for all available endpoints and methods in the Space API.' },
                     { title: 'Plugin', description: 'Reference for all available endpoints and methods in the Plugin API.' },
                     { title: 'Capability', description: 'Reference for all available endpoints and methods in the Capability API.' },
                     { title: 'Event', description: 'Reference for all available endpoints and methods in the Event API.' },
-                    { title: 'User ', description: 'Reference for all available endpoints and methods in the User API.' },
                     { title: 'Auth ', description: 'Reference for all available endpoints and methods in the Auth API.' },
                     { title: 'User', description: 'Reference for all available endpoints and methods in the User API.' },
                 ]
