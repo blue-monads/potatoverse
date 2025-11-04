@@ -140,7 +140,7 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 
 	qq.Println(hosts, port)
 
-	fullUrl := xutils.GetFullUrl(hosts[0], "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
+	fullUrl := xutils.GetFullUrl(hosts[0].Name, "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
 
 	body := &mailer.SimpleMessage{
 		Text: fullUrl,
@@ -199,7 +199,7 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 
 	hosts := c.AppOpts.Hosts
 	port := c.AppOpts.Port
-	fullUrl := xutils.GetFullUrl(hosts[0], "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
+	fullUrl := xutils.GetFullUrl(hosts[0].Name, "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
 
 	// Send email
 	body := &mailer.SimpleMessage{

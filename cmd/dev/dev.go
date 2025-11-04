@@ -10,9 +10,13 @@ import (
 func main() {
 
 	app, err := backend.NewDevApp(&xtypes.AppOptions{
-		WorkingDir:   "./tmp",
-		Port:         7777,
-		Hosts:        []string{"*.localhost"},
+		WorkingDir: "./tmp",
+		Port:       7777,
+		Hosts: []xtypes.Host{
+			{
+				Name: "*.localhost",
+			},
+		},
 		Name:         "PotatoVerse",
 		MasterSecret: "default-master-secret",
 		Debug:        true,

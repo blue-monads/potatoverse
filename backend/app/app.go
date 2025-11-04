@@ -19,6 +19,12 @@ type App struct {
 }
 
 func NewApp(happ *HeadLess) *App {
+
+	hosts := make([]string, len(happ.AppOpts.Hosts))
+	for i, host := range happ.AppOpts.Hosts {
+		hosts[i] = host.Name
+	}
+
 	return &App{
 		happ: happ,
 		server: server.NewServer(server.Option{
@@ -26,7 +32,7 @@ func NewApp(happ *HeadLess) *App {
 			Ctrl:        happ.Controller().(*actions.Controller),
 			Signer:      happ.Signer(),
 			Engine:      happ.Engine().(*engine.Engine),
-			Hosts:       happ.AppOpts.Hosts,
+			Hosts:       hosts,
 			LocalSocket: happ.AppOpts.SocketFile,
 			SiteName:    "Demo",
 		}),

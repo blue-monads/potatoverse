@@ -3,13 +3,17 @@ package xtypes
 type AppOptions struct {
 	Name         string        `json:"name,omitempty" toml:"name,omitempty"`
 	Port         int           `json:"port,omitempty" toml:"port,omitempty"`
-	Hosts        []string      `json:"hosts,omitempty" toml:"hosts,omitempty"`
+	Hosts        []Host        `json:"hosts,omitempty" toml:"hosts,omitempty"`
 	MasterSecret string        `json:"master_secret,omitempty" toml:"master_secret,omitempty"`
 	Debug        bool          `json:"debug_mode,omitempty" toml:"debug_mode,omitempty"`
 	WorkingDir   string        `json:"working_dir,omitempty" toml:"working_dir,omitempty"`
 	SocketFile   string        `json:"socket_file,omitempty" toml:"socket_file,omitempty"`
 	Mailer       MailerOptions `json:"mailer" toml:"mailer"`
 	Repos        []RepoOptions `json:"repos" toml:"repos"`
+}
+
+type Host struct {
+	Name string `json:"name,omitempty" toml:"name,omitempty"`
 }
 
 type MailerOptions struct {
