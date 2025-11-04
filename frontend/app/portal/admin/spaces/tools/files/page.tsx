@@ -573,7 +573,7 @@ print(response.json())`}
         <WithAdminBodyLayout
             Icon={Folder}
             name="Space Files"
-            description={`Managing files for install ID ${installId}`}
+            description={`Managing files for spaces`}
             rightContent={
                 <div className="flex items-center gap-2">
                     <button
