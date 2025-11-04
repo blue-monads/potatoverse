@@ -187,14 +187,10 @@ func (a *Server) helpRoutes(g *gin.RouterGroup) {
 
 	/*
 		- docs
-		- docs/llm.txt
 		- api_docs
-		- api_docs/llm.txt
-		- glossary
-		- glossary/llm.txt
+		- topics
 		- lua_bindings
-		- lua_bindings/llm.txt
-
+		- capabilities
 
 
 	*/
