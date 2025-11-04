@@ -23,6 +23,8 @@ func (f *Funnel) HandleVerify(c *gin.Context) {}
 
 func (f *Funnel) HandleConnect(c *gin.Context) {}
 
+// Schnorr Signatures for secp256k1
+
 func SignWithPubKey(pubKey, signPayload string) (string, error) {
 
 	return "", nil
