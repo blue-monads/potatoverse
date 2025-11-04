@@ -42,6 +42,12 @@ const tabs = [
         url: '/portal/admin/spaces/tools/events',
     },
 
+    {
+        label: 'Docs',
+        value: 'docs',
+        url: '/portal/admin/spaces/tools/docs',
+    },
+
     // {
     //     label: 'Data Tables',
     //     value: 'data-tables',

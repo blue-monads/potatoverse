@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGApp } from "@/hooks";
-import { LogOut, MessageCircleIcon, Search } from "lucide-react";
+import { HelpCircleIcon, LogOut, MessageCircleIcon, Search } from "lucide-react";
 import useUserNotification from "@/hooks/useUserNotification";
 import MessagePanel from "@/contain/MessagePanel/MessagePanel";
 
@@ -247,6 +247,13 @@ const navigation = [
       </svg>
     ),
 
+  },
+  {
+    href: "/zz/pages/portal/admin/help",
+    name: "Help",
+    icon: (
+      <HelpCircleIcon className="w-6 h-6" />
+    ),
   }
 
 ];
