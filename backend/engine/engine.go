@@ -12,10 +12,10 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 type Engine struct {
@@ -97,12 +97,12 @@ func (e *Engine) Start(app xtypes.App) error {
 
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
-	pp.Println("@ServeSpaceFile/1")
+	qq.Println("@ServeSpaceFile/1")
 
 	spaceKey := ctx.Param("space_key")
 	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
 
-	pp.Println("@ServeSpaceFile/3")
+	qq.Println("@ServeSpaceFile/3")
 
 	sIndex := e.getIndex(spaceKey, spaceId)
 
@@ -112,19 +112,19 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 			keys = append(keys, key)
 		}
 
-		pp.Println("@ServeSpaceFile/4", keys)
-		pp.Println("@ServeSpaceFile/4")
+		qq.Println("@ServeSpaceFile/4", keys)
+		qq.Println("@ServeSpaceFile/4")
 		httpx.WriteErrString(ctx, "space not found")
 		return
 	}
 
-	pp.Println("@ServeSpaceFile/5")
+	qq.Println("@ServeSpaceFile/5")
 
 	switch sIndex.routeOption.RouterType {
 	case "simple", "":
 		e.serveSimpleRoute(ctx, sIndex)
 	case "dynamic":
-		pp.Println("@ServeSpaceFile/6")
+		qq.Println("@ServeSpaceFile/6")
 		e.serveDynamicRoute(ctx, sIndex)
 	default:
 		httpx.WriteErrString(ctx, "router type not supported")
@@ -253,9 +253,9 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 		name = name + ".html"
 	}
 
-	pp.Println("@ropt", ropt)
-	pp.Println("@name", name)
-	pp.Println("@path", path)
+	qq.Println("@ropt", ropt)
+	qq.Println("@name", name)
+	qq.Println("@path", path)
 
 	return name, path
 }

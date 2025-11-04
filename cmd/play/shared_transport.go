@@ -8,7 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -226,10 +226,10 @@ func (m *multiplexedConnection) Write(ctx context.Context, msg jsonrpc.Message) 
 	m.transport.mu.RLock()
 	defer m.transport.mu.RUnlock()
 
-	pp.Println("@using_broadcast", len(m.transport.clients))
+	qq.Println("@using_broadcast", len(m.transport.clients))
 
 	for _, client := range m.transport.clients {
-		pp.Println("@broadcasting_to", client.id)
+		qq.Println("@broadcasting_to", client.id)
 		select {
 		case client.inCh <- msg:
 		case <-ctx.Done():

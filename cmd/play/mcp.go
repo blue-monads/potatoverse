@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -232,7 +232,7 @@ func runMcp() {
 	log.Printf("Active connections remaining: %d\n", activeConnections)
 
 	time.Sleep(500 * time.Millisecond)
-	pp.Println("Transport test completed successfully!")
+	qq.Println("Transport test completed successfully!")
 }
 
 func EasyWsResourceHandler(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {

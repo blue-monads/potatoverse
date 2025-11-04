@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 type PanicError struct {
@@ -37,9 +37,9 @@ func PanicWrapper(wrapped func()) (err error) {
 				Stack: stackStr,
 			}
 
-			pp.Println(causeStr)
+			qq.Println(causeStr)
 
-			pp.Println("@stack", stackStr)
+			qq.Println("@stack", stackStr)
 
 		}
 	}()

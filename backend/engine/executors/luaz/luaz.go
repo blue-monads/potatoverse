@@ -7,9 +7,9 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -71,10 +71,10 @@ func New(opts Options) *Luaz {
 
 			err := L.DoString(opts.Code)
 			if err != nil {
-				pp.Println("@lua_exec_error", err)
+				qq.Println("@lua_exec_error", err)
 				return nil, err
 			}
-			pp.Println("@lua_exec_success", "code length", len(opts.Code))
+			qq.Println("@lua_exec_success", "code length", len(opts.Code))
 
 			return lh, nil
 		},
@@ -86,9 +86,9 @@ func New(opts Options) *Luaz {
 }
 
 func (l *Luaz) Cleanup() {
-	pp.Println("@cleanup/2")
+	qq.Println("@cleanup/2")
 	l.pool.CleanupExpiredStates()
-	pp.Println("@cleanup/3")
+	qq.Println("@cleanup/3")
 }
 
 type HttpEvent struct {
@@ -98,29 +98,29 @@ type HttpEvent struct {
 }
 
 func (l *Luaz) Handle(event HttpEvent) error {
-	pp.Println("@handle/1")
+	qq.Println("@handle/1")
 
 	lh, err := l.pool.Get()
 	if err != nil {
-		pp.Println("@handle/1.1", err)
+		qq.Println("@handle/1.1", err)
 		httpx.WriteErr(event.Request, err)
 		return err
 	}
 
 	if lh == nil {
-		pp.Println("@handle/1.2", "lh is nil")
+		qq.Println("@handle/1.2", "lh is nil")
 		httpx.WriteErr(event.Request, errors.New("Could not get lua state"))
 		return errors.New("Could not get lua state")
 	}
 
-	pp.Println("@handle/2", event.HandlerName, event.Params)
+	qq.Println("@handle/2", event.HandlerName, event.Params)
 
 	err = lh.Handle(event.Request, event.HandlerName, event.Params)
 	if err != nil {
 		return err
 	}
 
-	pp.Println("@handle/3")
+	qq.Println("@handle/3")
 
 	l.pool.Put(lh)
 

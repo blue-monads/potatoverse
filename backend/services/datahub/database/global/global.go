@@ -2,7 +2,7 @@ package global
 
 import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -16,7 +16,7 @@ func NewGlobalOperations(db db.Session) *GlobalOperations {
 
 func (d *GlobalOperations) GetGlobalConfig(key, group string) (*dbmodels.GlobalConfig, error) {
 	table := d.globalConfigTable()
-	pp.Println("@1", key, group)
+	qq.Println("@1", key, group)
 	var config dbmodels.GlobalConfig
 	err := table.Find(db.Cond{"key": key, "group": group}).One(&config)
 	if err != nil {

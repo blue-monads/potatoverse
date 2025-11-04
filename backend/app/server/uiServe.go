@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/app/server/assets"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/frontend"
 
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 var (
@@ -24,7 +24,7 @@ func (s *Server) pages(z *gin.RouterGroup) {
 	z.GET("/pages/*files", rfunc)
 	z.GET("/lib/*file", func(ctx *gin.Context) {
 
-		pp.Println("@lib/1")
+		qq.Println("@lib/1")
 
 		file := ctx.Param("file")
 
@@ -32,11 +32,11 @@ func (s *Server) pages(z *gin.RouterGroup) {
 
 		fout, err := frontend.BuildProd.Open(path.Join("output", file))
 		if err != nil {
-			pp.Println("@lib/2", err.Error())
+			qq.Println("@lib/2", err.Error())
 			return
 		}
 
-		pp.Println("@lib/3")
+		qq.Println("@lib/3")
 
 		defer fout.Close()
 

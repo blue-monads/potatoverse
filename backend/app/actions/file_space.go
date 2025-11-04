@@ -7,7 +7,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 func (c *Controller) ListSpaceFiles(installedId int64, path string) ([]dbmodels.FileMeta, error) {
@@ -40,13 +40,13 @@ func (c *Controller) GetSpaceFile(installedId int64, fileId int64) (*dbmodels.Fi
 }
 
 func (c *Controller) DownloadSpaceFile(installedId int64, fileId int64, w http.ResponseWriter) error {
-	pp.Println("@DownloadSpaceFile/1", installedId, fileId)
+	qq.Println("@DownloadSpaceFile/1", installedId, fileId)
 	err := c.validateSpaceFileOwnership(installedId, fileId)
 	if err != nil {
 		return err
 	}
 
-	pp.Println("@DownloadSpaceFile/2", "success")
+	qq.Println("@DownloadSpaceFile/2", "success")
 
 	fops := c.database.GetFileOps()
 	return fops.StreamFile(installedId, fileId, w)
@@ -89,13 +89,13 @@ func (c *Controller) validateSpaceFileOwnership(installedId int64, fileId int64)
 		return err
 	}
 
-	pp.Println("@validateSpaceFileOwnership/3", file.OwnerID)
+	qq.Println("@validateSpaceFileOwnership/3", file.OwnerID)
 
 	if file.OwnerID != installedId {
 		return errors.New("file does not belong to the space")
 	}
 
-	pp.Println("@validateSpaceFileOwnership/4", "success")
+	qq.Println("@validateSpaceFileOwnership/4", "success")
 
 	return nil
 }

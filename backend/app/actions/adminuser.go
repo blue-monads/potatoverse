@@ -8,7 +8,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/easyerr"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]dbmodels.User, error) {
@@ -138,7 +138,7 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 	hosts := c.AppOpts.Hosts
 	port := c.AppOpts.Port
 
-	pp.Println(hosts, port)
+	qq.Println(hosts, port)
 
 	fullUrl := xutils.GetFullUrl(hosts[0], "/zz/pages/auth/signup/invite-finish?token="+inviteToken, port, false)
 

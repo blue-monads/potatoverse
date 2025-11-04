@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 // user
@@ -52,7 +52,7 @@ func (c *Controller) HasFingerprint() (bool, error) {
 
 	config, err := c.database.GetGlobalOps().GetGlobalConfig("fingerprint", "CORE")
 	if err != nil {
-		pp.Println(err)
+		qq.Println(err)
 		if errorMessage := err.Error(); strings.Contains(errorMessage, "upper: no more rows in this result set") {
 			return false, nil
 		}

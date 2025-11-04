@@ -10,8 +10,8 @@ import (
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 type Server struct {
@@ -65,7 +65,7 @@ func (s *Server) Start() error {
 
 func (s *Server) listenUnixSocket() error {
 
-	pp.Println("@listen_unix_socket", s.opt.LocalSocket)
+	qq.Println("@listen_unix_socket", s.opt.LocalSocket)
 
 	if s.opt.LocalSocket != "" {
 		return nil

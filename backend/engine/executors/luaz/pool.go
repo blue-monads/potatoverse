@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 // LuaStatePool implements a pool of lua.LState objects.
@@ -69,11 +69,11 @@ func (p *LuaStatePool) get(sleepCount int) (*LuaH, error) {
 				return nil, errors.New("max on flight reached")
 			}
 
-			pp.Println("@get/1", "max on flight reached", sleepCount)
+			qq.Println("@get/1", "max on flight reached", sleepCount)
 
 			time.Sleep(time.Millisecond * 100)
 
-			pp.Println("@get/2", "sleeping for 100ms")
+			qq.Println("@get/2", "sleeping for 100ms")
 
 			return p.get(sleepCount + 1)
 
@@ -95,7 +95,7 @@ func (p *LuaStatePool) get(sleepCount int) (*LuaH, error) {
 
 	p.m.Unlock()
 
-	pp.Println("@get/3", "got state from pool")
+	qq.Println("@get/3", "got state from pool")
 
 	L.L.SetTop(0)
 
@@ -137,30 +137,30 @@ func (p *LuaStatePool) Close() {
 }
 
 func (p *LuaStatePool) CleanupExpiredStates() {
-	pp.Println("@cleanup_expired_states/1")
+	qq.Println("@cleanup_expired_states/1")
 	p.m.Lock()
 	defer p.m.Unlock()
 
-	pp.Println("@cleanup_expired_states/2")
+	qq.Println("@cleanup_expired_states/2")
 
 	currTotal := len(p.saved)
 	if currTotal < p.minSize {
-		pp.Println("@cleanup_expired_states/3")
+		qq.Println("@cleanup_expired_states/3")
 		return
 	}
-	pp.Println("@cleanup_expired_states/4")
+	qq.Println("@cleanup_expired_states/4")
 
 	if currTotal > p.minSize {
-		pp.Println("@cleanup_expired_states/5")
+		qq.Println("@cleanup_expired_states/5")
 		toClose := currTotal - p.minSize
 		for i := range toClose {
 			p.saved[i].Close()
 			p.onFlight--
 		}
-		pp.Println("@cleanup_expired_states/6")
+		qq.Println("@cleanup_expired_states/6")
 
 		p.saved = p.saved[toClose:]
-		pp.Println("@cleanup_expired_states/7", toClose)
+		qq.Println("@cleanup_expired_states/7", toClose)
 
 	}
 }

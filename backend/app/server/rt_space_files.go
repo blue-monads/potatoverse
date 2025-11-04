@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 func (a *Server) ListSpaceFiles(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
@@ -50,21 +50,21 @@ func (a *Server) GetSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any,
 }
 
 func (a *Server) DownloadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	pp.Println("@DownloadSpaceFile/1", claim.UserId)
+	qq.Println("@DownloadSpaceFile/1", claim.UserId)
 
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	pp.Println("@DownloadSpaceFile/2", installId)
+	qq.Println("@DownloadSpaceFile/2", installId)
 
 	fileId, err := strconv.ParseInt(ctx.Param("fileId"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	pp.Println("@DownloadSpaceFile/3", fileId)
+	qq.Println("@DownloadSpaceFile/3", fileId)
 
 	err = a.ctrl.DownloadSpaceFile(installId, fileId, ctx.Writer)
 	if err != nil {

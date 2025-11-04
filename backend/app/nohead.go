@@ -7,7 +7,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/mailer"
@@ -81,7 +81,7 @@ func (h *HeadLess) Start() error {
 		return err
 	}
 
-	pp.Println(h.AppOpts)
+	qq.Println(h.AppOpts)
 
 	// sha256 hash of the master secret
 	shash := hashMasterSecret(h.AppOpts.MasterSecret)

@@ -649,7 +649,7 @@ Planned features (may not be implemented yet):
 
 1. Check logs for executor errors
 2. Use `/zz/api/core/engine/debug` for engine state
-3. Use `pp.Println()` for detailed debugging (k0kubun/pp)
+3. Use `qq.Println()` for detailed debugging (k0kubun/pp)
 4. Check Lua state pool status in debug data
 
 ## Module Dependencies

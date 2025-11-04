@@ -4,7 +4,7 @@ import (
 	"hash"
 	"os"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -16,7 +16,7 @@ func (f *FileOperations) fileExists(ownerID int64, path string, name string) (bo
 		"name":     name,
 	}
 
-	pp.Println("@fileExists/1", cond)
+	qq.Println("@fileExists/1", cond)
 
 	return f.fileMetaTable().Find(cond).Exists()
 }

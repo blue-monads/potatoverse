@@ -12,7 +12,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 
 	"github.com/upper/db/v4"
 )
@@ -79,7 +79,7 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 	for _, file := range zipReader.File {
 		fPath, fName := path.Split(file.Name)
 
-		pp.Println("@fPath", fPath, "@fName", fName)
+		qq.Println("@fPath", fPath, "@fName", fName)
 
 		fPath = strings.TrimPrefix(fPath, "/")
 		fPath = strings.TrimSuffix(fPath, "/")
@@ -105,7 +105,7 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 				if !createdFolders[folderKey] {
 					_, err = f.CreateFolder(ownerID, parentPath, part, ownerID)
 					if err != nil && err.Error() != "file already exists" {
-						pp.Println("@CreateFolder error", err, "parentPath", parentPath, "name", part)
+						qq.Println("@CreateFolder error", err, "parentPath", parentPath, "name", part)
 					}
 					createdFolders[folderKey] = true
 				}
@@ -245,7 +245,7 @@ func (f *FileOperations) GetFileMetaByPath(ownerID int64, path string, name stri
 		"name":     name,
 	}
 
-	pp.Println("@GetFileMetaByPath/1", cond)
+	qq.Println("@GetFileMetaByPath/1", cond)
 
 	err := f.fileMetaTable().Find(cond).One(file)
 	if err != nil {

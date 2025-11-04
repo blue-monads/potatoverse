@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 func FileExists(dpath, file string) bool {
@@ -33,7 +33,7 @@ func CreateIfNotExits(fpath string) error {
 
 func Die(args ...any) {
 
-	pp.Println(args...)
+	qq.Println(args...)
 	os.Exit(1)
 
 }

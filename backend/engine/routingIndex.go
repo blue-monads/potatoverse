@@ -12,8 +12,8 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
-	"github.com/k0kubun/pp"
 )
 
 type SpaceRouteIndexItem struct {
@@ -121,7 +121,7 @@ func (e *Engine) LoadRoutingIndex() error {
 
 					tmpl, err := template.ParseFiles(tempFolder + "/" + route.File)
 					if err != nil {
-						pp.Println("@err/5", err)
+						qq.Println("@err/5", err)
 						return err
 					}
 
@@ -145,7 +145,7 @@ func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
 
 	if spaceId != 0 {
 		key := fmt.Sprintf("%d|_|%s", spaceId, spaceKey)
-		pp.Println("@getIndex/1", key)
+		qq.Println("@getIndex/1", key)
 
 		return e.RoutingIndex[key]
 	}
@@ -163,7 +163,7 @@ func (e *Engine) copyFolderToTemp(packageVersionId int64, folder string) (string
 	folder = strings.TrimSuffix(folder, "/")
 	folder = strings.TrimPrefix(folder, "/")
 
-	pp.Println("@folder", folder)
+	qq.Println("@folder", folder)
 
 	fileOps := e.db.GetPackageFileOps()
 
@@ -171,7 +171,7 @@ func (e *Engine) copyFolderToTemp(packageVersionId int64, folder string) (string
 	// Note: folders aren't explicitly stored, so we list files by path
 	files, err := fileOps.ListFiles(packageVersionId, folder)
 	if err != nil {
-		pp.Println("@err/1", err)
+		qq.Println("@err/1", err)
 		return "", fmt.Errorf("failed to list files: %w", err)
 	}
 
@@ -193,7 +193,7 @@ func (e *Engine) copyFolderToTemp(packageVersionId int64, folder string) (string
 	// Copy all files (handle recursive copying for subdirectories)
 	err = e.copyFilesRecursive(fileOps, packageVersionId, files, folder, targetPath)
 	if err != nil {
-		pp.Println("@err/2", err)
+		qq.Println("@err/2", err)
 		return "", fmt.Errorf("failed to copy files: %w", err)
 	}
 
@@ -202,10 +202,10 @@ func (e *Engine) copyFolderToTemp(packageVersionId int64, folder string) (string
 
 func (e *Engine) copyFilesRecursive(fileOps datahub.FileOps, packageVersionId int64, files []dbmodels.FileMeta, sourceFolderPath string, targetBasePath string) error {
 
-	pp.Println("@copyFilesRecursive/1", targetBasePath, "sourceFolder:", sourceFolderPath, "files:", len(files))
+	qq.Println("@copyFilesRecursive/1", targetBasePath, "sourceFolder:", sourceFolderPath, "files:", len(files))
 
 	for _, file := range files {
-		pp.Println("@file", file.Name, "path:", file.Path, "is_folder:", file.IsFolder)
+		qq.Println("@file", file.Name, "path:", file.Path, "is_folder:", file.IsFolder)
 
 		// Skip folder entries (if any exist)
 		if file.IsFolder {
@@ -245,34 +245,34 @@ func (e *Engine) copyFilesRecursive(fileOps datahub.FileOps, packageVersionId in
 		targetDir := filepath.Dir(targetFilePath)
 		err := os.MkdirAll(targetDir, 0755)
 		if err != nil {
-			pp.Println("@err/4", err)
+			qq.Println("@err/4", err)
 			return fmt.Errorf("failed to create directory %s: %w", targetDir, err)
 		}
 
 		// Create the file
 		tfile, err := os.Create(targetFilePath)
 		if err != nil {
-			pp.Println("@err/5", err)
+			qq.Println("@err/5", err)
 			return fmt.Errorf("failed to create file %s: %w", targetFilePath, err)
 		}
 
-		pp.Println("@copying file", targetFilePath, "file.ID:", file.ID, "file.Size:", file.Size, "file.Path:", file.Path, "file.Name:", file.Name, "file.StoreType:", file.StoreType)
+		qq.Println("@copying file", targetFilePath, "file.ID:", file.ID, "file.Size:", file.Size, "file.Path:", file.Path, "file.Name:", file.Name, "file.StoreType:", file.StoreType)
 
 		// Try getting file content as bytes first to verify it exists
 		content, err := fileOps.GetFileContentByPath(packageVersionId, file.Path, file.Name)
 		if err != nil {
 			tfile.Close()
 			os.Remove(targetFilePath) // Clean up empty file
-			pp.Println("@err/getcontent", err)
+			qq.Println("@err/getcontent", err)
 			return fmt.Errorf("failed to get file content %s (path: %s, name: %s): %w", targetFilePath, file.Path, file.Name, err)
 		}
 
-		pp.Println("@got file content", "size:", len(content), "bytes")
+		qq.Println("@got file content", "size:", len(content), "bytes")
 
 		if len(content) == 0 && file.Size > 0 {
 			tfile.Close()
 			os.Remove(targetFilePath)
-			pp.Println("@warn", "file content is empty but size is", file.Size)
+			qq.Println("@warn", "file content is empty but size is", file.Size)
 			return fmt.Errorf("file content is empty but file size is %d bytes", file.Size)
 		}
 
@@ -281,48 +281,48 @@ func (e *Engine) copyFilesRecursive(fileOps datahub.FileOps, packageVersionId in
 		if err != nil {
 			tfile.Close()
 			os.Remove(targetFilePath)
-			pp.Println("@err/write", err)
+			qq.Println("@err/write", err)
 			return fmt.Errorf("failed to write file %s: %w", targetFilePath, err)
 		}
 
 		if bytesWritten != len(content) {
 			tfile.Close()
 			os.Remove(targetFilePath)
-			pp.Println("@err/write", "incomplete write")
+			qq.Println("@err/write", "incomplete write")
 			return fmt.Errorf("incomplete write: wrote %d of %d bytes", bytesWritten, len(content))
 		}
 
-		pp.Println("@wrote", bytesWritten, "bytes to file")
+		qq.Println("@wrote", bytesWritten, "bytes to file")
 
 		// Ensure data is written to disk
 		err = tfile.Sync()
 		if err != nil {
 			tfile.Close()
-			pp.Println("@err/sync", err)
+			qq.Println("@err/sync", err)
 			return fmt.Errorf("failed to sync file %s: %w", targetFilePath, err)
 		}
 
 		err = tfile.Close()
 		if err != nil {
-			pp.Println("@err/7", err)
+			qq.Println("@err/7", err)
 			return fmt.Errorf("failed to close file %s: %w", targetFilePath, err)
 		}
 
 		// Verify file was written correctly
 		info, err := os.Stat(targetFilePath)
 		if err != nil {
-			pp.Println("@err/stat", err)
+			qq.Println("@err/stat", err)
 			return fmt.Errorf("failed to stat copied file %s: %w", targetFilePath, err)
 		}
 
-		pp.Println("@file copied successfully", targetFilePath, "size:", info.Size(), "expected:", len(content))
+		qq.Println("@file copied successfully", targetFilePath, "size:", info.Size(), "expected:", len(content))
 
 		if info.Size() != int64(len(content)) {
 			return fmt.Errorf("file size mismatch: expected %d bytes, got %d bytes", len(content), info.Size())
 		}
 	}
 
-	pp.Println("@copyFilesRecursive/2", "done")
+	qq.Println("@copyFilesRecursive/2", "done")
 
 	return nil
 

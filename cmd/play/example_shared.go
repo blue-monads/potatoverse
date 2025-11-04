@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -123,7 +123,7 @@ func runSharedServerExample() {
 					panic(fmt.Sprintf("expected %s to contain %s", innertext, fullClientName))
 				}
 
-				pp.Println("result", fullClientName, "|>", innertext)
+				qq.Println("result", fullClientName, "|>", innertext)
 				log.Printf("[%s] Tool result: %v\n", clientName, result.Content)
 			}
 

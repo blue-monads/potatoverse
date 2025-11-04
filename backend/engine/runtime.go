@@ -10,9 +10,9 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/utils/libx"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 const Code = `
@@ -64,7 +64,7 @@ func (r *Runtime) cleanupExecs() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		pp.Println("@cleanup_execs/1")
+		qq.Println("@cleanup_execs/1")
 
 		r.execsLock.RLock()
 		for _, e := range r.execs {
@@ -155,13 +155,13 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
 	e, err := r.GetExec(opts.PackageName, opts.InstalledId, opts.SpaceId)
 	if err != nil {
-		pp.Println("@exec_http/1", "error getting exec", err)
+		qq.Println("@exec_http/1", "error getting exec", err)
 		httpx.WriteErr(opts.HttpContext, err)
 		return err
 	}
 
 	if e == nil {
-		pp.Println("@exec_http/1", "exec is nil")
+		qq.Println("@exec_http/1", "exec is nil")
 		httpx.WriteErr(opts.HttpContext, errors.New("exec is nil"))
 		return errors.New("exec is nil")
 	}
@@ -186,7 +186,7 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 			Request:     opts.HttpContext,
 		})
 		if err != nil {
-			pp.Println("@exec_http/2", "error handling http", err)
+			qq.Println("@exec_http/2", "error handling http", err)
 			panic(err)
 		}
 

@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
 )
 
 /*
@@ -54,8 +54,8 @@ func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	requestPath := ctx.Param("subpath")
 	requestMethod := ctx.Request.Method
 
-	pp.Println("@requestPath", requestPath)
-	pp.Println("@requestMethod", requestMethod)
+	qq.Println("@requestPath", requestPath)
+	qq.Println("@requestMethod", requestMethod)
 
 	// Find matching route
 	matchedRoute, pathParams := e.findMatchingRoute(indexItem, requestPath, requestMethod)
@@ -65,9 +65,9 @@ func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 		return
 	}
 
-	pp.Println("@matchedRoute", matchedRoute)
+	qq.Println("@matchedRoute", matchedRoute)
 	if matchedRoute.Type != "static" {
-		pp.Println("@pathParams", pathParams)
+		qq.Println("@pathParams", pathParams)
 	}
 
 	// Handle different route types
@@ -94,8 +94,8 @@ func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	// Build the package file path
 	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
 
-	pp.Println("@static name", name)
-	pp.Println("@static path", path)
+	qq.Println("@static name", name)
+	qq.Println("@static path", path)
 
 	pFileOps := e.db.GetPackageFileOps()
 	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx.Writer)
@@ -131,7 +131,7 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		return
 	}
 
-	pp.Println("@template ctx.Keys", pathParams)
+	qq.Println("@template ctx.Keys", pathParams)
 
 	err = tmpl.Execute(ctx.Writer, ctx.Keys)
 	if err != nil {
@@ -190,10 +190,10 @@ func matchPath(routePattern, requestPath string) (map[string]string, bool) {
 	patternSegments := strings.Split(strings.Trim(routePattern, "/"), "/")
 	pathSegments := strings.Split(strings.Trim(requestPath, "/"), "/")
 
-	pp.Println("@matchPath/1", patternSegments, pathSegments)
+	qq.Println("@matchPath/1", patternSegments, pathSegments)
 
 	if len(patternSegments) != len(pathSegments) {
-		pp.Println("@matchPath/2", len(patternSegments), len(pathSegments))
+		qq.Println("@matchPath/2", len(patternSegments), len(pathSegments))
 		return nil, false
 	}
 

@@ -5,8 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
+
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -72,28 +73,28 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 	handler := l.L.GetGlobal(handlerName)
 	if handler == lua.LNil {
-		pp.Println("@callHandler/1", "handler not found", handlerName)
+		qq.Println("@callHandler/1", "handler not found", handlerName)
 		return errors.New("handler not found")
 	}
 
 	if handler == nil {
-		pp.Println("@callHandler/2", "handler is nil", handlerName)
+		qq.Println("@callHandler/2", "handler is nil", handlerName)
 		return errors.New("handler is nil")
 	}
 
-	pp.Println("@callHandler/3", "handler", handler.String())
+	qq.Println("@callHandler/3", "handler", handler.String())
 
 	l.L.Push(handler)
 
-	pp.Println("@callHandler/4", "handler pushed")
+	qq.Println("@callHandler/4", "handler pushed")
 
 	l.L.Push(ctable)
 
-	pp.Println("@callHandler/5", "ctable pushed")
+	qq.Println("@callHandler/5", "ctable pushed")
 
 	l.L.Call(1, 0)
 
-	pp.Println("@callHandler/6", "handler called")
+	qq.Println("@callHandler/6", "handler called")
 
 	return nil
 
