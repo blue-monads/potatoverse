@@ -12,7 +12,8 @@ import (
 
 func main() {
 	// runMcp()
-	runSharedServerExample()
+	// runSharedServerExample()
+	SelfSignedServer()
 }
 
 func Main1() {
