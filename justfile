@@ -20,10 +20,10 @@ build_frontend:
 	cd frontend && npm run build
 
 build_backend:
-	go build -v -o tmp/turnix ./main.go
+	go build -v -o tmp/potatoverse ./main.go
 
 copy_binary:
-	cp tmp/turnix ~/go/bin
+	cp tmp/potatoverse ~/go/bin
 
 run_cli:
 	cd tmp && FRONTEND_DEV_SERVER="http://localhost:7779"  go run ../main.go 
