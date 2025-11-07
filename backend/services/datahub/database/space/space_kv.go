@@ -6,6 +6,7 @@ import (
 )
 
 func (d *SpaceOperations) QuerySpaceKV(installId int64, cond map[any]any, offset int, limit int) ([]dbmodels.SpaceKV, error) {
+
 	table := d.spaceKVTable()
 	datas := make([]dbmodels.SpaceKV, 0)
 
@@ -24,6 +25,31 @@ func (d *SpaceOperations) QuerySpaceKV(installId int64, cond map[any]any, offset
 	if err != nil {
 		return nil, err
 	}
+
+	return datas, nil
+}
+
+func (d *SpaceOperations) QueryWithValueSpaceKV(installId int64, cond map[any]any, offset int, limit int) ([]dbmodels.SpaceKV, error) {
+
+	table := d.spaceKVTable()
+	datas := make([]dbmodels.SpaceKV, 0)
+
+	cond["install_id"] = installId
+
+	if limit > 1000 || limit <= 0 {
+		limit = 100
+	}
+
+	err := table.Find(db.Cond(cond)).
+		Select().
+		OrderBy("id ASC").
+		Offset(offset).
+		Limit(limit).
+		All(&datas)
+	if err != nil {
+		return nil, err
+	}
+
 	return datas, nil
 }
 
