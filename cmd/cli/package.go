@@ -15,35 +15,46 @@ import (
 )
 
 func (c *PackageBuildCmd) Run(_ *kong.Context) error {
-	potatoTomlFile, err := os.ReadFile(c.PotatoTomlFile)
+	_, err := PackageFiles(c.PotatoTomlFile)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func PackageFiles(potatoTomlFile string) (string, error) {
+	potatoTomlFileData, err := os.ReadFile(potatoTomlFile)
+	if err != nil {
+		return "", err
 	}
 
 	potatoToml := models.PotatoPackage{}
-	err = toml.Unmarshal(potatoTomlFile, &potatoToml)
+	err = toml.Unmarshal(potatoTomlFileData, &potatoToml)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if c.OutputZipFile == "" {
-		c.OutputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
+	outputZipFile := potatoToml.Packaging.OutputZipFile
+
+	if outputZipFile == "" {
+		outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
 	}
 
-	zipFile, err := os.Create(c.OutputZipFile)
+	zipFile, err := os.Create(outputZipFile)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer zipFile.Close()
 
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	potatoFileDir := path.Dir(c.PotatoTomlFile)
+	potatoFileDir := path.Dir(potatoTomlFile)
 
 	err = packageFilesV2(potatoFileDir, potatoToml.Packaging, zipWriter)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	potatoToml.FilesDir = ""
@@ -51,26 +62,26 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 
 	potatoJson, err := json.Marshal(potatoToml)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	pfile, err := zipWriter.Create("potato.json")
 	if err != nil {
-		return err
+		return "", err
 	}
 	_, err = pfile.Write(potatoJson)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = zipWriter.Close()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	fmt.Printf("Package built successfully: %s\n", c.OutputZipFile)
+	fmt.Printf("Package built successfully: %s\n", outputZipFile)
 
-	return nil
+	return outputZipFile, nil
 }
 
 func packageFilesV2(basePath string, opts *models.PackagingOptions, zipWriter *zip.Writer) error {
