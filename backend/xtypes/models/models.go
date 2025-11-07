@@ -17,8 +17,6 @@ type PotatoPackage struct {
 
 	// for local dev
 
-	// files to bundle in the package
-	FilesDir  string            `json:"files_dir,omitempty" toml:"files_dir,omitempty"`
 	DevToken  string            `json:"dev_token,omitempty" toml:"dev_token,omitempty"`
 	Packaging *PackagingOptions `json:"packaging,omitempty" toml:"packaging,omitempty"`
 }

@@ -23,14 +23,11 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 	return nil
 }
 
-func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
-	potatoTomlFileData, err := os.ReadFile(potatoTomlFile)
-	if err != nil {
-		return "", err
-	}
+// simple.chip.zip
+// simple.czip
 
-	potatoToml := models.PotatoPackage{}
-	err = toml.Unmarshal(potatoTomlFileData, &potatoToml)
+func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
+	potatoToml, err := readPotatoToml(potatoTomlFile)
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +55,6 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 		return "", err
 	}
 
-	potatoToml.FilesDir = ""
 	potatoToml.DevToken = ""
 
 	potatoJson, err := json.Marshal(potatoToml)
@@ -83,6 +79,16 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 	fmt.Printf("Package built successfully: %s\n", outputZipFile)
 
 	return outputZipFile, nil
+}
+
+func readPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
+	potatoTomlFileData, err := os.ReadFile(potatoTomlFile)
+	if err != nil {
+		return nil, err
+	}
+	potatoToml := models.PotatoPackage{}
+	err = toml.Unmarshal(potatoTomlFileData, &potatoToml)
+	return &potatoToml, nil
 }
 
 func packageFilesV2(basePath string, opts *models.PackagingOptions, zipWriter *zip.Writer) error {
@@ -237,3 +243,5 @@ func globToRegex(pattern string) (*regexp.Regexp, error) {
 	regexPattern := "^" + escaped + "$"
 	return regexp.Compile(regexPattern)
 }
+
+// ssd
