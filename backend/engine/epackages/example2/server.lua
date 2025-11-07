@@ -89,9 +89,7 @@ function get_category_page(ctx)
         category.category_name = category.name
     end
 
-    print("state", state)
-
-    req.state_set_all({
+    req.stateSetAll({
         category_id = category.category_id,
         category_name = category.category_name,
         description = category.description,
@@ -131,7 +129,7 @@ function get_user_profile(ctx)
     
     -- Set template variables using setAll
 
-    req.state_set_all({
+    req.stateSetAll({
         user_id = user.user_id,
         username = user.username,
         email = user.email,
