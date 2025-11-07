@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
 func TestPackageFilesV2(t *testing.T) {
@@ -21,7 +21,7 @@ func TestPackageFilesV2(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		opts           *xtypes.PackagingOptions
+		opts           *models.PackagingOptions
 		expectedFiles  []string
 		expectedCount  int
 		expectError    bool
@@ -29,7 +29,7 @@ func TestPackageFilesV2(t *testing.T) {
 	}{
 		{
 			name: "include all files with **/*",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"**/*"},
 			},
 			expectedFiles: []string{
@@ -44,7 +44,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include only txt files",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"**/*.txt"},
 			},
 			expectedFiles: []string{
@@ -56,7 +56,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include specific directory with **",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"cc/**/*"},
 			},
 			expectedFiles: []string{
@@ -67,7 +67,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include multiple patterns",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"aa/**/*", "bb/**/*"},
 			},
 			expectedFiles: []string{
@@ -78,7 +78,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "exclude txt files",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"**/*"},
 				ExcludeFiles: []string{"**/*.txt"},
 			},
@@ -91,7 +91,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "exclude specific directory",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"**/*"},
 				ExcludeFiles: []string{"cc/**/*"},
 			},
@@ -105,7 +105,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "exclude nested directory",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"**/*"},
 				ExcludeFiles: []string{"cc/nnn/**/*"},
 			},
@@ -120,7 +120,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include with single asterisk",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"ee/*.txt"},
 			},
 			expectedFiles: []string{
@@ -131,7 +131,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include specific file",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"bb/abcisxyz.md"},
 			},
 			expectedFiles: []string{
@@ -141,7 +141,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "no include patterns - should include everything",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{},
 			},
 			expectedFiles: []string{
@@ -161,7 +161,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "complex include and exclude",
-			opts: &xtypes.PackagingOptions{
+			opts: &models.PackagingOptions{
 				IncludeFiles: []string{"**/*.txt", "**/*.md"},
 				ExcludeFiles: []string{"aa/**/*"},
 			},

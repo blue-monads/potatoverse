@@ -8,10 +8,8 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -43,7 +41,7 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 
 	potatoFileDir := path.Dir(c.PotatoTomlFile)
 
-	err = includeSubFolder(potatoFileDir, potatoFileDir, potatoToml.FilesDir, zipWriter)
+	err = packageFilesV2(potatoFileDir, potatoToml.Packaging, zipWriter)
 	if err != nil {
 		return err
 	}
@@ -75,54 +73,7 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 	return nil
 }
 
-func includeSubFolder(basePath, folder, name string, zipWriter *zip.Writer) error {
-
-	fullPath := path.Join(folder, name)
-
-	files, err := os.ReadDir(fullPath)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-
-		if file.IsDir() {
-			err = includeSubFolder(basePath, fullPath, file.Name(), zipWriter)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-		// Create the relative path for this file within the zip
-		filePath := path.Join(fullPath, file.Name())
-		targetPath := strings.TrimPrefix(filePath, basePath)
-		targetPath = strings.TrimPrefix(targetPath, "/")
-
-		zfile, err := zipWriter.Create(targetPath)
-		if err != nil {
-			return err
-		}
-
-		fileData, err := os.ReadFile(filePath)
-		if err != nil {
-			return err
-		}
-
-		_, err = zfile.Write(fileData)
-		if err != nil {
-			return err
-		}
-
-	}
-
-	return nil
-}
-
-func packageFilesV2(basePath string, opts *xtypes.PackagingOptions, zipWriter *zip.Writer) error {
-	if opts == nil {
-		return nil
-	}
+func packageFilesV2(basePath string, opts *models.PackagingOptions, zipWriter *zip.Writer) error {
 
 	// Normalize basePath to absolute path
 	absBasePath, err := filepath.Abs(basePath)
