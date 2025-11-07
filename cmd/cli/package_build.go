@@ -29,7 +29,7 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 	}
 
 	if outputZipFile == "" {
-		outputZipFile = potatoToml.Packaging.OutputZipFile
+		outputZipFile = potatoToml.Developer.OutputZipFile
 		if outputZipFile == "" {
 			outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
 		}
@@ -46,12 +46,12 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 
 	potatoFileDir := path.Dir(potatoTomlFile)
 
-	err = packageFilesV2(potatoFileDir, potatoToml.Packaging, zipWriter)
+	err = packageFilesV2(potatoFileDir, potatoToml.Developer, zipWriter)
 	if err != nil {
 		return "", err
 	}
 
-	potatoToml.DevToken = ""
+	potatoToml.Developer = nil
 
 	potatoJson, err := json.Marshal(potatoToml)
 	if err != nil {

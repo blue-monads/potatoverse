@@ -21,7 +21,7 @@ func TestPackageFilesV2(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		opts           *models.PackagingOptions
+		opts           *models.DeveloperOptions
 		expectedFiles  []string
 		expectedCount  int
 		expectError    bool
@@ -29,7 +29,7 @@ func TestPackageFilesV2(t *testing.T) {
 	}{
 		{
 			name: "include all files with **/*",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"**/*"},
 			},
 			expectedFiles: []string{
@@ -44,7 +44,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include only txt files",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"**/*.txt"},
 			},
 			expectedFiles: []string{
@@ -56,7 +56,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include specific directory with **",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"cc/**/*"},
 			},
 			expectedFiles: []string{
@@ -67,7 +67,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include multiple patterns",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"aa/**/*", "bb/**/*"},
 			},
 			expectedFiles: []string{
@@ -78,7 +78,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "exclude txt files",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"**/*"},
 				ExcludeFiles: []string{"**/*.txt"},
 			},
@@ -91,7 +91,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "exclude specific directory",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"**/*"},
 				ExcludeFiles: []string{"cc/**/*"},
 			},
@@ -105,7 +105,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "exclude nested directory",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"**/*"},
 				ExcludeFiles: []string{"cc/nnn/**/*"},
 			},
@@ -120,7 +120,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include with single asterisk",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"ee/*.txt"},
 			},
 			expectedFiles: []string{
@@ -131,7 +131,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "include specific file",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"bb/abcisxyz.md"},
 			},
 			expectedFiles: []string{
@@ -141,7 +141,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "no include patterns - should include everything",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{},
 			},
 			expectedFiles: []string{
@@ -161,7 +161,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "complex include and exclude",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"**/*.txt", "**/*.md"},
 				ExcludeFiles: []string{"aa/**/*"},
 			},
@@ -174,7 +174,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "comma-separated source,destination - simple file rename",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"bb/abcisxyz.md,renamed.md"},
 			},
 			expectedFiles: []string{
@@ -184,7 +184,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "comma-separated source,destination - directory with glob",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"ee/**/*,newfolder"},
 			},
 			expectedFiles: []string{
@@ -195,7 +195,7 @@ func TestPackageFilesV2(t *testing.T) {
 		},
 		{
 			name: "comma-separated source,destination - mixed patterns",
-			opts: &models.PackagingOptions{
+			opts: &models.DeveloperOptions{
 				IncludeFiles: []string{"bb/abcisxyz.md,renamed.md", "ee/**/*,newfolder"},
 			},
 			expectedFiles: []string{

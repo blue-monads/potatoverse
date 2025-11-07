@@ -29,17 +29,12 @@ type includePatternInfo struct {
 	regex         *regexp.Regexp
 }
 
-func packageFilesV2(basePath string, opts *models.PackagingOptions, zipWriter *zip.Writer) error {
+func packageFilesV2(basePath string, opts *models.DeveloperOptions, zipWriter *zip.Writer) error {
 
 	// Normalize basePath to absolute path
 	absBasePath, err := filepath.Abs(basePath)
 	if err != nil {
 		return err
-	}
-
-	// Handle nil opts
-	if opts == nil {
-		return nil
 	}
 
 	// Parse include patterns - support comma-separated source,destination syntax

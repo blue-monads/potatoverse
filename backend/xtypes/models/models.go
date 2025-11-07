@@ -16,9 +16,15 @@ type PotatoPackage struct {
 	Artifacts     []PotatoArtifact `json:"artifacts" toml:"artifacts"`
 
 	// for local dev
+	Developer *DeveloperOptions `json:"developer,omitempty" toml:"developer,omitempty"`
+}
 
-	DevToken  string            `json:"dev_token,omitempty" toml:"dev_token,omitempty"`
-	Packaging *PackagingOptions `json:"packaging,omitempty" toml:"packaging,omitempty"`
+type DeveloperOptions struct {
+	ServerUrl     string   `json:"server_url" toml:"server_url"`
+	Token         string   `json:"token" toml:"token"`
+	OutputZipFile string   `json:"output_zip_file,omitempty" toml:"output_zip_file,omitempty"`
+	IncludeFiles  []string `json:"include_files,omitempty" toml:"include_files,omitempty"`
+	ExcludeFiles  []string `json:"exclude_files,omitempty" toml:"exclude_files,omitempty"`
 }
 
 type PotatoArtifact struct {
@@ -59,10 +65,4 @@ type PotatoMcpOptions struct {
 type PotatoDevOptions struct {
 	ServerUrl string `json:"server_url" toml:"server_url"`
 	Token     string `json:"token" toml:"token"`
-}
-
-type PackagingOptions struct {
-	OutputZipFile string   `json:"output_zip_file,omitempty" toml:"output_zip_file,omitempty"`
-	IncludeFiles  []string `json:"include_files,omitempty" toml:"include_files,omitempty"`
-	ExcludeFiles  []string `json:"exclude_files,omitempty" toml:"exclude_files,omitempty"`
 }
