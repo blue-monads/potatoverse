@@ -15,7 +15,7 @@ import (
 )
 
 func (c *PackageBuildCmd) Run(_ *kong.Context) error {
-	_, err := PackageFiles(c.PotatoTomlFile)
+	_, err := PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 	return nil
 }
 
-func PackageFiles(potatoTomlFile string) (string, error) {
+func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 	potatoTomlFileData, err := os.ReadFile(potatoTomlFile)
 	if err != nil {
 		return "", err
@@ -35,10 +35,11 @@ func PackageFiles(potatoTomlFile string) (string, error) {
 		return "", err
 	}
 
-	outputZipFile := potatoToml.Packaging.OutputZipFile
-
 	if outputZipFile == "" {
-		outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
+		outputZipFile = potatoToml.Packaging.OutputZipFile
+		if outputZipFile == "" {
+			outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
+		}
 	}
 
 	zipFile, err := os.Create(outputZipFile)
