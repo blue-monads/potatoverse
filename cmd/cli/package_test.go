@@ -172,6 +172,39 @@ func TestPackageFilesV2(t *testing.T) {
 			},
 			expectedCount: 3,
 		},
+		{
+			name: "comma-separated source,destination - simple file rename",
+			opts: &models.PackagingOptions{
+				IncludeFiles: []string{"bb/abcisxyz.md,renamed.md"},
+			},
+			expectedFiles: []string{
+				"renamed.md",
+			},
+			expectedCount: 1,
+		},
+		{
+			name: "comma-separated source,destination - directory with glob",
+			opts: &models.PackagingOptions{
+				IncludeFiles: []string{"ee/**/*,newfolder"},
+			},
+			expectedFiles: []string{
+				"newfolder/bullhorn.txt",
+				"newfolder/sans.txt",
+			},
+			expectedCount: 2,
+		},
+		{
+			name: "comma-separated source,destination - mixed patterns",
+			opts: &models.PackagingOptions{
+				IncludeFiles: []string{"bb/abcisxyz.md,renamed.md", "ee/**/*,newfolder"},
+			},
+			expectedFiles: []string{
+				"renamed.md",
+				"newfolder/bullhorn.txt",
+				"newfolder/sans.txt",
+			},
+			expectedCount: 3,
+		},
 	}
 
 	for _, tt := range tests {
