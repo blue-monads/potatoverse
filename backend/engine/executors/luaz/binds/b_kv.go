@@ -21,7 +21,7 @@ type SpaceKVQuery struct {
 	IncludeValue bool        `json:"include_value"`
 }
 
-func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
+func bindsKV(installId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 	return func(L *lua.LState) int {
 
@@ -44,10 +44,10 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 			var datas []dbmodels.SpaceKV
 			if query.IncludeValue {
-				datas, err = db.QueryWithValueSpaceKV(spaceId, query.Cond, query.Offset, query.Limit)
+				datas, err = db.QueryWithValueSpaceKV(installId, query.Cond, query.Offset, query.Limit)
 
 			} else {
-				datas, err = db.QuerySpaceKV(spaceId, query.Cond, query.Offset, query.Limit)
+				datas, err = db.QuerySpaceKV(installId, query.Cond, query.Offset, query.Limit)
 			}
 			if err != nil {
 				return pushError(L, err)
@@ -74,7 +74,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 				return pushError(L, err)
 			}
 
-			err = db.AddSpaceKV(spaceId, dataStruct)
+			err = db.AddSpaceKV(installId, dataStruct)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -85,7 +85,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 		GetSpaceKV := func(L *lua.LState) int {
 			group := L.CheckString(1)
 			key := L.CheckString(2)
-			data, err := db.GetSpaceKV(spaceId, group, key)
+			data, err := db.GetSpaceKV(installId, group, key)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -103,7 +103,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			group := L.CheckString(1)
 			offset := L.CheckInt(2)
 			limit := L.CheckInt(3)
-			datas, err := db.GetSpaceKVByGroup(spaceId, group, offset, limit)
+			datas, err := db.GetSpaceKVByGroup(installId, group, offset, limit)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -124,7 +124,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 		RemoveSpaceKV := func(L *lua.LState) int {
 			group := L.CheckString(1)
 			key := L.CheckString(2)
-			err := db.RemoveSpaceKV(spaceId, group, key)
+			err := db.RemoveSpaceKV(installId, group, key)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -138,7 +138,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			data := L.CheckTable(3)
 			dataMap := luaplus.TableToMap(L, data)
 
-			err := db.UpdateSpaceKV(spaceId, group, key, dataMap)
+			err := db.UpdateSpaceKV(installId, group, key, dataMap)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -151,7 +151,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			key := L.CheckString(2)
 			data := L.CheckTable(3)
 			dataMap := luaplus.TableToMap(L, data)
-			err := db.UpsertSpaceKV(spaceId, group, key, dataMap)
+			err := db.UpsertSpaceKV(installId, group, key, dataMap)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -177,6 +177,6 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 }
 
-func BindsKV(spaceId int64, handle *executors.EHandle) func(L *lua.LState) int {
-	return bindsKV(spaceId, handle.App.Database().GetSpaceKVOps())
+func BindsKV(installId int64, handle *executors.EHandle) func(L *lua.LState) int {
+	return bindsKV(installId, handle.App.Database().GetSpaceKVOps())
 }

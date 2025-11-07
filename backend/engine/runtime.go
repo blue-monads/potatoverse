@@ -99,6 +99,7 @@ func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Lua
 	}
 
 	source := Code
+	installId := int64(0)
 
 	if !ByPassPackageCode {
 
@@ -119,6 +120,7 @@ func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Lua
 		}
 
 		source = string(packageFile)
+		installId = s.InstalledId
 	}
 
 	e = luaz.New(luaz.Options{
@@ -129,8 +131,8 @@ func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Lua
 		Code:             source, // code,
 		WorkingFolder:    path.Join(r.parent.workingFolder, spaceKey, fmt.Sprintf("%d", pVersionId)),
 		SpaceId:          spaceid,
-		PackageVersionId: 0,
-		InstalledId:      0,
+		PackageVersionId: pVersionId,
+		InstalledId:      installId,
 	})
 
 	r.execsLock.Lock()
