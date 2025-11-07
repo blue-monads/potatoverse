@@ -41,23 +41,6 @@ type ServerStartCmd struct {
 	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
-// package
-
-type PackageCmd struct {
-	Build PackageBuildCmd `cmd:"" help:"Build the package."`
-	Push  PackagePushCmd  `cmd:"" help:"Push the package."`
-}
-
-type PackagePushCmd struct {
-	PotatoTomlFile string `name:"potato-toml-file" help:"Path to package directory." type:"path" default:"./potato.toml"`
-	OutputZipFile  string `name:"output-zip-file" help:"Output path for built package." type:"path"`
-}
-
-type PackageBuildCmd struct {
-	PotatoTomlFile string `name:"potato-toml-file" help:"Path to package directory." type:"path" default:"./potato.toml"`
-	OutputZipFile  string `name:"output-zip-file" help:"Output path for built package." type:"path"`
-}
-
 // operations
 
 type OperationsCmd struct {
@@ -97,53 +80,7 @@ type SingletonStartCmd struct {
 
 // dev
 
-type DevCmd struct {
-	Push DevPushCmd `cmd:"" help:"Push development changes."`
-}
-
-type DevRunStatelessCmd struct {
-	Port int    `name:"port" short:"p" help:"Server port." default:"7777"`
-	Host string `name:"host" help:"Server host." default:"*.localhost"`
-}
-
-func (c *DevRunStatelessCmd) Run(ctx *kong.Context) error {
-	panic("Dev Run Stateless - Not implemented yet")
-}
-
-type DevPushCmd struct {
-	Target string `arg:"" help:"Push target."`
-}
-
-func (c *DevPushCmd) Run(ctx *kong.Context) error {
-	panic("Dev Push - Not implemented yet")
-
-}
-
 // extra
-
-type ExtraCmd struct {
-	CombinedArgs []string `arg:"" passthrough:"partial" help:"Extra command and its arguments."`
-	Command      string
-	Args         []string
-}
-
-func (e *ExtraCmd) Run(ctx *kong.Context) error {
-	if len(e.CombinedArgs) == 0 {
-		return fmt.Errorf("must specify command and arguments for extra passthrough")
-	}
-
-	e.Command = e.CombinedArgs[0]
-	if len(e.CombinedArgs) > 1 {
-		e.Args = e.CombinedArgs[1:]
-	} else {
-		e.Args = []string{}
-	}
-
-	fmt.Printf("Executing Extra Command: %s\n", e.Command)
-	fmt.Printf("With Unparsed Args: %v\n", e.Args)
-
-	return nil
-}
 
 func Run() {
 	var cli CLI
