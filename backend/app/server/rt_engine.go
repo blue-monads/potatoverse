@@ -154,10 +154,11 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 	proxyAddrs := map[string]*httputil.ReverseProxy{}
 
 	if DEV_MODE {
+		// TURNIX_DEV_SPACES="space1:8080,space2:8081"
 		devSpacesEnv := os.Getenv("TURNIX_DEV_SPACES")
-		devSpaces := strings.Split(devSpacesEnv, ",")
+		devSpaces := strings.SplitSeq(devSpacesEnv, ",")
 
-		for _, pname := range devSpaces {
+		for pname := range devSpaces {
 			nameParts := strings.Split(pname, ":")
 			if len(nameParts) != 2 {
 				continue
