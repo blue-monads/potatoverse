@@ -136,9 +136,9 @@
             // Save task via API
             async function saveTask(taskText) {
                 try {
-                    const response = await apiRequest('POST', '/api/tasks', { task: taskText });
-                    // response is an array of KV objects, keep full objects
-                    return response || [];
+                    await apiRequest('POST', '/api/tasks', { task: taskText });
+                    // Reload all tasks after successful save
+                    return await loadTasks();
                 } catch (e) {
                     console.error("Error saving task", e);
                     alert(`Error adding task: ${e.message}`);
@@ -151,9 +151,9 @@
                 try {
                     // URL encode the key to handle special characters
                     const encodedKey = encodeURIComponent(key);
-                    const response = await apiRequest('DELETE', `/api/tasks/${encodedKey}`);
-                    // response is an array of KV objects, keep full objects
-                    return response || [];
+                    await apiRequest('DELETE', `/api/tasks/${encodedKey}`);
+                    // Reload all tasks after successful delete
+                    return await loadTasks();
                 } catch (e) {
                     console.error("Error deleting task", e);
                     alert(`Error deleting task: ${e.message}`);
