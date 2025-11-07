@@ -24,3 +24,17 @@ dev_serve_port = 7778
 server_url = "http://localhost:7777"
 # if starts with $ then it will be treated as an environment variable
 token = "$POTATO_DEV_TOKEN" 
+
+[packaging]
+output_zip_file="simple-todo.zip"
+include_files = [
+    "public/**/*",
+    "server.lua",
+    "mcp.json"
+]
+exclude_files = [
+    "public/node_modules/**/*",
+    "public/package-lock.json",
+    "public/package.json",
+    "public/package-lock.json",
+]
