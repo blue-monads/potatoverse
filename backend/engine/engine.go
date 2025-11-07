@@ -100,7 +100,7 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	qq.Println("@ServeSpaceFile/1")
 
 	spaceKey := ctx.Param("space_key")
-	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
+	spaceId := extractDomainSpaceId(ctx.Request.Host)
 
 	qq.Println("@ServeSpaceFile/3")
 
@@ -141,7 +141,7 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
 	capabilityName := ctx.Param("capability_name")
 
-	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
+	spaceId := extractDomainSpaceId(ctx.Request.Host)
 
 	index := e.getIndex(spaceKey, spaceId)
 
@@ -161,9 +161,9 @@ func (e *Engine) ServeCapabilityRoot(ctx *gin.Context) {
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
-	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
+	spaceId := extractDomainSpaceId(ctx.Request.Host)
 
-	qq.Println("@SpaceApi/3")
+	qq.Println("@SpaceApi/3", spaceKey, spaceId)
 
 	sIndex := e.getIndex(spaceKey, spaceId)
 
@@ -230,6 +230,8 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 var spaceIdPattern = regexp.MustCompile(`^s-(\d+)\.`)
 
 func extractDomainSpaceId(domain string) int64 {
+	qq.Println("@extractDomainSpaceId/1", domain)
+
 	if matches := spaceIdPattern.FindStringSubmatch(domain); matches != nil {
 		sid, _ := strconv.ParseInt(matches[1], 10, 64)
 		return sid
