@@ -122,7 +122,8 @@
             async function loadTasks() {
                 try {
                     const response = await apiRequest('GET', '/api/tasks');
-                    return response.tasks || [];
+                    // response is an array of KV objects, keep full objects
+                    return response || [];
                 } catch (e) {
                     console.error("Error loading tasks", e);
                     // Show error to user
@@ -136,7 +137,8 @@
             async function saveTask(taskText) {
                 try {
                     const response = await apiRequest('POST', '/api/tasks', { task: taskText });
-                    return response.tasks || [];
+                    // response is an array of KV objects, keep full objects
+                    return response || [];
                 } catch (e) {
                     console.error("Error saving task", e);
                     alert(`Error adding task: ${e.message}`);
@@ -145,12 +147,13 @@
             }
 
             // Delete task via API
-            async function deleteTask(index) {
+            async function deleteTask(key) {
                 try {
-                    // API uses 1-based indexing, but we need to adjust for 0-based array
-                    const apiIndex = index + 1;
-                    const response = await apiRequest('DELETE', `/api/tasks/${apiIndex}`);
-                    return response.tasks || [];
+                    // URL encode the key to handle special characters
+                    const encodedKey = encodeURIComponent(key);
+                    const response = await apiRequest('DELETE', `/api/tasks/${encodedKey}`);
+                    // response is an array of KV objects, keep full objects
+                    return response || [];
                 } catch (e) {
                     console.error("Error deleting task", e);
                     alert(`Error deleting task: ${e.message}`);
@@ -169,20 +172,27 @@
                     return;
                 }
 
-                tasks.forEach((task, index) => {
+                tasks.forEach((task) => {
                     const li = document.createElement('li');
                     li.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md hover:bg-gray-100 transition-colors';
                     
                     const span = document.createElement('span');
                     span.className = 'flex-1 text-gray-800';
-                    span.textContent = task;
+                    // Extract value from KV object
+                    span.textContent = task.value || task.Value || '';
                     
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'text-red-500 hover:text-red-700 font-bold text-xl px-2';
                     deleteBtn.textContent = '×';
                     deleteBtn.onclick = async () => {
                         try {
-                            tasks = await deleteTask(index);
+                            // Use key from the task object
+                            const key = task.key || task.Key;
+                            if (!key) {
+                                alert('Error: Task key not found');
+                                return;
+                            }
+                            tasks = await deleteTask(key);
                             renderTasks();
                         } catch (e) {
                             // Error already shown in deleteTask

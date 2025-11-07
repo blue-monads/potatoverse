@@ -179,6 +179,7 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
 		params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
 		params["subpath"] = subpath
+		params["method"] = opts.HttpContext.Request.Method
 
 		err := e.Handle(luaz.HttpEvent{
 			HandlerName: opts.HandlerName,
