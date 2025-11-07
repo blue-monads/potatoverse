@@ -5,11 +5,20 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	lua "github.com/yuin/gopher-lua"
 )
 
 func pushError(L *lua.LState, err error) int {
 	return luaplus.PushError(L, err)
+}
+
+type SpaceKVQuery struct {
+	Group        string      `json:"group"`
+	Cond         map[any]any `json:"cond"`
+	Offset       int         `json:"offset"`
+	Limit        int         `json:"limit"`
+	IncludeValue bool        `json:"include_value"`
 }
 
 func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
@@ -18,11 +27,28 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 		QuerySpaceKV := func(L *lua.LState) int {
 
-			cond := L.CheckTable(1)
+			query := &SpaceKVQuery{}
+			err := luaplus.MapToStruct(L, L.CheckTable(1), query)
+			if err != nil {
+				return pushError(L, err)
+			}
 
-			condMap := luaplus.TableToMapAny(L, cond)
+			if query.Group != "" {
+				if query.Cond == nil {
+					query.Cond = make(map[any]any)
+				}
+				query.Cond["group"] = query.Group
+			}
 
-			datas, err := db.QuerySpaceKV(spaceId, condMap, 0, 100)
+			qq.Println("query.Cond:", query)
+
+			var datas []dbmodels.SpaceKV
+			if query.IncludeValue {
+				datas, err = db.QueryWithValueSpaceKV(spaceId, query.Cond, query.Offset, query.Limit)
+
+			} else {
+				datas, err = db.QuerySpaceKV(spaceId, query.Cond, query.Offset, query.Limit)
+			}
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -33,12 +59,10 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 				if err != nil {
 					return pushError(L, err)
 				}
-
 				result.Append(luaTable)
 			}
 
 			L.Push(result)
-
 			return 1
 		}
 		AddSpaceKV := func(L *lua.LState) int {
@@ -104,6 +128,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			if err != nil {
 				return pushError(L, err)
 			}
+			L.Push(lua.LNil)
 			return 1
 		}
 
@@ -117,6 +142,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 			if err != nil {
 				return pushError(L, err)
 			}
+			L.Push(lua.LNil)
 			return 1
 		}
 
@@ -130,6 +156,7 @@ func bindsKV(spaceId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 				return pushError(L, err)
 			}
 
+			L.Push(lua.LNil)
 			return 1
 		}
 

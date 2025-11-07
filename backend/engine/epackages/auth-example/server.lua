@@ -5,21 +5,24 @@ function get_tasks(ctx)
 
     local data, err = kv.query({
         group = "TASKS",
+        include_value = true,
     })
 
     if err then
+        print("get_tasks error:", tostring(err))
+
         req.json(500, {
             error = tostring(err)
         })
         return
     end
 
-    -- data should be a table/array, but ensure it's not nil
+    -- Ensure data is a table (bindings now return proper arrays)
     if data == nil then
         data = {}
     end
     
-    req.json(200, data)
+    req.jsonArray(200, data)
 end
 
 function add_task(ctx)
@@ -57,24 +60,8 @@ function add_task(ctx)
         return
     end
     
-    -- Return all tasks
-    local data, err = kv.query({
-        group = "TASKS",
-    })
     
-    if err then
-        req.json(500, {
-            error = tostring(err)
-        })
-        return
-    end
-    
-    -- Ensure data is a table
-    if data == nil then
-        data = {}
-    end
-    
-    req.json(200, data)
+    req.json(201, {})
 end
 
 function delete_task(ctx)
@@ -91,8 +78,7 @@ function delete_task(ctx)
         return
     end
     
-    -- Delete the task directly by key
-    local _, err = kv.remove("TASKS", key)
+    local err = kv.remove("TASKS", key)
     if err then
         req.json(500, {
             error = tostring(err)
@@ -100,24 +86,9 @@ function delete_task(ctx)
         return
     end
     
-    -- Return remaining tasks
-    local remainingData, err = kv.query({
-        group = "TASKS",
-    })
+
     
-    if err then
-        req.json(500, {
-            error = tostring(err)
-        })
-        return
-    end
-    
-    -- Ensure data is a table
-    if remainingData == nil then
-        remainingData = {}
-    end
-    
-    req.json(200, remainingData)
+    req.json(200, {})
 end
 
 function on_http(ctx)

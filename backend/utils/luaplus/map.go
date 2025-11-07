@@ -6,6 +6,16 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+func TableToArray(L *lua.LState, table *lua.LTable) []any {
+	result := make([]any, 0)
+
+	table.ForEach(func(_ lua.LValue, value lua.LValue) {
+		result = append(result, LuaTypeToGoType(L, value))
+	})
+
+	return result
+}
+
 func TableToMap(L *lua.LState, table *lua.LTable) map[string]any {
 	result := make(map[string]any)
 

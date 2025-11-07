@@ -196,6 +196,14 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		return 0
 	}
 
+	reqJSONArray := func(L *lua.LState) int {
+		code := L.CheckInt(1)
+		jsonTbl := L.CheckTable(2)
+		jsonObj := luaplus.TableToArray(L, jsonTbl)
+		ctx.JSON(code, jsonObj)
+		return 0
+	}
+
 	reqHTML := func(L *lua.LState) int {
 		code := L.CheckInt(1)
 		name := L.CheckString(2)
@@ -457,6 +465,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		"redirect":            reqRedirect,
 		"remoteIP":            reqRemoteIP,
 		"json":                reqJSON,
+		"jsonArray":           reqJSONArray,
 		"html":                reqHTML,
 		"string":              reqString,
 		"setCookie":           reqSetCookie,
@@ -472,10 +481,10 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		"getPostFormMap":      reqGetPostFormMap,
 		"getPostFormArray":    reqGetPostFormArray,
 		"sseEvent":            reqSSEvent,
-		"state_keys":          reqStateKeys,
-		"state_get":           reqStateGet,
-		"state_set":           reqStateSet,
-		"state_set_all":       reqStateSetAll,
+		"stateKeys":           reqStateKeys,
+		"stateGet":            reqStateGet,
+		"stateSet":            reqStateSet,
+		"stateSetAll":         reqStateSetAll,
 	})
 
 	return mod
