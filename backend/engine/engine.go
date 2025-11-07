@@ -160,19 +160,15 @@ func (e *Engine) ServeCapabilityRoot(ctx *gin.Context) {
 }
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
-
 	spaceKey := ctx.Param("space_key")
-	spaceId := int64(0)
+	spaceId := extractDomainSpaceId(ctx.Request.URL.Host)
 
-	if matches := spaceIdPattern.FindStringSubmatch(ctx.Request.URL.Host); matches != nil {
-		sid, _ := strconv.ParseInt(matches[1], 10, 64)
-		spaceId = sid
-	}
+	qq.Println("@SpaceApi/3")
 
 	sIndex := e.getIndex(spaceKey, spaceId)
 
 	if sIndex == nil {
-		ctx.JSON(404, gin.H{"error": "space not found"})
+		httpx.WriteErrString(ctx, "space not found")
 		return
 	}
 
@@ -192,15 +188,24 @@ type SpaceInfo struct {
 	PackageInfo   string `json:"package_info"`
 }
 
-func (e *Engine) SpaceInfo(nsKey string) (*SpaceInfo, error) {
+func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 
-	ri := e.getIndex(nsKey, 0)
+	qq.Println("@SpaceInfo/1", nsKey, hostName)
 
-	if ri == nil {
+	var index *SpaceRouteIndexItem
+
+	if hostName != "" {
+		spaceId := extractDomainSpaceId(hostName)
+		if spaceId != 0 {
+			index = e.getIndex(nsKey, spaceId)
+		}
+	}
+
+	if index == nil {
 		return nil, errors.New("space not found")
 	}
 
-	space, err := e.db.GetSpaceOps().GetSpace(ri.spaceId)
+	space, err := e.db.GetSpaceOps().GetSpace(index.spaceId)
 	if err != nil {
 		return nil, err
 	}

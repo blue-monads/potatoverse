@@ -61,7 +61,7 @@ const InSpaceAuthorizerWrapper = () => {
             }
 
             try {
-                const resp = await getSpaceInfo(nspace_key);
+                const resp = await getSpaceInfo(nspace_key, redirect_back_url_url.hostname);
                 if (resp.status === 200) {
                     setSpaceInfo(resp.data);
                     setMode('space_info_loaded');

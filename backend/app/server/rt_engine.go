@@ -204,7 +204,8 @@ func (a *Server) handlePluginApi(ctx *gin.Context) {}
 
 func (a *Server) handleSpaceInfo(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
-	spaceInfo, err := a.engine.SpaceInfo(spaceKey)
+	hostName := ctx.Query("host_name")
+	spaceInfo, err := a.engine.SpaceInfo(spaceKey, hostName)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

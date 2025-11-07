@@ -337,8 +337,9 @@ export interface SpaceInfo {
     package_info: string;
 }
 
-export const getSpaceInfo = async (space_key: string) => {
-    return iaxios.get<SpaceInfo>(`/core/engine/space_info/${space_key}`);
+export const getSpaceInfo = async (space_key: string, host_name: string) => {
+    const encodedParams = encodeURIComponent(host_name);
+    return iaxios.get<SpaceInfo>(`/core/engine/space_info/${space_key}?host_name=${encodedParams.toString()}`);
 }
 
 
