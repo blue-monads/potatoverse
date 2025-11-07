@@ -23,6 +23,7 @@ build_backend:
 	go build -v -o tmp/potatoverse ./main.go
 
 copy_binary:
+	go build -v -o tmp/potatoverse ./main.go
 	cp tmp/potatoverse ~/go/bin
 
 run_cli:
