@@ -36,4 +36,24 @@ end
 
 `
 
+const HandlersReference = `
+
+
+function on_http(ctx)
+	print("@on_http", ctx.type())
+end
+
+function on_ws_room(ctx)
+	print("@on_ws_room", ctx.type())
+end
+
+function on_rmcp(ctx)
+	print("@on_rmcp", ctx.type())
+end
+
+
+
+
+`
+
 const ByPassPackageCode = false

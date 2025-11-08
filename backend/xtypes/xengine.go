@@ -32,6 +32,11 @@ type BuilderOption struct {
 	App App
 
 	Logger *slog.Logger
+
+	WorkingFolder    string
+	SpaceId          int64
+	PackageVersionId int64
+	InstalledId      int64
 }
 
 type Builder func(opt BuilderOption) (*Defination, error)

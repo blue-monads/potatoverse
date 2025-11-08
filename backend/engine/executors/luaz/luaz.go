@@ -18,15 +18,7 @@ type Luaz struct {
 	handle *executors.EHandle
 }
 
-type Options struct {
-	BuilderOpts      xtypes.BuilderOption
-	WorkingFolder    string
-	SpaceId          int64
-	PackageVersionId int64
-	InstalledId      int64
-}
-
-func New(opts Options) (*Luaz, error) {
+func New(opts xtypes.BuilderOption) (*Luaz, error) {
 
 	os.MkdirAll(opts.WorkingFolder, 0755)
 
@@ -38,7 +30,7 @@ func New(opts Options) (*Luaz, error) {
 	source := Code
 
 	if !ByPassPackageCode {
-		sOps := opts.BuilderOpts.App.Database().GetSpaceOps()
+		sOps := opts.App.Database().GetSpaceOps()
 		s, err := sOps.GetSpace(opts.SpaceId)
 		if err != nil {
 			return nil, errors.New("space not found")
@@ -48,7 +40,7 @@ func New(opts Options) (*Luaz, error) {
 			s.ServerFile = "server.lua"
 		}
 
-		pfops := opts.BuilderOpts.App.Database().GetPackageFileOps()
+		pfops := opts.App.Database().GetPackageFileOps()
 		packageFile, err := pfops.GetFileContentByPath(opts.PackageVersionId, "", s.ServerFile)
 
 		if err != nil {
@@ -65,13 +57,13 @@ func New(opts Options) (*Luaz, error) {
 	lz := &Luaz{
 		pool: nil,
 		handle: &executors.EHandle{
-			Logger:           opts.BuilderOpts.Logger,
+			Logger:           opts.Logger,
 			FsRoot:           rfs,
 			SpaceId:          opts.SpaceId,
 			PackageVersionId: opts.PackageVersionId,
 			InstalledId:      opts.InstalledId,
-			App:              opts.BuilderOpts.App,
-			Database:         opts.BuilderOpts.App.Database(),
+			App:              opts.App,
+			Database:         opts.App.Database(),
 		},
 	}
 
@@ -157,23 +149,3 @@ func (l *Luaz) Handle(event HttpEvent) error {
 func (l *Luaz) GetDebugData() map[string]any {
 	return l.pool.GetDebugData()
 }
-
-const HandlersReference = `
-
-
-function on_http(ctx)
-	print("@on_http", ctx.type())
-end
-
-function on_ws_room(ctx)
-	print("@on_ws_room", ctx.type())
-end
-
-function on_rmcp(ctx)
-	print("@on_rmcp", ctx.type())
-end
-
-
-
-
-`
