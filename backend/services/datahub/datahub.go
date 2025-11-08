@@ -190,3 +190,45 @@ type FileOps interface {
 	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
 	RemoveFileShare(ownerID int64, userId int64, id string) error
 }
+
+type FindQuery struct {
+	Table  string      `json:"table"`
+	Offset int         `json:"offset"`
+	Limit  int         `json:"limit"`
+	Cond   map[any]any `json:"cond"`
+	Order  string      `json:"order"`
+	Fields []string    `json:"fields"`
+}
+
+type FindByQuerySQL struct {
+	Table string               `json:"table"`
+	Joins []FindByQuerySQLJoin `json:"joins"`
+	Cond  map[any]any          `json:"cond"`
+}
+
+type FindByQuerySQLJoin struct {
+	Table    string `json:"table"`
+	On       string `json:"on"`
+	As       string `json:"as"`
+	JoinType string `json:"join_type,omitempty"`
+}
+
+type DBLowOps interface {
+	RunDDL(ddl string) error
+	RunQuery(query string, data ...any) ([]map[string]any, error)
+	RunQueryOne(query string, data ...any) (map[string]any, error)
+
+	Insert(table string, data map[string]any) (int64, error)
+	UpdateById(table string, id int64, data map[string]any) error
+	DeleteById(table string, id int64) error
+	FindById(table string, id int64) (map[string]any, error)
+
+	UpdateByCond(table string, cond map[any]any, data map[string]any) error
+	DeleteByCond(table string, cond map[any]any) error
+
+	FindAllByCond(table string, cond map[any]any) ([]map[string]any, error)
+	FindOneByCond(table string, cond map[any]any) (map[string]any, error)
+	FindAllByQuery(query *FindQuery) ([]map[string]any, error)
+
+	FindByQuerySQL(query *FindByQuerySQL) ([]map[string]any, error)
+}
