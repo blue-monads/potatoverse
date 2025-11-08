@@ -70,7 +70,7 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		return nil, err
 	}
 
-	e, err = luaz.New(&xtypes.BuilderOption{
+	e, err = luaz.New(&xtypes.ExecutorBuilderOption{
 		App:              r.parent.app,
 		Logger:           r.parent.app.Logger().With("package_id", pVersionId),
 		WorkingFolder:    wd,

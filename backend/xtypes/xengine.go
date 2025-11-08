@@ -1,7 +1,6 @@
 package xtypes
 
 import (
-	"io/fs"
 	"log/slog"
 	"os"
 
@@ -23,13 +22,7 @@ type Engine interface {
 	SpaceApi(ctx *gin.Context)
 }
 
-type LazyData interface {
-	AsMap() (map[string]any, error)
-	// AsJSON struct target
-	AsJson(target any) error
-}
-
-type BuilderOption struct {
+type ExecutorBuilderOption struct {
 	App App
 
 	Logger *slog.Logger
@@ -41,21 +34,31 @@ type BuilderOption struct {
 	FsRoot           *os.Root
 }
 
-type Builder func(opt BuilderOption) (*Defination, error)
+type ExecutorBuilder struct {
+	Name  string
+	Icon  string
+	Build func(opt ExecutorBuilderOption) (*Executor, error)
+}
 
-type Defination struct {
-	Name            string
-	Slug            string
-	Info            string
-	Icon            string
-	Version         string
-	AssetData       fs.FS
-	AssetDataPrefix string
+type HttpExecution struct {
+	HandlerName string
+	Params      map[string]string
+	Request     *gin.Context
+}
 
-	LinkPattern string
+type GenericExecution struct {
+	ActionName string
+	Params     map[string]string
+	Context    GenericContext
+}
 
-	OnInit       func(sid int64) error
-	IsInitilized func(sid int64) (bool, error)
-	OnDeInit     func(sid int64) error
-	OnClose      func() error
+type GenericContext interface {
+	ListActions() ([]string, error)
+	GetActionMeta(name string) (map[string]any, error)
+	ExecuteAction(name string, params LazyData) (map[string]any, error)
+}
+
+type Executor interface {
+	HandleHttp(event HttpExecution) error
+	HandleGeneric(event GenericExecution) error
 }

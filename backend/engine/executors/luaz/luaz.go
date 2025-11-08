@@ -13,10 +13,10 @@ import (
 
 type Luaz struct {
 	pool   *LuaStatePool
-	handle *xtypes.BuilderOption
+	handle *xtypes.ExecutorBuilderOption
 }
 
-func New(opts *xtypes.BuilderOption) (*Luaz, error) {
+func New(opts *xtypes.ExecutorBuilderOption) (*Luaz, error) {
 
 	source := Code
 
