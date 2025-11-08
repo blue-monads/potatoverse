@@ -75,24 +75,10 @@ func (e *Engine) LoadRoutingIndex() error {
 			continue
 		}
 
-		routeOptions := models.PotatoRouteOptions{}
-		err = json.Unmarshal([]byte(space.RouteOptions), &routeOptions)
+		indexItem, err := e.buildIndexItem(&space, packageVersion)
 		if err != nil {
-			routeOptions.ServeFolder = "public"
-			routeOptions.TrimPathPrefix = ""
-			routeOptions.ForceHtmlExtension = false
-			routeOptions.ForceIndexHtmlFile = true
-			routeOptions.RouterType = "simple"
-
-			e.logger.Warn("error unmarshalling route options, using default values", "error", err, "space_id", space.ID, "route_options", space.RouteOptions)
-
-		}
-
-		indexItem := &SpaceRouteIndexItem{
-			installedId:      space.InstalledId,
-			spaceId:          space.ID,
-			routeOption:      routeOptions,
-			packageVersionId: packageVersion.ID,
+			e.logger.Warn("failed to build index item", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
+			continue
 		}
 
 		nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
@@ -102,38 +88,6 @@ func (e *Engine) LoadRoutingIndex() error {
 			nextRoutingIndex[space.NamespaceKey] = indexItem
 		}
 
-		if indexItem.routeOption.RouterType == "" {
-			indexItem.routeOption.RouterType = "simple"
-			indexItem.routeOption.ForceHtmlExtension = true
-			indexItem.routeOption.ForceIndexHtmlFile = true
-			indexItem.routeOption.ServeFolder = "public"
-
-		}
-
-		if routeOptions.RouterType == "dynamic" {
-			indexItem.compiledTemplates = make(map[string]*template.Template)
-
-			tempFolder, err := e.copyFolderToTemp(packageVersion.ID, routeOptions.TemplateFolder)
-			if err != nil {
-				return err
-			}
-
-			// defer os.RemoveAll(tempFolder)
-
-			for _, route := range routeOptions.Routes {
-				if route.Type == "template" && route.File != "" {
-
-					tmpl, err := template.ParseFiles(tempFolder + "/" + route.File)
-					if err != nil {
-						qq.Println("@err/5", err)
-						return err
-					}
-
-					indexItem.compiledTemplates[route.File] = tmpl
-				}
-			}
-		}
-
 	}
 
 	e.riLock.Lock()
@@ -141,6 +95,61 @@ func (e *Engine) LoadRoutingIndex() error {
 	e.riLock.Unlock()
 
 	return nil
+}
+
+func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.PackageVersion) (*SpaceRouteIndexItem, error) {
+
+	routeOptions := models.PotatoRouteOptions{}
+	err := json.Unmarshal([]byte(space.RouteOptions), &routeOptions)
+	if err != nil {
+		routeOptions.ServeFolder = "public"
+		routeOptions.TrimPathPrefix = ""
+		routeOptions.ForceHtmlExtension = false
+		routeOptions.ForceIndexHtmlFile = true
+		routeOptions.RouterType = "simple"
+
+	}
+
+	indexItem := &SpaceRouteIndexItem{
+		installedId:      space.InstalledId,
+		spaceId:          space.ID,
+		routeOption:      routeOptions,
+		packageVersionId: packageVersion.ID,
+	}
+
+	if indexItem.routeOption.RouterType == "" {
+		indexItem.routeOption.RouterType = "simple"
+		indexItem.routeOption.ForceHtmlExtension = true
+		indexItem.routeOption.ForceIndexHtmlFile = true
+		indexItem.routeOption.ServeFolder = "public"
+
+	}
+
+	if routeOptions.RouterType == "dynamic" {
+		indexItem.compiledTemplates = make(map[string]*template.Template)
+
+		tempFolder, err := e.copyFolderToTemp(packageVersion.ID, routeOptions.TemplateFolder)
+		if err != nil {
+			return nil, err
+		}
+
+		// defer os.RemoveAll(tempFolder)
+
+		for _, route := range routeOptions.Routes {
+			if route.Type == "template" && route.File != "" {
+
+				tmpl, err := template.ParseFiles(tempFolder + "/" + route.File)
+				if err != nil {
+					qq.Println("@err/5", err)
+					return nil, err
+				}
+
+				indexItem.compiledTemplates[route.File] = tmpl
+			}
+		}
+	}
+
+	return indexItem, nil
 }
 
 func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
