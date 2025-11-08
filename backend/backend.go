@@ -45,7 +45,8 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 			SocketFile:   options.SocketFile,
 			Mailer:       options.Mailer,
 		},
-		Mailer: m,
+		Mailer:            m,
+		WorkingFolderBase: options.WorkingDir,
 	})
 
 	if seedDB {

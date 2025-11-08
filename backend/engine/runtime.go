@@ -61,7 +61,7 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		return e, nil
 	}
 
-	wd := path.Join(r.parent.workingFolder, spaceKey, fmt.Sprintf("%d", pVersionId))
+	wd := path.Join(r.parent.workingFolder, "work_dir", spaceKey, fmt.Sprintf("%d", pVersionId))
 
 	os.MkdirAll(wd, 0755)
 
