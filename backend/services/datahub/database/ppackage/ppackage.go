@@ -101,25 +101,25 @@ func (d *PackageInstallOperations) DeletePackage(id int64) error {
 	return d.installedPackagesTable().Find(db.Cond{"id": id}).Delete()
 }
 
-func (d *PackageInstallOperations) UpdatePackage(id int64, file string) (int64, error) {
-	// Read the new file
-	_, err := os.Stat(file)
+func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int64, error) {
+	pkgManifest, err := xutils.ReadPackageManifestFromZip(filePath)
 	if err != nil {
 		return 0, err
 	}
 
-	content, err := os.ReadFile(file)
-	if err != nil {
-		return 0, err
-	}
-
-	// Create a new version
 	version := &dbmodels.PackageVersion{
-		Name:    filepath.Base(file),
-		Slug:    "",
-		Info:    "",
-		Tags:    "",
-		Version: "1.0.0",
+		InstallId:     id,
+		Name:          pkgManifest.Name,
+		Slug:          pkgManifest.Slug,
+		Info:          pkgManifest.Info,
+		Tags:          strings.Join(pkgManifest.Tags, ","),
+		Version:       pkgManifest.Version,
+		FormatVersion: pkgManifest.FormatVersion,
+		AuthorName:    pkgManifest.AuthorName,
+		AuthorEmail:   pkgManifest.AuthorEmail,
+		AuthorSite:    pkgManifest.AuthorSite,
+		SourceCode:    pkgManifest.SourceCode,
+		License:       pkgManifest.License,
 	}
 
 	result, err := d.packageVersionsTable().Insert(version)
@@ -129,17 +129,13 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, file string) (int64, 
 
 	versionId := result.ID().(int64)
 
-	// Update the package with new active install id
-	err = d.installedPackagesTable().Find(db.Cond{"id": id}).Update(map[string]any{
-		"active_install_id": versionId,
-	})
+	err = d.fileOps.ApplyZipToFile(versionId, filePath)
 	if err != nil {
 		return 0, err
 	}
 
-	_ = content
-
 	return versionId, nil
+
 }
 
 func (d *PackageInstallOperations) ListPackages() ([]dbmodels.InstalledPackage, error) {
