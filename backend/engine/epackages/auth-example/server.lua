@@ -97,6 +97,8 @@ function on_http(ctx)
     local path = ctx.param("subpath")
     local method = ctx.param("method")
 
+    print("SOMETHING NEW")
+
     print("on_http - path:", path, "method:", method)
 
     if path == "/api/tasks" and method == "GET" then

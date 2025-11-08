@@ -53,6 +53,12 @@ func (r *Runtime) GetDebugData() map[int64]any {
 
 }
 
+func (r *Runtime) ClearExecs() {
+	r.execsLock.Lock()
+	defer r.execsLock.Unlock()
+	r.execs = make(map[int64]*luaz.Luaz)
+}
+
 func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (*luaz.Luaz, error) {
 	r.execsLock.RLock()
 	e := r.execs[spaceid]

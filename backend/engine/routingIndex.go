@@ -103,10 +103,15 @@ func (e *Engine) loadRoutingIndex() error {
 }
 
 func (e *Engine) LoadRoutingIndexForPackages(installedId int64) {
+
+	e.runtime.ClearExecs()
+
 	e.reloadPackageIds <- installedId
 }
 
 func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
+
+	qq.Println("@loadRoutingIndexForPackages/1", installedIds)
 
 	nextPartialIndex := make(map[string]*SpaceRouteIndexItem)
 
@@ -121,6 +126,8 @@ func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 		allSpaces = append(allSpaces, spaces...)
 	}
 
+	qq.Println("@loadRoutingIndexForPackages/2", len(allSpaces))
+
 	if len(allSpaces) == 0 {
 		// No spaces to update, but still need to remove old entries
 		e.riLock.Lock()
@@ -134,6 +141,8 @@ func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 		return nil
 	}
 
+	qq.Println("@loadRoutingIndexForPackages/3", len(installedIds))
+
 	// Get installed packages to find their ActiveInstallIDs
 	installs, err := e.db.GetPackageInstallOps().ListPackagesByIds(installedIds)
 	if err != nil {
@@ -145,15 +154,21 @@ func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 		pversionIds = append(pversionIds, install.ActiveInstallID)
 	}
 
+	qq.Println("@loadRoutingIndexForPackages/4", len(pversionIds))
+
 	packageVersions, err := e.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
 	if err != nil {
 		return err
 	}
 
+	qq.Println("@loadRoutingIndexForPackages/5", len(packageVersions))
+
 	pversionMap := make(map[int64]*dbmodels.PackageVersion)
 	for _, pversion := range packageVersions {
 		pversionMap[pversion.InstallId] = &pversion
 	}
+
+	qq.Println("@loadRoutingIndexForPackages/6", len(pversionMap))
 
 	// Build index items for affected spaces
 	affectedSpaceIds := make(map[int64]struct{})
@@ -172,13 +187,20 @@ func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 			continue
 		}
 
-		nextPartialIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
+		key := fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)
+		qq.Println("@loadRoutingIndexForPackages/7.1", key)
+
+		nextPartialIndex[key] = indexItem
+
+		qq.Println("@loadRoutingIndexForPackages/7.2", key)
 
 		exist := nextPartialIndex[space.NamespaceKey]
 		if exist == nil {
 			nextPartialIndex[space.NamespaceKey] = indexItem
 		}
 	}
+
+	qq.Println("@loadRoutingIndexForPackages/7", len(nextPartialIndex))
 
 	e.riLock.Lock()
 	// Remove old entries for affected spaces
@@ -207,6 +229,9 @@ func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 			}
 		}
 	}
+
+	qq.Println("@loadRoutingIndexForPackages/8", len(e.RoutingIndex))
+
 	e.riLock.Unlock()
 
 	return nil
