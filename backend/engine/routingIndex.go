@@ -137,7 +137,7 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 			return nil, err
 		}
 
-		// defer os.RemoveAll(tempFolder)
+		defer os.RemoveAll(tempFolder)
 
 		for _, route := range routeOptions.Routes {
 			if route.Type == "template" && route.File != "" {
