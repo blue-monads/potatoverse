@@ -2,6 +2,7 @@ package cli
 
 import (
 	"archive/zip"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,12 +14,23 @@ import (
 )
 
 func readPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
+
 	potatoTomlFileData, err := os.ReadFile(potatoTomlFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoTomlFile, err)
 	}
+
 	potatoToml := models.PotatoPackage{}
-	err = toml.Unmarshal(potatoTomlFileData, &potatoToml)
+	if strings.HasSuffix(potatoTomlFile, ".json") {
+		err = json.Unmarshal(potatoTomlFileData, &potatoToml)
+	} else {
+		err = toml.Unmarshal(potatoTomlFileData, &potatoToml)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal potato manifest: %s %w", potatoTomlFile, err)
+	}
+
 	return &potatoToml, nil
 }
 
