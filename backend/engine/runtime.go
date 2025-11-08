@@ -15,44 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const Code = `
-
-local db = require("db")
-local math = require("math")
-
-function im_cool(a)
-	print("I'm cool")
-	return a + 1
-end
-
-
-function on_http(ctx)
-  print("Hello from lua!", ctx.type())
-  local req = ctx.request()
-
-  local rand = math.random(1, 100)
-
-  db.add({
-	group = "test",
-	key = "test" .. rand,
-	value = "test",
-  })
-
-
-  req.json(200, {
-	im_cool = im_cool(18),
-	message = "Hello from lua! from lua!",
-	space_id = ctx.param("space_id"),
-	package_id = ctx.param("package_id"),
-	subpath = ctx.param("subpath"),
-  })
-
-end
-
-`
-
-const ByPassPackageCode = false
-
 type Runtime struct {
 	execs     map[int64]*luaz.Luaz
 	execsLock sync.RWMutex
@@ -90,7 +52,7 @@ func (r *Runtime) GetDebugData() map[int64]any {
 
 }
 
-func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Luaz, error) {
+func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (*luaz.Luaz, error) {
 	r.execsLock.RLock()
 	e := r.execs[spaceid]
 	r.execsLock.RUnlock()
@@ -98,42 +60,19 @@ func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Lua
 		return e, nil
 	}
 
-	source := Code
-	installId := int64(0)
-
-	if !ByPassPackageCode {
-
-		sOps := r.parent.db.GetSpaceOps()
-		s, err := sOps.GetSpace(spaceid)
-		if err != nil {
-			return nil, err
-		}
-
-		if s.ServerFile == "" {
-			s.ServerFile = "server.lua"
-		}
-
-		pfops := r.parent.db.GetPackageFileOps()
-		packageFile, err := pfops.GetFileContentByPath(pVersionId, "", s.ServerFile)
-		if err != nil {
-			return nil, err
-		}
-
-		source = string(packageFile)
-		installId = s.InstalledId
-	}
-
-	e = luaz.New(luaz.Options{
+	e, err := luaz.New(luaz.Options{
 		BuilderOpts: xtypes.BuilderOption{
 			App:    r.parent.app,
 			Logger: r.parent.app.Logger().With("package_id", pVersionId),
 		},
-		Code:             source, // code,
 		WorkingFolder:    path.Join(r.parent.workingFolder, spaceKey, fmt.Sprintf("%d", pVersionId)),
 		SpaceId:          spaceid,
+		InstalledId:      installedId,
 		PackageVersionId: pVersionId,
-		InstalledId:      installId,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	r.execsLock.Lock()
 	r.execs[spaceid] = e
@@ -144,7 +83,7 @@ func (r *Runtime) GetExec(spaceKey string, pVersionId, spaceid int64) (*luaz.Lua
 }
 
 type ExecuteOptions struct {
-	PackageName      string
+	NSKey            string
 	PackageVersionId int64
 	InstalledId      int64
 	SpaceId          int64
@@ -155,7 +94,7 @@ type ExecuteOptions struct {
 
 func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
-	e, err := r.GetExec(opts.PackageName, opts.InstalledId, opts.SpaceId)
+	e, err := r.GetExec(opts.NSKey, opts.InstalledId, opts.PackageVersionId, opts.SpaceId)
 	if err != nil {
 		qq.Println("@exec_http/1", "error getting exec", err)
 		httpx.WriteErr(opts.HttpContext, err)
@@ -180,6 +119,7 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
 		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
 		params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
+		params["package_version_id"] = fmt.Sprintf("%d", opts.PackageVersionId)
 		params["subpath"] = subpath
 		params["method"] = opts.HttpContext.Request.Method
 
@@ -203,13 +143,15 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
 }
 
-func (r *Runtime) ExecHttp(packageName string, installedId, spaceId int64, ctx *gin.Context) {
+func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId int64, ctx *gin.Context) {
 	err := r.ExecuteHttp(ExecuteOptions{
-		PackageName: packageName,
-		InstalledId: installedId,
-		SpaceId:     spaceId,
-		HandlerName: "on_http",
-		HttpContext: ctx,
+		NSKey:            nsKey,
+		InstalledId:      installedId,
+		PackageVersionId: packageVersionId,
+		SpaceId:          spaceId,
+		HandlerName:      "on_http",
+		HttpContext:      ctx,
+		Params:           make(map[string]string),
 	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)

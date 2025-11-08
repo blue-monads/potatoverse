@@ -116,7 +116,7 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 	}
 
 	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		PackageName:      spaceKey,
+		NSKey:            spaceKey,
 		PackageVersionId: indexItem.packageVersionId,
 		InstalledId:      indexItem.installedId,
 		SpaceId:          indexItem.spaceId,
@@ -155,7 +155,7 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 	// Execute the handler
 	spaceKey := ctx.Param("space_key")
 	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		PackageName:      spaceKey,
+		NSKey:            spaceKey,
 		PackageVersionId: indexItem.packageVersionId,
 		InstalledId:      indexItem.installedId,
 		SpaceId:          indexItem.spaceId,

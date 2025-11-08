@@ -20,20 +20,46 @@ type Luaz struct {
 
 type Options struct {
 	BuilderOpts      xtypes.BuilderOption
-	Code             string
 	WorkingFolder    string
 	SpaceId          int64
 	PackageVersionId int64
 	InstalledId      int64
 }
 
-func New(opts Options) *Luaz {
+func New(opts Options) (*Luaz, error) {
 
 	os.MkdirAll(opts.WorkingFolder, 0755)
 
 	rfs, err := os.OpenRoot(opts.WorkingFolder)
 	if err != nil {
 		panic(err)
+	}
+
+	source := Code
+
+	if !ByPassPackageCode {
+		sOps := opts.BuilderOpts.App.Database().GetSpaceOps()
+		s, err := sOps.GetSpace(opts.SpaceId)
+		if err != nil {
+			return nil, errors.New("space not found")
+		}
+
+		if s.ServerFile == "" {
+			s.ServerFile = "server.lua"
+		}
+
+		pfops := opts.BuilderOpts.App.Database().GetPackageFileOps()
+		packageFile, err := pfops.GetFileContentByPath(opts.PackageVersionId, "", s.ServerFile)
+
+		if err != nil {
+			qq.Println("@lua_exec_error", err)
+			qq.Println("@package file not found", opts.PackageVersionId, opts.SpaceId, s.ServerFile)
+			qq.Println("@space", s)
+			return nil, errors.New("package file not found")
+		}
+
+		source = string(packageFile)
+
 	}
 
 	lz := &Luaz{
@@ -69,12 +95,12 @@ func New(opts Options) *Luaz {
 				return nil, err
 			}
 
-			err := L.DoString(opts.Code)
+			err := L.DoString(source)
 			if err != nil {
 				qq.Println("@lua_exec_error", err)
 				return nil, err
 			}
-			qq.Println("@lua_exec_success", "code length", len(opts.Code))
+			qq.Println("@lua_exec_success", "code length", len(source))
 
 			return lh, nil
 		},
@@ -82,7 +108,7 @@ func New(opts Options) *Luaz {
 
 	lz.pool = pool
 
-	return lz
+	return lz, nil
 }
 
 func (l *Luaz) Cleanup() {
