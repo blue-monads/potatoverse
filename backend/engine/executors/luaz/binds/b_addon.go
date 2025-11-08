@@ -25,19 +25,6 @@ func CapabilityModule(app xtypes.App, installId int64, spaceId int64) func(L *lu
 			return 1
 		}
 
-		getCapabilityMeta := func(L *lua.LState) int {
-			capabilityName := L.CheckString(1)
-			method := L.CheckString(2)
-			meta, err := capabilities.GetMeta(spaceId, capabilityName, method)
-			if err != nil {
-				return pushError(L, err)
-			}
-
-			table := luaplus.MapToTable(L, meta)
-			L.Push(table)
-			return 1
-		}
-
 		executeCapability := func(L *lua.LState) int {
 			capabilityName := L.CheckString(1)
 			method := L.CheckString(2)
@@ -72,7 +59,6 @@ func CapabilityModule(app xtypes.App, installId int64, spaceId int64) func(L *lu
 		table := L.NewTable()
 		L.SetFuncs(table, map[string]lua.LGFunction{
 			"list":    listCapabilities,
-			"meta":    getCapabilityMeta,
 			"execute": executeCapability,
 			"methods": getCapabilityMethods,
 		})

@@ -3,6 +3,8 @@ package low
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/upper/db/v4"
@@ -13,13 +15,25 @@ var (
 )
 
 type LowDB struct {
-	sess db.Session
+	sess      db.Session
+	ownerType string
+	ownerID   string
 }
 
 func NewLowDB(sess db.Session, ownerType string, ownerID string) *LowDB {
 	return &LowDB{
-		sess: sess,
+		sess:      sess,
+		ownerType: ownerType,
+		ownerID:   ownerID,
 	}
+}
+
+func (d *LowDB) tableName(table string) string {
+	if strings.Contains(table, "__") {
+		panic("table name cannot contain '__'")
+	}
+
+	return fmt.Sprintf("zz_%s__%s__%s", d.ownerType, d.ownerID, table)
 }
 
 func (d *LowDB) RunDDL(ddl string) error {
@@ -105,7 +119,7 @@ func (d *LowDB) RunQueryOne(query string, data ...any) (map[string]any, error) {
 }
 
 func (d *LowDB) Insert(table string, data map[string]any) (int64, error) {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	res, err := collection.Insert(data)
 	if err != nil {
 		return 0, err
@@ -114,17 +128,17 @@ func (d *LowDB) Insert(table string, data map[string]any) (int64, error) {
 }
 
 func (d *LowDB) UpdateById(table string, id int64, data map[string]any) error {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	return collection.Find(db.Cond{"id": id}).Update(data)
 }
 
 func (d *LowDB) DeleteById(table string, id int64) error {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	return collection.Find(db.Cond{"id": id}).Delete()
 }
 
 func (d *LowDB) FindById(table string, id int64) (map[string]any, error) {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	var result map[string]any
 	err := collection.Find(db.Cond{"id": id}).One(&result)
 	if err != nil {
@@ -134,18 +148,18 @@ func (d *LowDB) FindById(table string, id int64) (map[string]any, error) {
 }
 
 func (d *LowDB) UpdateByCond(table string, cond map[any]any, data map[string]any) error {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	return collection.Find(buildCond(cond)).Update(data)
 }
 
 func (d *LowDB) DeleteByCond(table string, cond map[any]any) error {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	dbCond := db.Cond(cond)
 	return collection.Find(dbCond).Delete()
 }
 
 func (d *LowDB) FindAllByCond(table string, cond map[any]any) ([]map[string]any, error) {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	var results []map[string]any
 	query := collection.Find(buildCond(cond))
 	err := query.All(&results)
@@ -156,7 +170,7 @@ func (d *LowDB) FindAllByCond(table string, cond map[any]any) ([]map[string]any,
 }
 
 func (d *LowDB) FindOneByCond(table string, cond map[any]any) (map[string]any, error) {
-	collection := d.sess.Collection(table)
+	collection := d.sess.Collection(d.tableName(table))
 	var result map[string]any
 	err := collection.Find(buildCond(cond)).One(&result)
 	if err != nil {
@@ -166,7 +180,7 @@ func (d *LowDB) FindOneByCond(table string, cond map[any]any) (map[string]any, e
 }
 
 func (d *LowDB) FindAllByQuery(query *datahub.FindQuery) ([]map[string]any, error) {
-	collection := d.sess.Collection(query.Table)
+	collection := d.sess.Collection(d.tableName(query.Table))
 	var results []map[string]any
 	queryf := collection.Find(buildCond(query.Cond))
 	if query.Offset > 0 {
@@ -193,6 +207,11 @@ func (d *LowDB) FindAllByQuery(query *datahub.FindQuery) ([]map[string]any, erro
 func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) {
 	if len(query.Joins) == 0 {
 		return nil, errors.New("no joins provided")
+	}
+
+	for _, join := range query.Joins {
+		join.LeftTable = d.tableName(join.LeftTable)
+		join.RightTable = d.tableName(join.RightTable)
 	}
 
 	firstJoin := query.Joins[0]
