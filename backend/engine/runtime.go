@@ -53,10 +53,12 @@ func (r *Runtime) GetDebugData() map[int64]any {
 
 }
 
-func (r *Runtime) ClearExecs() {
+func (r *Runtime) ClearExecs(spaceIds ...int64) {
 	r.execsLock.Lock()
 	defer r.execsLock.Unlock()
-	r.execs = make(map[int64]*luaz.Luaz)
+	for _, spaceId := range spaceIds {
+		delete(r.execs, spaceId)
+	}
 }
 
 func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (*luaz.Luaz, error) {

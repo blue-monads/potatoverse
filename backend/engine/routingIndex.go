@@ -103,9 +103,6 @@ func (e *Engine) loadRoutingIndex() error {
 }
 
 func (e *Engine) LoadRoutingIndexForPackages(installedId int64) {
-
-	e.runtime.ClearExecs()
-
 	e.reloadPackageIds <- installedId
 }
 
@@ -233,6 +230,13 @@ func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 	qq.Println("@loadRoutingIndexForPackages/8", len(e.RoutingIndex))
 
 	e.riLock.Unlock()
+
+	spaceIds := make([]int64, 0, len(affectedSpaceIds))
+	for spaceId := range affectedSpaceIds {
+		spaceIds = append(spaceIds, spaceId)
+	}
+
+	e.runtime.ClearExecs(spaceIds...)
 
 	return nil
 }
