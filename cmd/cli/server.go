@@ -13,6 +13,31 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// server
+
+type ServerCmd struct {
+	Init  ServerInitCmd  `cmd:"" help:"Initialize the server with default options."`
+	Start ServerStartCmd `cmd:"" help:"Start the server."`
+	Stop  ServerStopCmd  `cmd:"" help:"Stop the server."`
+}
+
+type ServerInitCmd struct {
+	DBFile          string `name:"db" help:"Path to database file." default:"data.db"`
+	Port            int    `name:"port" short:"p" help:"Server port." default:"7777"`
+	Host            string `name:"host" help:"Server host." default:"*.localhost"`
+	Name            string `name:"name" help:"Name of node." default:"PotatoVerse"`
+	SocketFile      string `name:"socket-file" help:"Socket file of node."`
+	MasterSecret    string `name:"master-secret" help:"Master secret of node."`
+	MasterSecretEnv string `name:"master-secret-env" help:"Master secret environment variable of node."`
+	Debug           bool   `name:"debug" help:"Debug mode of node." default:"false"`
+	WorkingDir      string `name:"working-dir" help:"Working dir of node."`
+}
+
+type ServerStartCmd struct {
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
+}
+
 func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 
 	config := xtypes.AppOptions{}
