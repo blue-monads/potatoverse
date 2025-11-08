@@ -1,3 +1,0 @@
-package spaces
-
-// internal spaces
