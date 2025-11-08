@@ -6,3 +6,4 @@ cmd/play/play.db
 backend/engine/luaz/binds/test.db
 backend/engine/testdata/test.zip
 backend/engine/epackages/auth-example/auth-example.zip
+dist/*

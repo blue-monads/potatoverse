@@ -1,0 +1,99 @@
+project_name: potatoverse
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+    flags:
+      - -trimpath
+      # Note: PIE disabled for Linux when using static linking with musl
+      # - >-
+      #   {{- if eq .Os "linux" }}-buildmode=pie{{- end }}
+    env:
+      - >-
+        {{- if eq .Os "darwin" }}
+          {{- if index .Env "SDK_PATH" }}CGO_ENABLED=1{{ else }}CGO_ENABLED=0{{ end }}
+        {{- else }}CGO_ENABLED=1{{- end }}
+      # macOS builds (use clang with SDK)
+      - >-
+        {{- if eq .Os "darwin" }}{{ if index .Env "SDK_PATH" }}SDKROOT={{ index .Env "SDK_PATH" }}{{ end }}{{- end }}
+      - >-
+        {{- if eq .Os "darwin" }}MACOSX_DEPLOYMENT_TARGET=11.0{{- end }}
+      - >-
+        {{- if eq .Os "darwin" }}{{ if index .Env "SDK_PATH" }}CGO_CFLAGS=-isysroot {{ index .Env "SDK_PATH" }} -mmacosx-version-min=11.0{{ end }}{{- end }}
+      - >-
+        {{- if eq .Os "darwin" }}{{ if index .Env "SDK_PATH" }}CGO_CXXFLAGS=-isysroot {{ index .Env "SDK_PATH" }} -mmacosx-version-min=11.0{{ end }}{{- end }}
+      - >-
+        {{- if eq .Os "darwin" }}{{ if index .Env "SDK_PATH" }}CGO_LDFLAGS=-isysroot {{ index .Env "SDK_PATH" }}{{ end }}{{- end }}
+      # Linux builds (use zig for cross-compilation with musl)
+      - >-
+        {{- if eq .Os "linux" }}
+          {{- if eq .Arch "amd64" }}CC=zig cc -target x86_64-linux-musl{{- end }}
+          {{- if eq .Arch "arm64" }}CC=zig cc -target aarch64-linux-musl{{- end }}
+        {{- end }}
+      - >-
+        {{- if eq .Os "linux" }}
+          {{- if eq .Arch "amd64" }}CXX=zig c++ -target x86_64-linux-musl{{- end }}
+          {{- if eq .Arch "arm64" }}CXX=zig c++ -target aarch64-linux-musl{{- end }}
+        {{- end }}
+      - >-
+        {{- if eq .Os "linux" }}CGO_LDFLAGS=-static{{- end }}
+      # Windows builds (use zig for cross-compilation)
+      - >-
+        {{- if eq .Os "windows" }}
+          {{- if eq .Arch "amd64" }}CC=zig cc -target x86_64-windows-gnu{{- end }}
+          {{- if eq .Arch "arm64" }}CC=zig cc -target aarch64-windows-gnu{{- end }}
+        {{- end }}
+      - >-
+        {{- if eq .Os "windows" }}
+          {{- if eq .Arch "amd64" }}CXX=zig c++ -target x86_64-windows-gnu{{- end }}
+          {{- if eq .Arch "arm64" }}CXX=zig c++ -target aarch64-windows-gnu{{- end }}
+        {{- end }}
+      # macOS compiler settings
+      - >-
+        {{- if eq .Os "darwin" }}
+          {{- if index .Env "SDK_PATH" }}
+            {{- if eq .Arch "amd64" }}CC=clang -arch x86_64 -isysroot {{ index .Env "SDK_PATH" }}{{- end }}
+            {{- if eq .Arch "arm64" }}CC=clang -arch arm64 -isysroot {{ index .Env "SDK_PATH" }}{{- end }}
+          {{- end }}
+        {{- end }}
+      - >-
+        {{- if eq .Os "darwin" }}
+          {{- if index .Env "SDK_PATH" }}
+            {{- if eq .Arch "amd64" }}CXX=clang++ -arch x86_64 -isysroot {{ index .Env "SDK_PATH" }}{{- end }}
+            {{- if eq .Arch "arm64" }}CXX=clang++ -arch arm64 -isysroot {{ index .Env "SDK_PATH" }}{{- end }}
+          {{- end }}
+        {{- end }}
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
