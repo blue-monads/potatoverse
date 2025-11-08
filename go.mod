@@ -15,6 +15,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml/v2 v2.2.2
+	github.com/rqlite/sql v0.0.0-20250623131620-453fa49cad04
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/upper/db/v4 v4.7.0
 	github.com/yuin/gopher-lua v1.1.1
