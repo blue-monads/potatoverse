@@ -141,7 +141,7 @@ func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, err
 		return 0, err
 	}
 
-	c.engine.LoadRoutingIndex()
+	c.engine.LoadRoutingIndexForPackages(id)
 
 	return id, nil
 
@@ -293,7 +293,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return 0, err
 	}
 
-	c.engine.LoadRoutingIndex()
+	c.engine.LoadRoutingIndexForPackages(installedId)
 
 	return pvid, nil
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -107,7 +108,106 @@ func (e *Engine) LoadRoutingIndexForPackages(installedId int64) {
 
 func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
 
-	// nextPartialIndex := make(map[string]*SpaceRouteIndexItem)
+	nextPartialIndex := make(map[string]*SpaceRouteIndexItem)
+
+	// Get all spaces for the given installedIds
+	allSpaces := make([]dbmodels.Space, 0)
+	for _, installedId := range installedIds {
+		spaces, err := e.db.GetSpaceOps().ListSpacesByPackageId(installedId)
+		if err != nil {
+			e.logger.Warn("failed to list spaces for installed package", "installed_id", installedId, "error", err)
+			continue
+		}
+		allSpaces = append(allSpaces, spaces...)
+	}
+
+	if len(allSpaces) == 0 {
+		// No spaces to update, but still need to remove old entries
+		e.riLock.Lock()
+		// Remove entries for spaces that no longer exist or were removed
+		for key, item := range e.RoutingIndex {
+			if slices.Contains(installedIds, item.installedId) {
+				delete(e.RoutingIndex, key)
+			}
+		}
+		e.riLock.Unlock()
+		return nil
+	}
+
+	// Get installed packages to find their ActiveInstallIDs
+	installs, err := e.db.GetPackageInstallOps().ListPackagesByIds(installedIds)
+	if err != nil {
+		return err
+	}
+
+	pversionIds := make([]int64, 0, len(installs))
+	for _, install := range installs {
+		pversionIds = append(pversionIds, install.ActiveInstallID)
+	}
+
+	packageVersions, err := e.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
+	if err != nil {
+		return err
+	}
+
+	pversionMap := make(map[int64]*dbmodels.PackageVersion)
+	for _, pversion := range packageVersions {
+		pversionMap[pversion.InstallId] = &pversion
+	}
+
+	// Build index items for affected spaces
+	affectedSpaceIds := make(map[int64]struct{})
+	for _, space := range allSpaces {
+		affectedSpaceIds[space.ID] = struct{}{}
+
+		packageVersion := pversionMap[space.InstalledId]
+		if packageVersion == nil {
+			e.logger.Warn("package version not found, skipping space", "space_id", space.ID, "installed_id", space.InstalledId)
+			continue
+		}
+
+		indexItem, err := e.buildIndexItem(&space, packageVersion)
+		if err != nil {
+			e.logger.Warn("failed to build index item", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
+			continue
+		}
+
+		nextPartialIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
+
+		exist := nextPartialIndex[space.NamespaceKey]
+		if exist == nil {
+			nextPartialIndex[space.NamespaceKey] = indexItem
+		}
+	}
+
+	e.riLock.Lock()
+	// Remove old entries for affected spaces
+	// First, collect keys to remove to avoid modifying map during iteration
+	keysToRemove := make([]string, 0)
+	for key, item := range e.RoutingIndex {
+		// Remove if it belongs to an affected space
+		if _, isAffected := affectedSpaceIds[item.spaceId]; isAffected {
+			keysToRemove = append(keysToRemove, key)
+		}
+	}
+	// Remove the collected keys
+	for _, key := range keysToRemove {
+		delete(e.RoutingIndex, key)
+	}
+	// Add new entries
+	for key, item := range nextPartialIndex {
+		// Space-specific keys are always updated
+		if strings.HasPrefix(key, fmt.Sprintf("%d|_|", item.spaceId)) {
+			e.RoutingIndex[key] = item
+		} else {
+			// For namespace keys, only add if they don't already exist
+			// (preserving namespace keys from other packages)
+			if e.RoutingIndex[key] == nil {
+				e.RoutingIndex[key] = item
+			}
+		}
+	}
+	e.riLock.Unlock()
 
 	return nil
 }
