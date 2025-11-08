@@ -75,20 +75,6 @@ Resources:
 
 - sync
 
-# Example apps
-    - openLChat
-## Simple
-    - CimplePASTE (cimple-paste) kv
-    - CimpleForm (cimple-form)
-    - CimpleDOC (cimple-doc)
-    - CimplePage (cimple-page)
-    - CimpleEvent (cimple-event)
-## Playground
-    - pyodide (wasm)
-    - duckdb (wasm)
-    - Observable
-    - Sqlite
-    - Sqlite Wasm
 
 
 
