@@ -108,6 +108,8 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 		routeOptions.ForceIndexHtmlFile = true
 		routeOptions.RouterType = "simple"
 
+		e.logger.Warn("failed to unmarshal route options", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
+
 	}
 
 	indexItem := &SpaceRouteIndexItem{
@@ -122,6 +124,8 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 		indexItem.routeOption.ForceHtmlExtension = true
 		indexItem.routeOption.ForceIndexHtmlFile = true
 		indexItem.routeOption.ServeFolder = "public"
+
+		e.logger.Warn("failed to set default route options", "space_id", space.ID, "installed_id", space.InstalledId)
 
 	}
 
