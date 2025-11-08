@@ -3,10 +3,10 @@ package low
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/enforcer"
 	"github.com/upper/db/v4"
 )
 
@@ -33,18 +33,30 @@ func (d *LowDB) tableName(table string) string {
 		panic("table name cannot contain '__'")
 	}
 
-	return fmt.Sprintf("zz_%s__%s__%s", d.ownerType, d.ownerID, table)
+	return enforcer.TableName(d.ownerType, d.ownerID, table)
+
 }
 
 func (d *LowDB) RunDDL(ddl string) error {
 	driver := d.sess.Driver().(*sql.DB)
-	_, err := driver.Exec(ddl)
+	transformedDDL, err := enforcer.TransformQuery(d.ownerType, d.ownerID, ddl)
+	if err != nil {
+		return err
+	}
+	_, err = driver.Exec(transformedDDL)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
 func (d *LowDB) RunQuery(query string, data ...any) ([]map[string]any, error) {
 	driver := d.sess.Driver().(*sql.DB)
-	rows, err := driver.Query(query, data...)
+	transformedQuery, err := enforcer.TransformQuery(d.ownerType, d.ownerID, query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := driver.Query(transformedQuery, data...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +94,11 @@ func (d *LowDB) RunQuery(query string, data ...any) ([]map[string]any, error) {
 
 func (d *LowDB) RunQueryOne(query string, data ...any) (map[string]any, error) {
 	driver := d.sess.Driver().(*sql.DB)
-	rows, err := driver.Query(query, data...)
+	transformedQuery, err := enforcer.TransformQuery(d.ownerType, d.ownerID, query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := driver.Query(transformedQuery, data...)
 	if err != nil {
 		return nil, err
 	}
