@@ -125,7 +125,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 		// Fallback to default behavior for backward compatibility
 		file, err = engine.ZipEPackage(name)
 	}
-	
+
 	if err != nil {
 		return 0, err
 	}
@@ -282,6 +282,15 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 
 		}
 
+	}
+
+	pops := c.database.GetPackageInstallOps()
+	if err != nil {
+		return 0, err
+	}
+	err = pops.UpdateActiveInstallId(installedId, pvid)
+	if err != nil {
+		return 0, err
 	}
 
 	c.engine.LoadRoutingIndex()
