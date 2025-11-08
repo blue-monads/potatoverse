@@ -2,6 +2,7 @@ package low
 
 import (
 	"database/sql"
+	"errors"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/upper/db/v4"
@@ -189,40 +190,75 @@ func (d *LowDB) FindAllByQuery(query *datahub.FindQuery) ([]map[string]any, erro
 
 }
 
-func (d *LowDB) FindByQuerySQL(query *datahub.FindByQuerySQL) ([]map[string]any, error) {
-	sqlQuery := d.sess.SQL().Select("*").From(query.Table)
+func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) {
+	if len(query.Joins) == 0 {
+		return nil, errors.New("no joins provided")
+	}
+
+	firstJoin := query.Joins[0]
+	mainTable := firstJoin.LeftTable
+	if firstJoin.LeftAs != "" {
+		mainTable = mainTable + " AS " + firstJoin.LeftAs
+	}
+
+	// Build select query
+	var sqlQuery db.Selector
+	if len(query.Fields) > 0 {
+		// Convert []string to []interface{} for Select variadic
+		fields := make([]any, len(query.Fields))
+		for i, f := range query.Fields {
+			fields[i] = f
+		}
+		sqlQuery = d.sess.SQL().Select(fields...).From(mainTable)
+	} else {
+		sqlQuery = d.sess.SQL().Select("*").From(mainTable)
+	}
 
 	// Add joins
 	for _, join := range query.Joins {
-		joinTable := join.Table
-		if join.As != "" {
-			joinTable = joinTable + " AS " + join.As
+		rightTable := join.RightTable
+		if join.RightAs != "" {
+			rightTable = rightTable + " AS " + join.RightAs
 		}
+
+		// Build ON clause using aliases if provided
+		leftTableRef := join.LeftTable
+		if join.LeftAs != "" {
+			leftTableRef = join.LeftAs
+		}
+		rightTableRef := join.RightTable
+		if join.RightAs != "" {
+			rightTableRef = join.RightAs
+		}
+		onClause := leftTableRef + "." + join.LeftOn + " = " + rightTableRef + "." + join.RightOn
 
 		// Handle different join types
 		switch join.JoinType {
 		case "LEFT", "LEFT JOIN":
-			sqlQuery = sqlQuery.LeftJoin(joinTable)
+			sqlQuery = sqlQuery.LeftJoin(rightTable)
 		case "RIGHT", "RIGHT JOIN":
-			sqlQuery = sqlQuery.RightJoin(joinTable)
+			sqlQuery = sqlQuery.RightJoin(rightTable)
 		case "FULL", "FULL OUTER", "FULL OUTER JOIN":
-			sqlQuery = sqlQuery.FullJoin(joinTable)
+			sqlQuery = sqlQuery.FullJoin(rightTable)
 		case "INNER", "INNER JOIN", "":
 			// Default to inner join
-			sqlQuery = sqlQuery.Join(joinTable)
+			sqlQuery = sqlQuery.Join(rightTable)
 		default:
 			// Default to inner join for unknown types
-			sqlQuery = sqlQuery.Join(joinTable)
+			sqlQuery = sqlQuery.Join(rightTable)
 		}
 
-		if join.On != "" {
-			sqlQuery = sqlQuery.On(join.On)
-		}
+		sqlQuery = sqlQuery.On(onClause)
 	}
 
 	// Add root condition
 	if len(query.Cond) > 0 {
 		sqlQuery = sqlQuery.Where(buildCond(query.Cond))
+	}
+
+	// Add ordering
+	if query.Order != "" {
+		sqlQuery = sqlQuery.OrderBy(query.Order)
 	}
 
 	// Execute query and get rows

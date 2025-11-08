@@ -200,17 +200,21 @@ type FindQuery struct {
 	Fields []string    `json:"fields"`
 }
 
-type FindByQuerySQL struct {
-	Table string               `json:"table"`
-	Joins []FindByQuerySQLJoin `json:"joins"`
-	Cond  map[any]any          `json:"cond"`
+type FindByJoin struct {
+	Joins  []Join      `json:"joins"`
+	Cond   map[any]any `json:"cond"`
+	Order  string      `json:"order,omitempty"`
+	Fields []string    `json:"fields,omitempty"`
 }
 
-type FindByQuerySQLJoin struct {
-	Table    string `json:"table"`
-	On       string `json:"on"`
-	As       string `json:"as"`
-	JoinType string `json:"join_type,omitempty"`
+type Join struct {
+	LeftTable  string `json:"left_table"`
+	RightTable string `json:"right_table"`
+	LeftOn     string `json:"left_on"`
+	RightOn    string `json:"right_on"`
+	LeftAs     string `json:"left_as,omitempty"`
+	RightAs    string `json:"right_as,omitempty"`
+	JoinType   string `json:"join_type,omitempty"`
 }
 
 type DBLowOps interface {
@@ -230,5 +234,5 @@ type DBLowOps interface {
 	FindOneByCond(table string, cond map[any]any) (map[string]any, error)
 	FindAllByQuery(query *FindQuery) ([]map[string]any, error)
 
-	FindByQuerySQL(query *FindByQuerySQL) ([]map[string]any, error)
+	FindByJoin(query *FindByJoin) ([]map[string]any, error)
 }
