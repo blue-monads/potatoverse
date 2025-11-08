@@ -13,6 +13,10 @@ func TransformQuery(ownerType string, ownerID string, input string) (string, err
 	return transformQuery(ownerType, ownerID, input)
 }
 
+func TableName(ownerType string, ownerID string, tableName string) string {
+	return fmt.Sprintf("zz_%s__%s__%s", ownerType, ownerID, tableName)
+}
+
 func transformQuery(ownerType string, ownerID string, input string) (string, error) {
 	prefix := fmt.Sprintf("zz_%s__%s__", ownerType, ownerID)
 
