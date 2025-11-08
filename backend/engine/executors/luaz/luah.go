@@ -44,7 +44,7 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
 		"request": func(L *lua.LState) int {
-			table := binds.HttpModule(l.parent.handle, L, ctx)
+			table := binds.HttpModule(l.parent.handle.App, l.parent.handle.SpaceId, L, ctx)
 			L.Push(table)
 			return 1
 		},
@@ -101,9 +101,9 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 }
 
 func (l *LuaH) registerModules() error {
-	l.L.PreloadModule("kv", binds.BindsKV(l.parent.handle.InstalledId, l.parent.handle))
+	l.L.PreloadModule("kv", binds.BindsKV(l.parent.handle.InstalledId, l.parent.handle.App))
 	l.L.PreloadModule("mcp", binds.BindMCP)
-	l.L.PreloadModule("capability", binds.CapabilityModule(l.parent.handle))
+	l.L.PreloadModule("capability", binds.CapabilityModule(l.parent.handle.App, l.parent.handle.InstalledId, l.parent.handle.SpaceId))
 
 	return nil
 }

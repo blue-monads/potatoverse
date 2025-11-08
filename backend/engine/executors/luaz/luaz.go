@@ -2,10 +2,8 @@ package luaz
 
 import (
 	"errors"
-	"os"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -15,17 +13,10 @@ import (
 
 type Luaz struct {
 	pool   *LuaStatePool
-	handle *executors.EHandle
+	handle *xtypes.BuilderOption
 }
 
-func New(opts xtypes.BuilderOption) (*Luaz, error) {
-
-	os.MkdirAll(opts.WorkingFolder, 0755)
-
-	rfs, err := os.OpenRoot(opts.WorkingFolder)
-	if err != nil {
-		panic(err)
-	}
+func New(opts *xtypes.BuilderOption) (*Luaz, error) {
 
 	source := Code
 
@@ -55,16 +46,8 @@ func New(opts xtypes.BuilderOption) (*Luaz, error) {
 	}
 
 	lz := &Luaz{
-		pool: nil,
-		handle: &executors.EHandle{
-			Logger:           opts.Logger,
-			FsRoot:           rfs,
-			SpaceId:          opts.SpaceId,
-			PackageVersionId: opts.PackageVersionId,
-			InstalledId:      opts.InstalledId,
-			App:              opts.App,
-			Database:         opts.App.Database(),
-		},
+		pool:   nil,
+		handle: opts,
 	}
 
 	pool := NewLuaStatePool(LuaStatePoolOptions{
@@ -82,12 +65,12 @@ func New(opts xtypes.BuilderOption) (*Luaz, error) {
 				closers: []func() error{},
 			}
 
-			err = lh.registerModules()
+			err := lh.registerModules()
 			if err != nil {
 				return nil, err
 			}
 
-			err := L.DoString(source)
+			err = L.DoString(source)
 			if err != nil {
 				qq.Println("@lua_exec_error", err)
 				return nil, err

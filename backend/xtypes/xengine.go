@@ -3,6 +3,7 @@ package xtypes
 import (
 	"io/fs"
 	"log/slog"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,6 +38,7 @@ type BuilderOption struct {
 	SpaceId          int64
 	PackageVersionId int64
 	InstalledId      int64
+	FsRoot           *os.Root
 }
 
 type Builder func(opt BuilderOption) (*Defination, error)

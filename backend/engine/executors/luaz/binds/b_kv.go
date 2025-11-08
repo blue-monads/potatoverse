@@ -1,11 +1,11 @@
 package binds
 
 import (
-	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -177,6 +177,6 @@ func bindsKV(installId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
 
 }
 
-func BindsKV(installId int64, handle *executors.EHandle) func(L *lua.LState) int {
-	return bindsKV(installId, handle.App.Database().GetSpaceKVOps())
+func BindsKV(installId int64, app xtypes.App) func(L *lua.LState) int {
+	return bindsKV(installId, app.Database().GetSpaceKVOps())
 }

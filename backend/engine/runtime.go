@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"sync"
 	"time"
@@ -60,13 +61,23 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		return e, nil
 	}
 
-	e, err := luaz.New(xtypes.BuilderOption{
+	wd := path.Join(r.parent.workingFolder, spaceKey, fmt.Sprintf("%d", pVersionId))
+
+	os.MkdirAll(wd, 0755)
+
+	rfs, err := os.OpenRoot(wd)
+	if err != nil {
+		return nil, err
+	}
+
+	e, err = luaz.New(&xtypes.BuilderOption{
 		App:              r.parent.app,
 		Logger:           r.parent.app.Logger().With("package_id", pVersionId),
-		WorkingFolder:    path.Join(r.parent.workingFolder, spaceKey, fmt.Sprintf("%d", pVersionId)),
+		WorkingFolder:    wd,
 		SpaceId:          spaceid,
 		InstalledId:      installedId,
 		PackageVersionId: pVersionId,
+		FsRoot:           rfs,
 	})
 	if err != nil {
 		return nil, err

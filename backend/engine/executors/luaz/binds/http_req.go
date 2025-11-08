@@ -3,16 +3,16 @@ package binds
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
 
-func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTable {
+func HttpModule(app xtypes.App, spaceId int64, L *lua.LState, ctx *gin.Context) *lua.LTable {
 
-	sig := bh.App.Signer()
+	sig := app.Signer()
 
 	mod := L.NewTable()
 
@@ -68,7 +68,7 @@ func HttpModule(bh *executors.EHandle, L *lua.LState, ctx *gin.Context) *lua.LTa
 		if err != nil {
 			return nil, err
 		}
-		if claim.SpaceId != bh.SpaceId {
+		if claim.SpaceId != spaceId {
 			return nil, errors.New("invalid space id")
 		}
 

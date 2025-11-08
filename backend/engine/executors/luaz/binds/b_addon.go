@@ -1,20 +1,19 @@
 package binds
 
 import (
-	"github.com/blue-monads/turnix/backend/engine/executors"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
-func CapabilityModule(handle *executors.EHandle) func(L *lua.LState) int {
+func CapabilityModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 
-		engine := handle.App.Engine().(xtypes.Engine)
+		engine := app.Engine().(xtypes.Engine)
 		capabilities := engine.GetCapabilityHub().(xtypes.CapabilityHub)
 
 		listCapabilities := func(L *lua.LState) int {
-			caps, err := capabilities.List(handle.SpaceId)
+			caps, err := capabilities.List(spaceId)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -29,7 +28,7 @@ func CapabilityModule(handle *executors.EHandle) func(L *lua.LState) int {
 		getCapabilityMeta := func(L *lua.LState) int {
 			capabilityName := L.CheckString(1)
 			method := L.CheckString(2)
-			meta, err := capabilities.GetMeta(handle.SpaceId, capabilityName, method)
+			meta, err := capabilities.GetMeta(spaceId, capabilityName, method)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -47,7 +46,7 @@ func CapabilityModule(handle *executors.EHandle) func(L *lua.LState) int {
 				L:     L,
 				table: params,
 			}
-			result, err := capabilities.Execute(handle.SpaceId, capabilityName, method, paramsLazyData)
+			result, err := capabilities.Execute(spaceId, capabilityName, method, paramsLazyData)
 			if err != nil {
 				return pushError(L, err)
 			}
@@ -58,7 +57,7 @@ func CapabilityModule(handle *executors.EHandle) func(L *lua.LState) int {
 
 		getCapabilityMethods := func(L *lua.LState) int {
 			capabilityName := L.CheckString(1)
-			methods, err := capabilities.Methods(handle.SpaceId, capabilityName)
+			methods, err := capabilities.Methods(spaceId, capabilityName)
 			if err != nil {
 				return pushError(L, err)
 			}
