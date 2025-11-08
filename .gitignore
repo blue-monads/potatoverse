@@ -7,5 +7,5 @@ backend/engine/luaz/binds/test.db
 backend/engine/testdata/test.zip
 backend/engine/epackages/auth-example/auth-example.zip
 dist/*
-backend/labs/vfsync/data/test.db
+backend/labs/vfsync/data/*
 backend/labs/vfsync/vfs

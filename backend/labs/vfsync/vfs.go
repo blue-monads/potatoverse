@@ -111,7 +111,11 @@ func (vfs *VFSync) Delete(name string, dirSync bool) error {
 	if !vfs.isPathSafe(fname) {
 		return errors.New("illegal path")
 	}
-	return os.Remove(fname)
+	//return os.Remove(fname)
+	// rename the file to .deleted
+	os.Rename(fname, fname+".deleted")
+
+	return nil
 }
 
 func (vfs *VFSync) Access(name string, flag sqlite3vfs.AccessFlag) (bool, error) {
