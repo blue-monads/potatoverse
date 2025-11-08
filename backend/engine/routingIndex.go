@@ -53,14 +53,18 @@ func (e *Engine) LoadRoutingIndex() error {
 		pversionIds = append(pversionIds, install.ActiveInstallID)
 	}
 
+	qq.Println("@pversionIds", pversionIds)
+
 	packageVersions, err := e.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
 	if err != nil {
 		return err
 	}
 
+	qq.Println("@packageVersions", len(packageVersions))
+
 	pversionMap := make(map[int64]*dbmodels.PackageVersion)
 	for _, pversion := range packageVersions {
-		pversionMap[pversion.ID] = &pversion
+		pversionMap[pversion.InstallId] = &pversion
 	}
 
 	for _, space := range spaces {
