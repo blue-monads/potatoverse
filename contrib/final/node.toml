@@ -1,0 +1,25 @@
+name = "potato"
+port = 7777
+host = "*.localhost"
+socket_file = "./tmp/potatoverse.sock"
+dev_mode = false
+# if starts with $ then it will be treated as an environment variable
+master_secret = "$POTATO_MASTER_SECRET" 
+debug = true
+working_dir = "./tmp"
+
+# repo array
+[[repo]]
+url = "https://store.potatoverse.com/package_index.json"
+type = "http"
+slug = "official"
+name = "Official Potato Store"
+
+[[repo]]
+name = "Development Packages"
+type = "embeded"
+slug = "dev"
+
+
+[mailer]
+type = "stdio"

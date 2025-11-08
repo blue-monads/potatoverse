@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Example - Simple Todo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/zz/static/libspace.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <header class="text-center my-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Auth Example - Simple Todo</h1>
+        </header>
+
+        <!-- Pre-login content (shown when not authenticated) -->
+        <div id="login-section" class="hidden bg-white rounded-lg shadow-md p-8 text-center">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Please authorize this space</h2>
+            <p class="text-gray-600 mb-6">You need to be authorize this space to use this todo app.</p>
+            <button 
+                onclick="window.spaceRedirrectToAuth('/zz/space/auth-example')"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-md shadow-md transition-colors"
+            >
+                Authorize
+            </button>
+        </div>
+
+        <!-- Main todo content (shown when authenticated) -->
+        <div id="todo-section" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <!-- Task list -->
+                <ul id="task-list" class="mb-6 space-y-2">
+                    <!-- Tasks will be dynamically added here -->
+                </ul>
+
+                <!-- Add task form -->
+                <form id="add-task-form" class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="new-task-input" 
+                        placeholder="Add a new task..." 
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        required
+                    />
+                    <button 
+                        type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-md shadow-md transition-colors"
+                    >
+                        Add
+                    </button>
+                </form>
+            </div>
+
+            <!-- User info (optional - shows auth is working) -->
+            <div class="mt-4 text-center text-sm text-gray-500">
+                <p>Logged in ✓</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Check authentication status
+        function checkAuth() {
+            const token = window.spaceGetToken ? window.spaceGetToken('auth-example') : null;
+            
+            if (token) {
+                // User is authenticated - show todo app
+                document.getElementById('login-section').classList.add('hidden');
+                document.getElementById('todo-section').classList.remove('hidden');
+                initializeTodoApp();
+            } else {
+                // User is not authenticated - show login
+                document.getElementById('login-section').classList.remove('hidden');
+                document.getElementById('todo-section').classList.add('hidden');
+            }
+        }
+
+        // Todo app functionality
+        function initializeTodoApp() {
+            // Get API base URL
+            const getApiUrl = () => {
+                const url = new URL("/zz/api/space/auth-example", window.location);
+                return url.toString();
+            };
+
+            // Get auth token for API requests
+            const getAuthToken = () => {
+                return window.spaceGetToken ? window.spaceGetToken('auth-example') : null;
+            };
+
+            // Make authenticated API request
+            async function apiRequest(method, path, body = null) {
+                const token = getAuthToken();
+                if (!token) {
+                    throw new Error('No auth token available');
+                }
+
+                const url = getApiUrl() + path;
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    }
+                };
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                return data;
+            }
+
+            // Load tasks from API
+            async function loadTasks() {
+                try {
+                    const response = await apiRequest('GET', '/api/tasks');
+                    // response is an array of KV objects, keep full objects
+                    return response || [];
+                } catch (e) {
+                    console.error("Error loading tasks", e);
+                    // Show error to user
+                    const taskList = document.getElementById('task-list');
+                    taskList.innerHTML = `<li class="text-red-500 text-center py-4">Error loading tasks: ${e.message}</li>`;
+                    return [];
+                }
+            }
+
+            // Save task via API
+            async function saveTask(taskText) {
+                try {
+                    await apiRequest('POST', '/api/tasks', { task: taskText });
+                    // Reload all tasks after successful save
+                    return await loadTasks();
+                } catch (e) {
+                    console.error("Error saving task", e);
+                    alert(`Error adding task: ${e.message}`);
+                    throw e;
+                }
+            }
+
+            // Delete task via API
+            async function deleteTask(key) {
+                try {
+                    // URL encode the key to handle special characters
+                    const encodedKey = encodeURIComponent(key);
+                    await apiRequest('DELETE', `/api/tasks/${encodedKey}`);
+                    // Reload all tasks after successful delete
+                    return await loadTasks();
+                } catch (e) {
+                    console.error("Error deleting task", e);
+                    alert(`Error deleting task: ${e.message}`);
+                    throw e;
+                }
+            }
+
+            let tasks = [];
+
+            function renderTasks() {
+                const taskList = document.getElementById('task-list');
+                taskList.innerHTML = '';
+
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<li class="text-gray-500 text-center py-4">No tasks yet. Add one above!</li>';
+                    return;
+                }
+
+                tasks.forEach((task) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-md hover:bg-gray-100 transition-colors';
+                    
+                    const span = document.createElement('span');
+                    span.className = 'flex-1 text-gray-800';
+                    // Extract value from KV object
+                    span.textContent = task.value || task.Value || '';
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'text-red-500 hover:text-red-700 font-bold text-xl px-2';
+                    deleteBtn.textContent = '×';
+                    deleteBtn.onclick = async () => {
+                        try {
+                            // Use key from the task object
+                            const key = task.key || task.Key;
+                            if (!key) {
+                                alert('Error: Task key not found');
+                                return;
+                            }
+                            tasks = await deleteTask(key);
+                            renderTasks();
+                        } catch (e) {
+                            // Error already shown in deleteTask
+                        }
+                    };
+                    
+                    li.appendChild(span);
+                    li.appendChild(deleteBtn);
+                    taskList.appendChild(li);
+                });
+            }
+
+            // Add new task
+            const addForm = document.getElementById('add-task-form');
+            const newTaskInput = document.getElementById('new-task-input');
+            
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const taskText = newTaskInput.value.trim();
+                if (taskText) {
+                    try {
+                        tasks = await saveTask(taskText);
+                        renderTasks();
+                        newTaskInput.value = '';
+                    } catch (e) {
+                        // Error already shown in saveTask
+                    }
+                }
+            });
+
+            // Initial load and render
+            (async () => {
+                tasks = await loadTasks();
+                renderTasks();
+            })();
+        }
+
+        // Check auth on page load
+        // Wait a bit for libspace.js to load if it's loaded asynchronously
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkAuth);
+        } else {
+            // If DOM is already loaded, check immediately and also after a short delay
+            // to handle async script loading
+            checkAuth();
+            setTimeout(checkAuth, 100);
+        }
+    </script>
+</body>
+</html>

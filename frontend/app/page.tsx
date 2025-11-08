@@ -1,0 +1,27 @@
+"use client"
+
+export default function Home() {
+  return (
+    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+
+      <ul className="list-disc list-inside">
+        <li>
+          <a className="hover:underline" href="/zz/pages/portal/admin">Admin</a>
+        </li>
+        <li>
+          <a className="hover:underline" href="/zz/pages/portal/main">Portal</a>
+        </li>
+        <li>
+          <a className="hover:underline" href="/zz/pages/auth/login">Login</a>
+        </li>
+
+        <li>
+          <a className="hover:underline" href="/zz/pages/play">Play</a>
+        </li>
+
+
+      </ul>
+
+    </div>
+  );
+}

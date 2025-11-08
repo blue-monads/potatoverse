@@ -1,0 +1,182 @@
+package binds
+
+import (
+	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/utils/luaplus"
+	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
+	lua "github.com/yuin/gopher-lua"
+)
+
+func pushError(L *lua.LState, err error) int {
+	return luaplus.PushError(L, err)
+}
+
+type SpaceKVQuery struct {
+	Group        string      `json:"group"`
+	Cond         map[any]any `json:"cond"`
+	Offset       int         `json:"offset"`
+	Limit        int         `json:"limit"`
+	IncludeValue bool        `json:"include_value"`
+}
+
+func bindsKV(installId int64, db datahub.SpaceKVOps) func(L *lua.LState) int {
+
+	return func(L *lua.LState) int {
+
+		QuerySpaceKV := func(L *lua.LState) int {
+
+			query := &SpaceKVQuery{}
+			err := luaplus.MapToStruct(L, L.CheckTable(1), query)
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			if query.Group != "" {
+				if query.Cond == nil {
+					query.Cond = make(map[any]any)
+				}
+				query.Cond["group"] = query.Group
+			}
+
+			qq.Println("query.Cond:", query)
+
+			var datas []dbmodels.SpaceKV
+			if query.IncludeValue {
+				datas, err = db.QueryWithValueSpaceKV(installId, query.Cond, query.Offset, query.Limit)
+
+			} else {
+				datas, err = db.QuerySpaceKV(installId, query.Cond, query.Offset, query.Limit)
+			}
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			result := L.NewTable()
+			for _, data := range datas {
+				luaTable, err := luaplus.StructToTable(L, data)
+				if err != nil {
+					return pushError(L, err)
+				}
+				result.Append(luaTable)
+			}
+
+			L.Push(result)
+			return 1
+		}
+		AddSpaceKV := func(L *lua.LState) int {
+
+			dataStruct := &dbmodels.SpaceKV{}
+
+			luaTable, err := luaplus.StructToTable(L, dataStruct)
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			err = db.AddSpaceKV(installId, dataStruct)
+			if err != nil {
+				return pushError(L, err)
+			}
+			L.Push(luaTable)
+			return 1
+		}
+
+		GetSpaceKV := func(L *lua.LState) int {
+			group := L.CheckString(1)
+			key := L.CheckString(2)
+			data, err := db.GetSpaceKV(installId, group, key)
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			luaTable, err := luaplus.StructToTable(L, data)
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			L.Push(luaTable)
+			return 1
+		}
+
+		GetSpaceKVByGroup := func(L *lua.LState) int {
+			group := L.CheckString(1)
+			offset := L.CheckInt(2)
+			limit := L.CheckInt(3)
+			datas, err := db.GetSpaceKVByGroup(installId, group, offset, limit)
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			result := L.NewTable()
+			for _, data := range datas {
+				luaTable, err := luaplus.StructToTable(L, data)
+				if err != nil {
+					return pushError(L, err)
+				}
+				result.Append(luaTable)
+			}
+
+			L.Push(result)
+			return 1
+		}
+
+		RemoveSpaceKV := func(L *lua.LState) int {
+			group := L.CheckString(1)
+			key := L.CheckString(2)
+			err := db.RemoveSpaceKV(installId, group, key)
+			if err != nil {
+				return pushError(L, err)
+			}
+			L.Push(lua.LNil)
+			return 1
+		}
+
+		UpdateSpaceKV := func(L *lua.LState) int {
+			group := L.CheckString(1)
+			key := L.CheckString(2)
+			data := L.CheckTable(3)
+			dataMap := luaplus.TableToMap(L, data)
+
+			err := db.UpdateSpaceKV(installId, group, key, dataMap)
+			if err != nil {
+				return pushError(L, err)
+			}
+			L.Push(lua.LNil)
+			return 1
+		}
+
+		UpsertSpaceKV := func(L *lua.LState) int {
+			group := L.CheckString(1)
+			key := L.CheckString(2)
+			data := L.CheckTable(3)
+			dataMap := luaplus.TableToMap(L, data)
+			err := db.UpsertSpaceKV(installId, group, key, dataMap)
+			if err != nil {
+				return pushError(L, err)
+			}
+
+			L.Push(lua.LNil)
+			return 1
+		}
+
+		table := L.NewTable()
+		L.SetFuncs(table, map[string]lua.LGFunction{
+			"query":        QuerySpaceKV,
+			"add":          AddSpaceKV,
+			"get":          GetSpaceKV,
+			"get_by_group": GetSpaceKVByGroup,
+			"remove":       RemoveSpaceKV,
+			"update":       UpdateSpaceKV,
+			"upsert":       UpsertSpaceKV,
+		})
+		L.Push(table)
+		return 1
+
+	}
+
+}
+
+func BindsKV(installId int64, app xtypes.App) func(L *lua.LState) int {
+	return bindsKV(installId, app.Database().GetSpaceKVOps())
+}

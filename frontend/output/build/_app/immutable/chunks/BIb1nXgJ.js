@@ -1,1 +1,0 @@
-import{d as i}from"./B9EOMJ0E.js";import{n as m,p as t}from"./bUAA_rse.js";const c=i([m,t],([a,e])=>{let r;a&&a.to?r=a.to.url.searchParams:r=new URLSearchParams(location.search);let s={};return e.params&&(s.pid=e.params.pid),r.forEach((o,p)=>{s[p]=o}),s});c.subscribe(a=>{console.log("@params",a)});export{c as p};

@@ -6,126 +6,80 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 
-	"github.com/aurowora/compress"
-	"github.com/blue-monads/turnix/backend/controller"
-	"github.com/blue-monads/turnix/backend/controller/auth"
-	"github.com/blue-monads/turnix/backend/controller/common"
-	"github.com/blue-monads/turnix/backend/controller/project"
-	"github.com/blue-monads/turnix/backend/controller/self"
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/services/database"
 	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes/xproject"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
-	"github.com/rs/zerolog"
-
-	limits "github.com/gin-contrib/size"
 )
 
 type Server struct {
-	db         *database.DB
-	signer     *signer.Signer
-	rootLogger zerolog.Logger
-
-	localSocket string
-	ldListener  net.Listener
-
-	devMode bool
-
-	// controllers
+	ctrl   *actions.Controller
+	router *gin.Engine
+	signer *signer.Signer
 
 	engine *engine.Engine
 
-	cAuth    *auth.AuthController
-	cProject *project.ProjectController
-	cSelf    *self.SelfController
-	cCommon  *common.CommonController
-
-	// injector
-
+	opt Option
 }
 
-type Options struct {
-	DB          *database.DB
+type Option struct {
+	Port        int
+	Ctrl        *actions.Controller
 	Signer      *signer.Signer
-	Defs        map[string]*xproject.Defination
-	Controller  *controller.RootController
-	LocalSocket string
-	DevMode     bool
 	Engine      *engine.Engine
+	Hosts       []string
+	GlobalJS    string
+	SiteName    string
+	LocalSocket string
 }
 
-func New(opts Options) *Server {
-
-	// opts.ProjectBuilders["abc"] = &xproject.Defination{}
-
-	s := &Server{
-		db:          opts.DB,
-		signer:      opts.Signer,
-		engine:      opts.Engine,
-		rootLogger:  zerolog.New(os.Stdout).With().Str("service", "server").Logger(),
-		cAuth:       opts.Controller.GetAuthController(),
-		cProject:    opts.Controller.GetProjectController(),
-		cSelf:       opts.Controller.GetSelfController(),
-		cCommon:     opts.Controller.GetCommonController(),
-		localSocket: opts.LocalSocket,
-		devMode:     opts.DevMode,
+func NewServer(opt Option) *Server {
+	return &Server{
+		ctrl:   opt.Ctrl,
+		signer: opt.Signer,
+		engine: opt.Engine,
+		opt:    opt,
 	}
-
-	return s
 }
 
-func (a *Server) Start(port string) error {
-
-	a.listenUnixSocket(port)
-
-	r := gin.Default()
-
-	if !a.devMode {
-		r.Use(compress.Compress())
-	}
-
-	r.Use(limits.RequestSizeLimiter(100 * 1024 * 1024))
-
-	a.bindRoutes(r)
-
-	err := a.engine.Start()
+func (s *Server) Start() error {
+	err := s.buildGlobalJS()
 	if err != nil {
 		return err
 	}
 
-	go func() {
-		time.Sleep(time.Second * 2)
+	s.router = gin.Default()
 
-		pp.Println(fmt.Sprintf("http://localhost%s/z/pages", port))
+	s.bindRoutes()
+	err = s.listenUnixSocket()
+	if err != nil {
+		return err
+	}
 
-	}()
+	s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
 
-	return r.Run(port)
+	return nil
 }
 
-type LocalStatus struct {
-	Port string `json:"port"`
-}
+func (s *Server) listenUnixSocket() error {
 
-func (s *Server) listenUnixSocket(port string) error {
+	qq.Println("@listen_unix_socket", s.opt.LocalSocket)
 
-	pp.Println("@listen_unix_socket", s.localSocket)
+	if s.opt.LocalSocket != "" {
+		return nil
+	}
 
 	// delete old socket
 
-	os.Remove(s.localSocket)
+	os.Remove(s.opt.LocalSocket)
 
-	l, err := net.Listen("unix", s.localSocket)
+	l, err := net.Listen("unix", s.opt.LocalSocket)
 	if err != nil {
 		log.Println("listen_unix_socket error:", err.Error())
 		return err
 	}
-
-	s.ldListener = l
 
 	go func() {
 		for {
@@ -138,11 +92,11 @@ func (s *Server) listenUnixSocket(port string) error {
 			func(c net.Conn) {
 				defer c.Close()
 
-				msg := LocalStatus{
-					Port: port,
-				}
+				out, err := json.Marshal(map[string]any{
+					"port": s.opt.Port,
+					"host": s.opt.Hosts,
+				})
 
-				out, err := json.Marshal(msg)
 				if err != nil {
 					log.Fatal("json marshal error:", err.Error())
 					return

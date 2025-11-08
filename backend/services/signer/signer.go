@@ -10,41 +10,53 @@ import (
 )
 
 const (
-	TokenTypeAccess      uint8 = 1
-	TokenTypeEmailInvite uint8 = 2
-	TokenTypePair        uint8 = 3
-	TokenTypeAdvisiery   uint8 = 4
+	TokenTypeAccess             uint8 = 1
+	TokenTypeEmailInvite        uint8 = 2
+	TokenTypePair               uint8 = 3
+	TokenTypeSpace              uint8 = 4
+	TokenTypeSpaceAdvisiery     uint8 = 5
+	TokenTypeSpaceFilePresigned uint8 = 6
+	ToekenPackageDev            uint8 = 7
 )
 
 type AccessClaim struct {
-	XID             string         `json:"x,omitempty"`
-	Typeid          uint8          `json:"t,omitempty"`
-	UserId          int64          `json:"u,omitempty"`
-	PinnedProjectId int64          `json:"p,omitempty"`
-	Extrameta       map[string]any `json:"e,omitempty"`
+	Typeid    uint8          `json:"t,omitempty"`
+	UserId    int64          `json:"u,omitempty"`
+	Extrameta map[string]any `json:"e,omitempty"`
 }
 
 type InviteClaim struct {
-	XID            string `json:"x,omitempty"`
-	Typeid         uint8  `json:"t,omitempty"`
-	InviteFromUser int64  `json:"u,omitempty"`
-	InviteToUser   int64  `json:"z,omitempty"`
-	InviteEmail    string `json:"e,omitempty"`
-	ProjectId      int64  `json:"p,omitempty"`
+	Typeid   uint8 `json:"t,omitempty"`
+	InviteId int64 `json:"p,omitempty"`
 }
 
-type AdvisieryClaimE struct {
-	XID       string `json:"x,omitempty"`
+type SpaceClaim struct {
+	Typeid  uint8 `json:"t,omitempty"`
+	SpaceId int64 `json:"s,omitempty"`
+	UserId  int64 `json:"u,omitempty"`
+}
+
+type SpaceAdvisieryClaim struct {
+	Typeid       uint8          `json:"t,omitempty"`
+	TokenSubType string         `json:"st,omitempty"`
+	SpaceId      int64          `json:"s,omitempty"`
+	UserId       int64          `json:"u,omitempty"`
+	Data         map[string]any `json:"d,omitempty"`
+}
+
+type SpaceFilePresignedClaim struct {
 	Typeid    uint8  `json:"t,omitempty"`
-	ProjectId int64  `json:"p,omitempty"`
-	Data      any    `json:"d,omitempty"`
+	InstallId int64  `json:"i,omitempty"`
+	UserId    int64  `json:"u,omitempty"`
+	PathName  string `json:"pn,omitempty"`
+	FileName  string `json:"fn,omitempty"`
+	Expiry    int64  `json:"e,omitempty"`
 }
 
-type AdvisieryClaimD struct {
-	XID       string          `json:"x,omitempty"`
-	Typeid    uint8           `json:"t,omitempty"`
-	ProjectId int64           `json:"p,omitempty"`
-	Data      json.RawMessage `json:"d,omitempty"`
+type PackageDevClaim struct {
+	Typeid           uint8 `json:"t,omitempty"`
+	InstallPackageId int64 `json:"p,omitempty"`
+	UserId           int64 `json:"u,omitempty"`
 }
 
 // fixme => add expiry
@@ -127,32 +139,94 @@ func (ts *Signer) SignInvite(claim *InviteClaim) (string, error) {
 	return ts.sign(claim)
 }
 
-func (ts *Signer) ParseProjectAdvisiery(pid int64, tstr string) ([]byte, error) {
+func (ts *Signer) ParseSpace(tstr string) (*SpaceClaim, error) {
 
-	claim := &AdvisieryClaimD{}
+	claim := &SpaceClaim{}
 
 	err := ts.parse(tstr, claim)
 	if err != nil {
 		return nil, err
 	}
 
-	if claim.ProjectId != pid {
+	if claim.Typeid != TokenTypeSpace {
 		return nil, ErrInvalidToken
 	}
 
-	if claim.Typeid != TokenTypeAdvisiery {
-		return nil, ErrInvalidToken
-	}
-
-	return claim.Data, nil
+	return claim, nil
 }
 
-func (ts *Signer) SignProjectAdvisiery(pid int64, data any) (string, error) {
-	claim := &AdvisieryClaimE{
-		ProjectId: pid,
-		Data:      data,
-		Typeid:    TokenTypeAdvisiery,
+func (ts *Signer) SignSpace(claim *SpaceClaim) (string, error) {
+
+	claim.Typeid = TokenTypeSpace
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParseSpaceAdvisiery(tstr string) (*SpaceAdvisieryClaim, error) {
+
+	claim := &SpaceAdvisieryClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
 	}
+
+	if claim.Typeid != TokenTypeSpaceAdvisiery {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignSpaceAdvisiery(claim *SpaceAdvisieryClaim) (string, error) {
+
+	claim.Typeid = TokenTypeSpaceAdvisiery
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParseSpaceFilePresigned(tstr string) (*SpaceFilePresignedClaim, error) {
+
+	claim := &SpaceFilePresignedClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	if claim.Typeid != TokenTypeSpaceFilePresigned {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignSpaceFilePresigned(claim *SpaceFilePresignedClaim) (string, error) {
+
+	claim.Typeid = TokenTypeSpaceFilePresigned
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParsePackageDev(tstr string) (*PackageDevClaim, error) {
+
+	claim := &PackageDevClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	if claim.Typeid != ToekenPackageDev {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignPackageDev(claim *PackageDevClaim) (string, error) {
+
+	claim.Typeid = ToekenPackageDev
 
 	return ts.sign(claim)
 }

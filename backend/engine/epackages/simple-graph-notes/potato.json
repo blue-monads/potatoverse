@@ -1,0 +1,31 @@
+{
+    "name": "Simple Graph Notes",
+    "info": "Notes app to manage your notes.",
+    "slug": "simple-graph-notes",
+    "tags": [
+        "productivity",
+        "notes"
+    ],
+    "format_version": "0.0.1",
+    "author_name": "Bornjre",
+    "author_email": "bornjre@gmail.com",
+    "author_site": "https://github.com/bornjre",
+    "license": "MIT",
+    "version": "1.0.0",
+    "artifacts": [
+        {
+            "namespace": "simple-graph-notes",
+            "kind": "space",
+            "executor_type": "luaz",
+            "server_file": "server.lua",
+            "route_options": {
+                "serve_folder": "public",
+                "force_html_extension": false,
+                "force_index_html_file": false
+            },
+            "mcp_options": {
+                "enabled": false
+            }
+        }
+    ]
+}

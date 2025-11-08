@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/ztrue/tracerr"
 )
 
@@ -57,7 +57,7 @@ func Error(err string) error {
 
 func Wrap(message string, err error) error {
 	err = fmt.Errorf("%s: %w", message, err)
-	pp.Println(err)
+	qq.Println(err)
 	if !ScopeInfo {
 		return err
 	}

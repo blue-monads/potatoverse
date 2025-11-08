@@ -1,0 +1,81 @@
+
+
+-- Delivery and Driver tracking system
+
+CREATE TABLE IF NOT EXISTS Driver(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Vehicle(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    driver_id INTEGER NOT NULL,
+    vehicle_type TEXT NOT NULL,
+    vehicle_number TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS Trip(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    driver_id INTEGER NOT NULL,
+    vehicle_id INTEGER NOT NULL,
+    trip_status TEXT NOT NULL DEFAULT 'pending', -- pending, in_progress, completed, cancelled
+
+    pickup_address TEXT NOT NULL,
+    pickup_status TEXT NOT NULL DEFAULT 'pending', -- pending, in_progress, completed, cancelled
+    pickup_notes TEXT NOT NULL DEFAULT '',
+    pickup_time TIMESTAMP NOT NULL,
+
+    start_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+
+    total_distance INTEGER NOT NULL DEFAULT 0,
+    total_time INTEGER NOT NULL DEFAULT 0,
+    total_price INTEGER NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS TripOrders(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trip_id INTEGER NOT NULL,
+    order_id INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS TripOrder(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    weight INTEGER NOT NULL DEFAULT 0,
+    volume INTEGER NOT NULL DEFAULT 0,
+    price INTEGER NOT NULL DEFAULT 0,
+    delivery_address TEXT NOT NULL,
+    delivery_status TEXT NOT NULL DEFAULT 'pending', -- pending, in_progress, completed, cancelled
+    delivery_notes TEXT NOT NULL DEFAULT '',
+
+    delivery_proof TEXT NOT NULL DEFAULT '',    
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+ );
+
+
+
+CREATE TABLE IF NOT EXISTS TripOrderItems(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    item_type TEXT NOT NULL,
+    weight INTEGER NOT NULL DEFAULT 0,
+    volume INTEGER NOT NULL DEFAULT 0,
+    price INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

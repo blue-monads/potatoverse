@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Board - Information Board</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: auto;
+            background-image: 
+                radial-gradient(circle, rgba(255,255,255,0.1) 2px, transparent 2px);
+            background-size: 50px 50px;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn.danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            z-index: 1001;
+            overflow: hidden;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .card {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            min-width: 250px;
+            min-height: 150px;
+            padding: 20px;
+            cursor: move;
+            transition: box-shadow 0.3s;
+            resize: none;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .card.selected {
+            box-shadow: 0 0 0 3px #667eea;
+        }
+
+        .card.resizing {
+            cursor: nw-resize;
+        }
+
+        .card.richtext { border-left: 4px solid #667eea; }
+        .card.todo { border-left: 4px solid #48bb78; }
+        .card.image { border-left: 4px solid #ed8936; }
+        .card.links { border-left: 4px solid #9f7aea; }
+        .card.code { border-left: 4px solid #38b2ac; }
+        .card.kanban { border-left: 4px solid #f56565; }
+
+        .card-type-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .card.richtext .card-type-badge { background: #667eea; }
+        .card.todo .card-type-badge { background: #48bb78; }
+        .card.image .card-type-badge { background: #ed8936; }
+        .card.links .card-type-badge { background: #9f7aea; }
+        .card.code .card-type-badge { background: #38b2ac; }
+        .card.kanban .card-type-badge { background: #f56565; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            background: transparent;
+            border: none;
+            outline: none;
+            width: 100%;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .card-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .card-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .card-content {
+            height: calc(100% - 70px);
+            overflow-y: auto;
+        }
+
+        /* Rich Text Card */
+        .rich-text {
+            min-height: 80px;
+            height: 100%;
+            outline: none;
+            line-height: 1.6;
+            color: #555;
+            overflow-y: auto;
+        }
+
+        .rich-text img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        /* Todo Card */
+        .todo-list {
+            list-style: none;
+            margin: 0;
+            height: calc(100% - 50px);
+            overflow-y: auto;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .todo-item:hover {
+            background: #e9ecef;
+        }
+
+        .todo-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .todo-text {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .add-todo {
+            width: 100%;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-todo:hover {
+            border-color: #48bb78;
+            background: #f8f9fa;
+        }
+
+        /* Image Card */
+        .image-container {
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .image-display {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            min-height: 120px;
+        }
+
+        .image-display img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+        }
+
+        .image-placeholder {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .image-caption {
+            background: transparent;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            outline: none;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .image-url {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+            font-size: 12px;
+        }
+
+        /* Links Card */
+        .links-list {
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .link-item:hover {
+            background: #e9ecef;
+        }
+
+        .link-favicon {
+            width: 16px;
+            height: 16px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .link-content {
+            flex: 1;
+        }
+
+        .link-title {
+            font-weight: 500;
+            color: #333;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .link-url {
+            font-size: 12px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .add-link {
+            width: 100%;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-link:hover {
+            border-color: #9f7aea;
+            background: #f8f9fa;
+        }
+
+        /* Code Card */
+        .code-editor {
+            width: 100%;
+            height: calc(100% - 40px);
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            outline: none;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            border-radius: 6px;
+            resize: none;
+        }
+
+        .code-language {
+            margin-bottom: 10px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 12px;
+        }
+
+        /* Kanban Card */
+        .kanban-columns {
+            display: flex;
+            gap: 15px;
+            height: 100%;
+            overflow-x: auto;
+        }
+
+        .kanban-column {
+            flex: 1;
+            min-width: 120px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .kanban-header {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .kanban-items {
+            list-style: none;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+        }
+
+        .kanban-item {
+            background: white;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .kanban-add {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+            background: transparent;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        /* Resize handles and other existing styles */
+        .resize-handle {
+            position: absolute;
+            background: #667eea;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            z-index: 15;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .card:hover .resize-handle,
+        .card.selected .resize-handle {
+            opacity: 1;
+        }
+
+        .resize-handle.top-left { top: -6px; left: -6px; cursor: nw-resize; }
+        .resize-handle.top-right { top: -6px; right: -6px; cursor: ne-resize; }
+        .resize-handle.bottom-left { bottom: -6px; left: -6px; cursor: sw-resize; }
+        .resize-handle.bottom-right { bottom: -6px; right: -6px; cursor: se-resize; }
+        .resize-handle.top { top: -6px; left: calc(50% - 6px); cursor: n-resize; }
+        .resize-handle.bottom { bottom: -6px; left: calc(50% - 6px); cursor: s-resize; }
+        .resize-handle.left { left: -6px; top: calc(50% - 6px); cursor: w-resize; }
+        .resize-handle.right { right: -6px; top: calc(50% - 6px); cursor: e-resize; }
+
+        .link-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border: 3px solid white;
+            border-radius: 50%;
+            cursor: crosshair;
+            z-index: 10;
+            transition: transform 0.2s;
+        }
+
+        .link-point:hover { transform: scale(1.2); }
+        .link-point.top { top: -10px; left: calc(50% - 10px); }
+        .link-point.right { right: -10px; top: calc(50% - 10px); }
+        .link-point.bottom { bottom: -10px; left: calc(50% - 10px); }
+        .link-point.left { left: -10px; top: calc(50% - 10px); }
+
+        .connection-line {
+            stroke: #585b66;
+            stroke-width: 3;
+            fill: none;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .connection-line.preview {
+            stroke-dasharray: 5, 5;
+            opacity: 0.4;
+        }
+
+        .toolbar {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            display: none;
+            background: white;
+            border-radius: 6px;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .toolbar button {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .toolbar button:hover {
+            background: #e0e0e0;
+        }
+
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 2000;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal.active { display: block; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+        }
+
+        .modal-overlay.active { display: block; }
+
+        .help-content {
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .help-content h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .help-content ul {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="dropdown">
+            <button class="btn primary">➕ Add Card</button>
+            <div class="dropdown-content">
+                <div class="dropdown-item" onclick="addCard('richtext')">
+                    📝 Rich Text Card
+                </div>
+                <div class="dropdown-item" onclick="addCard('todo')">
+                    ✅ Todo List Card
+                </div>
+                <div class="dropdown-item" onclick="addCard('image')">
+                    🖼️ Image Card
+                </div>
+                <div class="dropdown-item" onclick="addCard('links')">
+                    🔗 Links Card
+                </div>
+                <div class="dropdown-item" onclick="addCard('code')">
+                    💻 Code Card
+                </div>
+                <div class="dropdown-item" onclick="addCard('kanban')">
+                    📋 Kanban Card
+                </div>
+            </div>
+        </div>
+        <button class="btn" onclick="toggleLinkMode()">🔗 Link Mode</button>
+        <button class="btn" onclick="saveBoard()">💾 Save</button>
+        <button class="btn" onclick="loadBoard()">📂 Load</button>
+        <button class="btn danger" onclick="clearBoard()">🗑️ Clear</button>
+        <button class="btn" onclick="showHelp()">❓ Help</button>
+    </div>
+
+    <div id="canvas">
+        <svg id="connections"></svg>
+    </div>
+
+    <div class="modal-overlay" onclick="hideHelp()"></div>
+    <div class="modal" id="helpModal">
+        <h2>Node Board - Card Types</h2>
+        <div class="help-content">
+            <h3>Card Types:</h3>
+            <ul>
+                <li><strong>Rich Text:</strong> For notes, documentation, and formatted content</li>
+                <li><strong>Todo List:</strong> For task management and checklists</li>
+                <li><strong>Image:</strong> For displaying images with captions</li>
+                <li><strong>Links:</strong> For bookmark collections and references</li>
+                <li><strong>Code:</strong> For code snippets with syntax highlighting</li>
+                <li><strong>Kanban:</strong> For simple workflow management</li>
+            </ul>
+            <h3>Working with Cards:</h3>
+            <ul>
+                <li>Drag cards to move them around</li>
+                <li>Drag handles to resize cards</li>
+                <li>Each card type has specialized tools and interfaces</li>
+                <li>Use Link Mode to connect related cards</li>
+            </ul>
+            <h3>Saving & Loading:</h3>
+            <ul>
+                <li>All card types and their content are preserved when saving</li>
+                <li>Load previously saved boards to continue working</li>
+            </ul>
+        </div>
+        <button class="btn primary" onclick="hideHelp()" style="margin-top: 20px;">Got it!</button>
+    </div>
+
+    <script>
+        let cards = [];
+        let connections = [];
+        let selectedCard = null;
+        let isDragging = false;
+        let isResizing = false;
+        let resizeHandle = null;
+        let dragOffset = { x: 0, y: 0 };
+        let resizeStartData = null;
+        let linkMode = false;
+        let linkStart = null;
+        let previewLine = null;
+        let cardIdCounter = 1;
+
+        const CARD_TYPES = {
+            richtext: {
+                name: 'Rich Text',
+                icon: '📝',
+                defaultTitle: 'Rich Text Note',
+                minWidth: 300,
+                minHeight: 200
+            },
+            todo: {
+                name: 'Todo List',
+                icon: '✅',
+                defaultTitle: 'Todo List',
+                minWidth: 250,
+                minHeight: 200
+            },
+            image: {
+                name: 'Image',
+                icon: '🖼️',
+                defaultTitle: 'Image Card',
+                minWidth: 300,
+                minHeight: 250
+            },
+            links: {
+                name: 'Links',
+                icon: '🔗',
+                defaultTitle: 'Link Collection',
+                minWidth: 300,
+                minHeight: 200
+            },
+            code: {
+                name: 'Code',
+                icon: '💻',
+                defaultTitle: 'Code Snippet',
+                minWidth: 400,
+                minHeight: 300
+            },
+            kanban: {
+                name: 'Kanban',
+                icon: '📋',
+                defaultTitle: 'Kanban Board',
+                minWidth: 400,
+                minHeight: 250
+            }
+        };
+
+        class Card {
+            constructor(x, y, type = 'richtext') {
+                this.id = `card-${cardIdCounter++}`;
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.title = CARD_TYPES[type].defaultTitle;
+                this.color = '#ffffff';
+                this.width = CARD_TYPES[type].minWidth;
+                this.height = CARD_TYPES[type].minHeight;
+                
+                this.data = this.initializeTypeData();
+                
+                this.element = this.createElement();
+                this.render();
+            }
+
+            initializeTypeData() {
+                switch(this.type) {
+                    case 'richtext':
+                        return { content: 'Click to edit...' };
+                    case 'todo':
+                        return { todos: [] };
+                    case 'image':
+                        return { url: '', caption: '' };
+                    case 'links':
+                        return { links: [] };
+                    case 'code':
+                        return { code: '// Your code here', language: 'javascript' };
+                    case 'kanban':
+                        return { 
+                            columns: {
+                                todo: { title: 'To Do', items: [] },
+                                doing: { title: 'Doing', items: [] },
+                                done: { title: 'Done', items: [] }
+                            }
+                        };
+                    default:
+                        return {};
+                }
+            }
+
+            createElement() {
+                const div = document.createElement('div');
+                div.className = `card ${this.type}`;
+                div.id = this.id;
+                
+                let content = this.createTypeSpecificContent();
+                
+                div.innerHTML = `
+                    <div class="card-type-badge">${CARD_TYPES[this.type].name}</div>
+                    
+                    <!-- Resize handles -->
+                    <div class="resize-handle top-left" data-direction="nw"></div>
+                    <div class="resize-handle top" data-direction="n"></div>
+                    <div class="resize-handle top-right" data-direction="ne"></div>
+                    <div class="resize-handle left" data-direction="w"></div>
+                    <div class="resize-handle right" data-direction="e"></div>
+                    <div class="resize-handle bottom-left" data-direction="sw"></div>
+                    <div class="resize-handle bottom" data-direction="s"></div>
+                    <div class="resize-handle bottom-right" data-direction="se"></div>
+                    
+                    <!-- Link points -->
+                    <div class="link-point top" data-card="${this.id}" data-position="top"></div>
+                    <div class="link-point right" data-card="${this.id}" data-position="right"></div>
+                    <div class="link-point bottom" data-card="${this.id}" data-position="bottom"></div>
+                    <div class="link-point left" data-card="${this.id}" data-position="left"></div>
+                    
+                    <div class="card-header">
+                        <input class="card-title" value="${this.title}" onchange="updateCardTitle('${this.id}', this.value)">
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="deleteCard('${this.id}')">✖</button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        ${content}
+                    </div>
+                `;
+                return div;
+            }
+
+            createTypeSpecificContent() {
+                switch(this.type) {
+                    case 'richtext':
+                        return `
+                            <div class="toolbar" id="toolbar-${this.id}">
+                                <button onclick="formatText('bold')"><b>B</b></button>
+                                <button onclick="formatText('italic')"><i>I</i></button>
+                                <button onclick="formatText('underline')"><u>U</u></button>
+                                <button onclick="insertLink()">🔗</button>
+                                <button onclick="insertImage()">🖼️</button>
+                                <button onclick="formatText('insertUnorderedList')">• List</button>
+                                <input type="color" class="color-picker" onchange="changeCardColor(this, '${this.id}')">
+                            </div>
+                            <div class="rich-text" contenteditable="true" 
+                                 onfocus="showToolbar('${this.id}')"
+                                 onblur="hideToolbar('${this.id}')"
+                                 oninput="updateCardData('${this.id}', 'content', this.innerHTML)">
+                                ${this.data.content}
+                            </div>
+                        `;
+                    
+                    case 'todo':
+                        return `
+                            <ul class="todo-list" id="todo-list-${this.id}"></ul>
+                            <button class="add-todo" onclick="addTodo('${this.id}')">+ Add Todo</button>
+                        `;
+                    
+                    case 'image':
+                        return `
+                            <input type="text" class="image-url" placeholder="Enter image URL..." 
+                                   onchange="updateImageUrl('${this.id}', this.value)" value="${this.data.url}">
+                            <div class="image-container">
+                                <div class="image-display" id="image-display-${this.id}">
+                                    ${this.data.url ? `<img src="${this.data.url}" alt="Image">` : '<div class="image-placeholder">No image selected</div>'}
+                                </div>
+                                <input type="text" class="image-caption" placeholder="Add a caption..." 
+                                       onchange="updateCardData('${this.id}', 'caption', this.value)" value="${this.data.caption}">
+                            </div>
+                        `;
+                    
+                    case 'links':
+                        return `
+                            <div class="links-list" id="links-list-${this.id}"></div>
+                            <button class="add-link" onclick="addLink('${this.id}')">+ Add Link</button>
+                        `;
+                    
+                    case 'code':
+                        return `
+                            <select class="code-language" onchange="updateCardData('${this.id}', 'language', this.value)">
+                                <option value="javascript">JavaScript</option>
+                                <option value="python">Python</option>
+                                <option value="html">HTML</option>
+                                <option value="css">CSS</option>
+                                <option value="json">JSON</option>
+                                <option value="markdown">Markdown</option>
+                                <option value="sql">SQL</option>
+                                <option value="bash">Bash</option>
+                            </select>
+                            <textarea class="code-editor" 
+                                      oninput="updateCardData('${this.id}', 'code', this.value)"
+                                      placeholder="Enter your code here...">${this.data.code}</textarea>
+                        `;
+                    
+                    case 'kanban':
+                        return `
+                            <div class="kanban-columns">
+                                <div class="kanban-column">
+                                    <div class="kanban-header">To Do</div>
+                                    <ul class="kanban-items" id="kanban-todo-${this.id}"></ul>
+                                    <button class="kanban-add" onclick="addKanbanItem('${this.id}', 'todo')">+ Add</button>
+                                </div>
+                                <div class="kanban-column">
+                                    <div class="kanban-header">Doing</div>
+                                    <ul class="kanban-items" id="kanban-doing-${this.id}"></ul>
+                                    <button class="kanban-add" onclick="addKanbanItem('${this.id}', 'doing')">+ Add</button>
+                                </div>
+                                <div class="kanban-column">
+                                    <div class="kanban-header">Done</div>
+                                    <ul class="kanban-items" id="kanban-done-${this.id}"></ul>
+                                    <button class="kanban-add" onclick="addKanbanItem('${this.id}', 'done')">+ Add</button>
+                                </div>
+                            </div>
+                        `;
+                    
+                    default:
+                        return '<div>Unknown card type</div>';
+                }
+            }
+
+            render() {
+                this.element.style.left = `${this.x}px`;
+                this.element.style.top = `${this.y}px`;
+                this.element.style.width = `${this.width}px`;
+                this.element.style.height = `${this.height}px`;
+                this.element.style.backgroundColor = this.color;
+                document.getElementById('canvas').appendChild(this.element);
+                this.attachEventListeners();
+                this.updateLinkPoints();
+                this.renderTypeSpecificData();
+            }
+
+            renderTypeSpecificData() {
+                switch(this.type) {
+                    case 'todo':
+                        this.data.todos.forEach(todo => {
+                            const todoList = this.element.querySelector(`#todo-list-${this.id}`);
+                            const todoItem = createTodoElement(this.id, todo.text, todo.completed);
+                            todoList.appendChild(todoItem);
+                        });
+                        break;
+                    
+                    case 'links':
+                        this.data.links.forEach(link => {
+                            const linksList = this.element.querySelector(`#links-list-${this.id}`);
+                            const linkItem = createLinkElement(this.id, link);
+                            linksList.appendChild(linkItem);
+                        });
+                        break;
+                    
+                    case 'code':
+                        const languageSelect = this.element.querySelector('.code-language');
+                        languageSelect.value = this.data.language;
+                        break;
+                    
+                    case 'kanban':
+                        Object.keys(this.data.columns).forEach(columnKey => {
+                            const column = this.data.columns[columnKey];
+                            const columnElement = this.element.querySelector(`#kanban-${columnKey}-${this.id}`);
+                            column.items.forEach(item => {
+                                const itemElement = createKanbanItemElement(this.id, columnKey, item);
+                                columnElement.appendChild(itemElement);
+                            });
+                        });
+                        break;
+                }
+            }
+
+            attachEventListeners() {
+                // Resize handle listeners
+                const resizeHandles = this.element.querySelectorAll('.resize-handle');
+                resizeHandles.forEach(handle => {
+                    handle.addEventListener('mousedown', (e) => {
+                        e.stopPropagation();
+                        startResizing(e, this, handle.dataset.direction);
+                    });
+                });
+
+                this.element.addEventListener('mousedown', (e) => {
+                    if (e.target.classList.contains('link-point')) {
+                        if (linkMode) {
+                            startLinking(e);
+                        }
+                        return;
+                    }
+                    if (e.target.classList.contains('resize-handle')) {
+                        return;
+                    }
+                    if (e.target.tagName === 'INPUT' || 
+                        e.target.tagName === 'BUTTON' || 
+                        e.target.tagName === 'SELECT' ||
+                        e.target.tagName === 'TEXTAREA' ||
+                        e.target.contentEditable === 'true' ||
+                        e.target.classList.contains('card-btn') ||
+                        e.target.closest('.modal')) { // Ignore clicks inside modal
+                        return;
+                    }
+                    startDragging(e, this);
+                });
+            }
+
+            updateLinkPoints() {
+                const linkPoints = this.element.querySelectorAll('.link-point');
+                linkPoints.forEach(point => {
+                    point.style.display = linkMode ? 'block' : 'none';
+                });
+            }
+
+            updatePosition(x, y) {
+                this.x = x;
+                this.y = y;
+                this.element.style.left = `${x}px`;
+                this.element.style.top = `${y}px`;
+                updateConnections();
+            }
+
+            updateSize(width, height) {
+                const typeInfo = CARD_TYPES[this.type];
+                this.width = Math.max(typeInfo.minWidth, width);
+                this.height = Math.max(typeInfo.minHeight, height);
+                this.element.style.width = `${this.width}px`;
+                this.element.style.height = `${this.height}px`;
+                updateConnections();
+            }
+
+            toJSON() {
+                return {
+                    id: this.id,
+                    type: this.type,
+                    x: this.x,
+                    y: this.y,
+                    title: this.title,
+                    data: this.data,
+                    color: this.color,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+
+            static fromJSON(data) {
+                const card = new Card(data.x, data.y, data.type);
+                card.id = data.id;
+                card.title = data.title;
+                card.data = data.data || card.initializeTypeData();
+                card.color = data.color;
+                card.width = data.width;
+                card.height = data.height;
+                
+                card.element.querySelector('.card-title').value = card.title;
+                card.element.style.backgroundColor = card.color;
+                card.element.style.width = `${card.width}px`;
+                card.element.style.height = `${card.height}px`;
+                
+                switch(card.type) {
+                    case 'richtext':
+                        card.element.querySelector('.rich-text').innerHTML = card.data.content;
+                        break;
+                    case 'image':
+                        if (card.data.url) {
+                            card.element.querySelector('.image-url').value = card.data.url;
+                            card.element.querySelector('.image-display').innerHTML = `<img src="${card.data.url}" alt="Image">`;
+                        }
+                        card.element.querySelector('.image-caption').value = card.data.caption || '';
+                        break;
+                    case 'code':
+                        card.element.querySelector('.code-editor').value = card.data.code;
+                        card.element.querySelector('.code-language').value = card.data.language;
+                        break;
+                }
+                
+                return card;
+            }
+        }
+
+        function updateCardData(cardId, field, value) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                card.data[field] = value;
+            }
+        }
+
+        function updateImageUrl(cardId, url) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                card.data.url = url;
+                const display = document.getElementById(`image-display-${cardId}`);
+                if (url) {
+                    display.innerHTML = `<img src="${url}" alt="Image">`;
+                } else {
+                    display.innerHTML = '<div class="image-placeholder">No image selected</div>';
+                }
+            }
+        }
+
+        function addTodo(cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                const todoText = prompt('Enter todo item:');
+                if (todoText) {
+                    const todo = { text: todoText, completed: false, id: Date.now() };
+                    card.data.todos.push(todo);
+                    
+                    const todoList = document.getElementById(`todo-list-${cardId}`);
+                    const todoItem = createTodoElement(cardId, todoText, false);
+                    todoList.appendChild(todoItem);
+                }
+            }
+        }
+
+        function createTodoElement(cardId, text, completed) {
+            const li = document.createElement('li');
+            li.className = `todo-item ${completed ? 'completed' : ''}`;
+            li.innerHTML = `
+                <input type="checkbox" class="todo-checkbox" ${completed ? 'checked' : ''} 
+                       onchange="toggleTodoComplete(this, '${cardId}')">
+                <input type="text" class="todo-text" value="${text}" 
+                       onchange="updateTodoText(this, '${cardId}')">
+            `;
+            return li;
+        }
+
+        function toggleTodoComplete(checkbox, cardId) {
+            const todoItem = checkbox.parentElement;
+            todoItem.classList.toggle('completed');
+            
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                const index = Array.from(todoItem.parentElement.children).indexOf(todoItem);
+                if (card.data.todos[index]) {
+                    card.data.todos[index].completed = checkbox.checked;
+                }
+            }
+        }
+
+        function updateTodoText(input, cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                const todoItem = input.parentElement;
+                const index = Array.from(todoItem.parentElement.children).indexOf(todoItem);
+                if (card.data.todos[index]) {
+                    card.data.todos[index].text = input.value;
+                }
+            }
+        }
+
+        function addLink(cardId) {
+            const url = prompt('Enter URL:');
+            if (url) {
+                const title = prompt('Enter title (optional):') || url;
+                const link = { url, title, id: Date.now() };
+                
+                const card = cards.find(c => c.id === cardId);
+                if (card) {
+                    card.data.links.push(link);
+                    
+                    const linksList = document.getElementById(`links-list-${cardId}`);
+                    const linkItem = createLinkElement(cardId, link);
+                    linksList.appendChild(linkItem);
+                }
+            }
+        }
+
+        function createLinkElement(cardId, link) {
+            const div = document.createElement('div');
+            div.className = 'link-item';
+            div.innerHTML = `
+                <img class="link-favicon" src="https://www.google.com/s2/favicons?domain=${link.url}" 
+                     onerror="this.style.display='none'">
+                <div class="link-content">
+                    <a href="${link.url}" target="_blank" class="link-title">${link.title}</a>
+                    <a href="${link.url}" target="_blank" class="link-url">${link.url}</a>
+                </div>
+            `;
+            return div;
+        }
+
+        function addKanbanItem(cardId, column) {
+            const text = prompt('Enter item:');
+            if (text) {
+                const item = { text, id: Date.now() };
+                
+                const card = cards.find(c => c.id === cardId);
+                if (card) {
+                    card.data.columns[column].items.push(item);
+                    
+                    const columnElement = document.getElementById(`kanban-${column}-${cardId}`);
+                    const itemElement = createKanbanItemElement(cardId, column, item);
+                    columnElement.appendChild(itemElement);
+                }
+            }
+        }
+
+        function createKanbanItemElement(cardId, column, item) {
+            const li = document.createElement('li');
+            li.className = 'kanban-item';
+            li.textContent = item.text;
+            return li;
+        }
+
+        function addCard(type = 'richtext') {
+            const x = Math.random() * (window.innerWidth - 400) + 50;
+            const y = Math.random() * (window.innerHeight - 300) + 50;
+            const card = new Card(x, y, type);
+            cards.push(card);
+        }
+
+        function deleteCard(cardId) {
+            const index = cards.findIndex(c => c.id === cardId);
+            if (index > -1) {
+                const card = cards[index];
+                card.element.remove();
+                cards.splice(index, 1);
+                
+                connections = connections.filter(conn => 
+                    conn.from.card !== cardId && conn.to.card !== cardId
+                );
+                updateConnections();
+            }
+        }
+
+        function updateCardTitle(cardId, title) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                card.title = title;
+            }
+        }
+
+        function changeCardColor(input, cardId) {
+            const card = cards.find(c => c.id === cardId);
+            if (card) {
+                card.color = input.value;
+                card.element.style.backgroundColor = input.value;
+            }
+        }
+
+        function startResizing(e, card, direction) {
+            isResizing = true;
+            selectedCard = card;
+            resizeHandle = direction;
+            
+            resizeStartData = {
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                cardX: card.x,
+                cardY: card.y,
+                cardWidth: card.width,
+                cardHeight: card.height
+            };
+            
+            card.element.classList.add('resizing');
+            e.preventDefault();
+        }
+
+        function handleResize(e) {
+            if (!isResizing || !selectedCard || !resizeStartData) return;
+            
+            const deltaX = e.clientX - resizeStartData.mouseX;
+            const deltaY = e.clientY - resizeStartData.mouseY;
+            
+            let newX = resizeStartData.cardX;
+            let newY = resizeStartData.cardY;
+            let newWidth = resizeStartData.cardWidth;
+            let newHeight = resizeStartData.cardHeight;
+            
+            switch(resizeHandle) {
+                case 'se': newWidth += deltaX; newHeight += deltaY; break;
+                case 'sw': newX += deltaX; newWidth -= deltaX; newHeight += deltaY; break;
+                case 'ne': newY += deltaY; newWidth += deltaX; newHeight -= deltaY; break;
+                case 'nw': newX += deltaX; newY += deltaY; newWidth -= deltaX; newHeight -= deltaY; break;
+                case 'n': newY += deltaY; newHeight -= deltaY; break;
+                case 's': newHeight += deltaY; break;
+                case 'w': newX += deltaX; newWidth -= deltaX; break;
+                case 'e': newWidth += deltaX; break;
+            }
+            
+            const typeInfo = CARD_TYPES[selectedCard.type];
+            if (newWidth < typeInfo.minWidth) {
+                if (resizeHandle.includes('w')) {
+                    newX = resizeStartData.cardX + (resizeStartData.cardWidth - typeInfo.minWidth);
+                }
+                newWidth = typeInfo.minWidth;
+            }
+            if (newHeight < typeInfo.minHeight) {
+                if (resizeHandle.includes('n')) {
+                    newY = resizeStartData.cardY + (resizeStartData.cardHeight - typeInfo.minHeight);
+                }
+                newHeight = typeInfo.minHeight;
+            }
+            
+            selectedCard.x = newX;
+            selectedCard.y = newY;
+            selectedCard.updatePosition(newX, newY);
+            selectedCard.updateSize(newWidth, newHeight);
+        }
+
+        function startDragging(e, card) {
+            isDragging = true;
+            selectedCard = card;
+            dragOffset.x = e.clientX - card.x;
+            dragOffset.y = e.clientY - card.y;
+            card.element.classList.add('selected');
+        }
+
+        function toggleLinkMode() {
+            linkMode = !linkMode;
+            cards.forEach(card => card.updateLinkPoints());
+            
+            const btn = event.target;
+            if (linkMode) {
+                btn.style.background = '#667eea';
+                btn.style.color = 'white';
+            } else {
+                btn.style.background = 'white';
+                btn.style.color = 'black';
+            }
+        }
+
+        function startLinking(e) {
+            linkStart = e.target;
+            
+            const svg = document.getElementById('connections');
+            previewLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            previewLine.classList.add('connection-line', 'preview');
+            svg.appendChild(previewLine);
+        }
+
+        function endLinking() {
+            linkStart = null;
+            if (previewLine) {
+                previewLine.remove();
+                previewLine = null;
+            }
+        }
+
+        function createConnection(fromPoint, toPoint) {
+            const connection = {
+                from: {
+                    card: fromPoint.dataset.card,
+                    position: fromPoint.dataset.position
+                },
+                to: {
+                    card: toPoint.dataset.card,
+                    position: toPoint.dataset.position
+                }
+            };
+            
+            const exists = connections.some(conn => 
+                (conn.from.card === connection.from.card && conn.to.card === connection.to.card) ||
+                (conn.from.card === connection.to.card && conn.to.card === connection.from.card)
+            );
+            
+            if (!exists) {
+                connections.push(connection);
+                updateConnections();
+            }
+        }
+
+        function updateConnections() {
+            const svg = document.getElementById('connections');
+            svg.querySelectorAll('.connection-line:not(.preview)').forEach(line => line.remove());
+            
+            connections.forEach(conn => {
+                const fromCard = document.getElementById(conn.from.card);
+                const toCard = document.getElementById(conn.to.card);
+                
+                if (fromCard && toCard) {
+                    const fromPoint = getPointPosition(fromCard, conn.from.position);
+                    const toPoint = getPointPosition(toCard, conn.to.position);
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.classList.add('connection-line');
+                    
+                    const d = createCurvedPath(fromPoint, toPoint);
+                    path.setAttribute('d', d);
+                    
+                    svg.appendChild(path);
+                }
+            });
+        }
+
+        function getPointPosition(card, position) {
+            const rect = card.getBoundingClientRect();
+            const canvas = document.getElementById('canvas');
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            let x, y;
+            switch(position) {
+                case 'top':
+                    x = rect.left + rect.width / 2 - canvasRect.left + canvas.scrollLeft;
+                    y = rect.top - canvasRect.top + canvas.scrollTop;
+                    break;
+                case 'right':
+                    x = rect.right - canvasRect.left + canvas.scrollLeft;
+                    y = rect.top + rect.height / 2 - canvasRect.top + canvas.scrollTop;
+                    break;
+                case 'bottom':
+                    x = rect.left + rect.width / 2 - canvasRect.left + canvas.scrollLeft;
+                    y = rect.bottom - canvasRect.top + canvas.scrollTop;
+                    break;
+                case 'left':
+                    x = rect.left - canvasRect.left + canvas.scrollLeft;
+                    y = rect.top + rect.height / 2 - canvasRect.top + canvas.scrollTop;
+                    break;
+            }
+            return { x, y };
+        }
+
+        function createCurvedPath(from, to) {
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const dr = Math.sqrt(dx * dx + dy * dy);
+            const curve = dr / 4;
+            
+            return `M ${from.x} ${from.y} Q ${from.x + dx/2} ${from.y + dy/2 + curve} ${to.x} ${to.y}`;
+        }
+
+        function showToolbar(cardId) {
+            const toolbar = document.getElementById(`toolbar-${cardId}`);
+            if (toolbar) toolbar.style.display = 'block';
+        }
+
+        function hideToolbar(cardId) {
+            setTimeout(() => {
+                const toolbar = document.getElementById(`toolbar-${cardId}`);
+                if (toolbar) toolbar.style.display = 'none';
+            }, 200);
+        }
+
+        function formatText(command) {
+            document.execCommand(command, false, null);
+        }
+
+        function insertLink() {
+            const url = prompt('Enter URL:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+        }
+
+        function insertImage() {
+            const url = prompt('Enter image URL:');
+            if (url) {
+                document.execCommand('insertImage', false, url);
+            }
+        }
+
+        function saveBoard() {
+            const boardData = {
+                cards: cards.map(card => card.toJSON()),
+                connections: connections
+            };
+            
+            const dataStr = JSON.stringify(boardData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `node-board-${new Date().getTime()}.json`;
+            link.click();
+        }
+
+        function loadBoard() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    try {
+                        const boardData = JSON.parse(event.target.result);
+                        clearBoard(false);
+                        
+                        boardData.cards.forEach(cardData => {
+                            const card = Card.fromJSON(cardData);
+                            cards.push(card);
+                        });
+                        
+                        connections = boardData.connections || [];
+                        updateConnections();
+                        
+                        if (boardData.cards.length > 0) {
+                            const maxId = Math.max(...boardData.cards.map(c => 
+                                parseInt(c.id.replace('card-', ''))
+                            ));
+                            cardIdCounter = maxId + 1;
+                        }
+                    } catch (error) {
+                        alert('Error loading board: ' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        function clearBoard(confirm = true) {
+            if (confirm && !window.confirm('Clear all cards? This cannot be undone.')) {
+                return;
+            }
+            
+            cards.forEach(card => card.element.remove());
+            cards = [];
+            connections = [];
+            updateConnections();
+            cardIdCounter = 1;
+        }
+
+        function showHelp() {
+            document.getElementById('helpModal').classList.add('active');
+            document.querySelector('.modal-overlay').classList.add('active');
+        }
+
+        function hideHelp() {
+            document.getElementById('helpModal').classList.remove('active');
+            document.querySelector('.modal-overlay').classList.remove('active');
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (isResizing && selectedCard) {
+                handleResize(e);
+                return;
+            }
+            
+            if (isDragging && selectedCard) {
+                const newX = e.clientX - dragOffset.x;
+                const newY = e.clientY - dragOffset.y;
+                selectedCard.updatePosition(newX, newY);
+            }
+            
+            if (linkMode && linkStart && previewLine) {
+                const canvas = document.getElementById('canvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                const fromPoint = getPointPosition(
+                    document.getElementById(linkStart.dataset.card),
+                    linkStart.dataset.position
+                );
+                const toPoint = {
+                    x: e.clientX - canvasRect.left + canvas.scrollLeft,
+                    y: e.clientY - canvasRect.top + canvas.scrollTop
+                };
+                
+                const d = createCurvedPath(fromPoint, toPoint);
+                previewLine.setAttribute('d', d);
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle = null;
+                resizeStartData = null;
+                if (selectedCard) {
+                    selectedCard.element.classList.remove('resizing');
+                    selectedCard = null;
+                }
+                return;
+            }
+            
+            if (isDragging) {
+                isDragging = false;
+                if (selectedCard) {
+                    selectedCard.element.classList.remove('selected');
+                    selectedCard = null;
+                }
+            }
+            
+            if (linkMode && linkStart) {
+                if (e.target.classList.contains('link-point')) {
+                    createConnection(linkStart, e.target);
+                }
+                endLinking();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const welcomeCard = new Card(100, 100, 'richtext');
+            welcomeCard.title = 'Welcome to Node Board!';
+            welcomeCard.data.content = `
+                <h3>🎉 Node Board with Card Types!</h3>
+                <p>Now you can create specialized cards for different types of content:</p>
+                <ul>
+                    <li><strong>Rich Text:</strong> For notes and documentation</li>
+                    <li><strong>Todo Lists:</strong> For task management</li>
+                    <li><strong>Images:</strong> For visual content</li>
+                    <li><strong>Links:</strong> For bookmark collections</li>
+                    <li><strong>Code:</strong> For code snippets</li>
+                    <li><strong>Kanban:</strong> For workflow management</li>
+                </ul>
+                <p>Click the <strong>Add Card</strong> dropdown to explore different card types!</p>
+            `;
+            welcomeCard.element.querySelector('.card-title').value = welcomeCard.title;
+            welcomeCard.element.querySelector('.rich-text').innerHTML = welcomeCard.data.content;
+            cards.push(welcomeCard);
+
+            const todoCard = new Card(500, 100, 'todo');
+            todoCard.title = 'Example Todo List';
+            todoCard.data.todos = [
+                { text: 'Try different card types', completed: false, id: 1 },
+                { text: 'Link cards together', completed: false, id: 2 },
+                { text: 'Save your board', completed: false, id: 3 }
+            ];
+            cards.push(todoCard);
+
+            const codeCard = new Card(100, 400, 'code');
+            codeCard.title = 'Code Snippet Example';
+            codeCard.data.code = `// Example JavaScript function
+function createNodeBoard() {
+    const cards = [];
+    const connections = [];
+    
+    return {
+        addCard: (type) => {
+            const card = new Card(type);
+            cards.push(card);
+            return card;
+        },
+        
+        connectCards: (from, to) => {
+            connections.push({ from, to });
+        }
+    };
+}`;
+            codeCard.data.language = 'javascript';
+            cards.push(codeCard);
+        });
+    </script>
+</body>
+</html>

@@ -1,129 +1,79 @@
 package app
 
 import (
-	"log"
-	"os"
+	"log/slog"
 
+	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/app/server"
-	"github.com/blue-monads/turnix/backend/controller"
 	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/services/database"
+	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/services/xsockd"
-	"github.com/blue-monads/turnix/backend/xtypes/xproject"
-	"github.com/gin-gonic/gin"
-	"github.com/k0kubun/pp"
-	"github.com/rs/zerolog"
 )
 
+var _ xtypes.App = (*App)(nil)
+
 type App struct {
-	db         *database.DB
-	signer     *signer.Signer
-	projects   map[string]*xproject.Defination
-	rootLogger zerolog.Logger
-	controller *controller.RootController
-	server     *server.Server
-	engine     *engine.Engine
+	happ   *HeadLess
+	server *server.Server
 }
 
-type Options struct {
-	DB                 *database.DB
-	Signer             *signer.Signer
-	ProjectBuilders    map[string]xproject.Builder
-	LocalSocket        string
-	DevMode            bool
-	BasePath           string
-	ProjectInstallPath string
-}
+func NewApp(happ *HeadLess) *App {
 
-func New(opts Options) *App {
-
-	rootLogger := zerolog.New(os.Stdout)
-
-	app := &App{
-		db:         opts.DB,
-		signer:     opts.Signer,
-		rootLogger: rootLogger,
-		projects:   make(map[string]*xproject.Defination),
+	hosts := make([]string, len(happ.AppOpts.Hosts))
+	for i, host := range happ.AppOpts.Hosts {
+		hosts[i] = host.Name
 	}
 
-	for pbName, pBuilder := range opts.ProjectBuilders {
-		pp.Println("@buinding_ptype", pbName)
+	return &App{
+		happ: happ,
+		server: server.NewServer(server.Option{
+			Port:        happ.AppOpts.Port,
+			Ctrl:        happ.Controller().(*actions.Controller),
+			Signer:      happ.Signer(),
+			Engine:      happ.Engine().(*engine.Engine),
+			Hosts:       hosts,
+			LocalSocket: happ.AppOpts.SocketFile,
+			SiteName:    "Demo",
+		}),
+	}
+}
 
-		subLogger := rootLogger.With().Str("ptype", pbName).Logger()
+func (a *App) Init() error {
+	return a.happ.Init()
+}
 
-		proj, err := pBuilder(xproject.BuilderOption{
-			App:    app,
-			Logger: subLogger,
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
+func (a *App) Start() error {
 
-		app.projects[pbName] = proj
-
+	err := a.happ.Start()
+	if err != nil {
+		return err
 	}
 
-	e := engine.New(engine.Options{
-		App:                app,
-		Defs:               app.projects,
-		ProjectInstallPath: opts.ProjectInstallPath,
-	})
-
-	app.controller = controller.New(app.db, e)
-
-	app.server = server.New(server.Options{
-		DB:          app.db,
-		Signer:      app.signer,
-		Defs:        app.projects,
-		Controller:  app.controller,
-		LocalSocket: opts.LocalSocket,
-		DevMode:     opts.DevMode,
-		Engine:      e,
-	})
-
-	return app
+	return a.server.Start()
 }
 
-func (a *App) Start(port string) error {
-	return a.server.Start(port)
+func (a *App) Database() datahub.Database {
+	return a.happ.db
 }
 
-func (a *App) Stop() error {
-	return a.db.Close()
+func (a *App) Signer() *signer.Signer {
+	return a.happ.signer
 }
 
-func (a *App) GetDatabase() any {
-	return a.db
+func (a *App) Logger() *slog.Logger {
+	return a.happ.logger
 }
 
-func (a *App) GetEngine() any {
-	return a.engine
+func (a *App) Controller() any {
+	return a.happ.ctrl
 }
 
-func (a *App) GetSockd() xsockd.Sockd {
-	return nil
+func (a *App) Engine() any {
+
+	return a.happ.engine
 }
 
-func (a *App) GetController() any {
-	return a.controller
-}
-
-func (a *App) GetServer() any {
-	return a.server
-}
-
-func (a *App) GetSigner() any {
-	return a.signer
-}
-
-func (a *App) AuthMiddleware(fn xtypes.ApiHandler) gin.HandlerFunc {
-	return a.server.AuthMiddleware(fn)
-}
-
-func (a *App) AsApiAction(name string, fn xtypes.ApiHandler) gin.HandlerFunc {
-	//	return a.server.AsApiAction(name, fn)
-	return nil
-
+func (a *App) Config() any {
+	return a.happ.AppOpts
 }

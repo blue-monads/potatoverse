@@ -4,60 +4,49 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/blue-monads/turnix/backend/distro/climux"
+	"github.com/alecthomas/kong"
 )
 
-func RunCLI() {
-
-	if len(os.Args) == 1 {
-		os.Args = []string{os.Args[0], climux.DefaultCLI}
-	}
-
-	if os.Args[1] == "help" || os.Args[1] == "--help" {
-		PrintHelpText()
-		return
-	}
-
-	if os.Args[1] == "version" || os.Args[1] == "--version" {
-		fmt.Printf("turnix %s", "0.0.1-dev")
-		return
-	}
-
-	clis := climux.GetRegistry()
-	acli, ok := clis[os.Args[1]]
-	if !ok {
-		fmt.Println("not found cli :", os.Args)
-		os.Exit(1)
-		return
-	}
-
-	err := acli.HandleCLI(climux.Context{
-		Args: os.Args[1:],
-		R:    clis,
-	})
-	if err != nil {
-		panic(err)
-	}
+type CLI struct {
+	Server     ServerCmd     `cmd:"" help:"Server management commands."`
+	Package    PackageCmd    `cmd:"" help:"Package management commands."`
+	Operations OperationsCmd `cmd:"" help:"Backup and restore operations."`
+	Dev        DevCmd        `cmd:"" help:"Development utilities."`
+	Extra      ExtraCmd      `cmd:"" help:"Extra commands."`
+	Verbose    bool          `name:"verbose" short:"v" help:"Enable verbose output."`
 }
 
-func PrintHelpText() {
-	clis := climux.GetRegistry()
+// singleton
 
-	fmt.Printf(`Turnix is a platform for apps.
-Usage:
-	
-	turnix <command> [arguments]
+type SingletonCmd struct {
+	Start SingletonStartCmd `cmd:"" help:"Start the singleton."`
+}
 
-The commands are:
-`)
+type SingletonStartCmd struct {
+	Port           int    `name:"port" short:"p" help:"Server port." default:"7777"`
+	PackageOutPath string `name:"package-out-path" short:"pop" help:"Package output path." default:"./.single"`
+}
 
-	for _, v := range clis {
-		fmt.Printf("\t%s  \t\t%s\n", v.Name, v.Help)
+// dev
+
+// extra
+
+func Run() {
+	var cli CLI
+	parser := kong.Must(&cli,
+		kong.Name("potatoverse"),
+		kong.Description("Potatoverse: Platform for apps."),
+		kong.UsageOnError(),
+	)
+
+	ctx, err := parser.Parse(os.Args[1:])
+	if err != nil {
+		parser.FatalIfErrorf(err)
 	}
 
-	fmt.Printf(`	version		print turnix version
-	help  		this help page
-
-Use "turnix <command> help" for more information about a command.
-`)
+	err = ctx.Run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }

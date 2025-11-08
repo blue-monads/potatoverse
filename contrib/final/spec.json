@@ -1,0 +1,288 @@
+{
+    "http": {},
+    "http_api": {
+        "methods": [
+            {
+                "method": "POST",
+                "path": "/api/tasks",
+                "description": "Add a new task to the list",
+                "parameters": [
+                    {
+                        "name": "title",
+                        "description": "Title of the task",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "description",
+                        "description": "Optional description of the task",
+                        "type": "string",
+                        "required": false
+                    },
+                    {
+                        "name": "priority",
+                        "description": "Task priority (low, medium, high)",
+                        "type": "string",
+                        "required": false
+                    }
+                ],
+                "responses": [
+                    {
+                        "code": 200,
+                        "description": "Task created successfully",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "priority": {
+                                    "type": "string"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "method": "DELETE",
+                "path": "/api/tasks/{id}",
+                "description": "Remove a task from the list",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "description": "Task ID to remove",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": [
+                    {
+                        "code": 200,
+                        "description": "Task removed successfully",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "success": {
+                                    "type": "boolean"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "method": "GET",
+                "path": "/api/tasks",
+                "description": "List all tasks",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "description": "Maximum number of tasks to return",
+                        "type": "number",
+                        "required": false
+                    },
+                    {
+                        "name": "status",
+                        "description": "Filter by task status (pending, completed)",
+                        "type": "string",
+                        "required": false
+                    }
+                ],
+                "responses": [
+                    {
+                        "code": 200,
+                        "description": "List of tasks",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "priority": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    },
+                                    "created_at": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    "mcp": {
+        "name": "simple-todo",
+        "version": "1.0.0",
+        "description": "MCP server for Simple TODO application",
+        "tools": [
+            {
+                "name": "add_task",
+                "description": "Add a new task to the todo list",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "Title of the task"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Optional description"
+                        },
+                        "priority": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high"
+                            ],
+                            "description": "Task priority"
+                        }
+                    },
+                    "required": [
+                        "title"
+                    ]
+                }
+            },
+            {
+                "name": "remove_task",
+                "description": "Remove a task from the todo list",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {
+                            "type": "string",
+                            "description": "ID of the task to remove"
+                        }
+                    },
+                    "required": [
+                        "task_id"
+                    ]
+                }
+            },
+            {
+                "name": "list_task",
+                "description": "List all tasks in the todo list",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "completed",
+                                "all"
+                            ],
+                            "description": "Filter tasks by status"
+                        },
+                        "limit": {
+                            "type": "number",
+                            "description": "Maximum number of tasks to return"
+                        }
+                    }
+                }
+            }
+        ],
+        "resources": [
+            {
+                "name": "tasks",
+                "description": "Access to task resources",
+                "uri": "simple-todo://tasks"
+            }
+        ]
+    },
+    "events": [
+        {
+            "name": "task.created",
+            "description": "Emitted when a new task is created",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        {
+            "name": "task.removed",
+            "description": "Emitted when a task is removed",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "string"
+                    },
+                    "removed_at": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        {
+            "name": "task.updated",
+            "description": "Emitted when a task is updated",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "string"
+                    },
+                    "changes": {
+                        "type": "object"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        {
+            "name": "task.completed",
+            "description": "Emitted when a task is marked as completed",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "string"
+                    },
+                    "completed_at": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ]
+}

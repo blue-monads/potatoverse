@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/repr"
-	"github.com/k0kubun/pp"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -16,7 +16,7 @@ func Execute(driver *sql.DB, qstr string) error {
 	_, err := driver.Exec(qstr)
 
 	if err != nil {
-		pp.Println("ERROR =>", err.Error())
+		qq.Println("ERROR =>", err.Error())
 	}
 
 	return err

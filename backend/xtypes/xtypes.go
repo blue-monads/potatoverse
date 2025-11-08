@@ -1,26 +1,19 @@
 package xtypes
 
 import (
-	"github.com/blue-monads/turnix/backend/xtypes/services/xsockd"
+	"log/slog"
 
-	"github.com/gin-gonic/gin"
+	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/signer"
 )
 
-type ApiHandler func(ctx ContextPlus) (any, error)
-
 type App interface {
-	Start(string) error
-	Stop() error
-
-	AuthMiddleware(fn ApiHandler) gin.HandlerFunc
-	AsApiAction(name string, fn ApiHandler) gin.HandlerFunc
-
-	GetDatabase() any
-	GetSockd() xsockd.Sockd
-
-	GetController() any
-	GetServer() any
-	GetSigner() any
-
-	GetEngine() any
+	Init() error
+	Start() error
+	Database() datahub.Database
+	Signer() *signer.Signer
+	Logger() *slog.Logger
+	Controller() any
+	Engine() any
+	Config() any
 }

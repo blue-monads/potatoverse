@@ -1,37 +1,40 @@
 default:
 	just --list
-start_dev_frontend:
+frontend_start_dev:
 	cd frontend && npm run dev
-start_dev_backend:
-	FRONTEND_DEV_SERVER="http://localhost:5173" go run -v cmd/dev/main.go
+backend_start_dev:
+	FRONTEND_DEV_SERVER="http://localhost:7779" go run -v cmd/dev/*.go
+labs_start_dev:
+	go run -v backend/labs/labs.go
 run_tests:
 	cd tmp && rm -rf data.db && go run ../tests/*.go
 
 play:
-	FRONTEND_DEV_SERVER="http://localhost:5173" go run cli/play/play.go
+	FRONTEND_DEV_SERVER="http://localhost:7779" go run cli/play/play.go
 
 build:
 	cd frontend && npm run build
-	go build -v -o tmp/turnix ./main.go
+	go build -v -o ./tmp/potatoverse ./main.go
 
 build_frontend:
 	cd frontend && npm run build
 
 build_backend:
-	go build -v -o tmp/turnix ./main.go
+	go build -v -o tmp/potatoverse ./main.go
 
 copy_binary:
-	cp tmp/turnix ~/go/bin
+	go build -v -o tmp/potatoverse ./main.go
+	cp tmp/potatoverse ~/go/bin
 
 run_cli:
-	cd tmp && FRONTEND_DEV_SERVER="http://localhost:5173"  go run ../main.go 
+	cd tmp && FRONTEND_DEV_SERVER="http://localhost:7779"  go run ../main.go 
 
 
 run_http_server:
 	cd contrib && python3 -m http.server 8080
 
 start_test_server:
-	FRONTEND_DEV_SERVER="http://localhost:5173" TURNIX_DEV_MODE="true" TURNIX_DEV_ABC_SERVER="http://localhost:8080" go run -v cmd/dev/main.go
+	FRONTEND_DEV_SERVER="http://localhost:7779" TURNIX_DEV_MODE="true" TURNIX_DEV_ABC_SERVER="http://localhost:8080" go run -v cmd/dev/main.go
 
 citest:
 	./ci.sh

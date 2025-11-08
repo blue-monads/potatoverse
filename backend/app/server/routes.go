@@ -1,176 +1,198 @@
 package server
 
 import (
+	"embed"
+	_ "embed"
 	"net/http"
-	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 
-func (a *Server) bindRoutes(e *gin.Engine) {
+//go:embed all:static/*
+var StaticFiles embed.FS
 
-	root := e.Group("/z")
+func (a *Server) bindRoutes() {
 
-	root.POST("/auth/signup/direct", a.signUpDirect)
-	root.POST("/auth/signup/invite", a.signUpInvite)
-	root.POST("/auth/login", a.login)
+	root := a.router.Group("/zz")
 
-	a.apiRoutes(root)
+	root.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "pong"})
+	})
+
+	coreApi := root.Group("/api/core")
+
 	a.pages(root)
+	a.extraRoutes(root)
 
-	root.GET("/global.js", func(ctx *gin.Context) {
-		ctx.Data(http.StatusOK, httpx.CtypeJS, []byte(`console.log("global.js")`))
-	})
+	a.userRoutes(coreApi.Group("/user"))
+	a.authRoutes(coreApi.Group("/auth"))
+	a.selfUserRoutes(coreApi.Group("/self"))
+	a.engineRoutes(root, coreApi)
+	a.helpRoutes(root)
 
-	projectRoute := e.Group("/z/project")
+	coreApi.GET("/global.js", a.getGlobalJS)
 
-	a.engine.MountProjectType(projectRoute)
-
-	// this is mostly for serving API requests
-	root.Any("/projects/:ptype", func(ctx *gin.Context) {
-		ptype := ctx.Param("ptype")
-		a.engine.ServeProjectType(ptype, ctx)
-	})
-
-	root.Any("/projects/:ptype/*file", func(ctx *gin.Context) {
-		ptype := ctx.Param("ptype")
-		a.engine.ServeProjectType(ptype, ctx)
-	})
-
-	// this is for serving assets on external app/ptype case
-	root.Any("/p/:ptype", func(ctx *gin.Context) {
-		ptype := ctx.Param("ptype")
-		a.engine.ServeProjectTypeFile(ptype, ctx)
-	})
-
-	root.Any("/p/:ptype/*file", func(ctx *gin.Context) {
-		ptype := ctx.Param("ptype")
-		a.engine.ServeProjectTypeFile(ptype, ctx)
-	})
-
-	e.GET("/ping", a.ping)
-	e.NoRoute(a.noRoute)
-
-}
-
-func (a *Server) apiRoutes(root *gin.RouterGroup) {
-
-	apiv1 := root.Group("/api/v1")
-
-	apiv1.GET("/self", a.accessMiddleware(a.selfInfo))
-	apiv1.GET("/self/change_password", a.accessMiddleware(a.selfChangePassword))
-
-	apiv1.GET("/self/users", a.accessMiddleware(a.selfUsers))
-	apiv1.POST("/self/users", a.accessMiddleware(a.selfAddUser))
-	apiv1.GET("/self/users/:uid", a.accessMiddleware(a.selfGetUser))
-	apiv1.POST("/self/users/:uid", a.accessMiddleware(a.selfUpdateUser))
-	apiv1.DELETE("/self/users/:uid", a.accessMiddleware(a.selfDeleteUser))
-	apiv1.GET("/self/self", a.accessMiddleware(a.getSelfSelf))
-
-	apiv1.GET("/self/messages", a.accessMiddleware(a.listUserMessages))
-
-	// self files
-
-	apiv1.GET("/self/files", a.accessMiddleware(a.listSelfFiles))
-	apiv1.POST("/self/files", a.accessMiddleware(a.addSelfFile))
-	apiv1.PUT("/self/files", a.accessMiddleware(a.addSelfFolder))
-
-	apiv1.GET("/self/files/:id", (a.getSelfFile))
-	apiv1.DELETE("/self/files/:id", a.accessMiddleware(a.removeSelfFile))
-	apiv1.POST("/self/messages/:uid", a.accessMiddleware(a.messageUser))
-
-	apiv1.GET("/self/files/:id/shares", a.accessMiddleware(a.listSelfFileShares))
-	apiv1.POST("/self/files/:id/shares", a.accessMiddleware(a.addSelfFileShare))
-	apiv1.DELETE("/self/files/:id/shares/:id", a.accessMiddleware(a.deleteSelfFileShare))
-
-	apiv1.GET("/file/shared/:file", a.getSharedFile)
-	apiv1.POST("/file/shared/:file", a.accessMiddleware(a.sharedFile))
-	apiv1.DELETE("/file/shared/:file", a.accessMiddleware(a.deleteShareFile))
-
-	apiv1.GET("/file/shortKey/:shortkey", a.GetFileWithShortKey)
-	apiv1.POST("/file/:fid/shortkey", a.accessMiddleware(a.GetFileShortKey))
-
-	// user profile
-	apiv1.GET("/user/:uid", a.accessMiddleware(a.userProfile))
-
-	// project
-
-	apiv1.GET("/project", a.accessMiddleware(a.listProjects))
-	apiv1.POST("/project", a.accessMiddleware(a.addProject))
-	apiv1.POST("/project/:pid", a.accessMiddleware(a.updateProject))
-	apiv1.GET("/project/:pid", a.accessMiddleware(a.getProject))
-	apiv1.DELETE("/project/:pid", a.accessMiddleware(a.removeProject))
-
-	apiv1.POST("/project/:pid/user", a.accessMiddleware(a.inviteUserToPoject))     // invite
-	apiv1.DELETE("/project/:pid/user", a.accessMiddleware(a.removeUserFromPoject)) // remove from project
-
-	apiv1.POST("/project_type_install", a.accessMiddleware(a.installProjectType))
-
-	// project type
-
-	apiv1.GET("/project_types", a.accessMiddleware(a.ListProjectTypes))
-	apiv1.GET("/project_types/:ptype/form", a.accessMiddleware(a.GetProjectTypeForm))
-	apiv1.GET("/project_types/:ptype/reload", a.accessMiddleware(a.GetProjectTypeReload))
-	apiv1.GET("/project_types/:ptype", a.accessMiddleware(a.GetProjectType))
-
-	// project hook
-
-	apiv1.GET("/project/:pid/hook", a.accessMiddleware(a.listProjectHooks))
-	apiv1.POST("/project/:pid/hook", a.accessMiddleware(a.addProjectHook))
-	apiv1.GET("/project/:pid/hook/:id", a.accessMiddleware(a.getProjectHook))
-	apiv1.POST("/project/:pid/hook/:id", a.accessMiddleware(a.updateProjectHook))
-	apiv1.DELETE("/project/:pid/hook/:id", a.accessMiddleware(a.removeProjectHook))
-
-	// project files
-
-	apiv1.GET("/project/:pid/files", a.accessMiddleware(a.listProjectFiles))
-	apiv1.POST("/project/:pid/files", a.accessMiddleware(a.addProjectFile))
-	apiv1.PUT("/project/:pid/files", a.accessMiddleware(a.addProjectFolder))
-
-	apiv1.GET("/project/:pid/files/:id", (a.getProjectFile))
-	apiv1.DELETE("/project/:pid/files/:id", a.accessMiddleware(a.removeProjectFile))
-
-	apiv1.POST("/project/:pid/sqlexec", a.accessMiddleware(a.runProjectSQL))
-	apiv1.POST("/project/:pid/sqlexec2", a.accessMiddleware(a.runProjectSQL2))
-	apiv1.GET("/project/:pid/tables", a.accessMiddleware(a.listProjectTables))
-	apiv1.GET("/project/:pid/tables/:table/columns", a.accessMiddleware(a.listProjectTableColumns))
-	apiv1.POST("/project/:pid/autoquery", a.accessMiddleware(a.autoQueryProjectTable))
-
-	// project plugins
-
-	apiv1.GET("/project/:pid/plugins", a.accessMiddleware(a.listProjectPlugins))
-	apiv1.POST("/project/:pid/plugins", a.accessMiddleware(a.addProjectPlugin))
-	apiv1.DELETE("/project/:pid/plugins/:id", a.accessMiddleware(a.removeProjectPlugin))
-	apiv1.POST("/project/:pid/plugins/:id", a.accessMiddleware(a.updateProjectPlugin))
-	apiv1.GET("/project/:pid/plugins/:id", a.accessMiddleware(a.getProjectPlugin))
-
-}
-
-func (s *Server) noRoute(ctx *gin.Context) {
-
-	if strings.HasPrefix(ctx.Request.URL.Path, "/z/") {
-		pparts := strings.Split(ctx.Request.URL.Path, "/")
-
-		switch pparts[2] {
-		case "portal":
-			ctx.Redirect(http.StatusFound, "/z/pages/portal")
-			return
-		case "auth":
-			ctx.Redirect(http.StatusFound, "/z/pages/auth/login")
-			return
-		default:
-			return
+	root.GET("/static/*files", func(c *gin.Context) {
+		filePath := c.Param("files")
+		if len(filePath) > 0 && filePath[0] == '/' {
+			filePath = filePath[1:]
 		}
-	}
+
+		fullPath := "static/" + filePath
+
+		c.FileFromFS(fullPath, http.FS(StaticFiles))
+	})
 
 }
 
-var pingResponse = []byte(`{ "message": "pong" }`)
+func (a *Server) authRoutes(g *gin.RouterGroup) {
 
-const JsonContentType = "application/json"
+	g.POST("/login", a.login)
+	g.GET("/invite/:token", a.getInviteInfo)
+	g.POST("/invite/:token", a.acceptInvite)
 
-func (a *Server) ping(ctx *gin.Context) {
-	ctx.Writer.WriteHeader(200)
-	ctx.Data(http.StatusOK, JsonContentType, pingResponse)
+}
+
+func (a *Server) userRoutes(g *gin.RouterGroup) {
+	g.GET("/", a.withAccessTokenFn(a.listUsers))
+	g.GET("/:id", a.withAccessTokenFn(a.getUser))
+
+	// User Invites
+	g.GET("/invites", a.withAccessTokenFn(a.listUserInvites))
+	g.GET("/invites/:id", a.withAccessTokenFn(a.getUserInvite))
+	g.POST("/invites", a.withAccessTokenFn(a.addUserInvite))
+	g.PUT("/invites/:id", a.withAccessTokenFn(a.updateUserInvite))
+	g.DELETE("/invites/:id", a.withAccessTokenFn(a.deleteUserInvite))
+	g.POST("/invites/:id/resend", a.withAccessTokenFn(a.resendUserInvite))
+
+	// Create User Directly
+	g.POST("/create", a.withAccessTokenFn(a.createUserDirectly))
+
+	// User Groups
+	g.GET("/groups", a.withAccessTokenFn(a.listUserGroups))
+	g.GET("/groups/:name", a.withAccessTokenFn(a.getUserGroup))
+	g.POST("/groups", a.withAccessTokenFn(a.addUserGroup))
+	g.PUT("/groups/:name", a.withAccessTokenFn(a.updateUserGroup))
+	g.DELETE("/groups/:name", a.withAccessTokenFn(a.deleteUserGroup))
+
+	g.GET("/messages", a.withAccessTokenFn(a.listUserMessages))
+	g.GET("/messages/new", a.withAccessTokenFn(a.queryNewMessages))
+	g.GET("/messages/history", a.withAccessTokenFn(a.queryMessageHistory))
+	g.POST("/messages/read-all", a.withAccessTokenFn(a.setAllMessagesAsRead))
+	g.POST("/messages", a.withAccessTokenFn(a.sendUserMessage))
+	g.GET("/messages/:id", a.withAccessTokenFn(a.getUserMessage))
+	g.PUT("/messages/:id", a.withAccessTokenFn(a.updateUserMessage))
+	g.DELETE("/messages/:id", a.withAccessTokenFn(a.deleteUserMessage))
+	g.POST("/messages/:id/read", a.withAccessTokenFn(a.setMessageAsRead))
+
+}
+
+func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
+	g.GET("/portalData/:portal_type", a.withAccessTokenFn(a.selfUserPortalData))
+	g.GET("/info", a.withAccessTokenFn(a.selfInfo))
+	g.PUT("/bio", a.withAccessTokenFn(a.updateSelfBio))
+}
+
+func (a *Server) extraRoutes(g *gin.RouterGroup) {
+	g.GET("/profileImage/:id/:name", a.userSvgProfileIcon)
+	g.GET("/profileImage/:id", a.userSvgProfileIconById)
+	g.GET("/api/gradients", a.ListGradients)
+}
+
+func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
+
+	spaceFile := a.handleSpaceFile()
+	pluginFile := a.handlePluginFile()
+
+	coreApi.POST("/package/install", a.withAccessTokenFn(a.InstallPackage))
+	coreApi.POST("/package/install/zip", a.withAccessTokenFn(a.InstallPackageZip))
+	coreApi.POST("/package/install/embed", a.withAccessTokenFn(a.InstallPackageEmbed))
+	coreApi.DELETE("/package/:id", a.withAccessTokenFn(a.DeletePackage))
+	coreApi.POST("/package/:id/dev-token", a.withAccessTokenFn(a.GeneratePackageDevToken))
+	coreApi.POST("/package/push", a.PushPackage)
+	coreApi.GET("/package/list", a.withAccessTokenFn(a.ListEPackages))
+	coreApi.GET("/repo/list", a.withAccessTokenFn(a.ListRepos))
+	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
+	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))
+	coreApi.GET("/package/:id/info", a.withAccessTokenFn(a.GetInstalledPackageInfo))
+
+	// Package Version Files API
+	coreApi.GET("/vpackage/:id/files", a.withAccessTokenFn(a.ListPackageFiles))
+	coreApi.GET("/vpackage/:id/files/:fileId", a.withAccessTokenFn(a.GetPackageFile))
+	coreApi.GET("/vpackage/:id/files/:fileId/download", a.withAccessTokenFn(a.DownloadPackageFile))
+	coreApi.DELETE("vpackage/:id/files/:fileId", a.withAccessTokenFn(a.DeletePackageFile))
+	coreApi.POST("/vpackage/:id/files/upload", a.withAccessTokenFn(a.UploadPackageFile))
+
+	// Space KV API
+	coreApi.GET("/space/:install_id/kv", a.withAccessTokenFn(a.ListSpaceKV))
+	coreApi.GET("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.GetSpaceKV))
+	coreApi.POST("/space/:install_id/kv", a.withAccessTokenFn(a.CreateSpaceKV))
+	coreApi.PUT("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.UpdateSpaceKV))
+	coreApi.DELETE("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
+
+	// Space Files API
+	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.ListSpaceFiles))
+	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.GetSpaceFile))
+	coreApi.GET("/space/:install_id/files/:fileId/download", a.withAccessTokenFn(a.DownloadSpaceFile))
+	coreApi.DELETE("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.DeleteSpaceFile))
+	coreApi.POST("/space/:install_id/files/upload", a.withAccessTokenFn(a.UploadSpaceFile))
+	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
+	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
+
+	// Space Capabilities API
+	coreApi.GET("/space/:install_id/capabilities", a.withAccessTokenFn(a.ListSpaceCapabilities))
+	coreApi.GET("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.GetSpaceCapability))
+	coreApi.POST("/space/:install_id/capabilities", a.withAccessTokenFn(a.CreateSpaceCapability))
+	coreApi.PUT("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.UpdateSpaceCapability))
+	coreApi.DELETE("/space/:install_id/capabilities/:capabilityId", a.withAccessTokenFn(a.DeleteSpaceCapability))
+
+	// Space Users API
+	coreApi.GET("/space/:install_id/users", a.withAccessTokenFn(a.ListSpaceUsers))
+	coreApi.GET("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.GetSpaceUser))
+	coreApi.POST("/space/:install_id/users", a.withAccessTokenFn(a.CreateSpaceUser))
+	coreApi.PUT("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.UpdateSpaceUser))
+	coreApi.DELETE("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.DeleteSpaceUser))
+
+	// Event Subscriptions API
+	coreApi.GET("/space/:install_id/events", a.withAccessTokenFn(a.ListEventSubscriptions))
+	coreApi.GET("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.GetEventSubscription))
+	coreApi.POST("/space/:install_id/events", a.withAccessTokenFn(a.CreateEventSubscription))
+	coreApi.PUT("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.UpdateEventSubscription))
+	coreApi.DELETE("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.DeleteEventSubscription))
+
+	// Capability Types API
+	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))
+
+	zg.POST("/file/upload-presigned", a.UploadFileWithPresigned)
+
+	coreApi.GET("/engine/debug", a.handleEngineDebugData)
+	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
+
+	zg.Any("/space/:space_key/*subpath", spaceFile)
+	zg.Any("/plugin/:space_key/:plugin_id/*subpath", pluginFile)
+	zg.Any("/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)
+	zg.Any("/capabilities/:space_key/:capability_name", a.handleCapabilities)
+	zg.Any("/capability-root/:capability_name/*subpath", a.handleCapabilitiesRoot)
+
+	zg.Any("/api/space/:space_key", a.handleSpaceApi)
+	zg.Any("/api/space/:space_key/*subpath", a.handleSpaceApi)
+	zg.Any("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
+	zg.Any("/api/plugin/:space_key/:plugin_id/*subpath", a.handlePluginApi)
+	zg.Any("/api/capabilities/:space_key/:capability_name", a.handleCapabilities)
+	zg.Any("/api/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)
+
+}
+
+func (a *Server) helpRoutes(g *gin.RouterGroup) {
+
+	/*
+		- docs
+		- api_docs
+		- topics
+		- lua_bindings
+		- capabilities
+
+
+	*/
+
 }
