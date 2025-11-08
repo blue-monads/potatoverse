@@ -34,7 +34,11 @@ type PluginRouteIndexItem struct {
 	routeOption      models.PotatoRouteOptions
 }
 
-func (e *Engine) LoadRoutingIndex() error {
+func (e *Engine) LoadRoutingIndex() {
+	e.fullReload <- struct{}{}
+}
+
+func (e *Engine) loadRoutingIndex() error {
 
 	nextRoutingIndex := make(map[string]*SpaceRouteIndexItem)
 
@@ -93,6 +97,17 @@ func (e *Engine) LoadRoutingIndex() error {
 	e.riLock.Lock()
 	e.RoutingIndex = nextRoutingIndex
 	e.riLock.Unlock()
+
+	return nil
+}
+
+func (e *Engine) LoadRoutingIndexForPackages(installedId int64) {
+	e.reloadPackageIds <- installedId
+}
+
+func (e *Engine) loadRoutingIndexForPackages(installedIds ...int64) error {
+
+	// nextPartialIndex := make(map[string]*SpaceRouteIndexItem)
 
 	return nil
 }

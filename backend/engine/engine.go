@@ -33,6 +33,9 @@ type Engine struct {
 	app xtypes.App
 
 	repoHub *RepoHub
+
+	reloadPackageIds chan int64
+	fullReload       chan struct{}
 }
 
 func NewEngine(db datahub.Database, workingFolder string) *Engine {
@@ -50,6 +53,9 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			glock:    sync.RWMutex{},
 			builders: make(map[string]xtypes.CapabilityBuilder),
 		},
+		riLock:           sync.RWMutex{},
+		reloadPackageIds: make(chan int64, 20),
+		fullReload:       make(chan struct{}, 1),
 	}
 
 	e.capabilities.parent = e
@@ -91,8 +97,11 @@ func (e *Engine) Start(app xtypes.App) error {
 	}
 
 	go e.runtime.cleanupExecs()
+	go e.startEloop()
 
-	return e.LoadRoutingIndex()
+	e.LoadRoutingIndex()
+
+	return nil
 }
 
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
