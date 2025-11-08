@@ -47,6 +47,7 @@ type HttpExecution struct {
 }
 
 type GenericExecution struct {
+	Type       string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
 	Context    GenericContext
@@ -54,7 +55,6 @@ type GenericExecution struct {
 
 type GenericContext interface {
 	ListActions() ([]string, error)
-	GetActionMeta(name string) (map[string]any, error)
 	ExecuteAction(name string, params LazyData) (map[string]any, error)
 }
 

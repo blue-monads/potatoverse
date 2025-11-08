@@ -88,15 +88,6 @@ func (gh *CapabilityHub) Methods(spaceId int64, gname string) ([]string, error) 
 	return gs.ListActions()
 }
 
-func (gh *CapabilityHub) GetMeta(spaceId int64, gname, method string) (map[string]any, error) {
-	gs, err := gh.get(gname, spaceId)
-	if err != nil {
-		return nil, err
-	}
-
-	return gs.GetActionMeta(method)
-}
-
 func (gh *CapabilityHub) Execute(spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
 	gs, err := gh.get(gname, spaceId)
 	if err != nil {

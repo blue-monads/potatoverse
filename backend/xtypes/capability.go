@@ -6,7 +6,6 @@ type Capability interface {
 	Name() string
 	Handle(ctx *gin.Context)
 	ListActions() ([]string, error)
-	GetActionMeta(name string) (map[string]any, error)
 	ExecuteAction(name string, params LazyData) (map[string]any, error)
 }
 
