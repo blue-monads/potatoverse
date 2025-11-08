@@ -7,6 +7,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/enforcer"
+	"github.com/blue-monads/turnix/backend/utils/libx/dbutils"
 	"github.com/upper/db/v4"
 )
 
@@ -33,7 +34,11 @@ func (d *LowDB) tableName(table string) string {
 		panic("table name cannot contain '__'")
 	}
 
-	return enforcer.TableName(d.ownerType, d.ownerID, table)
+	tt := enforcer.TableName(d.ownerType, d.ownerID, table)
+
+	// qq.Println("tableName", table, "=>", tt)
+
+	return tt
 
 }
 
@@ -225,9 +230,19 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 		return nil, errors.New("no joins provided")
 	}
 
-	for _, join := range query.Joins {
+	for i := range query.Joins {
+		join := &query.Joins[i]
+		if join.LeftAs == "" {
+			join.LeftAs = join.LeftTable
+		}
+
+		if join.RightAs == "" {
+			join.RightAs = join.RightTable
+		}
+
 		join.LeftTable = d.tableName(join.LeftTable)
 		join.RightTable = d.tableName(join.RightTable)
+
 	}
 
 	firstJoin := query.Joins[0]
@@ -296,6 +311,8 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 		sqlQuery = sqlQuery.OrderBy(query.Order)
 	}
 
+	// qq.Println(sqlQuery.String())
+
 	// Execute query and get rows
 	rows, err := sqlQuery.Query()
 	if err != nil {
@@ -303,32 +320,5 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 	}
 	defer rows.Close()
 
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-	numColumns := len(columns)
-
-	values := make([]any, numColumns)
-	for i := range values {
-		values[i] = new(any)
-	}
-
-	var results []map[string]any
-	for rows.Next() {
-		if err := rows.Scan(values...); err != nil {
-			return nil, err
-		}
-
-		dest := make(map[string]any, numColumns)
-		for i, column := range columns {
-			dest[column] = *(values[i].(*any))
-		}
-		results = append(results, dest)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return results, nil
+	return dbutils.SelectScan(rows)
 }

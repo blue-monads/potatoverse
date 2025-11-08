@@ -6,12 +6,16 @@ import (
 	"testing"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/enforcer"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 // setupTestDB creates an in-memory SQLite database for testing
 func setupTestDB(t *testing.T) (db.Session, func()) {
+	ownerType := "package"
+	ownerID := "test123"
+
 	settings := sqlite.ConnectionURL{
 		Database: "dbtemp.sqlite",
 	}
@@ -21,9 +25,9 @@ func setupTestDB(t *testing.T) (db.Session, func()) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 
-	// Create a test table
+	// Create a test table using the enforcer to get the correct table name
 	driver := sess.Driver().(*sql.DB)
-	_, err = driver.Exec(`
+	createTableSQL := `
 		CREATE TABLE IF NOT EXISTS test_table (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
@@ -31,14 +35,26 @@ func setupTestDB(t *testing.T) (db.Session, func()) {
 			age INTEGER,
 			active INTEGER DEFAULT 1
 		)
-	`)
+	`
+	transformedSQL, err := enforcer.TransformQuery(ownerType, ownerID, createTableSQL)
+	if err != nil {
+		sess.Close()
+		t.Fatalf("Failed to transform SQL: %v", err)
+	}
+	_, err = driver.Exec(transformedSQL)
 	if err != nil {
 		sess.Close()
 		t.Fatalf("Failed to create test table: %v", err)
 	}
 
 	// Ensure table is empty at start
-	_, err = driver.Exec(`DELETE FROM test_table`)
+	deleteSQL := `DELETE FROM test_table`
+	transformedDeleteSQL, err := enforcer.TransformQuery(ownerType, ownerID, deleteSQL)
+	if err != nil {
+		sess.Close()
+		t.Fatalf("Failed to transform delete SQL: %v", err)
+	}
+	_, err = driver.Exec(transformedDeleteSQL)
 	if err != nil {
 		sess.Close()
 		t.Fatalf("Failed to clear test table: %v", err)
@@ -47,7 +63,9 @@ func setupTestDB(t *testing.T) (db.Session, func()) {
 	cleanup := func() {
 		// Clear table before closing
 		driver := sess.Driver().(*sql.DB)
-		driver.Exec(`DELETE FROM test_table`)
+		deleteSQL := `DELETE FROM test_table`
+		transformedDeleteSQL, _ := enforcer.TransformQuery(ownerType, ownerID, deleteSQL)
+		driver.Exec(transformedDeleteSQL)
 		sess.Close()
 
 		os.Remove("dbtemp.sqlite")
@@ -783,7 +801,7 @@ func TestBuildCond_WithDatabaseQuery_SimpleAND(t *testing.T) {
 	})
 
 	// Use the condition in a query
-	collection := sess.Collection("test_table")
+	collection := sess.Collection(enforcer.TableName("package", "test123", "test_table"))
 	var results []map[string]any
 	err = collection.Find(cond).All(&results)
 	if err != nil {
@@ -842,7 +860,7 @@ func TestBuildCond_WithDatabaseQuery_SimpleOR(t *testing.T) {
 	})
 
 	// Use the condition in a query
-	collection := sess.Collection("test_table")
+	collection := sess.Collection(enforcer.TableName("package", "test123", "test_table"))
 	var results []map[string]any
 	err = collection.Find(cond).All(&results)
 	if err != nil {
@@ -904,7 +922,7 @@ func TestBuildCond_WithDatabaseQuery_NestedAND(t *testing.T) {
 	})
 
 	// Use the condition in a query
-	collection := sess.Collection("test_table")
+	collection := sess.Collection(enforcer.TableName("package", "test123", "test_table"))
 	var results []map[string]any
 	err = collection.Find(cond).All(&results)
 	if err != nil {
@@ -983,7 +1001,7 @@ func TestBuildCond_WithDatabaseQuery_ComplexNested(t *testing.T) {
 	})
 
 	// Use the condition in a query
-	collection := sess.Collection("test_table")
+	collection := sess.Collection(enforcer.TableName("package", "test123", "test_table"))
 	var results []map[string]any
 	err = collection.Find(cond).All(&results)
 	if err != nil {
@@ -1061,6 +1079,11 @@ func TestBuildCond_WithComparisonOperators(t *testing.T) {
 	}
 }
 
+var (
+	ownerType = "package"
+	ownerID   = "test123"
+)
+
 // setupTestDBWithJoins creates test tables for join testing
 func setupTestDBWithJoins(t *testing.T) (db.Session, func()) {
 	settings := sqlite.ConnectionURL{
@@ -1072,10 +1095,9 @@ func setupTestDBWithJoins(t *testing.T) (db.Session, func()) {
 		t.Fatalf("Failed to open database: %v", err)
 	}
 
-	driver := sess.Driver().(*sql.DB)
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
-	// Create accounts table
-	_, err = driver.Exec(`
+	err = ldb.RunDDL(`
 		CREATE TABLE IF NOT EXISTS accounts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
@@ -1083,12 +1105,10 @@ func setupTestDBWithJoins(t *testing.T) (db.Session, func()) {
 		)
 	`)
 	if err != nil {
-		sess.Close()
 		t.Fatalf("Failed to create accounts table: %v", err)
 	}
 
-	// Create profiles table
-	_, err = driver.Exec(`
+	err = ldb.RunDDL(`
 		CREATE TABLE IF NOT EXISTS profiles (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			account_id INTEGER,
@@ -1097,12 +1117,10 @@ func setupTestDBWithJoins(t *testing.T) (db.Session, func()) {
 		)
 	`)
 	if err != nil {
-		sess.Close()
 		t.Fatalf("Failed to create profiles table: %v", err)
 	}
 
-	// Create orders table
-	_, err = driver.Exec(`
+	err = ldb.RunDDL(`
 		CREATE TABLE IF NOT EXISTS orders (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			account_id INTEGER,
@@ -1111,20 +1129,10 @@ func setupTestDBWithJoins(t *testing.T) (db.Session, func()) {
 		)
 	`)
 	if err != nil {
-		sess.Close()
 		t.Fatalf("Failed to create orders table: %v", err)
 	}
 
-	// Clear tables
-	_, err = driver.Exec(`DELETE FROM accounts; DELETE FROM profiles; DELETE FROM orders`)
-	if err != nil {
-		sess.Close()
-		t.Fatalf("Failed to clear tables: %v", err)
-	}
-
 	cleanup := func() {
-		driver := sess.Driver().(*sql.DB)
-		driver.Exec(`DELETE FROM accounts; DELETE FROM profiles; DELETE FROM orders`)
 		sess.Close()
 		os.Remove("dbtemp_joins.sqlite")
 	}
@@ -1136,7 +1144,7 @@ func TestFindByQuerySQL_SimpleQuery(t *testing.T) {
 	sess, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert test data
 	_, err := ldb.Insert("test_table", map[string]any{
@@ -1169,7 +1177,7 @@ func TestFindByQuerySQL_SimpleQuery(t *testing.T) {
 	// Actually, let's use accounts table for this test
 	sess2, cleanup2 := setupTestDBWithJoins(t)
 	defer cleanup2()
-	ldb2 := NewLowDB(sess2, "package", "test123")
+	ldb2 := NewLowDB(sess2, ownerType, ownerID)
 
 	accountID, err := ldb2.Insert("accounts", map[string]any{
 		"name":  "Alice",
@@ -1219,7 +1227,7 @@ func TestFindByQuerySQL_WithInnerJoin(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
@@ -1274,7 +1282,7 @@ func TestFindByQuerySQL_WithLeftJoin(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account without profile
 	_, err := ldb.Insert("accounts", map[string]any{
@@ -1343,7 +1351,7 @@ func TestFindByQuerySQL_WithJoinAlias(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
@@ -1393,7 +1401,7 @@ func TestFindByQuerySQL_WithMultipleJoins(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
@@ -1468,7 +1476,7 @@ func TestFindByQuerySQL_WithConditions(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert multiple accounts
 	accountID1, err := ldb.Insert("accounts", map[string]any{
@@ -1538,7 +1546,7 @@ func TestFindByQuerySQL_WithRightJoin(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert profile without account (orphaned)
 	_, err := ldb.Insert("profiles", map[string]any{
@@ -1595,7 +1603,7 @@ func TestFindByQuerySQL_EmptyResult(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert an account first
 	_, err := ldb.Insert("accounts", map[string]any{
@@ -1634,7 +1642,7 @@ func TestFindByQuerySQL_NoJoinsNoConditions(t *testing.T) {
 	sess, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert test data
 	_, err := ldb.Insert("test_table", map[string]any{
@@ -1659,7 +1667,7 @@ func TestFindByQuerySQL_NoJoinsNoConditions(t *testing.T) {
 	// Use accounts/profiles for proper join
 	sess2, cleanup2 := setupTestDBWithJoins(t)
 	defer cleanup2()
-	ldb2 := NewLowDB(sess2, "package", "test123")
+	ldb2 := NewLowDB(sess2, ownerType, ownerID)
 
 	_, err = ldb2.Insert("accounts", map[string]any{
 		"name":  "Test1",
@@ -1701,7 +1709,7 @@ func TestFindByQuerySQL_WithOrder(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert accounts
 	accountID1, err := ldb.Insert("accounts", map[string]any{
@@ -1770,7 +1778,7 @@ func TestFindByQuerySQL_WithFields(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
@@ -1830,7 +1838,7 @@ func TestFindByQuerySQL_WithTableAliases(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
@@ -1888,7 +1896,7 @@ func TestFindByQuerySQL_WithLeftAliasOnly(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
@@ -1942,7 +1950,7 @@ func TestFindByQuerySQL_WithRightAliasOnly(t *testing.T) {
 	sess, cleanup := setupTestDBWithJoins(t)
 	defer cleanup()
 
-	ldb := NewLowDB(sess, "package", "test123")
+	ldb := NewLowDB(sess, ownerType, ownerID)
 
 	// Insert account
 	accountID, err := ldb.Insert("accounts", map[string]any{
