@@ -1,8 +1,12 @@
-package userws
+package sockethub
 
 import "net"
 
-type IUserWs interface {
+type SocketHub interface {
+	GetUserSocket() UserSocket
+}
+
+type UserSocket interface {
 	SendUser(userId int64, message string) error
 	BroadcastGroup(groupName string, message string) error
 	BroadcastAll(message string) error
