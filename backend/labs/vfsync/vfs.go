@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -212,13 +213,13 @@ func (tf *VFSyncFile) Sync(flag sqlite3vfs.SyncType) error {
 func (tf *VFSyncFile) FileSize() (int64, error) {
 	qq.Println("FileSize")
 
-	cur, _ := tf.f.Seek(0, os.SEEK_CUR)
-	end, err := tf.f.Seek(0, os.SEEK_END)
+	cur, _ := tf.f.Seek(0, io.SeekCurrent)
+	end, err := tf.f.Seek(0, io.SeekEnd)
 	if err != nil {
 		return 0, err
 	}
 
-	tf.f.Seek(cur, os.SEEK_SET)
+	tf.f.Seek(cur, io.SeekStart)
 	return end, nil
 }
 
