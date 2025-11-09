@@ -1,12 +1,16 @@
 package xtypes
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 type Capability interface {
 	Name() string
 	Handle(ctx *gin.Context)
 	ListActions() ([]string, error)
-	ExecuteAction(name string, params LazyData) (map[string]any, error)
+	Execute(name string, params LazyData) (map[string]any, error)
+	Reload(opts LazyData) error
+	Close() error
 }
 
 type CapabilityBuilderFactory struct {
@@ -27,7 +31,7 @@ type CapabilityOptionField struct {
 }
 
 type CapabilityBuilder interface {
-	Build(spaceId int64) (Capability, error)
+	Build(spaceId int64, opts LazyData) (Capability, error)
 	Serve(ctx *gin.Context)
 }
 

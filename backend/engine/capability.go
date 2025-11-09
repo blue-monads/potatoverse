@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/blue-monads/turnix/backend/engine/capabilities/ping"
 	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
@@ -49,8 +50,24 @@ func (gh *CapabilityHub) Init() error {
 	return nil
 }
 
-func (gh *CapabilityHub) Handle(spaceId int64, name string, ctx *gin.Context) {
-	gs, err := gh.get(name, spaceId)
+func (gh *CapabilityHub) Reload(installId int64, spaceId int64, name string) error {
+	cap, err := gh.parent.db.GetSpaceOps().GetSpaceCapability(installId, name)
+	if err != nil {
+		return err
+	}
+
+	gg, err := gh.get(name, installId, spaceId)
+	if err != nil {
+		return err
+	}
+
+	opts := xtypes.LazyDataBytes(kosher.Byte(cap.Options))
+
+	return gg.Reload(opts)
+}
+
+func (gh *CapabilityHub) Handle(installId, spaceId int64, name string, ctx *gin.Context) {
+	gs, err := gh.get(name, installId, spaceId)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
@@ -79,8 +96,8 @@ func (gh *CapabilityHub) List(spaceId int64) ([]string, error) {
 	return keys, nil
 }
 
-func (gh *CapabilityHub) Methods(spaceId int64, gname string) ([]string, error) {
-	gs, err := gh.get(gname, spaceId)
+func (gh *CapabilityHub) Methods(installId, spaceId int64, gname string) ([]string, error) {
+	gs, err := gh.get(gname, installId, spaceId)
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +105,13 @@ func (gh *CapabilityHub) Methods(spaceId int64, gname string) ([]string, error) 
 	return gs.ListActions()
 }
 
-func (gh *CapabilityHub) Execute(spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
-	gs, err := gh.get(gname, spaceId)
+func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
+	gs, err := gh.get(gname, installId, spaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gs.ExecuteAction(method, params)
+	return gs.Execute(method, params)
 }
 
 func (gh *CapabilityHub) Definations() []CapabilityDefination {
@@ -121,7 +138,7 @@ type CapabilityDefination struct {
 
 // private
 
-func (gh *CapabilityHub) get(name string, spaceId int64) (xtypes.Capability, error) {
+func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capability, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.RLock()
@@ -134,7 +151,14 @@ func (gh *CapabilityHub) get(name string, spaceId int64) (xtypes.Capability, err
 			return nil, errors.New("capability builder not found")
 		}
 
-		instance, err := gbFactory.Build(spaceId)
+		cap, err := gh.parent.db.GetSpaceOps().GetSpaceCapability(installId, name)
+		if err != nil {
+			return nil, err
+		}
+
+		opts := xtypes.LazyDataBytes(kosher.Byte(cap.Options))
+
+		instance, err := gbFactory.Build(spaceId, opts)
 		if err != nil {
 			return nil, err
 		}

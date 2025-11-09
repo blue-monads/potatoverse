@@ -159,7 +159,7 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 		return
 	}
 
-	e.capabilities.Handle(spaceId, capabilityName, ctx)
+	e.capabilities.Handle(index.installedId, spaceId, capabilityName, ctx)
 
 }
 

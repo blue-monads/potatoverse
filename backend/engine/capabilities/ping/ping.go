@@ -29,7 +29,7 @@ type PingBuilder struct {
 	app xtypes.App
 }
 
-func (b *PingBuilder) Build(spaceId int64) (xtypes.Capability, error) {
+func (b *PingBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
 	return &PingCapability{
 		app:     b.app,
 		spaceId: spaceId,
@@ -46,6 +46,14 @@ func (b *PingBuilder) Serve(ctx *gin.Context) {
 type PingCapability struct {
 	app     xtypes.App
 	spaceId int64
+}
+
+func (p *PingCapability) Reload(opts xtypes.LazyData) error {
+	return nil
+}
+
+func (p *PingCapability) Close() error {
+	return nil
 }
 
 func (p *PingCapability) Name() string {
@@ -75,7 +83,7 @@ func (p *PingCapability) GetActionMeta(name string) (map[string]any, error) {
 	return nil, nil
 }
 
-func (p *PingCapability) ExecuteAction(name string, params xtypes.LazyData) (map[string]any, error) {
+func (p *PingCapability) Execute(name string, params xtypes.LazyData) (map[string]any, error) {
 	if name == "ping" {
 		return map[string]any{
 			"result":   "pong",
