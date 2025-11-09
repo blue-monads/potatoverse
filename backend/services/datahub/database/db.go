@@ -11,6 +11,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	fileops "github.com/blue-monads/turnix/backend/services/datahub/database/file"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/global"
+	"github.com/blue-monads/turnix/backend/services/datahub/database/low"
 	ppackage "github.com/blue-monads/turnix/backend/services/datahub/database/ppackage"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/space"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/user"
@@ -214,4 +215,8 @@ func (db *DB) GetFileOps() datahub.FileOps {
 
 func (db *DB) GetPackageFileOps() datahub.FileOps {
 	return db.packageFileOps
+}
+
+func (db *DB) GetLowDBOps(ownerType string, ownerID string) datahub.DBLowOps {
+	return low.NewLowDB(db.sess, ownerType, ownerID)
 }

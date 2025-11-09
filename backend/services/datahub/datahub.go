@@ -17,6 +17,9 @@ type Database interface {
 	GetPackageInstallOps() PackageInstallOps
 	GetFileOps() FileOps
 	GetPackageFileOps() FileOps
+
+	// ownerType: P -> Package, C -> Capability
+	GetLowDBOps(ownerType string, ownerID string) DBLowOps
 }
 
 type Core interface {
@@ -235,4 +238,7 @@ type DBLowOps interface {
 	FindAllByQuery(query *FindQuery) ([]map[string]any, error)
 
 	FindByJoin(query *FindByJoin) ([]map[string]any, error)
+
+	ListTables() ([]string, error)
+	ListTableColumns(table string) ([]map[string]any, error)
 }

@@ -3,6 +3,7 @@ package low
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
@@ -318,6 +319,50 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
+	return dbutils.SelectScan(rows)
+}
+
+func (d *LowDB) ListTables() ([]string, error) {
+
+	pattern := enforcer.TableNamePattern(d.ownerType, d.ownerID)
+
+	query := d.sess.SQL().
+		Select("name").
+		From("sqlite_master").
+		Where(db.Cond{
+			"type": "table",
+			"name": db.Like(pattern),
+		})
+
+	rows, err := query.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results, err := dbutils.SelectScan(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	tableNames := make([]string, len(results))
+	for i, result := range results {
+		tableNames[i] = result["name"].(string)
+	}
+
+	return tableNames, nil
+}
+
+func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {
+	finalTableName := d.tableName(table)
+	rawquery := fmt.Sprintf(`SELECT * FROM pragma_table_info('%s')`, finalTableName)
+	rows, err := d.sess.SQL().Query(rawquery)
+	if err != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
 
 	return dbutils.SelectScan(rows)
