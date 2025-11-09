@@ -14,10 +14,11 @@ type Capability interface {
 }
 
 type CapabilityBuilderFactory struct {
-	Builder      func(app App) (CapabilityBuilder, error)
 	Name         string
 	Icon         string
 	OptionFields []CapabilityOptionField
+
+	Builder func(app App) (CapabilityBuilder, error)
 }
 
 type CapabilityOptionField struct {
