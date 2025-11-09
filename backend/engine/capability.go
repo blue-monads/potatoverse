@@ -177,16 +177,3 @@ func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capa
 
 	return gs, nil
 }
-
-/*
-
-CapabilityResolver
-
--- user group
--- system
--- install
-
-
-
-
-*/

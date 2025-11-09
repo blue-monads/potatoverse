@@ -21,13 +21,14 @@ type CapabilityBuilderFactory struct {
 }
 
 type CapabilityOptionField struct {
-	Name        string   `json:"name"`
-	Key         string   `json:"key"`
-	Description string   `json:"description"`
-	Type        string   `json:"type"` // text, number, date, api_key, boolean, select, multi_select, textarea
-	Default     string   `json:"default"`
-	Options     []string `json:"options"`
-	Required    bool     `json:"required"`
+	Name        string `json:"name"`
+	Key         string `json:"key"`
+	Description string `json:"description"`
+	// text, number, date, api_key, boolean, select, multi_select, textarea
+	Type     string   `json:"type"`
+	Default  string   `json:"default"`
+	Options  []string `json:"options"`
+	Required bool     `json:"required"`
 }
 
 type CapabilityBuilder interface {
