@@ -1,4 +1,4 @@
 
-# MCP discoverable docs
-
-mcp-dd
+# MCP discoverable docs (mcp-dd)
+- browse
+- read
