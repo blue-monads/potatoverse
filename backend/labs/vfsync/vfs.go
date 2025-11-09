@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -104,17 +106,30 @@ func (vfs *VFSync) Delete(name string, dirSync bool) error {
 
 	var fname string
 	if filepath.IsAbs(name) {
+		qq.Println("Delete/0", name)
 		fname = name
 	} else {
+		qq.Println("Delete/1", vfs.baseDir, name)
 		fname = filepath.Join(vfs.baseDir, name)
 	}
 	if !vfs.isPathSafe(fname) {
+		qq.Println("Delete/2", fname)
 		return errors.New("illegal path")
 	}
+
+	qq.Println("Delete/3", fname)
 	//return os.Remove(fname)
 	// rename the file to .deleted
-	os.Rename(fname, fname+".deleted")
 
+	randID := rand.Intn(1000000)
+	deletedFile := fmt.Sprintf("%s.%d.deleted", fname, randID)
+	err := os.Rename(fname, deletedFile)
+	if err != nil {
+		qq.Println("Delete/4", err)
+		return err
+	}
+
+	qq.Println("Delete/5", deletedFile)
 	return nil
 }
 
