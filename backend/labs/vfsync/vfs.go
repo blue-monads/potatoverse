@@ -89,6 +89,11 @@ func (vfs *VFSync) Open(name string, flags sqlite3vfs.OpenFlag) (sqlite3vfs.File
 	if flags&sqlite3vfs.OpenReadWrite != 0 {
 		fileFlags |= os.O_RDWR
 	}
+
+	if flags&sqlite3vfs.OpenWAL != 0 {
+		fileFlags |= os.O_APPEND
+	}
+
 	if fileFlags == 0 {
 		fileFlags = os.O_RDWR
 	}
@@ -257,5 +262,39 @@ func (tf *VFSyncFile) SectorSize() int64 {
 
 func (tf *VFSyncFile) DeviceCharacteristics() sqlite3vfs.DeviceCharacteristic {
 	qq.Println("DeviceCharacteristics")
+	// Use DefaultDeviceCharacteristics for a reasonable set of capabilities
+	// that work on most modern filesystems (ext4, xfs, APFS, etc.)
+	// This includes:
+	//   - Atomic writes up to 4KB (IocapAtomic4K, IocapAtomic2K, IocapAtomic1K, IocapAtomic512)
+	//   - Safe append (IocapSafeAppend)
+	//   - Power-safe overwrites (IocapPowersafeOverwrite)
+	// return sqlite3vfs.DefaultDeviceCharacteristics()
 	return 0
 }
+
+/*
+
+func (tf *VFSyncFile) ShmMap(iPg int, pgsz int, isWrite bool) ([]byte, error) {
+	qq.Println("ShmMap", iPg, pgsz, isWrite)
+	// Return NotFoundError to indicate shared memory is not supported
+	return nil, sqlite3vfs.NotFoundError
+}
+
+func (tf *VFSyncFile) ShmLock(offset int, n int, flags sqlite3vfs.ShmLockFlag) error {
+	qq.Println("ShmLock", offset, n, flags)
+	// Return NotFoundError to indicate shared memory is not supported
+	return sqlite3vfs.NotFoundError
+}
+
+func (tf *VFSyncFile) ShmBarrier() {
+	qq.Println("ShmBarrier")
+	// No-op for files that don't support shared memory
+}
+
+func (tf *VFSyncFile) ShmUnmap(deleteFlag bool) error {
+	qq.Println("ShmUnmap", deleteFlag)
+	// Return NotFoundError to indicate shared memory is not supported
+	return sqlite3vfs.NotFoundError
+}
+
+*/

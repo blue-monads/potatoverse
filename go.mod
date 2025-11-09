@@ -24,6 +24,8 @@ require (
 	golang.org/x/crypto v0.25.0
 )
 
+// replace github.com/psanford/sqlite3vfs => ../sqlite3vfs
+
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
