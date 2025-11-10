@@ -1,6 +1,6 @@
 
 function get_tasks(ctx)
-    local kv = require("kv")
+    local kv = require("pkv")
     local req = ctx.request()
 
     local data, err = kv.query({
@@ -26,7 +26,7 @@ function get_tasks(ctx)
 end
 
 function add_task(ctx)
-    local kv = require("kv")
+    local kv = require("pkv")
     local req = ctx.request()
     
     -- Parse request body
@@ -65,7 +65,7 @@ function add_task(ctx)
 end
 
 function delete_task(ctx)
-    local kv = require("kv")
+    local kv = require("pkv")
     local req = ctx.request()
     local path = ctx.param("subpath")
     
