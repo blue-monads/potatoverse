@@ -117,7 +117,7 @@ type TSpace struct {
 
 func (d *SpaceOperations) ListThirdPartySpaces(userId int64, spaceType string) ([]dbmodels.Space, error) {
 	cond := db.Cond{
-		"userId": userId,
+		"user_id": userId,
 	}
 
 	projs := make([]TSpace, 0)
@@ -141,8 +141,7 @@ func (d *SpaceOperations) ListThirdPartySpaces(userId int64, spaceType string) (
 	datas := make([]dbmodels.Space, 0, len(projs))
 
 	err = d.spaceTable().Find(db.Cond{
-		"userId": userId,
-		"id IN":  projIds,
+		"id IN": projIds,
 	}).All(&datas)
 
 	if err != nil {
