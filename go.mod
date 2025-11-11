@@ -12,7 +12,6 @@ require (
 	github.com/hako/branca v0.0.0-20200807062402-6052ac720505
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/k0kubun/pp v3.0.1+incompatible
-	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/ncruces/go-sqlite3 v0.30.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -54,6 +53,7 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect

@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
