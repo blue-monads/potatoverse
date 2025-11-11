@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS MQEvents (
   payload BLOB NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
   status TEXT NOT NULL DEFAULT 'pending', -- new, scheduled, processed
-  targets JSON NOT NULL DEFAULT '[]',
   extrameta JSON NOT NULL DEFAULT '{}'
 );
 
