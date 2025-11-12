@@ -14,6 +14,10 @@ func Mmain1() {
 }
 
 func main() {
+	WebdavServer()
+}
+
+func Mmain2() {
 
 	buddyFs, err := buddyfs.NewBuddyFs("./tmp/buddyfs")
 	if err != nil {
