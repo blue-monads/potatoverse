@@ -345,6 +345,16 @@ func (d *SpaceOperations) RemoveSpaceUser(installId int64, id int64) error {
 
 // Event Subscriptions
 
+func (d *SpaceOperations) QueryAllEventSubscriptions() ([]dbmodels.EventSubscriptionLite, error) {
+	table := d.eventSubscriptionTable()
+	datas := make([]dbmodels.EventSubscriptionLite, 0)
+	err := table.Find().All(&datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
+}
+
 func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error) {
 	table := d.eventSubscriptionTable()
 	datas := make([]dbmodels.EventSubscription, 0)

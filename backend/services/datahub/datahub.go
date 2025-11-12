@@ -147,6 +147,8 @@ type SpaceOps interface {
 	RemoveSpaceUser(installId int64, id int64) error
 
 	// Event Subscriptions
+
+	QueryAllEventSubscriptions() ([]dbmodels.EventSubscriptionLite, error)
 	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error)
 	AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error)
 	GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error)
@@ -241,4 +243,17 @@ type DBLowOps interface {
 
 	ListTables() ([]string, error)
 	ListTableColumns(table string) ([]map[string]any, error)
+}
+
+type MQSynk interface {
+	AddEvent(installId int64, name string, payload []byte) (int64, error)
+	GetEvent(id int64) (*dbmodels.MQEvent, error)
+	UpdateEvent(id int64, data map[string]any) error
+
+	QueryNewEvents() ([]int64, error)
+	CreateEventTargets(eventId int64) ([]int64, error)
+	QueryNewEventTargets() ([]dbmodels.MQEventTarget, error)
+	QueryDelayExpiredTargets() ([]dbmodels.MQEventTarget, error)
+	QueryEventTargetsByEventId(eventId int64) ([]dbmodels.MQEventTarget, error)
+	UpdateEventTarget(id int64, data map[string]any) error
 }
