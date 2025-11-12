@@ -39,7 +39,7 @@ func (e *EventHub) rootEventWatcher() {
 			qq.Println("@rootEventWatcher/QueryNewEventTargets/error", err)
 		} else {
 			for _, target := range targets {
-				e.eventTargetProcessChan <- target.ID
+				e.eventTargetProcessChan <- target
 			}
 		}
 	}
@@ -61,6 +61,10 @@ func (e *EventHub) rootEventWatcher() {
 
 func (e *EventHub) eventProcessLoop() {
 	for eventId := range e.eventProcessChan {
+		if eventId == 0 {
+			continue
+		}
+
 		evt, err := e.sink.GetEvent(eventId)
 		if err != nil {
 			qq.Println("@eventProcessLoop/GetEvent/error", err)
@@ -97,6 +101,10 @@ func (e *EventHub) eventProcessLoop() {
 func (e *EventHub) targetProcessLoop() {
 
 	for targetId := range e.eventTargetProcessChan {
+		if targetId == 0 {
+			continue
+		}
+
 		err := e.targetProcessor(targetId)
 		if err != nil {
 			qq.Println("@targetProcessLoop/targetProcessor/error", err)

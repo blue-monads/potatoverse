@@ -252,8 +252,13 @@ type MQSynk interface {
 
 	QueryNewEvents() ([]int64, error)
 	CreateEventTargets(eventId int64) ([]int64, error)
-	QueryNewEventTargets() ([]dbmodels.MQEventTarget, error)
-	QueryDelayExpiredTargets() ([]dbmodels.MQEventTarget, error)
-	QueryEventTargetsByEventId(eventId int64) ([]dbmodels.MQEventTarget, error)
+	QueryNewEventTargets() ([]int64, error)
+	QueryDelayExpiredTargets() ([]int64, error)
+	QueryEventTargetsByEventId(eventId int64) ([]int64, error)
 	UpdateEventTarget(id int64, data map[string]any) error
+
+	StartTargetProcess(id int64) (*dbmodels.MQEventTarget, error)
+	DeleteTargetProcess(id int64) error
+	CompleteTargetProcess(id int64) error
+	FailTargetProcess(id int64, error string) error
 }
