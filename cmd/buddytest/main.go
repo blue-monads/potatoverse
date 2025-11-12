@@ -8,6 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func Mmain1() {
+	RunFtpServer()
+
+}
+
 func main() {
 
 	buddyFs, err := buddyfs.NewBuddyFs("./tmp/buddyfs")
@@ -19,7 +24,7 @@ func main() {
 
 	buddyFs.Mount(engine.Group("/buddyfs"))
 
-	go buddyClientRun()
+	go BetterFtpServer()
 
 	engine.Run(":8666")
 
