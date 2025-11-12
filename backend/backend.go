@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path"
@@ -19,7 +18,11 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	logger := slog.Default()
 
-	db, err := database.NewDB(fmt.Sprintf("%s/data.db", options.WorkingDir), logger)
+	maindbDir := path.Join(options.WorkingDir, "maindb")
+
+	os.MkdirAll(maindbDir, 0755)
+
+	db, err := database.NewDB(path.Join(maindbDir, "data.sqlite"), logger)
 	if err != nil {
 		logger.Error("Failed to initialize database", "err", err)
 		return nil, err
