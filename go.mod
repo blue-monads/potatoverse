@@ -6,8 +6,6 @@ require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/alecthomas/repr v0.5.1
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
-	github.com/emersion/go-webdav v0.7.0
-	github.com/fclairamb/ftpserverlib v0.27.0
 	github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gobwas/ws v1.4.0
@@ -19,16 +17,13 @@ require (
 	github.com/ncruces/go-sqlite3 v0.30.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml/v2 v2.2.2
-	github.com/pluveto/flydav v0.2.56
 	github.com/psanford/sqlite3vfs v0.0.0-20240315230605-24e1d98cf361
 	github.com/rqlite/sql v0.0.0-20250623131620-453fa49cad04
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
-	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.15.0
 	github.com/upper/db/v4 v4.7.0
 	github.com/yuin/gopher-lua v1.1.1
 	github.com/ztrue/tracerr v0.4.0
-	goftp.io/server/v2 v2.0.2
 	golang.org/x/crypto v0.43.0
 	golang.org/x/net v0.45.0
 )
@@ -45,7 +40,6 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/eknkc/basex v1.0.0 // indirect
-	github.com/fclairamb/go-log v0.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -67,6 +61,7 @@ require (
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tetratelabs/wazero v1.10.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
