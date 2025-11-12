@@ -29,6 +29,29 @@ type BuddyFs struct {
 	mu    sync.Mutex
 }
 
+func (b *BuddyFs) Mount(rt *gin.RouterGroup) {
+
+	rt.POST("/create", Middleware(b.Create))
+	rt.POST("/mkdir", Middleware(b.Mkdir))
+	rt.POST("/mkdirall", Middleware(b.MkdirAll))
+	rt.POST("/open", Middleware(b.Open))
+	rt.POST("/openfile", Middleware(b.OpenFile))
+	rt.DELETE("/remove", Middleware(b.Remove))
+	rt.DELETE("/removeall", Middleware(b.RemoveAll))
+	rt.POST("/rename", Middleware(b.Rename))
+	rt.GET("/stat", Middleware(b.Stat))
+	rt.PUT("/chmod", Middleware(b.Chmod))
+	rt.PUT("/chown", Middleware(b.Chown))
+	rt.PUT("/chtimes", Middleware(b.Chtimes))
+
+}
+
+func Middleware(h func(basePath string, ctx *gin.Context)) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		h("fixme", ctx)
+	}
+}
+
 func (b *BuddyFs) Create(basePath string, ctx *gin.Context) {
 	name := ctx.Query("name")
 	if name == "" {
@@ -232,11 +255,11 @@ func (b *BuddyFs) Rename(basePath string, ctx *gin.Context) {
 }
 
 type BuddyFsFileInfo struct {
-	Name    string
-	Size    int64
-	Mode    int64
-	ModTime time.Time
-	IsDir   bool
+	BaseName  string    `json:"Name"`
+	FileSize  int64     `json:"Size"`
+	FileMode  int64     `json:"Mode"`
+	Modified  time.Time `json:"ModTime"`
+	Directory bool      `json:"IsDir"`
 }
 
 func (b *BuddyFs) Stat(basePath string, ctx *gin.Context) {
@@ -253,11 +276,11 @@ func (b *BuddyFs) Stat(basePath string, ctx *gin.Context) {
 	}
 
 	bfi := &BuddyFsFileInfo{
-		Name:    fi.Name(),
-		Size:    fi.Size(),
-		Mode:    int64(fi.Mode()),
-		ModTime: fi.ModTime(),
-		IsDir:   fi.IsDir(),
+		BaseName:  fi.Name(),
+		FileSize:  fi.Size(),
+		FileMode:  int64(fi.Mode()),
+		Modified:  fi.ModTime(),
+		Directory: fi.IsDir(),
 	}
 
 	httpx.WriteJSON(ctx, bfi, nil)

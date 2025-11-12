@@ -69,11 +69,11 @@ func (b *BuddyFs) Readdir(ctx *gin.Context) {
 	rFiles := make([]BuddyFsFileInfo, len(files))
 	for i, file := range files {
 		rFiles[i] = BuddyFsFileInfo{
-			Name:    file.Name(),
-			Size:    file.Size(),
-			Mode:    int64(file.Mode()),
-			ModTime: file.ModTime(),
-			IsDir:   file.IsDir(),
+			BaseName:  file.Name(),
+			FileSize:  file.Size(),
+			FileMode:  int64(file.Mode()),
+			Modified:  file.ModTime(),
+			Directory: file.IsDir(),
 		}
 	}
 
@@ -110,11 +110,11 @@ func (b *BuddyFs) FileStat(ctx *gin.Context) {
 	}
 
 	httpx.WriteJSON(ctx, BuddyFsFileInfo{
-		Name:    fi.Name(),
-		Size:    fi.Size(),
-		Mode:    int64(fi.Mode()),
-		ModTime: fi.ModTime(),
-		IsDir:   fi.IsDir(),
+		BaseName:  fi.Name(),
+		FileSize:  fi.Size(),
+		FileMode:  int64(fi.Mode()),
+		Modified:  fi.ModTime(),
+		Directory: fi.IsDir(),
 	}, nil)
 }
 
