@@ -83,7 +83,26 @@ func (i *BuddyFsFileInfo) Sys() interface{} {
 // File system operations
 
 // Create creates a new file and returns a file handle
+
+func (c *BuddyFsClient) Ping() error {
+	req, err := http.NewRequest("POST", c.baseUrl+"/ping", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return c.parseError(resp)
+	}
+	return nil
+}
+
 func (c *BuddyFsClient) Create(name string) (afero.File, error) {
+
 	req, err := http.NewRequest("POST", c.baseUrl+"/create", nil)
 	if err != nil {
 		return nil, err
@@ -447,7 +466,7 @@ func (h *OpenFileHandle) Name() string {
 	}
 
 	// Fallback to server lookup. We deliberately ignore errors to comply with the afero.File contract.
-	req, err := http.NewRequest("GET", h.parent.baseUrl+"/name", nil)
+	req, err := http.NewRequest("GET", h.parent.baseUrl+"/file/name", nil)
 	if err != nil {
 		return ""
 	}
@@ -483,7 +502,7 @@ func (h *OpenFileHandle) Readdir(count int) ([]os.FileInfo, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", h.parent.baseUrl+"/readdir", nil)
+	req, err := http.NewRequest("GET", h.parent.baseUrl+"/file/readdir", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +543,7 @@ func (h *OpenFileHandle) Readdirnames(n int) ([]string, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", h.parent.baseUrl+"/readdirnames", nil)
+	req, err := http.NewRequest("GET", h.parent.baseUrl+"/file/readdirnames", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -560,7 +579,7 @@ func (h *OpenFileHandle) Stat() (os.FileInfo, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", h.parent.baseUrl+"/filestat", nil)
+	req, err := http.NewRequest("GET", h.parent.baseUrl+"/file/stat", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -593,7 +612,7 @@ func (h *OpenFileHandle) Sync() error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/sync", nil)
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/sync", nil)
 	if err != nil {
 		return err
 	}
@@ -621,7 +640,7 @@ func (h *OpenFileHandle) Truncate(size int64) error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/truncate", nil)
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/truncate", nil)
 	if err != nil {
 		return err
 	}
@@ -655,7 +674,7 @@ func (h *OpenFileHandle) Write(p []byte) (int, error) {
 		return 0, err
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/write", bytes.NewReader(p))
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/write", bytes.NewReader(p))
 	if err != nil {
 		return 0, err
 	}
@@ -695,7 +714,7 @@ func (h *OpenFileHandle) WriteAt(p []byte, off int64) (int, error) {
 		return 0, err
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/writeat", bytes.NewReader(p))
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/writeat", bytes.NewReader(p))
 	if err != nil {
 		return 0, err
 	}
@@ -739,7 +758,7 @@ func (h *OpenFileHandle) Read(p []byte) (int, error) {
 		return 0, nil
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/read", nil)
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/read", nil)
 	if err != nil {
 		return 0, err
 	}
@@ -820,7 +839,7 @@ func (h *OpenFileHandle) ReadAt(p []byte, off int64) (int, error) {
 		return 0, nil
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/readat", nil)
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/readat", nil)
 	if err != nil {
 		return 0, err
 	}
@@ -913,7 +932,7 @@ func (h *OpenFileHandle) Seek(offset int64, whence int) (int64, error) {
 		return 0, fmt.Errorf("invalid whence value: %d", whence)
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/seek", nil)
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/seek", nil)
 	if err != nil {
 		return 0, err
 	}
@@ -949,7 +968,7 @@ func (h *OpenFileHandle) Close() error {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", h.parent.baseUrl+"/close", nil)
+	req, err := http.NewRequest("POST", h.parent.baseUrl+"/file/close", nil)
 	if err != nil {
 		return err
 	}

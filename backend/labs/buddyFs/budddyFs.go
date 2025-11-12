@@ -29,7 +29,28 @@ type BuddyFs struct {
 	mu    sync.Mutex
 }
 
+func NewBuddyFs(basePath string) (*BuddyFs, error) {
+
+	os.MkdirAll(basePath, 0755)
+
+	root, err := os.OpenRoot(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	b := &BuddyFs{
+		fs:     root,
+		fsPath: basePath,
+		files:  make(map[string]*BuddyFsFile),
+		mu:     sync.Mutex{},
+	}
+
+	return b, nil
+}
+
 func (b *BuddyFs) Mount(rt *gin.RouterGroup) {
+
+	rt.POST("/ping", Middleware(b.Ping))
 
 	rt.POST("/create", Middleware(b.Create))
 	rt.POST("/mkdir", Middleware(b.Mkdir))
@@ -44,12 +65,39 @@ func (b *BuddyFs) Mount(rt *gin.RouterGroup) {
 	rt.PUT("/chown", Middleware(b.Chown))
 	rt.PUT("/chtimes", Middleware(b.Chtimes))
 
+	rt.GET("/file/name", Middleware2(b.Name))
+	rt.GET("/file/readdir", Middleware2(b.Readdir))
+	rt.GET("/file/readdirnames", Middleware2(b.Readdirnames))
+	rt.GET("/file/stat", Middleware2(b.FileStat))
+	rt.POST("/file/sync", Middleware2(b.Sync))
+	rt.POST("/file/truncate", Middleware2(b.Truncate))
+	rt.POST("/file/write", Middleware2(b.WriteString))
+	rt.POST("/file/close", Middleware2(b.Close))
+	rt.POST("/file/read", Middleware2(b.Read))
+	rt.POST("/file/readat", Middleware2(b.ReadAt))
+	rt.POST("/file/writeString", Middleware2(b.WriteString))
+	rt.POST("/file/writeat", Middleware2(b.WriteAt))
+	rt.POST("/file/seek", Middleware2(b.Seek))
+
 }
 
 func Middleware(h func(basePath string, ctx *gin.Context)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		h("fixme", ctx)
+		h("todo_decoded_buddy_key", ctx)
 	}
+}
+
+func Middleware2(h func(ctx *gin.Context)) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		h(ctx)
+	}
+}
+
+func (b *BuddyFs) Ping(basePath string, ctx *gin.Context) {
+
+	b.fs.Mkdir(basePath, 0755)
+
+	httpx.WriteOk(ctx)
 }
 
 func (b *BuddyFs) Create(basePath string, ctx *gin.Context) {
@@ -168,6 +216,8 @@ func (b *BuddyFs) Open(basePath string, ctx *gin.Context) {
 	b.mu.Lock()
 	b.files[randStr] = f
 	b.mu.Unlock()
+
+	ctx.Data(http.StatusOK, "", []byte(randStr))
 }
 
 func (b *BuddyFs) OpenFile(basePath string, ctx *gin.Context) {
@@ -218,6 +268,8 @@ func (b *BuddyFs) OpenFile(basePath string, ctx *gin.Context) {
 	b.mu.Lock()
 	b.files[randStr] = f
 	b.mu.Unlock()
+
+	ctx.Data(http.StatusOK, "", []byte(randStr))
 }
 
 func (b *BuddyFs) Remove(basePath string, ctx *gin.Context) {

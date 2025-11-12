@@ -3,6 +3,7 @@ package buddyfs
 import (
 	"errors"
 	"io"
+	"net/http"
 	"strconv"
 
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
@@ -178,18 +179,23 @@ func (b *BuddyFs) WriteString(ctx *gin.Context) {
 }
 
 func (b *BuddyFs) Close(ctx *gin.Context) {
-	file, err := b.getFile(ctx)
-	if err != nil {
-		httpx.WriteErr(ctx, err)
+	fileKey := ctx.Query("filekey")
+	if fileKey == "" {
+		httpx.WriteErr(ctx, errors.New("filekey is required"))
 		return
 	}
 
 	b.mu.Lock()
-	defer b.mu.Unlock()
+	file, ok := b.files[fileKey]
+	if !ok {
+		b.mu.Unlock()
+		httpx.WriteErr(ctx, errors.New("file not found"))
+		return
+	}
+	delete(b.files, fileKey)
+	b.mu.Unlock()
 
-	delete(b.files, file.Name())
-
-	err = file.Close()
+	err := file.Close()
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
@@ -204,19 +210,27 @@ func (b *BuddyFs) Read(ctx *gin.Context) {
 		return
 	}
 
-	bodyBytes, err := io.ReadAll(ctx.Request.Body)
+	size := ctx.Query("size")
+	if size == "" {
+		httpx.WriteErr(ctx, errors.New("size is required"))
+		return
+	}
+
+	sizeInt, err := strconv.Atoi(size)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	_, err = file.Write(bodyBytes)
-	if err != nil {
+	buf := make([]byte, sizeInt)
+	n, err := file.Read(buf)
+	if err != nil && err != io.EOF {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	httpx.WriteJSON(ctx, map[string]int{"read": len(bodyBytes)}, nil)
+	// Return raw bytes for compatibility with client
+	ctx.Data(http.StatusOK, "application/octet-stream", buf[:n])
 }
 
 func (b *BuddyFs) ReadAt(ctx *gin.Context) {
@@ -238,19 +252,27 @@ func (b *BuddyFs) ReadAt(ctx *gin.Context) {
 		return
 	}
 
-	bodyBytes, err := io.ReadAll(ctx.Request.Body)
+	size := ctx.Query("size")
+	if size == "" {
+		httpx.WriteErr(ctx, errors.New("size is required"))
+		return
+	}
+
+	sizeInt, err := strconv.Atoi(size)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	_, err = file.WriteAt(bodyBytes, offInt)
-	if err != nil {
+	buf := make([]byte, sizeInt)
+	n, err := file.ReadAt(buf, offInt)
+	if err != nil && err != io.EOF {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	httpx.WriteJSON(ctx, map[string]int{"read": len(bodyBytes)}, nil)
+	// Return raw bytes for compatibility with client
+	ctx.Data(http.StatusOK, "application/octet-stream", buf[:n])
 }
 
 func (b *BuddyFs) Seek(ctx *gin.Context) {
@@ -295,4 +317,38 @@ func (b *BuddyFs) Write(ctx *gin.Context) {
 	}
 
 	httpx.WriteJSON(ctx, map[string]int64{"written": written}, nil)
+}
+
+func (b *BuddyFs) WriteAt(ctx *gin.Context) {
+	file, err := b.getFile(ctx)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	off := ctx.Query("off")
+	if off == "" {
+		httpx.WriteErr(ctx, errors.New("off is required"))
+		return
+	}
+
+	offInt, err := strconv.ParseInt(off, 10, 64)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	written, err := file.WriteAt(bodyBytes, offInt)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	httpx.WriteJSON(ctx, map[string]int64{"written": int64(written)}, nil)
 }
