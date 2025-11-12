@@ -20,6 +20,7 @@ require (
 	github.com/psanford/sqlite3vfs v0.0.0-20240315230605-24e1d98cf361
 	github.com/rqlite/sql v0.0.0-20250623131620-453fa49cad04
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
+	github.com/spf13/afero v1.15.0
 	github.com/upper/db/v4 v4.7.0
 	github.com/yuin/gopher-lua v1.1.1
 	github.com/ztrue/tracerr v0.4.0
