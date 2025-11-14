@@ -1,4 +1,4 @@
-package engine
+package caphub
 
 import (
 	"errors"
@@ -14,7 +14,8 @@ import (
 )
 
 type CapabilityHub struct {
-	parent  *Engine
+	app xtypes.App
+
 	goodies map[string]xtypes.Capability
 	glock   sync.RWMutex
 
@@ -22,10 +23,18 @@ type CapabilityHub struct {
 	builderFactories map[string]xtypes.CapabilityBuilderFactory
 }
 
-func (gh *CapabilityHub) Init() error {
-	app := gh.parent.app
+func NewCapabilityHub() *CapabilityHub {
+	return &CapabilityHub{
 
-	app.Logger().Info("Initializing CapabilityHub")
+		goodies:          make(map[string]xtypes.Capability),
+		glock:            sync.RWMutex{},
+		builders:         make(map[string]xtypes.CapabilityBuilder),
+		builderFactories: make(map[string]xtypes.CapabilityBuilderFactory),
+	}
+}
+
+func (gh *CapabilityHub) Init(app xtypes.App) error {
+	gh.app = app
 
 	builderFactories, err := registry.GetCapabilityBuilderFactories()
 	if err != nil {
@@ -51,7 +60,9 @@ func (gh *CapabilityHub) Init() error {
 }
 
 func (gh *CapabilityHub) Reload(installId int64, spaceId int64, name string) error {
-	cap, err := gh.parent.db.GetSpaceOps().GetSpaceCapability(installId, name)
+	db := gh.app.Database().GetSpaceOps()
+
+	cap, err := db.GetSpaceCapability(installId, name)
 	if err != nil {
 		return err
 	}
@@ -126,10 +137,6 @@ func (gh *CapabilityHub) Definations() []CapabilityDefination {
 	return definations
 }
 
-func (e *Engine) GetCapabilityDefinitions() []CapabilityDefination {
-	return e.capabilities.Definations()
-}
-
 type CapabilityDefination struct {
 	Name         string                         `json:"name"`
 	Icon         string                         `json:"icon"`
@@ -151,7 +158,9 @@ func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capa
 			return nil, errors.New("capability builder not found")
 		}
 
-		cap, err := gh.parent.db.GetSpaceOps().GetSpaceCapability(installId, name)
+		db := gh.app.Database().GetSpaceOps()
+
+		cap, err := db.GetSpaceCapability(installId, name)
 		if err != nil {
 			return nil, err
 		}

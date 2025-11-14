@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
+	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
+	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -24,8 +26,6 @@ type Engine struct {
 	riLock        sync.RWMutex
 	workingFolder string
 
-	capabilities CapabilityHub
-
 	runtime Runtime
 
 	logger *slog.Logger
@@ -34,11 +34,16 @@ type Engine struct {
 
 	repoHub *RepoHub
 
+	eventHub *eventhub.EventHub
+
+	capHub *caphub.CapabilityHub
+
 	reloadPackageIds chan int64
 	fullReload       chan struct{}
 }
 
 func NewEngine(db datahub.Database, workingFolder string) *Engine {
+
 	e := &Engine{
 		db:            db,
 		workingFolder: workingFolder,
@@ -47,18 +52,14 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			execs:     make(map[int64]*luaz.Luaz),
 			execsLock: sync.RWMutex{},
 		},
-		logger: slog.Default().With("module", "engine"),
-		capabilities: CapabilityHub{
-			goodies:  make(map[string]xtypes.Capability),
-			glock:    sync.RWMutex{},
-			builders: make(map[string]xtypes.CapabilityBuilder),
-		},
+		logger:           slog.Default().With("module", "engine"),
+		capHub:           nil,
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
-	}
 
-	e.capabilities.parent = e
+		eventHub: eventhub.NewEventHub(db),
+	}
 
 	return e
 }
@@ -91,7 +92,7 @@ func (e *Engine) Start(app xtypes.App) error {
 	}
 
 	// Initialize capabilities hub
-	err := e.capabilities.Init()
+	err := e.capHub.Init(app)
 	if err != nil {
 		return err
 	}
@@ -159,13 +160,13 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 		return
 	}
 
-	e.capabilities.Handle(index.installedId, spaceId, capabilityName, ctx)
+	e.capHub.Handle(index.installedId, spaceId, capabilityName, ctx)
 
 }
 
 func (e *Engine) ServeCapabilityRoot(ctx *gin.Context) {
 	capabilityName := ctx.Param("capability_name")
-	e.capabilities.HandleRoot(capabilityName, ctx)
+	e.capHub.HandleRoot(capabilityName, ctx)
 }
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
@@ -238,6 +239,10 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 
 }
 
+func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
+	return e.capHub.Definations()
+}
+
 // private
 
 // s-12.example.com
@@ -281,10 +286,15 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 	return name, path
 }
 
-func (e *Engine) GetCapabilityHub() *CapabilityHub {
-	return &e.capabilities
+func (e *Engine) GetCapabilityHub() *caphub.CapabilityHub {
+	return e.capHub
 }
 
 func (e *Engine) GetRepoHub() *RepoHub {
 	return e.repoHub
+}
+
+func (e *Engine) PublishEvent(installId int64, name string, payload []byte) error {
+
+	return e.eventHub.Publish(installId, name, payload)
 }

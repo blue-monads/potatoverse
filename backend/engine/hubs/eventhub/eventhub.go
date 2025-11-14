@@ -8,10 +8,6 @@ import (
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
-type IEventHub interface {
-	Publish(installId int64, name string, payload []byte) error
-}
-
 type EventHub struct {
 	sink datahub.MQSynk
 	db   datahub.Database

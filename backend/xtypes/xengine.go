@@ -20,6 +20,8 @@ type Engine interface {
 
 	ServeSpaceFile(ctx *gin.Context)
 	SpaceApi(ctx *gin.Context)
+
+	PublishEvent(installId int64, name string, payload []byte) error
 }
 
 type ExecutorBuilderOption struct {
