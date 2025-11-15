@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/blue-monads/turnix/backend/engine"
+	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -120,10 +120,10 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 	repoHub := c.engine.GetRepoHub()
 	if repoHub != nil && repoSlug != "" {
 		// Use RepoHub to get package from specific repo
-		file, err = engine.ZipEPackageFromRepo(repoHub, repoSlug, name)
+		file, err = repohub.ZipEPackageFromRepo(repoHub, repoSlug, name)
 	} else {
 		// Fallback to default behavior for backward compatibility
-		file, err = engine.ZipEPackage(name)
+		file, err = repohub.ZipEPackage(name)
 	}
 
 	if err != nil {

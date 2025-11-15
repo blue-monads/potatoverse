@@ -12,6 +12,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
+	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -32,7 +33,7 @@ type Engine struct {
 
 	app xtypes.App
 
-	repoHub *RepoHub
+	repoHub *repohub.RepoHub
 
 	eventHub *eventhub.EventHub
 
@@ -53,7 +54,7 @@ func NewEngine(db datahub.Database, workingFolder string) *Engine {
 			execsLock: sync.RWMutex{},
 		},
 		logger:           slog.Default().With("module", "engine"),
-		capHub:           nil,
+		capHub:           caphub.NewCapabilityHub(),
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
@@ -85,10 +86,10 @@ func (e *Engine) Start(app xtypes.App) error {
 	// Initialize repo hub
 	opts := app.Config().(*xtypes.AppOptions)
 	if opts != nil {
-		e.repoHub = NewRepoHub(opts.Repos, e.logger)
+		e.repoHub = repohub.NewRepoHub(opts.Repos, e.logger)
 	} else {
 		// Fallback: create empty repo hub
-		e.repoHub = NewRepoHub([]xtypes.RepoOptions{}, e.logger)
+		e.repoHub = repohub.NewRepoHub([]xtypes.RepoOptions{}, e.logger)
 	}
 
 	// Initialize capabilities hub
@@ -290,7 +291,7 @@ func (e *Engine) GetCapabilityHub() *caphub.CapabilityHub {
 	return e.capHub
 }
 
-func (e *Engine) GetRepoHub() *RepoHub {
+func (e *Engine) GetRepoHub() *repohub.RepoHub {
 	return e.repoHub
 }
 
