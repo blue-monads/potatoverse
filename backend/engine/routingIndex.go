@@ -392,10 +392,10 @@ func (e *Engine) copyFilesRecursive(fileOps datahub.FileOps, packageVersionId in
 		if file.Path == sourceFolderPath {
 			// File is directly in the source folder
 			targetFilePath = path.Join(targetBasePath, file.Name)
-		} else if strings.HasPrefix(file.Path, sourceFolderPath+"/") {
+		} else if after, ok := strings.CutPrefix(file.Path, sourceFolderPath+"/"); ok {
 			// File is in a subdirectory
 			// Get the relative path from sourceFolderPath
-			relPath := strings.TrimPrefix(file.Path, sourceFolderPath+"/")
+			relPath := after
 			targetFilePath = path.Join(targetBasePath, relPath, file.Name)
 		} else {
 			// This shouldn't happen, but handle it
