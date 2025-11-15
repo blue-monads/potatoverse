@@ -21,6 +21,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var _ xtypes.Engine = (*Engine)(nil)
+
 type Engine struct {
 	db            datahub.Database
 	RoutingIndex  map[string]*SpaceRouteIndexItem
@@ -43,23 +45,33 @@ type Engine struct {
 	fullReload       chan struct{}
 }
 
-func NewEngine(db datahub.Database, workingFolder string) *Engine {
+type EngineOption struct {
+	DB            datahub.Database
+	WorkingFolder string
+	Logger        *slog.Logger
+	Repos         []xtypes.RepoOptions
+}
+
+func NewEngine(opt EngineOption) *Engine {
+
+	elogger := opt.Logger.With("module", "engine")
 
 	e := &Engine{
-		db:            db,
-		workingFolder: workingFolder,
+		db:            opt.DB,
+		workingFolder: opt.WorkingFolder,
 		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
 			execs:     make(map[int64]*luaz.Luaz),
 			execsLock: sync.RWMutex{},
 		},
-		logger:           slog.Default().With("module", "engine"),
+		logger:           elogger,
 		capHub:           caphub.NewCapabilityHub(),
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
 
-		eventHub: eventhub.NewEventHub(db),
+		eventHub: eventhub.NewEventHub(opt.DB),
+		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub")),
 	}
 
 	return e
@@ -287,7 +299,7 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 	return name, path
 }
 
-func (e *Engine) GetCapabilityHub() *caphub.CapabilityHub {
+func (e *Engine) GetCapabilityHub() any {
 	return e.capHub
 }
 

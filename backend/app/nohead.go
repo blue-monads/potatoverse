@@ -39,7 +39,12 @@ type HeadLess struct {
 
 func NewHeadLess(opt Option) *HeadLess {
 
-	engine := engine.NewEngine(opt.Database, path.Join(opt.WorkingFolderBase, "engine"))
+	engine := engine.NewEngine(engine.EngineOption{
+		DB:            opt.Database,
+		WorkingFolder: path.Join(opt.WorkingFolderBase, "engine"),
+		Logger:        opt.Logger,
+		Repos:         opt.AppOpts.Repos,
+	})
 
 	happ := &HeadLess{
 		db:     opt.Database,

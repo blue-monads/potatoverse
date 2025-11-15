@@ -10,7 +10,7 @@ import (
 type Engine interface {
 	GetCapabilityHub() any
 	GetDebugData() map[string]any
-	LoadRoutingIndex() error
+	LoadRoutingIndex()
 
 	PluginApi(ctx *gin.Context)
 	ServePluginFile(ctx *gin.Context)
