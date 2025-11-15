@@ -46,8 +46,6 @@ func (e *EventHub) Start() error {
 }
 
 func (e *EventHub) Publish(installId int64, name string, payload []byte) error {
-	e.activeEventsLock.Lock()
-	defer e.activeEventsLock.Unlock()
 
 	if !e.needsProcessing(installId, name) {
 		return nil
