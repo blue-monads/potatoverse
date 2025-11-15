@@ -1,6 +1,8 @@
 package binds
 
 import (
+	"encoding/json"
+
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -43,6 +45,24 @@ func CoreModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LSta
 			return 1
 		}
 
+		publishJSONEvent := func(L *lua.LState) int {
+			name := L.CheckString(1)
+			payload := L.CheckTable(2)
+			payloadMap := luaplus.TableToMap(L, payload)
+			jsonData, err := json.Marshal(payloadMap)
+			if err != nil {
+				L.Push(lua.LString(err.Error()))
+				return 1
+			}
+			err = engine.PublishEvent(installId, name, jsonData)
+			if err != nil {
+				L.Push(lua.LString(err.Error()))
+				return 1
+			}
+			L.Push(lua.LNil)
+			return 1
+		}
+
 		signFsPresignedToken := func(L *lua.LState) int {
 			opts := &SignFsPresignedTokenOptions{}
 			err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
@@ -68,6 +88,7 @@ func CoreModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LSta
 		table := L.NewTable()
 		L.SetFuncs(table, map[string]lua.LGFunction{
 			"publish_event":          publishEvent,
+			"publish_json_event":     publishJSONEvent,
 			"get_fs_presigned_token": signFsPresignedToken,
 		})
 
