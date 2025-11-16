@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var _ xtypes.CapabilityHub = (*CapabilityHub)(nil)
+
 type CapabilityHub struct {
 	app xtypes.App
 

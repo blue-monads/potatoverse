@@ -39,6 +39,6 @@ type CapabilityBuilder interface {
 
 type CapabilityHub interface {
 	List(spaceId int64) ([]string, error)
-	Execute(spaceId int64, gname, method string, params LazyData) (map[string]any, error)
-	Methods(spaceId int64, gname string) ([]string, error)
+	Execute(installId, spaceId int64, gname, method string, params LazyData) (map[string]any, error)
+	Methods(installId, spaceId int64, gname string) ([]string, error)
 }
