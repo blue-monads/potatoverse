@@ -1,9 +1,9 @@
 
 function get_tasks(ctx)
-    local kv = require("pkv")
+    local potato = require("potato")
     local req = ctx.request()
 
-    local data, err = kv.query({
+    local data, err = potato.kv.query({
         group = "TASKS",
         include_value = true,
     })
@@ -26,7 +26,7 @@ function get_tasks(ctx)
 end
 
 function add_task(ctx)
-    local kv = require("pkv")
+    local potato = require("potato")
     local req = ctx.request()
     
     -- Parse request body
@@ -50,7 +50,7 @@ function add_task(ctx)
     local key = tostring(os.time()) .. "_" .. math.random(1000, 9999)
     
     -- Add task to KV store using upsert
-    local _, err = kv.upsert("TASKS", key, {
+    local _, err = potato.kv.upsert("TASKS", key, {
         value = taskText
     })
     if err then
@@ -59,13 +59,18 @@ function add_task(ctx)
         })
         return
     end
+
+    potato.core.publish_json_event("add_task", {
+        key = key,
+    })
+
     
     
     req.json(201, {})
 end
 
 function delete_task(ctx)
-    local kv = require("pkv")
+    local potato = require("potato")
     local req = ctx.request()
     local path = ctx.param("subpath")
     
@@ -78,7 +83,7 @@ function delete_task(ctx)
         return
     end
     
-    local err = kv.remove("TASKS", key)
+    local err = potato.kv.remove("TASKS", key)
     if err then
         req.json(500, {
             error = tostring(err)
@@ -86,7 +91,9 @@ function delete_task(ctx)
         return
     end
     
-
+    potato.core.publish_json_event("delete_task", {
+        key = key,
+    })
     
     req.json(200, {})
 end
