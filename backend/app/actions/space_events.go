@@ -7,6 +7,7 @@ import (
 )
 
 func (c *Controller) CreateEventSubscription(installId int64, data map[string]any) (*dbmodels.EventSubscription, error) {
+
 	// Validate required fields
 	eventKey, ok := data["event_key"].(string)
 	if !ok || eventKey == "" {
@@ -53,6 +54,8 @@ func (c *Controller) CreateEventSubscription(installId int64, data map[string]an
 	}
 
 	// Get the created event subscription
+	c.engine.RefreshEventIndex()
+
 	return c.database.GetSpaceOps().GetEventSubscription(installId, id)
 }
 
@@ -74,7 +77,14 @@ func (c *Controller) UpdateEventSubscriptionByID(installId int64, eventSubscript
 }
 
 func (c *Controller) DeleteEventSubscriptionByID(installId int64, eventSubscriptionId int64) error {
-	return c.database.GetSpaceOps().RemoveEventSubscription(installId, eventSubscriptionId)
+	err := c.database.GetSpaceOps().RemoveEventSubscription(installId, eventSubscriptionId)
+	if err != nil {
+		return err
+	}
+
+	c.engine.RefreshEventIndex()
+
+	return nil
 }
 
 func (c *Controller) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error) {
@@ -84,6 +94,3 @@ func (c *Controller) QueryEventSubscriptions(installId int64, cond map[any]any) 
 func (c *Controller) GetEventSubscriptionByID(installId int64, eventSubscriptionId int64) (*dbmodels.EventSubscription, error) {
 	return c.database.GetSpaceOps().GetEventSubscription(installId, eventSubscriptionId)
 }
-
-
-

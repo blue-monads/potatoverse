@@ -22,6 +22,7 @@ type Engine interface {
 	SpaceApi(ctx *gin.Context)
 
 	PublishEvent(installId int64, name string, payload []byte) error
+	RefreshEventIndex()
 }
 
 type ExecutorBuilderOption struct {

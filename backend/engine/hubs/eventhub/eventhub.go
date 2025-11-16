@@ -64,7 +64,11 @@ func (e *EventHub) Publish(installId int64, name string, payload []byte) error {
 }
 
 func (e *EventHub) RefreshFullIndex() {
-	e.refreshFullIndex <- struct{}{}
+
+	select {
+	case e.refreshFullIndex <- struct{}{}:
+	default:
+	}
 }
 
 func (e *EventHub) buildActiveEventsIndex() error {

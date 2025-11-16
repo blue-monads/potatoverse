@@ -311,3 +311,7 @@ func (e *Engine) PublishEvent(installId int64, name string, payload []byte) erro
 
 	return e.eventHub.Publish(installId, name, payload)
 }
+
+func (e *Engine) RefreshEventIndex() {
+	e.eventHub.RefreshFullIndex()
+}
