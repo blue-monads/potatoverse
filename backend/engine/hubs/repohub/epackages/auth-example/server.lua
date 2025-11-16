@@ -1,6 +1,6 @@
+local potato = require("potato")
 
 function get_tasks(ctx)
-    local potato = require("potato")
     local req = ctx.request()
 
     local data, err = potato.kv.query({
@@ -26,7 +26,6 @@ function get_tasks(ctx)
 end
 
 function add_task(ctx)
-    local potato = require("potato")
     local req = ctx.request()
     
     -- Parse request body
@@ -70,7 +69,6 @@ function add_task(ctx)
 end
 
 function delete_task(ctx)
-    local potato = require("potato")
     local req = ctx.request()
     local path = ctx.param("subpath")
     
