@@ -28,71 +28,99 @@ type SignFsPresignedTokenOptions struct {
 	UserId   int64  `json:"user_id"`
 }
 
-func CoreModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LState) int {
+// Core Module
+func registerCoreModuleType(L *lua.LState) {
+	mt := L.NewTypeMetatable(luaCoreModuleTypeName)
+	L.SetField(mt, "__index", L.NewFunction(coreModuleIndex))
+}
+
+func newCoreModule(L *lua.LState, app xtypes.App, installId int64, spaceId int64) *lua.LUserData {
 	engine := app.Engine().(xtypes.Engine)
-	sig := app.Signer()
+	ud := L.NewUserData()
+	ud.Value = &luaCoreModule{
+		app:       app,
+		installId: installId,
+		spaceId:   spaceId,
+		engine:    engine,
+		sig:       app.Signer(),
+	}
+	L.SetMetatable(ud, L.GetTypeMetatable(luaCoreModuleTypeName))
+	return ud
+}
 
-	return func(L *lua.LState) int {
-		publishEvent := func(L *lua.LState) int {
-			name := L.CheckString(1)
-			payload := L.CheckString(2)
-			err := engine.PublishEvent(installId, name, []byte(payload))
-			if err != nil {
-				L.Push(lua.LString(err.Error()))
-				return 1
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
+func checkCoreModule(L *lua.LState) *luaCoreModule {
+	ud := L.CheckUserData(1)
+	if v, ok := ud.Value.(*luaCoreModule); ok {
+		return v
+	}
+	L.ArgError(1, luaCoreModuleTypeName+" expected")
+	return nil
+}
 
-		publishJSONEvent := func(L *lua.LState) int {
-			name := L.CheckString(1)
-			payload := L.CheckTable(2)
-			payloadMap := luaplus.TableToMap(L, payload)
-			jsonData, err := json.Marshal(payloadMap)
-			if err != nil {
-				L.Push(lua.LString(err.Error()))
-				return 1
-			}
-			err = engine.PublishEvent(installId, name, jsonData)
-			if err != nil {
-				L.Push(lua.LString(err.Error()))
-				return 1
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
+func coreModuleIndex(L *lua.LState) int {
+	mod := checkCoreModule(L)
+	method := L.CheckString(2)
 
-		signFsPresignedToken := func(L *lua.LState) int {
-			opts := &SignFsPresignedTokenOptions{}
-			err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
-			if err != nil {
-				L.Push(lua.LString(err.Error()))
-				return 1
-			}
+	switch method {
+	case "publish_event":
+		return corePublishEvent(mod, L)
+	case "publish_json_event":
+		return corePublishJSONEvent(mod, L)
+	case "file_token":
+		return coreSignFsPresignedToken(mod, L)
+	}
 
-			signature, err := sig.SignSpaceFilePresigned(&signer.SpaceFilePresignedClaim{
-				InstallId: installId,
-				UserId:    opts.UserId,
-				PathName:  opts.Path,
-				FileName:  opts.FileName,
-			})
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LString(signature))
-			L.Push(lua.LNil)
-			return 2
-		}
+	return 0
+}
 
-		table := L.NewTable()
-		L.SetFuncs(table, map[string]lua.LGFunction{
-			"publish_event":          publishEvent,
-			"publish_json_event":     publishJSONEvent,
-			"get_fs_presigned_token": signFsPresignedToken,
-		})
-
-		L.Push(table)
+func corePublishEvent(mod *luaCoreModule, L *lua.LState) int {
+	name := L.CheckString(1)
+	payload := L.CheckString(2)
+	err := mod.engine.PublishEvent(mod.installId, name, []byte(payload))
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
 		return 1
 	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func corePublishJSONEvent(mod *luaCoreModule, L *lua.LState) int {
+	name := L.CheckString(1)
+	payload := L.CheckTable(2)
+	payloadMap := luaplus.TableToMap(L, payload)
+	jsonData, err := json.Marshal(payloadMap)
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
+		return 1
+	}
+	err = mod.engine.PublishEvent(mod.installId, name, jsonData)
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
+		return 1
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func coreSignFsPresignedToken(mod *luaCoreModule, L *lua.LState) int {
+	opts := &SignFsPresignedTokenOptions{}
+	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
+		return 1
+	}
+
+	signature, err := mod.sig.SignSpaceFilePresigned(&signer.SpaceFilePresignedClaim{
+		InstallId: mod.installId,
+		UserId:    opts.UserId,
+		PathName:  opts.Path,
+		FileName:  opts.FileName,
+	})
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LString(signature))
+	L.Push(lua.LNil)
+	return 2
 }

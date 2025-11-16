@@ -7,9 +7,9 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/cjoudrey/gluahttp"
 	"github.com/gin-gonic/gin"
 
-	"github.com/cjoudrey/gluahttp"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -109,11 +109,8 @@ func (l *LuaH) registerModules() error {
 	spaceId := l.parent.handle.SpaceId
 	app := l.parent.handle.App
 
-	l.L.PreloadModule("pkv", binds.BindsKV(installId, app))
 	l.L.PreloadModule("pmcp", binds.BindMCP)
-	l.L.PreloadModule("pcap", binds.CapabilityModule(app, installId, spaceId))
-	l.L.PreloadModule("pdb", binds.BindsDB(app, installId))
-	l.L.PreloadModule("pcore", binds.CoreModule(app, installId, spaceId))
+	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, spaceId))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 
 	return nil

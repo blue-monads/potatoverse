@@ -9,269 +9,298 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func BindsDB(app xtypes.App, installId int64) func(L *lua.LState) int {
-	return bindsDB(app, installId)
+// DB Module
+func registerDBModuleType(L *lua.LState) {
+	mt := L.NewTypeMetatable(luaDBModuleTypeName)
+	L.SetField(mt, "__index", L.NewFunction(dbModuleIndex))
 }
 
-func bindsDB(app xtypes.App, installId int64) func(L *lua.LState) int {
-	return func(L *lua.LState) int {
+func newDBModule(L *lua.LState, app xtypes.App, installId int64) *lua.LUserData {
+	ud := L.NewUserData()
+	ud.Value = &luaDBModule{
+		app:       app,
+		installId: installId,
+		db:        app.Database().GetLowDBOps("P", strconv.FormatInt(installId, 10)),
+	}
+	L.SetMetatable(ud, L.GetTypeMetatable(luaDBModuleTypeName))
+	return ud
+}
 
-		db := app.Database().
-			GetLowDBOps("P", strconv.FormatInt(installId, 10))
+func checkDBModule(L *lua.LState) *luaDBModule {
+	ud := L.CheckUserData(1)
+	if v, ok := ud.Value.(*luaDBModule); ok {
+		return v
+	}
+	L.ArgError(1, luaDBModuleTypeName+" expected")
+	return nil
+}
 
-		table := L.NewTable()
+func dbModuleIndex(L *lua.LState) int {
+	mod := checkDBModule(L)
+	method := L.CheckString(2)
 
-		runDDL := func(L *lua.LState) int {
-			ddl := L.CheckString(1)
-			err := db.RunDDL(ddl)
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
+	switch method {
+	case "run_ddl":
+		return dbRunDDL(mod, L)
+	case "run_query":
+		return dbRunQuery(mod, L)
+	case "run_query_one":
+		return dbRunQueryOne(mod, L)
+	case "insert":
+		return dbInsert(mod, L)
+	case "update_by_id":
+		return dbUpdateById(mod, L)
+	case "delete_by_id":
+		return dbDeleteById(mod, L)
+	case "find_by_id":
+		return dbFindById(mod, L)
+	case "update_by_cond":
+		return dbUpdateByCond(mod, L)
+	case "delete_by_cond":
+		return dbDeleteByCond(mod, L)
+	case "find_all_by_cond":
+		return dbFindAllByCond(mod, L)
+	case "find_one_by_cond":
+		return dbFindOneByCond(mod, L)
+	case "find_all_by_query":
+		return dbFindAllByQuery(mod, L)
+	case "find_by_join":
+		return dbFindByJoin(mod, L)
+	case "list_tables":
+		return dbListTables(mod, L)
+	case "list_columns":
+		return dbListTableColumns(mod, L)
+	}
 
-		runQuery := func(L *lua.LState) int {
-			query := L.CheckString(1)
-			var args []any
-			// Collect variadic arguments from index 2 onwards
-			for i := 2; i <= L.GetTop(); i++ {
-				arg := L.Get(i)
-				args = append(args, luaplus.LuaTypeToGoType(L, arg))
-			}
-			results, err := db.RunQuery(query, args...)
-			if err != nil {
-				return pushError(L, err)
-			}
-			resultTable := L.NewTable()
-			for _, row := range results {
-				rowTable := luaplus.MapToTable(L, row)
-				resultTable.Append(rowTable)
-			}
-			L.Push(resultTable)
-			return 1
-		}
+	return 0
+}
 
-		runQueryOne := func(L *lua.LState) int {
-			query := L.CheckString(1)
-			var args []any
-			// Collect variadic arguments from index 2 onwards
-			for i := 2; i <= L.GetTop(); i++ {
-				arg := L.Get(i)
-				args = append(args, luaplus.LuaTypeToGoType(L, arg))
-			}
-			result, err := db.RunQueryOne(query, args...)
-			if err != nil {
-				return pushError(L, err)
-			}
-			if result == nil {
-				L.Push(lua.LNil)
-				return 1
-			}
-			resultTable := luaplus.MapToTable(L, result)
-			L.Push(resultTable)
-			return 1
-		}
+func dbRunDDL(mod *luaDBModule, L *lua.LState) int {
+	ddl := L.CheckString(1)
+	err := mod.db.RunDDL(ddl)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
+}
 
-		insert := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			dataTable := L.CheckTable(2)
-			dataMap := luaplus.TableToMap(L, dataTable)
-			id, err := db.Insert(tableName, dataMap)
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LNumber(id))
-			return 1
-		}
+func dbRunQuery(mod *luaDBModule, L *lua.LState) int {
+	query := L.CheckString(1)
+	var args []any
+	for i := 2; i <= L.GetTop(); i++ {
+		arg := L.Get(i)
+		args = append(args, luaplus.LuaTypeToGoType(L, arg))
+	}
+	results, err := mod.db.RunQuery(query, args...)
+	if err != nil {
+		return pushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, row := range results {
+		rowTable := luaplus.MapToTable(L, row)
+		resultTable.Append(rowTable)
+	}
+	L.Push(resultTable)
+	return 1
+}
 
-		updateById := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			id := int64(L.CheckNumber(2))
-			dataTable := L.CheckTable(3)
-			dataMap := luaplus.TableToMap(L, dataTable)
-			err := db.UpdateById(tableName, id, dataMap)
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
-
-		deleteById := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			id := int64(L.CheckNumber(2))
-			err := db.DeleteById(tableName, id)
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
-
-		findById := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			id := int64(L.CheckNumber(2))
-			result, err := db.FindById(tableName, id)
-			if err != nil {
-				return pushError(L, err)
-			}
-			if result == nil {
-				L.Push(lua.LNil)
-				return 1
-			}
-			resultTable := luaplus.MapToTable(L, result)
-			L.Push(resultTable)
-			return 1
-		}
-
-		updateByCond := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			condTable := L.CheckTable(2)
-			dataTable := L.CheckTable(3)
-			condMap := luaplus.TableToMapAny(L, condTable)
-			dataMap := luaplus.TableToMap(L, dataTable)
-			err := db.UpdateByCond(tableName, condMap, dataMap)
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
-
-		deleteByCond := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			condTable := L.CheckTable(2)
-			condMap := luaplus.TableToMapAny(L, condTable)
-			err := db.DeleteByCond(tableName, condMap)
-			if err != nil {
-				return pushError(L, err)
-			}
-			L.Push(lua.LNil)
-			return 1
-		}
-
-		findAllByCond := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			condTable := L.CheckTable(2)
-			condMap := luaplus.TableToMapAny(L, condTable)
-			results, err := db.FindAllByCond(tableName, condMap)
-			if err != nil {
-				return pushError(L, err)
-			}
-			resultTable := L.NewTable()
-			for _, row := range results {
-				rowTable := luaplus.MapToTable(L, row)
-				resultTable.Append(rowTable)
-			}
-			L.Push(resultTable)
-			return 1
-		}
-
-		findOneByCond := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			condTable := L.CheckTable(2)
-			condMap := luaplus.TableToMapAny(L, condTable)
-			result, err := db.FindOneByCond(tableName, condMap)
-			if err != nil {
-				return pushError(L, err)
-			}
-			if result == nil {
-				L.Push(lua.LNil)
-				return 1
-			}
-			resultTable := luaplus.MapToTable(L, result)
-			L.Push(resultTable)
-			return 1
-		}
-
-		findAllByQuery := func(L *lua.LState) int {
-			queryTable := L.CheckTable(1)
-			query := &datahub.FindQuery{}
-			err := luaplus.MapToStruct(L, queryTable, query)
-			if err != nil {
-				return pushError(L, err)
-			}
-			results, err := db.FindAllByQuery(query)
-			if err != nil {
-				return pushError(L, err)
-			}
-			resultTable := L.NewTable()
-			for _, row := range results {
-				rowTable := luaplus.MapToTable(L, row)
-				resultTable.Append(rowTable)
-			}
-			L.Push(resultTable)
-			return 1
-		}
-
-		findByJoin := func(L *lua.LState) int {
-			queryTable := L.CheckTable(1)
-			query := &datahub.FindByJoin{}
-			err := luaplus.MapToStruct(L, queryTable, query)
-			if err != nil {
-				return pushError(L, err)
-			}
-			results, err := db.FindByJoin(query)
-			if err != nil {
-				return pushError(L, err)
-			}
-			resultTable := L.NewTable()
-			for _, row := range results {
-				rowTable := luaplus.MapToTable(L, row)
-				resultTable.Append(rowTable)
-			}
-			L.Push(resultTable)
-			return 1
-		}
-
-		listTables := func(L *lua.LState) int {
-			tables, err := db.ListTables()
-			if err != nil {
-				return pushError(L, err)
-			}
-			resultTable := L.NewTable()
-			for _, tableName := range tables {
-				resultTable.Append(lua.LString(tableName))
-			}
-			L.Push(resultTable)
-			return 1
-		}
-
-		listTableColumns := func(L *lua.LState) int {
-			tableName := L.CheckString(1)
-			columns, err := db.ListTableColumns(tableName)
-			if err != nil {
-				return pushError(L, err)
-			}
-			resultTable := L.NewTable()
-			for _, column := range columns {
-				columnTable := luaplus.MapToTable(L, column)
-				resultTable.Append(columnTable)
-			}
-			L.Push(resultTable)
-			return 1
-		}
-
-		L.SetFuncs(table, map[string]lua.LGFunction{
-			"run_ddl":           runDDL,
-			"run_query":         runQuery,
-			"run_query_one":     runQueryOne,
-			"insert":            insert,
-			"update_by_id":      updateById,
-			"delete_by_id":      deleteById,
-			"find_by_id":        findById,
-			"update_by_cond":    updateByCond,
-			"delete_by_cond":    deleteByCond,
-			"find_all_by_cond":  findAllByCond,
-			"find_one_by_cond":  findOneByCond,
-			"find_all_by_query": findAllByQuery,
-			"find_by_join":      findByJoin,
-			"list_tables":       listTables,
-			"list_columns":      listTableColumns,
-		})
-
-		L.Push(table)
+func dbRunQueryOne(mod *luaDBModule, L *lua.LState) int {
+	query := L.CheckString(1)
+	var args []any
+	for i := 2; i <= L.GetTop(); i++ {
+		arg := L.Get(i)
+		args = append(args, luaplus.LuaTypeToGoType(L, arg))
+	}
+	result, err := mod.db.RunQueryOne(query, args...)
+	if err != nil {
+		return pushError(L, err)
+	}
+	if result == nil {
+		L.Push(lua.LNil)
 		return 1
 	}
+	resultTable := luaplus.MapToTable(L, result)
+	L.Push(resultTable)
+	return 1
+}
+
+func dbInsert(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	dataTable := L.CheckTable(2)
+	dataMap := luaplus.TableToMap(L, dataTable)
+	id, err := mod.db.Insert(tableName, dataMap)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNumber(id))
+	return 1
+}
+
+func dbUpdateById(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	id := int64(L.CheckNumber(2))
+	dataTable := L.CheckTable(3)
+	dataMap := luaplus.TableToMap(L, dataTable)
+	err := mod.db.UpdateById(tableName, id, dataMap)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func dbDeleteById(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	id := int64(L.CheckNumber(2))
+	err := mod.db.DeleteById(tableName, id)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func dbFindById(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	id := int64(L.CheckNumber(2))
+	result, err := mod.db.FindById(tableName, id)
+	if err != nil {
+		return pushError(L, err)
+	}
+	if result == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+	resultTable := luaplus.MapToTable(L, result)
+	L.Push(resultTable)
+	return 1
+}
+
+func dbUpdateByCond(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	condTable := L.CheckTable(2)
+	dataTable := L.CheckTable(3)
+	condMap := luaplus.TableToMapAny(L, condTable)
+	dataMap := luaplus.TableToMap(L, dataTable)
+	err := mod.db.UpdateByCond(tableName, condMap, dataMap)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func dbDeleteByCond(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	condTable := L.CheckTable(2)
+	condMap := luaplus.TableToMapAny(L, condTable)
+	err := mod.db.DeleteByCond(tableName, condMap)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func dbFindAllByCond(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	condTable := L.CheckTable(2)
+	condMap := luaplus.TableToMapAny(L, condTable)
+	results, err := mod.db.FindAllByCond(tableName, condMap)
+	if err != nil {
+		return pushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, row := range results {
+		rowTable := luaplus.MapToTable(L, row)
+		resultTable.Append(rowTable)
+	}
+	L.Push(resultTable)
+	return 1
+}
+
+func dbFindOneByCond(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	condTable := L.CheckTable(2)
+	condMap := luaplus.TableToMapAny(L, condTable)
+	result, err := mod.db.FindOneByCond(tableName, condMap)
+	if err != nil {
+		return pushError(L, err)
+	}
+	if result == nil {
+		L.Push(lua.LNil)
+		return 1
+	}
+	resultTable := luaplus.MapToTable(L, result)
+	L.Push(resultTable)
+	return 1
+}
+
+func dbFindAllByQuery(mod *luaDBModule, L *lua.LState) int {
+	queryTable := L.CheckTable(1)
+	query := &datahub.FindQuery{}
+	err := luaplus.MapToStruct(L, queryTable, query)
+	if err != nil {
+		return pushError(L, err)
+	}
+	results, err := mod.db.FindAllByQuery(query)
+	if err != nil {
+		return pushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, row := range results {
+		rowTable := luaplus.MapToTable(L, row)
+		resultTable.Append(rowTable)
+	}
+	L.Push(resultTable)
+	return 1
+}
+
+func dbFindByJoin(mod *luaDBModule, L *lua.LState) int {
+	queryTable := L.CheckTable(1)
+	query := &datahub.FindByJoin{}
+	err := luaplus.MapToStruct(L, queryTable, query)
+	if err != nil {
+		return pushError(L, err)
+	}
+	results, err := mod.db.FindByJoin(query)
+	if err != nil {
+		return pushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, row := range results {
+		rowTable := luaplus.MapToTable(L, row)
+		resultTable.Append(rowTable)
+	}
+	L.Push(resultTable)
+	return 1
+}
+
+func dbListTables(mod *luaDBModule, L *lua.LState) int {
+	tables, err := mod.db.ListTables()
+	if err != nil {
+		return pushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, tableName := range tables {
+		resultTable.Append(lua.LString(tableName))
+	}
+	L.Push(resultTable)
+	return 1
+}
+
+func dbListTableColumns(mod *luaDBModule, L *lua.LState) int {
+	tableName := L.CheckString(1)
+	columns, err := mod.db.ListTableColumns(tableName)
+	if err != nil {
+		return pushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, column := range columns {
+		columnTable := luaplus.MapToTable(L, column)
+		resultTable.Append(columnTable)
+	}
+	L.Push(resultTable)
+	return 1
 }
