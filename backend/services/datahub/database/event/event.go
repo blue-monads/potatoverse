@@ -210,6 +210,13 @@ func (d *EventOperations) TransitionTargetComplete(evtId, targetId int64) error 
 	return nil
 }
 
+func (d *EventOperations) TransitionTargetDelay(targetId int64, eventId, delay int64) error {
+	return d.UpdateEventTarget(targetId, map[string]any{
+		"status":        "delayed",
+		"delayed_until": delay,
+	})
+}
+
 func (d *EventOperations) TransitionTargetFail(evtId, targetId int64, errorMsg string) error {
 	return d.UpdateEventTarget(targetId, map[string]any{
 		"status": "failed",
