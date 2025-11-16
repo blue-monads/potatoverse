@@ -80,7 +80,9 @@ function add_task(ctx)
     end
 
     potato.core.publish_json_event("add_task", {
-        key = key,
+        kvKey = key,
+        userId = userId,
+        kvId = id,
     })
 
     
@@ -120,7 +122,8 @@ function delete_task(ctx)
     end
     
     potato.core.publish_json_event("delete_task", {
-        key = key,
+        kvKey = key,
+        userId = userId,
     })
     
     req.json(200, {})
