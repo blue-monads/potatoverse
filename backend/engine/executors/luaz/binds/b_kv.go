@@ -55,19 +55,40 @@ func kvModuleIndex(L *lua.LState) int {
 
 	switch method {
 	case "query":
-		return kvQuery(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvQuery(mod, L)
+		}))
+		return 1
 	case "add":
-		return kvAdd(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvAdd(mod, L)
+		}))
+		return 1
 	case "get":
-		return kvGet(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvGet(mod, L)
+		}))
+		return 1
 	case "get_by_group":
-		return kvGetByGroup(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvGetByGroup(mod, L)
+		}))
+		return 1
 	case "remove":
-		return kvRemove(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvRemove(mod, L)
+		}))
+		return 1
 	case "update":
-		return kvUpdate(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvUpdate(mod, L)
+		}))
+		return 1
 	case "upsert":
-		return kvUpsert(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return kvUpsert(mod, L)
+		}))
+		return 1
 	}
 
 	return 0

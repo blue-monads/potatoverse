@@ -47,13 +47,25 @@ func capModuleIndex(L *lua.LState) int {
 
 	switch method {
 	case "list":
-		return capList(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return capList(mod, L)
+		}))
+		return 1
 	case "execute":
-		return capExecute(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return capExecute(mod, L)
+		}))
+		return 1
 	case "methods":
-		return capMethods(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return capMethods(mod, L)
+		}))
+		return 1
 	case "sign_token":
-		return capSignToken(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return capSignToken(mod, L)
+		}))
+		return 1
 	}
 
 	return 0
@@ -80,7 +92,7 @@ func capExecute(mod *luaCapModule, L *lua.LState) int {
 		L:     L,
 		table: params,
 	}
-	result, err := mod.capabilities.Execute(mod.spaceId, capabilityName, method, paramsLazyData)
+	result, err := mod.capabilities.Execute(mod.installId, mod.spaceId, capabilityName, method, paramsLazyData)
 	if err != nil {
 		return pushError(L, err)
 	}
@@ -91,7 +103,7 @@ func capExecute(mod *luaCapModule, L *lua.LState) int {
 
 func capMethods(mod *luaCapModule, L *lua.LState) int {
 	capabilityName := L.CheckString(1)
-	methods, err := mod.capabilities.Methods(mod.spaceId, capabilityName)
+	methods, err := mod.capabilities.Methods(mod.installId, mod.spaceId, capabilityName)
 	if err != nil {
 		return pushError(L, err)
 	}

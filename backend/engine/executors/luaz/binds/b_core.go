@@ -63,11 +63,20 @@ func coreModuleIndex(L *lua.LState) int {
 
 	switch method {
 	case "publish_event":
-		return corePublishEvent(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return corePublishEvent(mod, L)
+		}))
+		return 1
 	case "publish_json_event":
-		return corePublishJSONEvent(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return corePublishJSONEvent(mod, L)
+		}))
+		return 1
 	case "file_token":
-		return coreSignFsPresignedToken(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return coreSignFsPresignedToken(mod, L)
+		}))
+		return 1
 	}
 
 	return 0

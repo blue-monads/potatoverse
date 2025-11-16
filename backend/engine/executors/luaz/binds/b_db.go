@@ -41,35 +41,80 @@ func dbModuleIndex(L *lua.LState) int {
 
 	switch method {
 	case "run_ddl":
-		return dbRunDDL(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbRunDDL(mod, L)
+		}))
+		return 1
 	case "run_query":
-		return dbRunQuery(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbRunQuery(mod, L)
+		}))
+		return 1
 	case "run_query_one":
-		return dbRunQueryOne(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbRunQueryOne(mod, L)
+		}))
+		return 1
 	case "insert":
-		return dbInsert(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbInsert(mod, L)
+		}))
+		return 1
 	case "update_by_id":
-		return dbUpdateById(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbUpdateById(mod, L)
+		}))
+		return 1
 	case "delete_by_id":
-		return dbDeleteById(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbDeleteById(mod, L)
+		}))
+		return 1
 	case "find_by_id":
-		return dbFindById(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindById(mod, L)
+		}))
+		return 1
 	case "update_by_cond":
-		return dbUpdateByCond(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbUpdateByCond(mod, L)
+		}))
+		return 1
 	case "delete_by_cond":
-		return dbDeleteByCond(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbDeleteByCond(mod, L)
+		}))
+		return 1
 	case "find_all_by_cond":
-		return dbFindAllByCond(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindAllByCond(mod, L)
+		}))
+		return 1
 	case "find_one_by_cond":
-		return dbFindOneByCond(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindOneByCond(mod, L)
+		}))
+		return 1
 	case "find_all_by_query":
-		return dbFindAllByQuery(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindAllByQuery(mod, L)
+		}))
+		return 1
 	case "find_by_join":
-		return dbFindByJoin(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindByJoin(mod, L)
+		}))
+		return 1
 	case "list_tables":
-		return dbListTables(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbListTables(mod, L)
+		}))
+		return 1
 	case "list_columns":
-		return dbListTableColumns(mod, L)
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbListTableColumns(mod, L)
+		}))
+		return 1
 	}
 
 	return 0
