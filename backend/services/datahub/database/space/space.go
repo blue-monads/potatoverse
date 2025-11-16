@@ -345,10 +345,14 @@ func (d *SpaceOperations) RemoveSpaceUser(installId int64, id int64) error {
 
 // Event Subscriptions
 
-func (d *SpaceOperations) QueryAllEventSubscriptions() ([]dbmodels.EventSubscriptionLite, error) {
+func (d *SpaceOperations) QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.EventSubscriptionLite, error) {
 	table := d.eventSubscriptionTable()
 	datas := make([]dbmodels.EventSubscriptionLite, 0)
-	err := table.Find().All(&datas)
+	cond := db.Cond{}
+	if !includeDisabled {
+		cond["disabled"] = false
+	}
+	err := table.Find(cond).All(&datas)
 	if err != nil {
 		return nil, err
 	}

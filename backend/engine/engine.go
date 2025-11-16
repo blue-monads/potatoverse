@@ -110,6 +110,11 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
+	err = e.eventHub.Start()
+	if err != nil {
+		return err
+	}
+
 	go e.runtime.cleanupExecs()
 	go e.startEloop()
 

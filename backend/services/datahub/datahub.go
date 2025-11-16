@@ -17,6 +17,7 @@ type Database interface {
 	GetPackageInstallOps() PackageInstallOps
 	GetFileOps() FileOps
 	GetPackageFileOps() FileOps
+	GetMQSynk() MQSynk
 
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
@@ -148,7 +149,7 @@ type SpaceOps interface {
 
 	// Event Subscriptions
 
-	QueryAllEventSubscriptions() ([]dbmodels.EventSubscriptionLite, error)
+	QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.EventSubscriptionLite, error)
 	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error)
 	AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error)
 	GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error)
@@ -257,8 +258,7 @@ type MQSynk interface {
 	QueryEventTargetsByEventId(eventId int64) ([]int64, error)
 	UpdateEventTarget(id int64, data map[string]any) error
 
-	StartTargetProcess(id int64) (*dbmodels.MQEventTarget, error)
-	DeleteTargetProcess(id int64) error
-	CompleteTargetProcess(id int64) error
-	FailTargetProcess(id int64, error string) error
+	TransitionTargetStart(targetId int64) (*dbmodels.MQEventTarget, error)
+	TransitionTargetComplete(eventId, targetId int64) error
+	TransitionTargetFail(eventId, targetId int64, error string) error
 }

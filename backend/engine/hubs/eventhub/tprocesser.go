@@ -3,6 +3,7 @@ package eventhub
 import (
 	"time"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
@@ -14,7 +15,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 
 	qq.Println("targetProcessor/2")
 
-	target, err := e.sink.StartTargetProcess(targetId)
+	target, err := e.sink.TransitionTargetStart(targetId)
 	if err != nil {
 		qq.Println("targetProcessor/3", err)
 		return err
@@ -40,7 +41,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 
 	time.Sleep(time.Second * 10)
 
-	err = e.sink.CompleteTargetProcess(targetId)
+	err = e.sink.TransitionTargetComplete(event.ID, targetId)
 	if err != nil {
 		qq.Println("targetProcessor/9", err)
 		return err
@@ -48,4 +49,10 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 
 	return nil
 
+}
+
+type TargetExecution struct {
+	SubscriptionID *dbmodels.EventSubscription
+	Target         *dbmodels.MQEventTarget
+	Event          *dbmodels.MQEvent
 }

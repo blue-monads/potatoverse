@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/turnix/backend/services/datahub/database/file"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/global"
 	"github.com/blue-monads/turnix/backend/services/datahub/database/low"
@@ -33,6 +34,7 @@ type DB struct {
 	fileOps           *fileops.FileOperations
 	packageFileOps    *fileops.FileOperations
 	packageInstallOps *ppackage.PackageInstallOperations
+	eventOps          *event.EventOperations
 }
 
 const (
@@ -120,6 +122,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 	})
 
 	packageInstallOps := ppackage.NewPackageInstallOperations(sess, packageFileOps)
+	eventOps := event.NewEventOperations(sess)
 
 	if err := AutoMigrate(sess); err != nil {
 		return nil, err
@@ -134,6 +137,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		fileOps:              fileOps,
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
+		eventOps:             eventOps,
 	}, nil
 }
 
@@ -219,4 +223,8 @@ func (db *DB) GetPackageFileOps() datahub.FileOps {
 
 func (db *DB) GetLowDBOps(ownerType string, ownerID string) datahub.DBLowOps {
 	return low.NewLowDB(db.sess, ownerType, ownerID)
+}
+
+func (db *DB) GetMQSynk() datahub.MQSynk {
+	return db.eventOps
 }

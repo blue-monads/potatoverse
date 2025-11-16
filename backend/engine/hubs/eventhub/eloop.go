@@ -52,7 +52,10 @@ func (e *EventHub) rootEventWatcher() {
 
 	case <-e.refreshFullIndex:
 		qq.Println("@rootEventWatcher/refreshFullIndex")
-		e.buildActiveEventsIndex()
+		err := e.buildActiveEventsIndex()
+		if err != nil {
+			qq.Println("@rootEventWatcher/2")
+		}
 	}
 
 }

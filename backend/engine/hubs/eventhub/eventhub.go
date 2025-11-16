@@ -24,7 +24,8 @@ type EventHub struct {
 func NewEventHub(db datahub.Database) *EventHub {
 
 	return &EventHub{
-		sink:                   nil,
+		sink:                   db.GetMQSynk(),
+		db:                     db,
 		activeEvents:           make(map[string]bool),
 		activeEventsLock:       sync.RWMutex{},
 		eventProcessChan:       make(chan int64, 13),
@@ -47,18 +48,26 @@ func (e *EventHub) Start() error {
 
 func (e *EventHub) Publish(installId int64, name string, payload []byte) error {
 
+	qq.Println("@Publish/1")
+
 	if !e.needsProcessing(installId, name) {
+		qq.Println("@Publish/2")
 		return nil
 	}
 
+	qq.Println("@Publish/3")
+
 	eventId, err := e.sink.AddEvent(installId, name, payload)
 	if err != nil {
+		qq.Println("@Publish/4")
 		return err
 	}
 
+	qq.Println("@Publish/4")
+
 	e.eventProcessChan <- eventId
 
-	qq.Println("@published/event", eventId)
+	qq.Println("@Publish/5")
 
 	return nil
 }
@@ -74,7 +83,7 @@ func (e *EventHub) RefreshFullIndex() {
 func (e *EventHub) buildActiveEventsIndex() error {
 	sops := e.db.GetSpaceOps()
 
-	subs, err := sops.QueryAllEventSubscriptions()
+	subs, err := sops.QueryAllEventSubscriptions(false)
 	if err != nil {
 		return err
 	}
