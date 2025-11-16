@@ -24,3 +24,7 @@ func (l *LuaLazyData) AsJson(target any) error {
 
 	return nil
 }
+
+func pushError(L *lua.LState, err error) int {
+	return luaplus.PushError(L, err)
+}

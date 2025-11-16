@@ -9,10 +9,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func pushError(L *lua.LState, err error) int {
-	return luaplus.PushError(L, err)
-}
-
 type SpaceKVQuery struct {
 	Group        string      `json:"group"`
 	Cond         map[any]any `json:"cond"`
