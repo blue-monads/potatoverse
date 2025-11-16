@@ -2,6 +2,16 @@ local potato = require("potato")
 
 function get_tasks(ctx)
     local req = ctx.request()
+    local userId, err = req.getUserId()
+
+    if err then
+        req.json(401, {
+            error = tostring(err)
+        })
+        return
+    end
+
+    print("userId:", userId)
 
     local data, err = potato.kv.query({
         group = "TASKS",
@@ -27,7 +37,17 @@ end
 
 function add_task(ctx)
     local req = ctx.request()
-    
+    local userId, err = req.getUserId()
+
+    if err then
+        req.json(401, {
+            error = tostring(err)
+        })
+        return
+    end
+
+    print("userId:", userId)
+
     -- Parse request body
     local body, err = req.bindJSON()
     if err then
@@ -71,6 +91,16 @@ end
 function delete_task(ctx)
     local req = ctx.request()
     local path = ctx.param("subpath")
+
+    local userId, err = req.getUserId()
+    if err then
+        req.json(401, {
+            error = tostring(err)
+        })
+        return
+    end
+
+    print("userId:", userId)
     
     -- Extract key from path like "/api/tasks/{key}"
     local key = string.match(path, "/api/tasks/(.+)")

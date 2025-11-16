@@ -108,7 +108,8 @@ func HttpModule(app xtypes.App, spaceId int64, L *lua.LState, ctx *gin.Context) 
 
 		userId := claim.UserId
 		L.Push(lua.LNumber(userId))
-		return 1
+		L.Push(lua.LNil)
+		return 2
 	}
 
 	reqData := func(L *lua.LState) int {
