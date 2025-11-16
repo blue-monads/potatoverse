@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS EventSubscriptions (
   install_id INTEGER NOT NULL,
   space_id INTEGER NOT NULL DEFAULT 0,
   event_key TEXT NOT NULL DEFAULT '',
-  target_type TEXT NOT NULL DEFAULT '', -- push, email, sms, webhook, script
+  target_type TEXT NOT NULL DEFAULT '', -- webhook, script, space_method
   target_endpoint TEXT NOT NULL DEFAULT '',
   target_options JSON NOT NULL DEFAULT '{}', -- it has creds, api keys and other options
   target_code TEXT NOT NULL DEFAULT '',
