@@ -10,7 +10,6 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/tidwall/gjson"
 	"github.com/tidwall/pretty"
 )
 
@@ -98,32 +97,6 @@ type TargetExecution struct {
 	Subscription *dbmodels.EventSubscription
 	Target       *dbmodels.MQEventTarget
 	Event        *dbmodels.MQEvent
-}
-
-func RuleEngine(rulestr string, payload []byte) (bool, error) {
-
-	if rulestr == "{}" || rulestr == "" {
-		return true, nil
-	}
-
-	rules := map[string]string{}
-	err := json.Unmarshal([]byte(rulestr), &rules)
-	if err != nil {
-		return false, err
-	}
-
-	json := kosher.Str(payload)
-	for k, v := range rules {
-		qq.Println("RuleEngine/1", k, v)
-		value := gjson.Get(json, k)
-		if value.String() != v {
-			qq.Println("RuleEngine/2", value.String(), v)
-			return false, nil
-		}
-		qq.Println("RuleEngine/3", value.String(), v)
-	}
-
-	return true, nil
 }
 
 func PerformWebhookTargetExecution(ectx TargetExecution) error {
