@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Pencil, Target } from 'lucide-react';
+import { Zap, Pencil, Target, Clock } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import { EventSubscription } from '@/lib';
 import RuleEditor, { Rule } from './RuleEditor';
@@ -53,6 +53,9 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
         smtpTo: '',
     });
     const [disabled, setDisabled] = useState(initialData?.disabled || false);
+    const [delayStart, setDelayStart] = useState(initialData?.delay_start || 0);
+    const [retryDelay, setRetryDelay] = useState(initialData?.retry_delay || 0);
+    const [maxRetries, setMaxRetries] = useState(initialData?.max_retries || 0);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -106,6 +109,11 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             }
 
             setTarget(targetData);
+
+            // Set retry and delay fields
+            setDelayStart(initialData.delay_start || 0);
+            setRetryDelay(initialData.retry_delay || 0);
+            setMaxRetries(initialData.max_retries || 0);
         }
     }, [initialData]);
 
@@ -173,6 +181,9 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 target_options: targetOptions,
                 rules: JSON.stringify(rules),
                 transform: '{}',
+                delay_start: delayStart,
+                retry_delay: retryDelay,
+                max_retries: maxRetries,
                 disabled: disabled,
             };
 
@@ -347,6 +358,52 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Retry and Delay Settings */}
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Clock className="w-5 h-5 text-gray-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">Retry & Delay Settings</h3>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Delay Start (seconds)</label>
+                            <input
+                                type="number"
+                                value={delayStart}
+                                onChange={(e) => setDelayStart(parseInt(e.target.value) || 0)}
+                                min="0"
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Delay before processing starts</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Retry Delay (seconds)</label>
+                            <input
+                                type="number"
+                                value={retryDelay}
+                                onChange={(e) => setRetryDelay(parseInt(e.target.value) || 0)}
+                                min="0"
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Delay between retry attempts</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Max Retries</label>
+                            <input
+                                type="number"
+                                value={maxRetries}
+                                onChange={(e) => setMaxRetries(parseInt(e.target.value) || 0)}
+                                min="0"
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Maximum number of retry attempts</p>
                         </div>
                     </div>
                 </div>

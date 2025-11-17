@@ -201,6 +201,10 @@ CREATE TABLE IF NOT EXISTS EventSubscriptions (
   target_code TEXT NOT NULL DEFAULT '',
   rules JSON NOT NULL DEFAULT '{}',
   transform JSON NOT NULL DEFAULT '{}',
+  delay_start INTEGER NOT NULL DEFAULT 0,
+  retry_delay INTEGER NOT NULL DEFAULT 0,
+  max_retries INTEGER NOT NULL DEFAULT 0,
+
   extrameta JSON NOT NULL DEFAULT '{}',
   created_by INTEGER NOT NULL DEFAULT 0,
   disabled BOOLEAN NOT NULL DEFAULT FALSE,

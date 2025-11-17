@@ -3,6 +3,7 @@ package server
 import (
 	"strconv"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
@@ -353,15 +354,13 @@ func (a *Server) CreateEventSubscription(claim *signer.AccessClaim, ctx *gin.Con
 
 	// fixme => permission check
 
-	var subscriptionData map[string]any
+	var subscriptionData *dbmodels.EventSubscription
 	if err := ctx.ShouldBindJSON(&subscriptionData); err != nil {
 		return nil, err
 	}
 
-	// Set created_by from claim if available
-	if claim != nil && claim.UserId > 0 {
-		subscriptionData["created_by"] = float64(claim.UserId)
-	}
+	subscriptionData.InstallID = installId
+	subscriptionData.CreatedBy = claim.UserId
 
 	subscription, err := a.ctrl.CreateEventSubscription(installId, subscriptionData)
 	if err != nil {

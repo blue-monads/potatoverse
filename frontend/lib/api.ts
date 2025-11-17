@@ -676,6 +676,9 @@ export interface EventSubscription {
     target_code: string;
     rules: string; // JSON string
     transform: string; // JSON string
+    delay_start: number;
+    retry_delay: number;
+    max_retries: number;
     extrameta: string; // JSON string
     created_by: number;
     disabled: boolean;
@@ -705,6 +708,9 @@ export const createEventSubscription = async (installId: number, data: {
     target_code?: string;
     rules?: any; // Will be JSON stringified
     transform?: any; // Will be JSON stringified
+    delay_start?: number;
+    retry_delay?: number;
+    max_retries?: number;
     extrameta?: any; // Will be JSON stringified
     disabled?: boolean;
 }) => {
@@ -718,6 +724,9 @@ export const createEventSubscription = async (installId: number, data: {
         ...(data.target_code && { target_code: data.target_code }),
         ...(data.rules && { rules: typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules) }),
         ...(data.transform && { transform: typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform) }),
+        ...(data.delay_start !== undefined && { delay_start: data.delay_start }),
+        ...(data.retry_delay !== undefined && { retry_delay: data.retry_delay }),
+        ...(data.max_retries !== undefined && { max_retries: data.max_retries }),
         ...(data.extrameta && { extrameta: typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta) }),
         ...(data.disabled !== undefined && { disabled: data.disabled }),
     };
@@ -736,6 +745,9 @@ export const updateEventSubscription = async (installId: number, subscriptionId:
     if (data.target_code !== undefined) payload.target_code = data.target_code;
     if (data.rules !== undefined) payload.rules = typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules);
     if (data.transform !== undefined) payload.transform = typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform);
+    if (data.delay_start !== undefined) payload.delay_start = data.delay_start;
+    if (data.retry_delay !== undefined) payload.retry_delay = data.retry_delay;
+    if (data.max_retries !== undefined) payload.max_retries = data.max_retries;
     if (data.extrameta !== undefined) payload.extrameta = typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta);
     if (data.disabled !== undefined) payload.disabled = data.disabled;
     
