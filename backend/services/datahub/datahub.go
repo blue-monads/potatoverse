@@ -259,7 +259,8 @@ type MQSynk interface {
 	UpdateEventTarget(id int64, data map[string]any) error
 
 	TransitionTargetStart(targetId int64) (*dbmodels.MQEventTarget, error)
-	TransitionTargetDelay(targetId int64, eventId, delay int64) error
+	TransitionTargetStartDelayed(targetId int64, eventId, delay int64) error
+	TransitionTargetDelay(targetId int64, eventId, delay, retryCount int64) error
 	TransitionTargetComplete(eventId, targetId int64) error
 	TransitionTargetFail(eventId, targetId int64, error string) error
 }

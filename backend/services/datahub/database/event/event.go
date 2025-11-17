@@ -217,6 +217,14 @@ func (d *EventOperations) TransitionTargetDelay(targetId int64, eventId, delay i
 	})
 }
 
+func (d *EventOperations) TransitionTargetStartDelayed(targetId int64, eventId, delay, retryCount int64) error {
+	return d.UpdateEventTarget(targetId, map[string]any{
+		"status":        "start_delayed",
+		"delayed_until": delay,
+		"retry_count":   retryCount,
+	})
+}
+
 func (d *EventOperations) TransitionTargetFail(evtId, targetId int64, errorMsg string) error {
 	return d.UpdateEventTarget(targetId, map[string]any{
 		"status": "failed",

@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS MQEventTargets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id INTEGER NOT NULL,
   subscription_id INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'new', -- new, processing, delayed, processed, failed
+  status TEXT NOT NULL DEFAULT 'new', -- new, processing, start_delayed, delayed, processed, failed
   delayed_until INTEGER NOT NULL DEFAULT 0,
   retry_count INTEGER NOT NULL DEFAULT 0,
   error TEXT NOT NULL DEFAULT '',

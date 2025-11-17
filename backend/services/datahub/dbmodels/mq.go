@@ -17,6 +17,8 @@ type MQEventTarget struct {
 	EventID        int64     `json:"event_id" db:"event_id"`
 	SubscriptionID int64     `json:"subscription_id" db:"subscription_id"`
 	Status         string    `json:"status" db:"status"`
+	DelayedUntil   int64     `json:"delayed_until" db:"delayed_until"`
+	RetryCount     int64     `json:"retry_count" db:"retry_count"`
 	CreatedAt      time.Time `json:"created_at" db:"created_at,omitempty"`
 	UpdatedAt      time.Time `json:"updated_at" db:"updated_at,omitempty"`
 }

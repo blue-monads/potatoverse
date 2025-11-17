@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
@@ -62,6 +63,19 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 		Event:        event,
 	}
 
+	if sub.DelayStart > 0 && target.Status != "start_delayed" {
+		delayStart := time.Now().Unix() + sub.DelayStart*1000
+		err = e.sink.TransitionTargetStartDelayed(targetId, event.ID, delayStart)
+		if err != nil {
+			qq.Println("targetProcessor/11", err)
+			e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
+			return err
+		}
+
+		qq.Println("targetProcessor/12", "delayed for", sub.DelayStart, "seconds")
+		return nil
+	}
+
 	switch sub.TargetType {
 	case "webhook":
 		err = PerformWebhookTargetExecution(ectx)
@@ -79,7 +93,23 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 	if err != nil {
 		qq.Println("targetProcessor/11", err, sub.TargetType)
 		e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
-		return err
+
+		if sub.MaxRetries > 0 && target.RetryCount < sub.MaxRetries {
+			retryCount := target.RetryCount + 1
+			delay := time.Now().Unix() + sub.RetryDelay*1000
+			err = e.sink.TransitionTargetDelay(targetId, event.ID, delay, retryCount)
+			if err != nil {
+				qq.Println("targetProcessor/12", err)
+				e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
+				return err
+			}
+			qq.Println("targetProcessor/13", "delayed for", sub.RetryDelay, "seconds")
+			return nil
+		}
+
+		e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
+
+		return nil
 	} else {
 		err = e.sink.TransitionTargetComplete(event.ID, targetId)
 		if err != nil {
