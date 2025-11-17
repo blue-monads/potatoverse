@@ -192,19 +192,29 @@ func (d *EventOperations) TransitionTargetComplete(evtId, targetId int64) error 
 		return err
 	}
 
-	count, err := d.eventTargetTable().Find(db.Cond{
-		"event_id":  evtId,
-		"status !=": "processed",
-	}).Count()
-
-	if count == 0 {
-		return d.UpdateEvent(evtId, map[string]any{
-			"status": "processed",
-		})
-	}
+	rows, err := d.db.SQL().Query(`	
+SELECT
+  COUNT(id) AS total_target,
+  COUNT(CASE WHEN status IN ('processed', 'failed') THEN 1 END) AS is_processed
+FROM
+  MQEventTargets
+WHERE
+  event_id = ?;`, evtId)
 
 	if err != nil {
 		return err
+	}
+
+	defer rows.Close()
+
+	var totalTarget, totalProcessedTarget int64
+	rows.Next()
+	rows.Scan(&totalTarget, &totalProcessedTarget)
+
+	if totalTarget == totalProcessedTarget {
+		return d.UpdateEvent(evtId, map[string]any{
+			"status": "processed",
+		})
 	}
 
 	return nil
