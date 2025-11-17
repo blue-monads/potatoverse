@@ -1,21 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Pencil, Filter, Target, Plus, Trash2, Layers } from 'lucide-react';
+import { Zap, Pencil, Target } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import { EventSubscription } from '@/lib';
-
-interface Rule {
-    id: string;
-    variable: string;
-    operator: string;
-    value: string;
-}
-
-interface LogicalGroup {
-    id: string;
-    type: 'AND' | 'OR';
-    rules: Rule[];
-}
+import RuleEditor, { Rule } from './RuleEditor';
 
 interface Target {
     type: string;
@@ -29,6 +17,21 @@ interface Target {
     smtpTo: string;
 }
 
+
+
+/*
+
+Rule Example:
+    Variable      Operator       Value     ParentId
+1.  orderamount   greater_than   100            
+2.  $logical      group          AND                
+3.  deliveryFee   less_than      10         2    
+4.  paymode       equal_to       ONLINE     2    
+
+
+*/
+
+
 interface EventSubscriptionEditorProps {
     onSave: (data: any) => Promise<void>;
     onBack: () => void;
@@ -38,7 +41,6 @@ interface EventSubscriptionEditorProps {
 export default function EventSubscriptionEditor({ onSave, onBack, initialData }: EventSubscriptionEditorProps) {
     const [eventKey, setEventKey] = useState(initialData?.event_key || '');
     const [rules, setRules] = useState<Rule[]>([]);
-    const [logicalGroups, setLogicalGroups] = useState<LogicalGroup[]>([]);
     const [target, setTarget] = useState<Target>({
         type: 'webhook',
         endpoint: '',
@@ -55,27 +57,18 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
 
     useEffect(() => {
         if (initialData) {
-            // Parse rules from JSON string
+            // Parse rules from JSON string and convert to flat array structure
             try {
-                const rulesData = initialData.rules ? JSON.parse(initialData.rules) : {};
-                if (rulesData.rules && Array.isArray(rulesData.rules)) {
-                    setRules(rulesData.rules.map((r: any, idx: number) => ({
-                        id: r.id || `rule-${idx}`,
+                const rulesData = initialData.rules ? JSON.parse(initialData.rules) : [] as Rule[];
+
+                // If rulesData is already a flat array (new format)
+                if (Array.isArray(rulesData) && rulesData.length > 0 && rulesData[0].id) {
+                    setRules(rulesData.map((r: any) => ({
+                        id: r.id || `rule-${Date.now()}`,
                         variable: r.variable || '',
                         operator: r.operator || '',
                         value: r.value || '',
-                    })));
-                }
-                if (rulesData.groups && Array.isArray(rulesData.groups)) {
-                    setLogicalGroups(rulesData.groups.map((g: any, idx: number) => ({
-                        id: g.id || `group-${idx}`,
-                        type: g.type || 'AND',
-                        rules: (g.rules || []).map((r: any, rIdx: number) => ({
-                            id: r.id || `rule-${idx}-${rIdx}`,
-                            variable: r.variable || '',
-                            operator: r.operator || '',
-                            value: r.value || '',
-                        })),
+                        parentId: r.parent_id || r.parentId || undefined,
                     })));
                 }
             } catch (e) {
@@ -158,11 +151,6 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
 
         setSaving(true);
         try {
-            // Build rules JSON
-            const rulesData = {
-                rules: rules,
-                groups: logicalGroups,
-            };
 
             // Build target_options based on type
             let targetOptions: any = {};
@@ -183,7 +171,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 target_endpoint: target.type === 'webhook' ? target.endpoint : '',
                 target_code: target.type === 'script' ? target.code : '',
                 target_options: targetOptions,
-                rules: JSON.stringify(rulesData),
+                rules: JSON.stringify(rules),
                 transform: '{}',
                 disabled: disabled,
             };
@@ -196,93 +184,15 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
         }
     };
 
-    const addRule = () => {
-        setRules([...rules, {
-            id: `rule-${Date.now()}`,
-            variable: '',
-            operator: 'equal_to',
-            value: '',
-        }]);
-    };
-
-    const updateRule = (id: string, updates: Partial<Rule>) => {
-        setRules(rules.map(r => r.id === id ? { ...r, ...updates } : r));
-    };
-
-    const deleteRule = (id: string) => {
-        setRules(rules.filter(r => r.id !== id));
-    };
-
-    const addLogicalGroup = () => {
-        setLogicalGroups([...logicalGroups, {
-            id: `group-${Date.now()}`,
-            type: 'AND',
-            rules: [{
-                id: `rule-${Date.now()}-1`,
-                variable: '',
-                operator: 'equal_to',
-                value: '',
-            }],
-        }]);
-    };
-
-    const addRuleToGroup = (groupId: string) => {
-        setLogicalGroups(logicalGroups.map(g => 
-            g.id === groupId 
-                ? { ...g, rules: [...g.rules, { id: `rule-${Date.now()}`, variable: '', operator: 'equal_to', value: '' }] }
-                : g
-        ));
-    };
-
-    const updateRuleInGroup = (groupId: string, ruleId: string, updates: Partial<Rule>) => {
-        setLogicalGroups(logicalGroups.map(g =>
-            g.id === groupId
-                ? { ...g, rules: g.rules.map(r => r.id === ruleId ? { ...r, ...updates } : r) }
-                : g
-        ));
-    };
-
-    const deleteRuleFromGroup = (groupId: string, ruleId: string) => {
-        setLogicalGroups(logicalGroups.map(g =>
-            g.id === groupId
-                ? { ...g, rules: g.rules.filter(r => r.id !== ruleId) }
-                : g
-        ));
-    };
-
-    const toggleGroupType = (groupId: string) => {
-        setLogicalGroups(logicalGroups.map(g =>
-            g.id === groupId
-                ? { ...g, type: g.type === 'AND' ? 'OR' : 'AND' }
-                : g
-        ));
-    };
-
-    const deleteGroup = (groupId: string) => {
-        setLogicalGroups(logicalGroups.filter(g => g.id !== groupId));
-    };
-
     const updateTarget = (updates: Partial<Target>) => {
         setTarget({ ...target, ...updates });
     };
 
-    const operators = [
-        { value: 'equal_to', label: 'Equal To' },
-        { value: 'not_equal_to', label: 'Not Equal To' },
-        { value: 'greater_than', label: 'Greater Than' },
-        { value: 'less_than', label: 'Less Than' },
-        { value: 'greater_than_or_equal', label: 'Greater Than Or Equal' },
-        { value: 'less_than_or_equal', label: 'Less Than Or Equal' },
-        { value: 'contains', label: 'Contains' },
-        { value: 'not_contains', label: 'Not Contains' },
-        { value: 'before', label: 'Before' },
-        { value: 'after', label: 'After' },
-    ];
-
     const targetTypes = [
         { value: 'webhook', label: 'Webhook' },
-        { value: 'email', label: 'Email' },
         { value: 'script', label: 'Script' },
+        { value: 'log', label: 'Log' },
+        { value: 'space_method', label: 'Space Method' },
     ];
 
     return (
@@ -311,145 +221,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 </div>
 
                 {/* Rules Section */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Filter className="w-5 h-5 text-gray-500" />
-                        <h3 className="text-lg font-semibold text-gray-900">Rules</h3>
-                    </div>
-
-                    {/* Individual Rules */}
-                    <div className="space-y-3 mb-4">
-                        {rules.map((rule) => (
-                            <div key={rule.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-                                <input
-                                    type="text"
-                                    value={rule.variable}
-                                    onChange={(e) => updateRule(rule.id, { variable: e.target.value })}
-                                    placeholder="Variable"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <select
-                                    value={rule.operator}
-                                    onChange={(e) => updateRule(rule.id, { operator: e.target.value })}
-                                    className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    {operators.map(op => (
-                                        <option key={op.value} value={op.value}>{op.label}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="text"
-                                    value={rule.value}
-                                    onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                                    placeholder="Value"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <button
-                                    onClick={() => deleteRule(rule.id)}
-                                    className="text-red-600 hover:text-red-900"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-2 mb-4">
-                        <button
-                            onClick={addRule}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add Rule
-                        </button>
-                        <button
-                            onClick={addLogicalGroup}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Logical Group (AND)
-                        </button>
-                        <button
-                            onClick={addLogicalGroup}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Logical Group (OR)
-                        </button>
-                    </div>
-
-                    {/* Logical Groups */}
-                    <div className="space-y-3">
-                        {logicalGroups.map((group) => (
-                            <div key={group.id} className="border border-green-300 rounded-lg p-4 bg-green-50">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <Layers className="w-4 h-4 text-green-700" />
-                                        <span className="font-medium text-green-900">
-                                            Logical Group ({group.type})
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => toggleGroupType(group.id)}
-                                            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-                                        >
-                                            Switch to {group.type === 'AND' ? 'OR' : 'AND'}
-                                        </button>
-                                        <button
-                                            onClick={() => deleteGroup(group.id)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    {group.rules.map((rule) => (
-                                        <div key={rule.id} className="flex items-center gap-3 p-2 bg-white rounded">
-                                            <input
-                                                type="text"
-                                                value={rule.variable}
-                                                onChange={(e) => updateRuleInGroup(group.id, rule.id, { variable: e.target.value })}
-                                                placeholder="Variable"
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
-                                            />
-                                            <select
-                                                value={rule.operator}
-                                                onChange={(e) => updateRuleInGroup(group.id, rule.id, { operator: e.target.value })}
-                                                className="px-3 py-2 border border-gray-300 rounded text-sm"
-                                            >
-                                                {operators.map(op => (
-                                                    <option key={op.value} value={op.value}>{op.label}</option>
-                                                ))}
-                                            </select>
-                                            <input
-                                                type="text"
-                                                value={rule.value}
-                                                onChange={(e) => updateRuleInGroup(group.id, rule.id, { value: e.target.value })}
-                                                placeholder="Value"
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
-                                            />
-                                            <button
-                                                onClick={() => deleteRuleFromGroup(group.id, rule.id)}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => addRuleToGroup(group.id)}
-                                    className="mt-3 flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Add Rule
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <RuleEditor rules={rules} onRulesChange={setRules} />
 
                 {/* Target Section */}
                 <div className="bg-white rounded-lg shadow p-6">
