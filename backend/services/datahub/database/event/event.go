@@ -210,18 +210,18 @@ func (d *EventOperations) TransitionTargetComplete(evtId, targetId int64) error 
 	return nil
 }
 
-func (d *EventOperations) TransitionTargetDelay(targetId int64, eventId, delay int64) error {
+func (d *EventOperations) TransitionTargetDelay(targetId int64, eventId, delay, retryCount int64) error {
 	return d.UpdateEventTarget(targetId, map[string]any{
 		"status":        "delayed",
 		"delayed_until": delay,
+		"retry_count":   retryCount,
 	})
 }
 
-func (d *EventOperations) TransitionTargetStartDelayed(targetId int64, eventId, delay, retryCount int64) error {
+func (d *EventOperations) TransitionTargetStartDelayed(targetId int64, eventId, delay int64) error {
 	return d.UpdateEventTarget(targetId, map[string]any{
 		"status":        "start_delayed",
 		"delayed_until": delay,
-		"retry_count":   retryCount,
 	})
 }
 
