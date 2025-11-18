@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS EventSubscriptions (
   delay_start INTEGER NOT NULL DEFAULT 0,
   retry_delay INTEGER NOT NULL DEFAULT 0,
   max_retries INTEGER NOT NULL DEFAULT 0,
-
+  expires_on INTEGER NOT NULL DEFAULT 0, -- (created_at + expires_in > now) then status is expired
   extrameta JSON NOT NULL DEFAULT '{}',
   created_by INTEGER NOT NULL DEFAULT 0,
   disabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS MQEventTargets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   event_id INTEGER NOT NULL,
   subscription_id INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'new', -- new, processing, start_delayed, delayed, processed, failed
+  status TEXT NOT NULL DEFAULT 'new', -- new, processing, start_delayed, delayed, processed, failed, expired
   delayed_until INTEGER NOT NULL DEFAULT 0,
   retry_count INTEGER NOT NULL DEFAULT 0,
   error TEXT NOT NULL DEFAULT '',
