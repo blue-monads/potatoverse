@@ -937,3 +937,4 @@ func TestRuleEngine_InvalidJSON(t *testing.T) {
 		})
 	}
 }
+
