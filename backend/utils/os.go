@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
@@ -105,4 +106,14 @@ func ExtractZip(zfile, ofolder string) error {
 	}
 
 	return nil
+}
+
+func CollapseTimestampId() int64 {
+	interval := int64(time.Minute * 15) // 15 minutes
+
+	now := time.Now().Unix()
+
+	rounded := now - (now % interval)
+
+	return rounded
 }

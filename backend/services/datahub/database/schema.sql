@@ -205,6 +205,7 @@ CREATE TABLE IF NOT EXISTS EventSubscriptions (
   retry_delay INTEGER NOT NULL DEFAULT 0,
   max_retries INTEGER NOT NULL DEFAULT 0,
   expires_on INTEGER NOT NULL DEFAULT 0, -- (created_at + expires_in > now) then status is expired
+  collapse_interval INTEGER NOT NULL DEFAULT 0, -- 1 minute, 5 minute, 15 minute etc in seconds
   extrameta JSON NOT NULL DEFAULT '{}',
   created_by INTEGER NOT NULL DEFAULT 0,
   disabled BOOLEAN NOT NULL DEFAULT FALSE,
@@ -212,8 +213,11 @@ CREATE TABLE IF NOT EXISTS EventSubscriptions (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- utc timestamp rounded to nearsest interval
+
 CREATE TABLE IF NOT EXISTS MQEvents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  interval_id INTEGER NOT NULL DEFAULT 0,
   install_id INTEGER NOT NULL,
   name TEXT NOT NULL,
   payload BLOB NOT NULL,
