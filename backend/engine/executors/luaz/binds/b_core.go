@@ -77,6 +77,11 @@ func coreModuleIndex(L *lua.LState) int {
 			return coreSignFsPresignedToken(mod, L)
 		}))
 		return 1
+	case "advisery_token":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return coreSignAdviseryToken(mod, L)
+		}))
+		return 1
 	}
 
 	return 0
@@ -125,6 +130,35 @@ func coreSignFsPresignedToken(mod *luaCoreModule, L *lua.LState) int {
 		UserId:    opts.UserId,
 		PathName:  opts.Path,
 		FileName:  opts.FileName,
+	})
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LString(signature))
+	L.Push(lua.LNil)
+	return 2
+}
+
+type SignAdviseryTokenOptions struct {
+	TokenSubType string         `json:"token_sub_type"`
+	UserId       int64          `json:"user_id"`
+	Data         map[string]any `json:"data"`
+}
+
+func coreSignAdviseryToken(mod *luaCoreModule, L *lua.LState) int {
+	opts := &SignAdviseryTokenOptions{}
+	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
+	if err != nil {
+		L.Push(lua.LString(err.Error()))
+		return 1
+	}
+
+	signature, err := mod.sig.SignSpaceAdvisiery(&signer.SpaceAdvisieryClaim{
+		InstallId:    mod.installId,
+		UserId:       opts.UserId,
+		TokenSubType: opts.TokenSubType,
+		Data:         opts.Data,
+		SpaceId:      mod.spaceId,
 	})
 	if err != nil {
 		return pushError(L, err)
