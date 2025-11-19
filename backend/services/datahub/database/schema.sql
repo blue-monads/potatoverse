@@ -217,7 +217,6 @@ CREATE TABLE IF NOT EXISTS EventSubscriptions (
 
 CREATE TABLE IF NOT EXISTS MQEvents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  interval_id INTEGER NOT NULL DEFAULT 0,
   install_id INTEGER NOT NULL,
   name TEXT NOT NULL,
   payload BLOB NOT NULL,
@@ -229,6 +228,7 @@ CREATE TABLE IF NOT EXISTS MQEvents (
 
 CREATE TABLE IF NOT EXISTS MQEventTargets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  collapse_key TEXT NOT NULL DEFAULT '',
   event_id INTEGER NOT NULL,
   subscription_id INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'new', -- new, processing, start_delayed, delayed, processed, failed, expired
