@@ -15,6 +15,8 @@ func registerDBModuleType(L *lua.LState) {
 	L.SetField(mt, "__index", L.NewFunction(dbModuleIndex))
 }
 
+// fixme add to closer so any pending txns are committed/rolled back on app shutdown
+
 // Txn Module
 func registerTxnModuleType(L *lua.LState) {
 	mt := L.NewTypeMetatable(luaTxnModuleTypeName)
