@@ -4,6 +4,9 @@
 - go through all services and fix logging
 - add http client bindings to lua
 - devices and sessions, hash password
+- low db txn support
+- low db testing
+- event hub testing
 
 
 ## capabilities
