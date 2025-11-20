@@ -15,10 +15,34 @@ func registerDBModuleType(L *lua.LState) {
 	L.SetField(mt, "__index", L.NewFunction(dbModuleIndex))
 }
 
+// Txn Module
+func registerTxnModuleType(L *lua.LState) {
+	mt := L.NewTypeMetatable(luaTxnModuleTypeName)
+	L.SetField(mt, "__index", L.NewFunction(txnModuleIndex))
+}
+
+func newTxnModule(L *lua.LState, installId int64, txn datahub.DBLowTxnOps) *lua.LUserData {
+	ud := L.NewUserData()
+	ud.Value = &luaTxnModule{
+		installId: installId,
+		txn:       txn,
+	}
+	L.SetMetatable(ud, L.GetTypeMetatable(luaTxnModuleTypeName))
+	return ud
+}
+
+func checkTxnModule(L *lua.LState) *luaTxnModule {
+	ud := L.CheckUserData(1)
+	if v, ok := ud.Value.(*luaTxnModule); ok {
+		return v
+	}
+	L.ArgError(1, luaTxnModuleTypeName+" expected")
+	return nil
+}
+
 func newDBModule(L *lua.LState, app xtypes.App, installId int64) *lua.LUserData {
 	ud := L.NewUserData()
 	ud.Value = &luaDBModule{
-		app:       app,
 		installId: installId,
 		db:        app.Database().GetLowDBOps("P", strconv.FormatInt(installId, 10)),
 	}
@@ -115,9 +139,124 @@ func dbModuleIndex(L *lua.LState) int {
 			return dbListTableColumns(mod, L)
 		}))
 		return 1
+	case "start_txn":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbStartTxn(mod, L)
+		}))
+		return 1
 	}
 
 	return 0
+}
+
+func txnModuleIndex(L *lua.LState) int {
+	mod := checkTxnModule(L)
+	method := L.CheckString(2)
+
+	// Create a temporary db module wrapper to reuse the same method implementations
+	// Since DBLowTxnOps embeds DBLowCoreOps, we can use mod.txn as the db field
+	dbMod := &luaDBModule{
+		installId: mod.installId,
+		db:        mod.txn, // DBLowTxnOps embeds DBLowCoreOps
+	}
+
+	switch method {
+	case "run_ddl":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbRunDDL(dbMod, L)
+		}))
+		return 1
+	case "run_query":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbRunQuery(dbMod, L)
+		}))
+		return 1
+	case "run_query_one":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbRunQueryOne(dbMod, L)
+		}))
+		return 1
+	case "insert":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbInsert(dbMod, L)
+		}))
+		return 1
+	case "update_by_id":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbUpdateById(dbMod, L)
+		}))
+		return 1
+	case "delete_by_id":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbDeleteById(dbMod, L)
+		}))
+		return 1
+	case "find_by_id":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindById(dbMod, L)
+		}))
+		return 1
+	case "update_by_cond":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbUpdateByCond(dbMod, L)
+		}))
+		return 1
+	case "delete_by_cond":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbDeleteByCond(dbMod, L)
+		}))
+		return 1
+	case "find_all_by_cond":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindAllByCond(dbMod, L)
+		}))
+		return 1
+	case "find_one_by_cond":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindOneByCond(dbMod, L)
+		}))
+		return 1
+	case "find_all_by_query":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindAllByQuery(dbMod, L)
+		}))
+		return 1
+	case "find_by_join":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return dbFindByJoin(dbMod, L)
+		}))
+		return 1
+	case "commit":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return txnCommit(mod, L)
+		}))
+		return 1
+	case "rollback":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return txnRollback(mod, L)
+		}))
+		return 1
+	}
+
+	return 0
+}
+
+func txnCommit(mod *luaTxnModule, L *lua.LState) int {
+	err := mod.txn.Commit()
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
+}
+
+func txnRollback(mod *luaTxnModule, L *lua.LState) int {
+	err := mod.txn.Rollback()
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LNil)
+	return 1
 }
 
 func dbRunDDL(mod *luaDBModule, L *lua.LState) int {
@@ -322,8 +461,23 @@ func dbFindByJoin(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
+func dbStartTxn(mod *luaDBModule, L *lua.LState) int {
+	db := mod.db.(datahub.DBLowOps)
+	txn, err := db.StartTxn()
+	if err != nil {
+		return pushError(L, err)
+	}
+
+	txnModule := newTxnModule(L, mod.installId, txn)
+	L.Push(txnModule)
+	return 1
+}
+
 func dbListTables(mod *luaDBModule, L *lua.LState) int {
-	tables, err := mod.db.ListTables()
+
+	db := mod.db.(datahub.DBLowOps)
+
+	tables, err := db.ListTables()
 	if err != nil {
 		return pushError(L, err)
 	}
@@ -337,7 +491,8 @@ func dbListTables(mod *luaDBModule, L *lua.LState) int {
 
 func dbListTableColumns(mod *luaDBModule, L *lua.LState) int {
 	tableName := L.CheckString(1)
-	columns, err := mod.db.ListTableColumns(tableName)
+	db := mod.db.(datahub.DBLowOps)
+	columns, err := db.ListTableColumns(tableName)
 	if err != nil {
 		return pushError(L, err)
 	}

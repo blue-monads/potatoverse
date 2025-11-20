@@ -11,6 +11,7 @@ const (
 	luaKVModuleTypeName   = "potato.kv"
 	luaCapModuleTypeName  = "potato.cap"
 	luaDBModuleTypeName   = "potato.db"
+	luaTxnModuleTypeName  = "potato.txn"
 	luaCoreModuleTypeName = "potato.core"
 )
 
@@ -22,9 +23,13 @@ type luaCapModule struct {
 }
 
 type luaDBModule struct {
-	app       xtypes.App
 	installId int64
-	db        datahub.DBLowOps
+	db        datahub.DBLowCoreOps
+}
+
+type luaTxnModule struct {
+	installId int64
+	txn       datahub.DBLowTxnOps
 }
 
 type luaCoreModule struct {
@@ -41,6 +46,7 @@ func PotatoModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LS
 		registerKVModuleType(L)
 		registerCapModuleType(L)
 		registerDBModuleType(L)
+		registerTxnModuleType(L)
 		registerCoreModuleType(L)
 
 		// Create main potato table
