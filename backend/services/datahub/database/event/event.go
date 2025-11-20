@@ -253,5 +253,5 @@ func (d *EventOperations) eventTargetTable() db.Collection {
 }
 
 func (d *EventOperations) subscriptionTable() db.Collection {
-	return d.db.Collection("EventSubscriptions")
+	return d.db.Collection("MQSubscriptions")
 }
