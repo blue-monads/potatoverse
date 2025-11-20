@@ -66,7 +66,7 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 			lh := &LuaH{
 				parent:  &LuazExecutor{parent: b},
 				L:       L,
-				closers: []func() error{},
+				closers: make([]CloseItem, 0, 4),
 			}
 
 			err := lh.registerModules()

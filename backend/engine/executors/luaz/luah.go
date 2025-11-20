@@ -15,15 +15,36 @@ import (
 
 var luaHttpClient = &http.Client{}
 
+type CloseItem struct {
+	Closer func() error
+	Id     uint16
+}
+
 type LuaH struct {
+	counter uint16
 	parent  *LuazExecutor
-	closers []func() error
+	closers []CloseItem
 	L       *lua.LState
+}
+
+func (l *LuaH) AddCloser(closer func() error) uint16 {
+	l.counter++
+	l.closers = append(l.closers, CloseItem{Closer: closer, Id: l.counter})
+	return l.counter
+}
+
+func (l *LuaH) RemoveCloser(id uint16) {
+	for i := range l.closers {
+		l.closers[i] = CloseItem{Closer: nil, Id: 0}
+	}
 }
 
 func (l *LuaH) Close() error {
 	for _, c := range l.closers {
-		c()
+		if c.Closer != nil {
+			err := c.Closer()
+			qq.Println("@close/1", "closer", c.Id, "error", err)
+		}
 	}
 
 	l.closers = l.closers[:0]
