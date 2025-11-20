@@ -403,5 +403,5 @@ func (d *SpaceOperations) RemoveEventSubscription(installId int64, id int64) err
 }
 
 func (d *SpaceOperations) eventSubscriptionTable() db.Collection {
-	return d.db.Collection("EventSubscriptions")
+	return d.db.Collection("MQSubscriptions")
 }
