@@ -1,6 +1,7 @@
 package eventhub
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -19,9 +20,14 @@ type EventHub struct {
 
 	eventProcessChan       chan int64
 	eventTargetProcessChan chan int64
+
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
 func NewEventHub(db datahub.Database) *EventHub {
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &EventHub{
 		sink:                   db.GetMQSynk(),
@@ -31,6 +37,8 @@ func NewEventHub(db datahub.Database) *EventHub {
 		eventProcessChan:       make(chan int64, 13),
 		eventTargetProcessChan: make(chan int64, 27),
 		refreshFullIndex:       make(chan struct{}, 1),
+		ctx:                    ctx,
+		cancel:                 cancel,
 	}
 }
 
@@ -65,7 +73,11 @@ func (e *EventHub) Publish(installId int64, name string, payload []byte) error {
 
 	qq.Println("@Publish/4")
 
-	e.eventProcessChan <- eventId
+	select {
+	case e.eventProcessChan <- eventId:
+	case <-e.ctx.Done():
+		return e.ctx.Err()
+	}
 
 	qq.Println("@Publish/5")
 
@@ -109,4 +121,12 @@ func (e *EventHub) needsProcessing(installId int64, name string) bool {
 	defer e.activeEventsLock.RUnlock()
 
 	return e.activeEvents[key]
+}
+
+func (e *EventHub) Stop() {
+	// Cancel context to signal all goroutines to stop
+	e.cancel()
+
+	// Wait for all goroutines to finish
+	e.wg.Wait()
 }
