@@ -12,10 +12,11 @@ import {
     updateSpaceCapability, 
     deleteSpaceCapability,
     listCapabilityTypes,
-    CapabilityDefinition,
-    CapabilityOptionField
+    CapabilityDefinition
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
+import { CapabilityOptionsSection } from '@/contain/compo/CapabilityOptionsSection';
+import { buildCapabilityOptions } from '@/contain/compo/capabilityUtils';
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -345,20 +346,13 @@ const CapabilityEditForm = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const options: Record<string, any> = {};
-        if (currentDefinition) {
-            currentDefinition.option_fields.forEach(field => {
-                if (formData[field.key] !== undefined) {
-                    options[field.key] = formData[field.key];
-                }
-            });
-        }
+        const options = buildCapabilityOptions(currentDefinition, formData, false);
 
         onSave({
             name,
             capability_type: capabilityType,
             space_id: spaceId,
-            options: Object.keys(options).length > 0 ? options : undefined,
+            options,
         });
     };
 
@@ -412,22 +406,13 @@ const CapabilityEditForm = ({
                 </select>
             </div>
 
-            {currentDefinition && currentDefinition.option_fields.length > 0 && (
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Configuration Options
-                    </label>
-                    <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-white">
-                        {currentDefinition.option_fields.map(field => (
-                            <CapabilityOptionFieldInput
-                                key={field.key}
-                                field={field}
-                                value={formData[field.key] !== undefined ? formData[field.key] : field.default}
-                                onChange={(value) => setFormData({ ...formData, [field.key]: value })}
-                            />
-                        ))}
-                    </div>
-                </div>
+            {currentDefinition && (
+                <CapabilityOptionsSection
+                    definition={currentDefinition}
+                    formData={formData}
+                    onFieldChange={(key, value) => setFormData({ ...formData, [key]: value })}
+                    className="bg-white"
+                />
             )}
 
             <div className="flex justify-end gap-2">
@@ -449,75 +434,3 @@ const CapabilityEditForm = ({
     );
 };
 
-const CapabilityOptionFieldInput = ({
-    field,
-    value,
-    onChange
-}: {
-    field: CapabilityOptionField;
-    value: any;
-    onChange: (value: any) => void;
-}) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        let newValue: any = e.target.value;
-        
-        if (field.type === 'number') {
-            newValue = parseFloat(newValue) || 0;
-        } else if (field.type === 'boolean') {
-            newValue = (e.target as HTMLInputElement).checked;
-        }
-
-        onChange(newValue);
-    };
-
-    return (
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-                {field.name}
-                {field.required && <span className="text-red-500">*</span>}
-            </label>
-            {field.description && (
-                <p className="text-xs text-gray-500 mb-1">{field.description}</p>
-            )}
-            {field.type === 'textarea' ? (
-                <textarea
-                    value={value || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required={field.required}
-                    rows={3}
-                />
-            ) : field.type === 'select' ? (
-                <select
-                    value={value || field.default || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required={field.required}
-                >
-                    {field.options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                </select>
-            ) : field.type === 'boolean' ? (
-                <label className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        checked={value || false}
-                        onChange={handleChange}
-                        className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700">Enabled</span>
-                </label>
-            ) : (
-                <input
-                    type={field.type === 'api_key' ? 'password' : field.type === 'number' ? 'number' : 'text'}
-                    value={value || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required={field.required}
-                    placeholder={field.default}
-                />
-            )}
-        </div>
-    );
-};
