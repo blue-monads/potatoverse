@@ -1,59 +1,96 @@
 package luaz
 
-const Code = `
+import (
+	"errors"
+	"time"
 
-local db = require("db")
-local math = require("math")
+	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
+	lua "github.com/yuin/gopher-lua"
+)
 
-function im_cool(a)
-	print("I'm cool")
-	return a + 1
-end
+func BuildLuazExecutor(app xtypes.App) (xtypes.ExecutorBuilder, error) {
+	return &LuazExecutorBuilder{app: app}, nil
+}
 
+type LuazExecutorBuilder struct {
+	app xtypes.App
+}
 
-function on_http(ctx)
-  print("Hello from lua!", ctx.type())
-  local req = ctx.request()
+func (b *LuazExecutorBuilder) Name() string {
+	return "luaz"
+}
 
-  local rand = math.random(1, 100)
+func (b *LuazExecutorBuilder) Icon() string {
+	return "luaz"
+}
 
-  db.add({
-	group = "test",
-	key = "test" .. rand,
-	value = "test",
-  })
+func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.Executor, error) {
 
+	source := Code
 
-  req.json(200, {
-	im_cool = im_cool(18),
-	message = "Hello from lua! from lua!",
-	space_id = ctx.param("space_id"),
-	package_id = ctx.param("package_id"),
-	subpath = ctx.param("subpath"),
-  })
+	if !ByPassPackageCode {
+		sOps := b.app.Database().GetSpaceOps()
+		s, err := sOps.GetSpace(opt.SpaceId)
+		if err != nil {
+			return nil, errors.New("space not found")
+		}
 
-end
+		if s.ServerFile == "" {
+			s.ServerFile = "server.lua"
+		}
 
-`
+		pfops := b.app.Database().GetPackageFileOps()
+		packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, "", s.ServerFile)
 
-const HandlersReference = `
+		if err != nil {
+			qq.Println("@lua_exec_error", err)
+			qq.Println("@package file not found", opt.PackageVersionId, opt.SpaceId, s.ServerFile)
+			qq.Println("@space", s)
+			return nil, errors.New("package file not found")
+		}
 
+		source = string(packageFile)
 
-function on_http(ctx)
-	print("@on_http", ctx.type())
-end
+	}
 
-function on_ws_room(ctx)
-	print("@on_ws_room", ctx.type())
-end
+	pool := NewLuaStatePool(LuaStatePoolOptions{
+		MinSize:     10,
+		MaxSize:     20,
+		MaxOnFlight: 50,
+		Ttl:         time.Hour,
+		InitFn: func() (*LuaH, error) {
 
-function on_rmcp(ctx)
-	print("@on_rmcp", ctx.type())
-end
+			L := lua.NewState()
 
+			lh := &LuaH{
+				parent:  &LuazExecutor{parent: b},
+				L:       L,
+				closers: []func() error{},
+			}
 
+			err := lh.registerModules()
+			if err != nil {
+				return nil, err
+			}
 
+			err = L.DoString(source)
+			if err != nil {
+				qq.Println("@lua_exec_error", err)
+				return nil, err
+			}
+			qq.Println("@lua_exec_success", "code length", len(source))
 
-`
+			return lh, nil
+		},
+	})
 
-const ByPassPackageCode = false
+	ex := &LuazExecutor{
+		parent: b,
+		pool:   pool,
+		handle: opt,
+	}
+
+	return ex, nil
+
+}

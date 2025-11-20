@@ -16,7 +16,7 @@ import (
 var luaHttpClient = &http.Client{}
 
 type LuaH struct {
-	parent  *Luaz
+	parent  *LuazExecutor
 	closers []func() error
 	L       *lua.LState
 }
@@ -48,7 +48,10 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
 		"request": func(L *lua.LState) int {
-			table := binds.HttpModule(l.parent.handle.App, l.parent.handle.SpaceId, L, ctx)
+			app := l.parent.parent.app
+			spaceId := l.parent.handle.SpaceId
+
+			table := binds.HttpModule(app, spaceId, L, ctx)
 			L.Push(table)
 			return 1
 		},
@@ -107,7 +110,7 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 func (l *LuaH) registerModules() error {
 	installId := l.parent.handle.InstalledId
 	spaceId := l.parent.handle.SpaceId
-	app := l.parent.handle.App
+	app := l.parent.parent.app
 
 	l.L.PreloadModule("pmcp", binds.BindMCP)
 	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, spaceId))

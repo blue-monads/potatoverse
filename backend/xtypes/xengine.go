@@ -37,10 +37,10 @@ type ExecutorBuilderOption struct {
 
 type ExecutorBuilderFactory func(app App) (ExecutorBuilder, error)
 
-type ExecutorBuilder struct {
-	Name  string
-	Icon  string
-	Build func(opt *ExecutorBuilderOption) (Executor, error)
+type ExecutorBuilder interface {
+	Name() string
+	Icon() string
+	Build(opt *ExecutorBuilderOption) (Executor, error)
 }
 
 type HttpExecution struct {
