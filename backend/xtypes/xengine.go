@@ -26,8 +26,6 @@ type Engine interface {
 }
 
 type ExecutorBuilderOption struct {
-	App App
-
 	Logger *slog.Logger
 
 	WorkingFolder    string
@@ -37,10 +35,12 @@ type ExecutorBuilderOption struct {
 	FsRoot           *os.Root
 }
 
+type ExecutorBuilderFactory func(app App) (ExecutorBuilder, error)
+
 type ExecutorBuilder struct {
 	Name  string
 	Icon  string
-	Build func(opt ExecutorBuilderOption) (*Executor, error)
+	Build func(opt *ExecutorBuilderOption) (Executor, error)
 }
 
 type HttpExecution struct {
@@ -49,7 +49,7 @@ type HttpExecution struct {
 	Request     *gin.Context
 }
 
-type GenericExecution struct {
+type EventExecution struct {
 	Type       string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
@@ -62,6 +62,9 @@ type GenericContext interface {
 }
 
 type Executor interface {
+	Cleanup()
+	GetDebugData() map[string]any
+
 	HandleHttp(event HttpExecution) error
-	HandleGeneric(event GenericExecution) error
+	HandleEvent(event EventExecution) error
 }

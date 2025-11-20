@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
@@ -61,8 +60,9 @@ func NewEngine(opt EngineOption) *Engine {
 		workingFolder: opt.WorkingFolder,
 		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
-			execs:     make(map[int64]*luaz.Luaz),
-			execsLock: sync.RWMutex{},
+			activeExecs:     make(map[int64]xtypes.Executor),
+			activeExecsLock: sync.RWMutex{},
+			builders:        make(map[string]xtypes.ExecutorBuilder),
 		},
 		logger:           elogger,
 		capHub:           caphub.NewCapabilityHub(),
@@ -73,6 +73,8 @@ func NewEngine(opt EngineOption) *Engine {
 		eventHub: eventhub.NewEventHub(opt.DB),
 		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub")),
 	}
+
+	e.runtime.parent = e
 
 	return e
 }
