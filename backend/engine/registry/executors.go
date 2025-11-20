@@ -8,20 +8,23 @@ import (
 )
 
 var (
-	ExecutorBuilderFactories = make(map[string]xtypes.ExecutorBuilderFactory)
-	meLock                   = sync.RWMutex{}
+	executorBuilderFactories = make(map[string]xtypes.ExecutorBuilderFactory)
+	meLock                   = sync.Mutex{}
 )
 
-func RegisterExecutor(name string, factory xtypes.ExecutorBuilderFactory) {
-	ExecutorBuilderFactories[name] = factory
+func RegisterExecutorBuilderFactory(name string, factory xtypes.ExecutorBuilderFactory) {
+	meLock.Lock()
+	defer meLock.Unlock()
+
+	executorBuilderFactories[name] = factory
 }
 
-func GetExecutorBuilderFactories() (map[string]xtypes.ExecutorBuilderFactory, error) {
-	meLock.RLock()
-	defer meLock.RUnlock()
+func GetExecutorBuilderFactories() map[string]xtypes.ExecutorBuilderFactory {
+	meLock.Lock()
+	defer meLock.Unlock()
 
 	copy := make(map[string]xtypes.ExecutorBuilderFactory)
-	maps.Copy(copy, ExecutorBuilderFactories)
+	maps.Copy(copy, executorBuilderFactories)
 
-	return copy, nil
+	return copy
 }

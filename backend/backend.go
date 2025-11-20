@@ -12,6 +12,8 @@ import (
 	"github.com/blue-monads/turnix/backend/services/mailer/stdio"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
+
+	_ "github.com/blue-monads/turnix/backend/engine/executors"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {

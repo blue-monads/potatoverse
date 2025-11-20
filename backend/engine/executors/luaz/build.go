@@ -9,7 +9,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func BuildLuazExecutor(app xtypes.App) (xtypes.ExecutorBuilder, error) {
+func BuildLuazExecutorBuilder(app xtypes.App) (xtypes.ExecutorBuilder, error) {
 	return &LuazExecutorBuilder{app: app}, nil
 }
 
@@ -54,6 +54,11 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 
 	}
 
+	ex := &LuazExecutor{
+		parent: b,
+		handle: opt,
+	}
+
 	pool := NewLuaStatePool(LuaStatePoolOptions{
 		MinSize:     10,
 		MaxSize:     20,
@@ -64,9 +69,10 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 			L := lua.NewState()
 
 			lh := &LuaH{
-				parent:  &LuazExecutor{parent: b},
+				parent:  ex,
 				L:       L,
 				closers: make([]CloseItem, 0, 4),
+				counter: 0,
 			}
 
 			err := lh.registerModules()
@@ -85,11 +91,7 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 		},
 	})
 
-	ex := &LuazExecutor{
-		parent: b,
-		pool:   pool,
-		handle: opt,
-	}
+	ex.pool = pool
 
 	return ex, nil
 

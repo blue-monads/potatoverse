@@ -12,6 +12,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
+	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -104,6 +105,16 @@ func (e *Engine) Start(app xtypes.App) error {
 	} else {
 		// Fallback: create empty repo hub
 		e.repoHub = repohub.NewRepoHub([]xtypes.RepoOptions{}, e.logger)
+	}
+
+	bfactories := registry.GetExecutorBuilderFactories()
+
+	for name, factory := range bfactories {
+		builder, err := factory(app)
+		if err != nil {
+			return err
+		}
+		e.runtime.builders[name] = builder
 	}
 
 	// Initialize capabilities hub
