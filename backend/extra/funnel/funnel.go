@@ -10,6 +10,8 @@ import (
 // root_<pub_key_hash>.freehttptunnel.com
 // <s-x>_<pub_key_hash>.freehttptunnel.com
 
+// zz-10-funnel
+
 type ServerConnection struct {
 	Conn net.Conn
 }
