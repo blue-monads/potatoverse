@@ -224,6 +224,21 @@ type Join struct {
 }
 
 type DBLowOps interface {
+	ListTables() ([]string, error)
+	ListTableColumns(table string) ([]map[string]any, error)
+
+	DBLowTxnOps
+
+	StartTxn() (DBLowTxnOps, error)
+}
+
+type DBLowTxnOps interface {
+	Commit() error
+	Rollback() error
+	DBLowCoreOps
+}
+
+type DBLowCoreOps interface {
 	RunDDL(ddl string) error
 	RunQuery(query string, data ...any) ([]map[string]any, error)
 	RunQueryOne(query string, data ...any) (map[string]any, error)
@@ -241,9 +256,6 @@ type DBLowOps interface {
 	FindAllByQuery(query *FindQuery) ([]map[string]any, error)
 
 	FindByJoin(query *FindByJoin) ([]map[string]any, error)
-
-	ListTables() ([]string, error)
-	ListTableColumns(table string) ([]map[string]any, error)
 }
 
 type MQSynk interface {

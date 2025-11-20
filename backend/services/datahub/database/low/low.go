@@ -10,7 +10,14 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/enforcer"
 	"github.com/blue-monads/turnix/backend/utils/libx/dbutils"
 	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/sqlite"
 )
+
+type Txnish interface {
+	Commit() error
+
+	Rollback() error
+}
 
 var (
 	_ datahub.DBLowOps = (*LowDB)(nil)
@@ -20,6 +27,7 @@ type LowDB struct {
 	sess      db.Session
 	ownerType string
 	ownerID   string
+	isTxn     bool
 }
 
 func NewLowDB(sess db.Session, ownerType string, ownerID string) *LowDB {
@@ -27,8 +35,11 @@ func NewLowDB(sess db.Session, ownerType string, ownerID string) *LowDB {
 		sess:      sess,
 		ownerType: ownerType,
 		ownerID:   ownerID,
+		isTxn:     false,
 	}
 }
+
+// db.NewTx
 
 func (d *LowDB) tableName(table string) string {
 	if strings.Contains(table, "__") {
@@ -41,6 +52,48 @@ func (d *LowDB) tableName(table string) string {
 
 	return tt
 
+}
+
+func (d *LowDB) StartTxn() (datahub.DBLowTxnOps, error) {
+	if d.isTxn {
+		return nil, errors.New("already in a transaction")
+	}
+	d.isTxn = true
+
+	driver := d.sess.Driver().(*sql.DB)
+	tx, err := driver.Begin()
+	if err != nil {
+		return nil, err
+	}
+	txn, err := sqlite.NewTx(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LowDB{
+		sess:      txn,
+		ownerType: d.ownerType,
+		ownerID:   d.ownerID,
+		isTxn:     true,
+	}, nil
+
+}
+
+func (d *LowDB) Commit() error {
+	if !d.isTxn {
+		return errors.New("not in a transaction")
+	}
+
+	txnHandle := d.sess.(Txnish)
+	return txnHandle.Commit()
+}
+
+func (d *LowDB) Rollback() error {
+	if !d.isTxn {
+		return errors.New("not in a transaction")
+	}
+	txnHandle := d.sess.(Txnish)
+	return txnHandle.Rollback()
 }
 
 func (d *LowDB) RunDDL(ddl string) error {
