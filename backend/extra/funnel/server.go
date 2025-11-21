@@ -67,6 +67,11 @@ func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
 			break
 		}
 
+		// Skip WebSocket data packets (they're handled in routeWS)
+		if headerPacket.PType == PtypeWebSocketData {
+			continue
+		}
+
 		if headerPacket.PType != PTypeSendHeader {
 			// Invalid packet type
 			f.prLock.Lock()
@@ -95,17 +100,74 @@ func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
 			continue
 		}
 
-		// Create response reader for body that reads packets directly from connection
-		if resp.ContentLength > 0 {
-			resp.Body = &responseReader{
-				conn:     conn,
-				total:    int64(headerPacket.Total),
-				received: 0,
+		// Read all body packets before sending response
+		// This ensures we don't have a race condition with responseReader
+		var bodyData []byte
+		if headerPacket.Total > 0 {
+			// Read body packets
+			remaining := int64(headerPacket.Total)
+			for remaining > 0 {
+				bodyPacket, err := ReadPacket(conn)
+				if err != nil {
+					f.prLock.Lock()
+					if pending, exists := f.pendingRequests[reqId]; exists {
+						select {
+						case pending.ErrorChan <- err:
+						default:
+						}
+					}
+					f.prLock.Unlock()
+					continue
+				}
+
+				if bodyPacket.PType != PtypeSendBody && bodyPacket.PType != PtypeEndBody {
+					f.prLock.Lock()
+					if pending, exists := f.pendingRequests[reqId]; exists {
+						select {
+						case pending.ErrorChan <- io.ErrUnexpectedEOF:
+						default:
+						}
+					}
+					f.prLock.Unlock()
+					continue
+				}
+
+				bodyData = append(bodyData, bodyPacket.Data...)
+				remaining -= int64(len(bodyPacket.Data))
+
+				if bodyPacket.PType == PtypeEndBody {
+					break
+				}
 			}
-		} else {
-			// Empty body
-			resp.Body = io.NopCloser(bytes.NewReader(nil))
+		} else if headerPacket.Total == 0 {
+			// Read EndBody packet for zero-length response
+			endBodyPacket, err := ReadPacket(conn)
+			if err != nil {
+				f.prLock.Lock()
+				if pending, exists := f.pendingRequests[reqId]; exists {
+					select {
+					case pending.ErrorChan <- err:
+					default:
+					}
+				}
+				f.prLock.Unlock()
+				continue
+			}
+			if endBodyPacket.PType != PtypeEndBody {
+				f.prLock.Lock()
+				if pending, exists := f.pendingRequests[reqId]; exists {
+					select {
+					case pending.ErrorChan <- io.ErrUnexpectedEOF:
+					default:
+					}
+				}
+				f.prLock.Unlock()
+				continue
+			}
 		}
+
+		// Create response body from buffered data
+		resp.Body = io.NopCloser(bytes.NewReader(bodyData))
 
 		// Send response to pending request
 		f.prLock.Lock()

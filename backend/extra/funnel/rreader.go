@@ -22,6 +22,20 @@ func (r *responseReader) Read(p []byte) (int, error) {
 		return n, nil
 	}
 
+	// If total is 0 and we haven't received anything, we need to read the EndBody packet
+	// and return EOF immediately
+	if r.total == 0 && r.received == 0 {
+		packet, err := ReadPacket(r.conn)
+		if err != nil {
+			return 0, err
+		}
+		if packet.PType != PtypeEndBody {
+			return 0, io.ErrUnexpectedEOF
+		}
+		// Consumed the EndBody packet, return EOF
+		return 0, io.EOF
+	}
+
 	// Read next packet
 	packet, err := ReadPacket(r.conn)
 	if err != nil {

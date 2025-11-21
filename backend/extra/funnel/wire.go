@@ -11,10 +11,11 @@ import (
 type PacketType = uint8
 
 const (
-	PTypeSendHeader PacketType = iota
-	PtypeSendBody   PacketType = iota
-	PtypeEndBody    PacketType = iota
-	PtypeReSendBody PacketType = iota
+	PTypeSendHeader   PacketType = iota
+	PtypeSendBody     PacketType = iota
+	PtypeEndBody      PacketType = iota
+	PtypeReSendBody   PacketType = iota
+	PtypeWebSocketData PacketType = iota
 )
 
 type Packet struct {
