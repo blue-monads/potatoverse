@@ -103,6 +103,10 @@ func (c *FunnelClient) Start() error {
 
 	// Start handling incoming requests from funnel
 	err = c.handleFunnelConnection(conn)
+	if err != nil {
+		return fmt.Errorf("failed to handle funnel connection: %w", err)
+	}
+
 	conn.Close()
 	return err
 }
@@ -163,20 +167,26 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 			continue
 		}
 
+		pendingReqChan := make(chan *Packet)
+
+		c.prLock.Lock()
+		c.pendingRequests[reqId] = pendingReqChan
+		c.prLock.Unlock()
+
 		// Check if it's a websocket request
 		if req.Header.Get("Upgrade") == "websocket" {
 			qq.Println("@FunnelClient/handleFunnelConnection/4{WEBSOCKET_REQUEST}")
 			// Handle websocket request
-			go c.handleWebSocketRequest(reqId, req)
+			go c.handleWebSocketRequest(pendingReqChan, reqId, req)
 		} else {
 			qq.Println("@FunnelClient/handleFunnelConnection/5{HTTP_REQUEST}")
 			// Handle HTTP request
-			go c.handleHttpRequest(reqId, req)
+			go c.handleHttpRequest(pendingReqChan, reqId, req)
 		}
 	}
 }
 
-func (c *FunnelClient) handleHttpRequest(reqId string, req *http.Request) {
+func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *http.Request) {
 	// Modify request URL to point to local server
 	req.URL.Host = fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
 	req.URL.Scheme = "http"
@@ -186,12 +196,6 @@ func (c *FunnelClient) handleHttpRequest(reqId string, req *http.Request) {
 	// Set up request body reader if needed
 	if req.ContentLength > 0 {
 
-		pendingRequest := make(chan *Packet)
-
-		c.prLock.Lock()
-		c.pendingRequests[reqId] = pendingRequest
-		c.prLock.Unlock()
-
 		defer func() {
 			c.prLock.Lock()
 			delete(c.pendingRequests, reqId)
@@ -199,7 +203,7 @@ func (c *FunnelClient) handleHttpRequest(reqId string, req *http.Request) {
 		}()
 
 		req.Body = &requestReader{
-			pendingRequest: pendingRequest,
+			pendingRequest: pch,
 			total:          req.ContentLength,
 			received:       0,
 			buffer:         make([]byte, FragmentSize),
@@ -366,7 +370,14 @@ func (c *FunnelClient) handleHttpRequest(reqId string, req *http.Request) {
 	}
 }
 
-func (c *FunnelClient) handleWebSocketRequest(reqId string, req *http.Request) {
+func (c *FunnelClient) handleWebSocketRequest(pch chan *Packet, reqId string, req *http.Request) {
+
+	defer func() {
+		c.prLock.Lock()
+		delete(c.pendingRequests, reqId)
+		c.prLock.Unlock()
+	}()
+
 	// Parse local websocket URL
 	port := strconv.Itoa(c.opts.LocalHttpPort)
 	wsUrl := fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path)
@@ -378,17 +389,6 @@ func (c *FunnelClient) handleWebSocketRequest(reqId string, req *http.Request) {
 		return
 	}
 	defer localWS.Close()
-
-	pendingReqChan := make(chan *Packet)
-	c.prLock.Lock()
-	c.pendingRequests[reqId] = pendingReqChan
-	c.prLock.Unlock()
-
-	defer func() {
-		c.prLock.Lock()
-		delete(c.pendingRequests, reqId)
-		c.prLock.Unlock()
-	}()
 
 	// After sending the header packet, websocket communication uses packets with request ID
 	// Forward from local WS to funnel
@@ -414,7 +414,7 @@ func (c *FunnelClient) handleWebSocketRequest(reqId string, req *http.Request) {
 
 	// Forward from funnel to local WS
 	for {
-		packet := <-pendingReqChan
+		packet := <-pch
 		if packet == nil {
 			break
 		}
