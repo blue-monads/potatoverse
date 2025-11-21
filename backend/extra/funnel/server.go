@@ -94,9 +94,11 @@ func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrit
 		f.pendingReqLock.Unlock()
 
 		if pendingReqChan == nil {
+			qq.Println("@handleServerConnection/5{PENDING_REQ_NOT_FOUND}", reqId, "PACKET_TYPE", packet.PType)
 			continue
 		}
 
+		qq.Println("@handleServerConnection/6{ROUTING_PACKET}", reqId, "PACKET_TYPE", packet.PType, "DATA_LEN", len(packet.Data))
 		pendingReqChan <- packet
 	}
 

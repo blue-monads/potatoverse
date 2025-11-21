@@ -9,6 +9,7 @@ import (
 	"maps"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
@@ -100,6 +101,25 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 				}
 			}
 
+			if n == 0 && last {
+				// Send EndBody packet for EOF with no data
+				serverConn.writeChan <- &ServerWrite{
+					packet: &Packet{
+						PType:  PtypeEndBody,
+						Offset: int32(offset),
+						Total:  int32(req.ContentLength),
+						Data:   []byte{},
+					},
+					reqId: reqId,
+				}
+				break
+			}
+
+			if n == 0 {
+				// No data read, skip this iteration
+				continue
+			}
+
 			ptype := PtypeSendBody
 			if last {
 				ptype = PtypeEndBody
@@ -107,16 +127,14 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 
 			toSend := fbuf[:n]
 
-			err = WritePacket(serverConn.conn, &Packet{
-				PType:  ptype,
-				Offset: int32(offset),
-				Total:  int32(req.ContentLength),
-				Data:   toSend,
-			})
-
-			if err != nil {
-				c.Error(err)
-				return
+			serverConn.writeChan <- &ServerWrite{
+				packet: &Packet{
+					PType:  ptype,
+					Offset: int32(offset),
+					Total:  int32(req.ContentLength),
+					Data:   toSend,
+				},
+				reqId: reqId,
 			}
 
 			offset += int32(n)
@@ -146,12 +164,18 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 		panic(err)
 	}
 
+	qq.Println("@routeHttp/parseResponse/1{STATUS}", resp.StatusCode, "CONTENT_LENGTH", resp.ContentLength)
+
 	header := c.Writer.Header()
+	maps.Copy(header, resp.Header)
+
+	// Ensure Content-Length is set correctly if it was in the response
+	// (maps.Copy should have already copied it, but we ensure it's correct)
 	if resp.ContentLength > -1 {
-		header.Del("Content-Length")
+		header.Set("Content-Length", strconv.FormatInt(resp.ContentLength, 10))
 	}
 
-	maps.Copy(header, resp.Header)
+	qq.Println("@routeHttp/parseResponse/2{HEADERS_COPIED}")
 
 	c.Writer.WriteHeader(resp.StatusCode)
 
@@ -161,12 +185,15 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 			break
 		}
 
+		qq.Println("@routeHttp/writeBody/1{PACKET_TYPE}", wpack.PType, "DATA_LEN", len(wpack.Data))
+
 		for {
 			n, err := c.Writer.Write(wpack.Data)
 			if err != nil {
 				pp.Println("@err/Write", err.Error())
 				break
 			}
+			qq.Println("@routeHttp/writeBody/2{WRITTEN}", n, "REMAINING", len(wpack.Data)-n)
 			wpack.Data = wpack.Data[n:]
 			if len(wpack.Data) == 0 {
 				break
@@ -174,6 +201,7 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 		}
 
 		if wpack.PType == PtypeEndBody {
+			qq.Println("@routeHttp/writeBody/3{END_BODY}")
 			break
 		}
 	}

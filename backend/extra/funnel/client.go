@@ -167,16 +167,16 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		if req.Header.Get("Upgrade") == "websocket" {
 			qq.Println("@FunnelClient/handleFunnelConnection/4{WEBSOCKET_REQUEST}")
 			// Handle websocket request
-			go c.handleWebSocketRequest(conn, reqId, req)
+			go c.handleWebSocketRequest(reqId, req)
 		} else {
 			qq.Println("@FunnelClient/handleFunnelConnection/5{HTTP_REQUEST}")
 			// Handle HTTP request
-			go c.handleHttpRequest(conn, reqId, req)
+			go c.handleHttpRequest(reqId, req)
 		}
 	}
 }
 
-func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.Request) {
+func (c *FunnelClient) handleHttpRequest(reqId string, req *http.Request) {
 	// Modify request URL to point to local server
 	req.URL.Host = fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
 	req.URL.Scheme = "http"
@@ -366,7 +366,7 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 	}
 }
 
-func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *http.Request) {
+func (c *FunnelClient) handleWebSocketRequest(reqId string, req *http.Request) {
 	// Parse local websocket URL
 	port := strconv.Itoa(c.opts.LocalHttpPort)
 	wsUrl := fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path)
@@ -378,6 +378,17 @@ func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *
 		return
 	}
 	defer localWS.Close()
+
+	pendingReqChan := make(chan *Packet)
+	c.prLock.Lock()
+	c.pendingRequests[reqId] = pendingReqChan
+	c.prLock.Unlock()
+
+	defer func() {
+		c.prLock.Lock()
+		delete(c.pendingRequests, reqId)
+		c.prLock.Unlock()
+	}()
 
 	// After sending the header packet, websocket communication uses packets with request ID
 	// Forward from local WS to funnel
@@ -403,47 +414,16 @@ func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *
 
 	// Forward from funnel to local WS
 	for {
-		// Read request ID first
-		reqIdBuf := make([]byte, 16)
-		_, err := io.ReadFull(conn, reqIdBuf)
-		if err != nil {
-			if err != io.EOF {
-				// Connection error
-			}
+		packet := <-pendingReqChan
+		if packet == nil {
 			break
 		}
 
-		// Verify this is for our request
-		if string(reqIdBuf) != reqId {
-			// This message is for a different request, skip it
-			// Read the packet to consume it
-			packet, err := ReadPacket(conn)
-			if err != nil {
-				break
-			}
-			// Skip if not WebSocket data
-			if packet.PType != PtypeWebSocketData {
-				continue
-			}
-			// This shouldn't happen, but if it does, we've consumed the packet
-			continue
-		}
-
-		// Read WebSocket data packet
-		packet, err := ReadPacket(conn)
+		err = wsutil.WriteServerBinary(localWS, packet.Data)
 		if err != nil {
 			break
 		}
 
-		if packet.PType != PtypeWebSocketData {
-			// Invalid packet type
-			break
-		}
-
-		err = wsutil.WriteClientBinary(localWS, packet.Data)
-		if err != nil {
-			break
-		}
 	}
 }
 
@@ -456,11 +436,29 @@ type requestReader struct {
 }
 
 func (r *requestReader) Read(p []byte) (int, error) {
+	// Check if we've already read all the data
+	if r.total > 0 && r.received >= r.total {
+		return 0, io.EOF
+	}
+
 	// If we have buffered data, return it first
 	if len(r.buffer) > 0 {
-		n := copy(p, r.buffer)
+		// Limit copy to remaining bytes if total is set
+		toCopy := r.buffer
+		if r.total > 0 {
+			remaining := r.total - r.received
+			if int64(len(toCopy)) > remaining {
+				toCopy = toCopy[:remaining]
+			}
+		}
+		n := copy(p, toCopy)
 		r.buffer = r.buffer[n:]
 		r.received += int64(n)
+
+		// Check if we're done
+		if r.total > 0 && r.received >= r.total {
+			return n, io.EOF
+		}
 		return n, nil
 	}
 
@@ -470,17 +468,26 @@ func (r *requestReader) Read(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 
+	// Limit data to copy based on total if set
+	dataToCopy := packet.Data
+	if r.total > 0 {
+		remaining := r.total - r.received
+		if int64(len(dataToCopy)) > remaining {
+			dataToCopy = dataToCopy[:remaining]
+		}
+	}
+
 	// Copy data to buffer
-	n := copy(p, packet.Data)
+	n := copy(p, dataToCopy)
 	r.received += int64(n)
 
-	// If there's remaining data, buffer it
-	if n < len(packet.Data) {
-		r.buffer = packet.Data[n:]
+	// If there's remaining data in dataToCopy that we couldn't fit in p, buffer it
+	if n < len(dataToCopy) {
+		r.buffer = dataToCopy[n:]
 	}
 
 	// Check if we're done
-	if packet.PType == PtypeEndBody {
+	if packet.PType == PtypeEndBody || (r.total > 0 && r.received >= r.total) {
 		if len(r.buffer) == 0 {
 			return n, io.EOF
 		}
