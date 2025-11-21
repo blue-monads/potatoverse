@@ -6,22 +6,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	Name         = "Ping"
+	Icon         = "ping"
+	OptionFields = []xtypes.CapabilityOptionField{
+		{
+			Name:        "Add Radom number to the result",
+			Key:         "add_random_number",
+			Description: "Add a random number to the result",
+			Type:        "boolean",
+			Default:     "false",
+		},
+	}
+)
+
 func init() {
 	registry.RegisterCapability("ping", xtypes.CapabilityBuilderFactory{
 		Builder: func(app xtypes.App) (xtypes.CapabilityBuilder, error) {
 			return &PingBuilder{app: app}, nil
 		},
-		Name: "Ping",
-		Icon: "ping",
-		OptionFields: []xtypes.CapabilityOptionField{
-			{
-				Name:        "Add Radom number to the result",
-				Key:         "add_random_number",
-				Description: "Add a random number to the result",
-				Type:        "boolean",
-				Default:     "false",
-			},
-		},
+		Name:         Name,
+		Icon:         Icon,
+		OptionFields: OptionFields,
 	})
 }
 
@@ -70,17 +76,6 @@ func (p *PingCapability) Handle(ctx *gin.Context) {
 
 func (p *PingCapability) ListActions() ([]string, error) {
 	return []string{"ping"}, nil
-}
-
-func (p *PingCapability) GetActionMeta(name string) (map[string]any, error) {
-	if name == "ping" {
-		return map[string]any{
-			"name":        "ping",
-			"description": "Returns pong",
-			"returns":     "string",
-		}, nil
-	}
-	return nil, nil
 }
 
 func (p *PingCapability) Execute(name string, params xtypes.LazyData) (map[string]any, error) {
