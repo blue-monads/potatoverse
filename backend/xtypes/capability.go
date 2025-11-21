@@ -5,11 +5,10 @@ import (
 )
 
 type Capability interface {
-	Name() string
 	Handle(ctx *gin.Context)
 	ListActions() ([]string, error)
 	Execute(name string, params LazyData) (map[string]any, error)
-	Reload(opts LazyData) error
+	Reload(opts LazyData) (Capability, error)
 	Close() error
 }
 
@@ -33,6 +32,7 @@ type CapabilityOptionField struct {
 }
 
 type CapabilityBuilder interface {
+	Name() string
 	Build(spaceId int64, opts LazyData) (Capability, error)
 	Serve(ctx *gin.Context)
 }

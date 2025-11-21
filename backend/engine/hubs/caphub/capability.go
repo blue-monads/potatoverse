@@ -76,7 +76,14 @@ func (gh *CapabilityHub) Reload(installId int64, spaceId int64, name string) err
 
 	opts := xtypes.LazyDataBytes(kosher.Byte(cap.Options))
 
-	return gg.Reload(opts)
+	next, err := gg.Reload(opts)
+	if err != nil {
+		return err
+	}
+
+	gh.set(name, installId, spaceId, next)
+
+	return nil
 }
 
 func (gh *CapabilityHub) Handle(installId, spaceId int64, name string, ctx *gin.Context) {
@@ -146,6 +153,15 @@ type CapabilityDefination struct {
 }
 
 // private
+
+func (gh *CapabilityHub) set(name string, installId, spaceId int64, i xtypes.Capability) {
+	key := fmt.Sprintf("%s:%d", name, spaceId)
+
+	gh.glock.Lock()
+	gh.goodies[key] = i
+	gh.glock.Unlock()
+
+}
 
 func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capability, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)

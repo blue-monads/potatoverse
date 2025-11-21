@@ -49,21 +49,21 @@ func (b *PingBuilder) Serve(ctx *gin.Context) {
 	})
 }
 
+func (p *PingBuilder) Name() string {
+	return "ping"
+}
+
 type PingCapability struct {
 	app     xtypes.App
 	spaceId int64
 }
 
-func (p *PingCapability) Reload(opts xtypes.LazyData) error {
-	return nil
+func (p *PingCapability) Reload(opts xtypes.LazyData) (xtypes.Capability, error) {
+	return p, nil
 }
 
 func (p *PingCapability) Close() error {
 	return nil
-}
-
-func (p *PingCapability) Name() string {
-	return "ping"
 }
 
 func (p *PingCapability) Handle(ctx *gin.Context) {
