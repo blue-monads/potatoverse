@@ -22,6 +22,7 @@ require (
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/spf13/afero v1.15.0
 	github.com/tidwall/gjson v1.18.0
+	github.com/tidwall/pretty v1.2.0
 	github.com/upper/db/v4 v4.7.0
 	github.com/yuin/gopher-lua v1.1.1
 	github.com/ztrue/tracerr v0.4.0
@@ -65,7 +66,6 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tetratelabs/wazero v1.10.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
