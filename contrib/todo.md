@@ -20,3 +20,8 @@
 - lazydb
 
 https://github.com/pluveto/flydav
+
+// root_<pub_key_hash>.freehttptunnel.com
+// <s-x>_<pub_key_hash>.freehttptunnel.com
+
+// zz-10-funnel
