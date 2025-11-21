@@ -1,0 +1,23 @@
+{
+    "create_article": {
+        "stmt": "insert into articles (title, content) values (?, ?)",
+        "selects": ["id", "title", "content"],
+        "mode": "insert",
+        "return_mode": "id",
+        "validator": {
+            "title": {
+                "type": "string",
+                "required": true,
+                "min_length": 3,
+                "max_length": 100
+            },
+            "content": {                
+                "type": "string",
+                "required": true,
+                "regex": "^[a-zA-Z0-9]+$"
+            },
+            "ttl": 3600
+        }
+
+    }
+}
