@@ -5,15 +5,20 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
 // Route routes an HTTP request to the specified server and writes the response back to gin.Context
 func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
+	qq.Println("@Funnel/routeHttp/1{SERVER_ID}", serverId)
+
 	// Get server connection
 	f.scLock.RLock()
 	serverConn, exists := f.serverConnections[serverId]
 	f.scLock.RUnlock()
+
+	qq.Println("@Funnel/routeHttp/2{SERVER_CONN}")
 
 	if !exists {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "server not connected"})

@@ -19,6 +19,10 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
+func buildFunnelUrl(serverId string, port string) string {
+	return fmt.Sprintf("http://%s.localhost:%s/%s", serverId, port, serverId)
+}
+
 // setupLocalServer creates a local HTTP server for testing
 func setupLocalServer(t *testing.T) (*httptest.Server, int) {
 	t.Log("@setupLocalServer/1")
@@ -144,7 +148,11 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 	t.Log("@TestFunnel_HTTP_GetRequest/3")
 
 	// Setup funnel client
-	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
+	client := NewFunnelClient(FunnelClientOptions{
+		LocalHttpPort:   localPort,
+		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
+		ServerId:        "test-server",
+	})
 	defer client.Stop()
 
 	t.Log("@TestFunnel_HTTP_GetRequest/4")
@@ -166,7 +174,7 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := clientHTTP.Get(fmt.Sprintf("http://test-server.localhost:%s/test", fport))
+	resp, err := clientHTTP.Get(buildFunnelUrl("test-server", fport) + "/test")
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}
@@ -202,7 +210,11 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 	t.Log("@TestFunnel_HTTP_PostRequest/3")
 
 	// Setup funnel client
-	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
+	client := NewFunnelClient(FunnelClientOptions{
+		LocalHttpPort:   localPort,
+		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
+		ServerId:        "test-server",
+	})
 	defer client.Stop()
 
 	t.Log("@TestFunnel_HTTP_PostRequest/4")
@@ -226,7 +238,7 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 
 	postData := "Hello, Funnel!"
 	resp, err := clientHTTP.Post(
-		fmt.Sprintf("http://test-server.localhost:%s/echo", fport),
+		buildFunnelUrl("test-server", fport)+"/echo",
 		"text/plain",
 		strings.NewReader(postData),
 	)
@@ -264,7 +276,11 @@ func TestFunnel_WebSocket(t *testing.T) {
 	t.Log("@TestFunnel_WebSocket/3")
 
 	// Setup funnel client
-	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
+	client := NewFunnelClient(FunnelClientOptions{
+		LocalHttpPort:   localPort,
+		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
+		ServerId:        "test-server",
+	})
 	defer client.Stop()
 
 	t.Log("@TestFunnel_WebSocket/4")
@@ -282,7 +298,7 @@ func TestFunnel_WebSocket(t *testing.T) {
 	t.Log("@TestFunnel_WebSocket/6")
 
 	// Connect to WebSocket through funnel
-	u, err := url.Parse(fmt.Sprintf("ws://test-server.localhost:%s/ws", fport))
+	u, err := url.Parse(buildFunnelUrl("test-server", fport) + "/ws")
 	if err != nil {
 		t.Fatalf("Failed to parse WebSocket URL: %v", err)
 	}
@@ -332,7 +348,11 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 	t.Log("@TestFunnel_MultipleWebSocket/3")
 
 	// Setup funnel client
-	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
+	client := NewFunnelClient(FunnelClientOptions{
+		LocalHttpPort:   localPort,
+		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
+		ServerId:        "test-server",
+	})
 	defer client.Stop()
 
 	t.Log("@TestFunnel_MultipleWebSocket/4")
@@ -359,7 +379,7 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 
-			u, err := url.Parse(fmt.Sprintf("ws://test-server.localhost:%s/ws", fport))
+			u, err := url.Parse(buildFunnelUrl("test-server", fport) + "/ws")
 			if err != nil {
 				errors <- fmt.Errorf("connection %d: failed to parse URL: %v", id, err)
 				return
@@ -420,7 +440,11 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 	t.Log("@TestFunnel_MultipleRequests/3")
 
 	// Setup funnel client
-	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
+	client := NewFunnelClient(FunnelClientOptions{
+		LocalHttpPort:   localPort,
+		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
+		ServerId:        "test-server",
+	})
 	defer client.Stop()
 
 	t.Log("@TestFunnel_MultipleRequests/4")
@@ -451,7 +475,7 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 
-			resp, err := clientHTTP.Get(fmt.Sprintf("http://test-server.localhost:%s/test", fport))
+			resp, err := clientHTTP.Get(buildFunnelUrl("test-server", fport) + "/test")
 			if err != nil {
 				errors <- fmt.Errorf("request %d: failed to make request: %v", id, err)
 				return
@@ -501,7 +525,7 @@ func TestFunnel_ServerNotConnected(t *testing.T) {
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := clientHTTP.Get(fmt.Sprintf("http://non-existent-server.localhost:%s/test", fport))
+	resp, err := clientHTTP.Get(buildFunnelUrl("non-existent-server", fport) + "/test")
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}

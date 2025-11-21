@@ -14,33 +14,39 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/kosher"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
 )
 
-type FunnelClient struct {
+type FunnelClientOptions struct {
 	LocalHttpPort   int
 	RemoteFunnelUrl string
 	ServerId        string
-	ctx             context.Context
-	cancel          context.CancelFunc
-	conn            net.Conn
 }
 
-func NewFunnelClient(localHttpPort int, remoteFunnelUrl string, serverId string) *FunnelClient {
+type FunnelClient struct {
+	opts   FunnelClientOptions
+	ctx    context.Context
+	cancel context.CancelFunc
+	conn   net.Conn
+}
+
+func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &FunnelClient{
-		LocalHttpPort:   localHttpPort,
-		RemoteFunnelUrl: remoteFunnelUrl,
-		ServerId:        serverId,
-		ctx:             ctx,
-		cancel:          cancel,
+		opts:   opts,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
 func (c *FunnelClient) Start() error {
 	// Parse remote funnel URL
-	u, err := url.Parse(c.RemoteFunnelUrl)
+
+	qq.Println("@FunnelClient/Start/1{REMOTE_FUNNEL_URL}", c.opts.RemoteFunnelUrl)
+
+	u, err := url.Parse(c.opts.RemoteFunnelUrl)
 	if err != nil {
 		return fmt.Errorf("invalid remote funnel URL: %w", err)
 	}
@@ -50,10 +56,15 @@ func (c *FunnelClient) Start() error {
 	if u.Scheme == "https" {
 		wsScheme = "wss"
 	}
-	wsUrl := fmt.Sprintf("%s://%s/funnel/register/%s", wsScheme, u.Host, c.ServerId)
+
+	u.Scheme = wsScheme
+
+	finalUrl := u.String()
+
+	qq.Println("@FunnelClient/Start/2{FINAL_URL}", finalUrl)
 
 	// Connect to remote funnel via websocket
-	conn, _, _, err := ws.Dial(c.ctx, wsUrl)
+	conn, _, _, err := ws.Dial(c.ctx, finalUrl)
 	if err != nil {
 		return fmt.Errorf("failed to connect to funnel: %w", err)
 	}
@@ -107,6 +118,8 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 
 		reqId := kosher.Str(reqIdBuf)
 
+		qq.Println("@FunnelClient/handleFunnelConnection/3{REQ_ID}", reqId)
+
 		// Read header packet
 		headerPacket, err := ReadPacket(conn)
 		if err != nil {
@@ -128,9 +141,11 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 
 		// Check if it's a websocket request
 		if req.Header.Get("Upgrade") == "websocket" {
+			qq.Println("@FunnelClient/handleFunnelConnection/4{WEBSOCKET_REQUEST}")
 			// Handle websocket request
 			go c.handleWebSocketRequest(conn, reqId, req)
 		} else {
+			qq.Println("@FunnelClient/handleFunnelConnection/5{HTTP_REQUEST}")
 			// Handle HTTP request
 			go c.handleHttpRequest(conn, reqId, req)
 		}
@@ -139,10 +154,10 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 
 func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.Request) {
 	// Modify request URL to point to local server
-	req.URL.Host = fmt.Sprintf("localhost:%d", c.LocalHttpPort)
+	req.URL.Host = fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
 	req.URL.Scheme = "http"
 	req.RequestURI = ""
-	req.Host = fmt.Sprintf("localhost:%d", c.LocalHttpPort)
+	req.Host = fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
 
 	// Set up request body reader if needed
 	if req.ContentLength > 0 {
@@ -285,7 +300,7 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 
 func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *http.Request) {
 	// Parse local websocket URL
-	port := strconv.Itoa(c.LocalHttpPort)
+	port := strconv.Itoa(c.opts.LocalHttpPort)
 	wsUrl := fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path)
 
 	// Connect to local websocket server using gobwas/ws

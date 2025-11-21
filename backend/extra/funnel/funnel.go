@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,6 +38,8 @@ func New() *Funnel {
 }
 
 func (f *Funnel) HandleServerWebSocket(serverId string, c *gin.Context) {
+	qq.Println("@Funnel/HandleServerWebSocket/1{SERVER_ID}", serverId)
+
 	f.handleServerWebSocket(serverId, c)
 }
 

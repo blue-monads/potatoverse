@@ -8,23 +8,29 @@ import (
 	"net/http"
 
 	"github.com/blue-monads/turnix/backend/utils/kosher"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 )
 
 func (f *Funnel) handleServerWebSocket(serverId string, c *gin.Context) {
+	qq.Println("@Funnel/handleServerWebSocket/1{SERVER_ID}", serverId)
 	// Upgrade to websocket
 	conn, _, _, err := ws.UpgradeHTTP(c.Request, c.Writer)
 	if err != nil {
+		qq.Println("@Funnel/handleServerWebSocket/3{ERROR}", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to upgrade websocket"})
 		return
 	}
+
+	qq.Println("@Funnel/handleServerWebSocket/2{CONN}", conn)
 
 	// Register the server connection
 	f.registerServer(serverId, conn)
 }
 
 func (f *Funnel) registerServer(serverId string, conn net.Conn) {
+	qq.Println("@Funnel/registerServer/1{SERVER_ID}", serverId)
 	f.scLock.Lock()
 	f.serverConnections[serverId] = &ServerConnection{Conn: conn}
 	f.scLock.Unlock()
@@ -35,12 +41,15 @@ func (f *Funnel) registerServer(serverId string, conn net.Conn) {
 
 // handleServerConnection handles incoming packets from a server connection
 func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
+	qq.Println("@Funnel/handleServerConnection/1{SERVER_ID}", serverId)
+
 	defer conn.Close()
 
 	// Read request ID (16 bytes) first, then packet
 	reqIdBuf := make([]byte, 16)
 
 	for {
+		qq.Println("@Funnel/handleServerConnection/2{REQ_ID_BUF_READ}")
 		// Read request ID
 		_, err := io.ReadFull(conn, reqIdBuf)
 		if err != nil {
@@ -51,6 +60,8 @@ func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
 		}
 
 		reqId := kosher.Str(reqIdBuf)
+
+		qq.Println("@Funnel/handleServerConnection/3{REQ_ID}", reqId)
 
 		// Read header packet
 		headerPacket, err := ReadPacket(conn)
