@@ -311,6 +311,8 @@ func TestFunnel_WebSocket(t *testing.T) {
 		t.Fatalf("Failed to parse WebSocket URL: %v", err)
 	}
 
+	u.Scheme = "ws"
+
 	conn, _, _, err := ws.Dial(context.Background(), u.String())
 	if err != nil {
 		t.Fatalf("Failed to connect to WebSocket: %v", err)
@@ -392,6 +394,8 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 				errors <- fmt.Errorf("connection %d: failed to parse URL: %v", id, err)
 				return
 			}
+
+			u.Scheme = "ws"
 
 			conn, _, _, err := ws.Dial(context.Background(), u.String())
 			if err != nil {

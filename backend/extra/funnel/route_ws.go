@@ -12,7 +12,9 @@ import (
 )
 
 func (f *Funnel) routeWS(serverId string, c *gin.Context) {
-	// Get server connection
+
+	qq.Println("@routeWS/1", serverId)
+
 	f.scLock.RLock()
 	serverConn, exists := f.serverConnections[serverId]
 	f.scLock.RUnlock()
@@ -23,8 +25,12 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		return
 	}
 
+	qq.Println("@routeWS/2")
+
 	// Generate request ID
 	reqId := GetRequestId()
+
+	qq.Println("@routeWS/3")
 
 	// Dump request
 	req := c.Request
@@ -35,10 +41,14 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		return
 	}
 
+	qq.Println("@routeWS/4")
+
 	pendingReqChan := make(chan *Packet)
 	f.pendingReqLock.Lock()
 	f.pendingReq[reqId] = pendingReqChan
 	f.pendingReqLock.Unlock()
+
+	qq.Println("@routeWS/5")
 
 	defer func() {
 		qq.Println("@cleanup/1{REQ_ID}", reqId)
@@ -46,6 +56,8 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		delete(f.pendingReq, reqId)
 		f.pendingReqLock.Unlock()
 	}()
+
+	qq.Println("@routeWS/6")
 
 	// Write request header packet
 	serverConn.writeChan <- &ServerWrite{
@@ -58,6 +70,8 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		reqId: reqId,
 	}
 
+	qq.Println("@routeWS/7")
+
 	// Upgrade client connection to websocket
 	clientConn, _, _, err := ws.UpgradeHTTP(c.Request, c.Writer)
 	if err != nil {
@@ -65,33 +79,51 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		c.Error(err)
 		return
 	}
+
+	qq.Println("@routeWS/8")
+
 	defer clientConn.Close()
+
+	qq.Println("@routeWS/9")
 
 	go func() {
 		for {
 
+			qq.Println("@routeWS/10/loop")
+
 			packet := <-pendingReqChan
 			if packet == nil {
+				qq.Println("@routeWS/11/loop/break")
 				break
 			}
 
+			qq.Println("@routeWS/12/loop/write")
+
 			err = wsutil.WriteServerBinary(clientConn, packet.Data)
 			if err != nil {
+				qq.Println("@routeWS/13/loop/write/break", err)
 				break
 			}
 
 		}
 	}()
 
-	// Forward from client to server
+	qq.Println("@routeWS/14")
+
 	for {
+
+		qq.Println("@routeWS/15/loop")
+
 		msg, op, err := wsutil.ReadClientData(clientConn)
 		if err != nil {
 			if err != io.EOF {
+				qq.Println("@routeWS/16/loop/break", err)
 				// Connection closed
 			}
 			break
 		}
+
+		qq.Println("@routeWS/17/loop/write")
 
 		// Write WebSocket data as packet
 		serverConn.writeChan <- &ServerWrite{
@@ -104,8 +136,11 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 			reqId: reqId,
 		}
 
+		qq.Println("@routeWS/18/loop/write/end")
+
 		// If it's a close message, break
 		if op == ws.OpClose {
+			qq.Println("@routeWS/19/loop/break/close")
 			break
 		}
 	}
