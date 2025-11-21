@@ -11,8 +11,18 @@ import (
 // Funnel is a service that routes all http requests to a node(server) which are connected
 // to the service through websocket becase the service is not accessible from the internet (behind NAT)
 
+type ServerHandle struct {
+	conn      net.Conn
+	writeChan chan *ServerWrite
+}
+
+type ServerWrite struct {
+	packet *Packet
+	reqId  string
+}
+
 type Funnel struct {
-	serverConnections map[string]net.Conn
+	serverConnections map[string]*ServerHandle
 	scLock            sync.RWMutex
 
 	pendingReq     map[string]chan *Packet
@@ -22,7 +32,7 @@ type Funnel struct {
 // New creates a new Funnel instance
 func New() *Funnel {
 	return &Funnel{
-		serverConnections: make(map[string]net.Conn),
+		serverConnections: make(map[string]*ServerHandle),
 		scLock:            sync.RWMutex{},
 		pendingReq:        make(map[string]chan *Packet),
 		pendingReqLock:    sync.Mutex{},

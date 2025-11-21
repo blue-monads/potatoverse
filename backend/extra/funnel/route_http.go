@@ -64,15 +64,15 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	qq.Println("@routeHttp/4")
 
 	// Write request header packet
-	err = WritePacketFull(serverConn, &Packet{
-		PType:  PTypeSendHeader,
-		Offset: 0,
-		Total:  int32(req.ContentLength),
-		Data:   out,
-	}, reqId)
-	if err != nil {
-		c.Error(err)
-		return
+
+	serverConn.writeChan <- &ServerWrite{
+		packet: &Packet{
+			PType:  PTypeSendHeader,
+			Offset: 0,
+			Total:  int32(req.ContentLength),
+			Data:   out,
+		},
+		reqId: reqId,
 	}
 
 	qq.Println("@routeHttp/6")
@@ -107,7 +107,7 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 
 			toSend := fbuf[:n]
 
-			err = WritePacket(serverConn, &Packet{
+			err = WritePacket(serverConn.conn, &Packet{
 				PType:  ptype,
 				Offset: int32(offset),
 				Total:  int32(req.ContentLength),

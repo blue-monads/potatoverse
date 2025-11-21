@@ -29,15 +29,21 @@ func (f *Funnel) handleServerWebSocket(serverId string, c *gin.Context) {
 func (f *Funnel) registerServer(serverId string, conn net.Conn) {
 	qq.Println("@Funnel/registerServer/1{SERVER_ID}", serverId)
 	f.scLock.Lock()
-	f.serverConnections[serverId] = conn
+
+	swchan := make(chan *ServerWrite)
+
+	f.serverConnections[serverId] = &ServerHandle{
+		conn:      conn,
+		writeChan: swchan,
+	}
 	f.scLock.Unlock()
 
 	// Start goroutine to handle incoming responses from this server
-	go f.handleServerConnection(serverId, conn)
+	go f.handleServerConnection(serverId, swchan, conn)
 }
 
 // handleServerConnection handles incoming packets from a server connection
-func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
+func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrite, conn net.Conn) {
 	qq.Println("@handleServerConnection/1", serverId)
 	defer func() {
 		conn.Close()
@@ -46,6 +52,22 @@ func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
 		f.scLock.Lock()
 		delete(f.serverConnections, serverId)
 		f.scLock.Unlock()
+	}()
+
+	go func() {
+		for {
+			sw := <-swchan
+			if sw == nil {
+				break
+			}
+
+			err := WritePacketFull(conn, sw.packet, sw.reqId)
+			if err != nil {
+				qq.Println("@handleServerConnection/5{ERROR}", err)
+				break
+			}
+
+		}
 	}()
 
 	for {

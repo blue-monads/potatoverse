@@ -1,10 +1,11 @@
 package funnel
 
 import (
+	"errors"
 	"io"
-	"net/http"
 	"net/http/httputil"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -17,101 +18,68 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 	f.scLock.RUnlock()
 
 	if !exists {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "server not connected"})
+		qq.Println("@routeWS/1{SERVER_NOT_CONNECTED}")
+		c.Error(errors.New("server not connected"))
 		return
 	}
 
 	// Generate request ID
 	reqId := GetRequestId()
-	reqIdBytes := []byte(reqId)
 
 	// Dump request
 	req := c.Request
 	out, err := httputil.DumpRequest(req, false)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		qq.Println("@routeWS/2{ERROR}", err)
+		c.Error(err)
 		return
 	}
 
-	// Write request ID
-	_, err = serverConn.Write(reqIdBytes)
-	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request id"})
-		return
-	}
+	pendingReqChan := make(chan *Packet)
+	f.pendingReqLock.Lock()
+	f.pendingReq[reqId] = pendingReqChan
+	f.pendingReqLock.Unlock()
+
+	defer func() {
+		qq.Println("@cleanup/1{REQ_ID}", reqId)
+		f.pendingReqLock.Lock()
+		delete(f.pendingReq, reqId)
+		f.pendingReqLock.Unlock()
+	}()
 
 	// Write request header packet
-	err = WritePacket(serverConn, &Packet{
-		PType:  PTypeSendHeader,
-		Offset: 0,
-		Total:  0, // WebSocket doesn't have a body in the initial request
-		Data:   out,
-	})
-	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request header"})
-		return
+	serverConn.writeChan <- &ServerWrite{
+		packet: &Packet{
+			PType:  PTypeSendHeader,
+			Offset: 0,
+			Total:  0, // WebSocket doesn't have a body in the initial request
+			Data:   out,
+		},
+		reqId: reqId,
 	}
 
 	// Upgrade client connection to websocket
 	clientConn, _, _, err := ws.UpgradeHTTP(c.Request, c.Writer)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to upgrade websocket"})
+		qq.Println("@upgrade_err", err)
+		c.Error(err)
 		return
 	}
 	defer clientConn.Close()
 
-	// After sending the header packet, websocket communication uses packets with request ID
-	// Bidirectionally forward messages between client and server
-	// Forward from server to client
 	go func() {
 		for {
-			// Read request ID first
-			reqIdBuf := make([]byte, 16)
-			_, err := io.ReadFull(serverConn, reqIdBuf)
-			if err != nil {
-				if err != io.EOF {
-					// Connection error
-				}
-				clientConn.Close()
-				return
+
+			packet := <-pendingReqChan
+			if packet == nil {
+				break
 			}
 
-			// Verify this is for our request
-			if string(reqIdBuf) != reqId {
-				// This message is for a different request, skip it
-				// Read the packet to consume it
-				packet, err := ReadPacket(serverConn)
-				if err != nil {
-					clientConn.Close()
-					return
-				}
-				// Skip if not WebSocket data
-				if packet.PType != PtypeWebSocketData {
-					continue
-				}
-				// This shouldn't happen, but if it does, we've consumed the packet
-				continue
-			}
-
-			// Read WebSocket data packet
-			packet, err := ReadPacket(serverConn)
-			if err != nil {
-				clientConn.Close()
-				return
-			}
-
-			if packet.PType != PtypeWebSocketData {
-				// Invalid packet type, close connection
-				clientConn.Close()
-				return
-			}
-
-			// Write to client websocket as binary
 			err = wsutil.WriteServerBinary(clientConn, packet.Data)
 			if err != nil {
-				clientConn.Close()
-				return
+				break
 			}
+
 		}
 	}()
 
@@ -125,21 +93,15 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 			break
 		}
 
-		// Write request ID
-		_, err = serverConn.Write(reqIdBytes)
-		if err != nil {
-			break
-		}
-
 		// Write WebSocket data as packet
-		err = WritePacket(serverConn, &Packet{
-			PType:  PtypeWebSocketData,
-			Offset: 0,
-			Total:  int32(len(msg)),
-			Data:   msg,
-		})
-		if err != nil {
-			break
+		serverConn.writeChan <- &ServerWrite{
+			packet: &Packet{
+				PType:  PtypeWebSocketData,
+				Offset: 0,
+				Total:  int32(len(msg)),
+				Data:   msg,
+			},
+			reqId: reqId,
 		}
 
 		// If it's a close message, break

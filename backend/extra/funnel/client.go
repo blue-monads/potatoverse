@@ -26,17 +26,49 @@ type FunnelClientOptions struct {
 
 type FunnelClient struct {
 	opts FunnelClientOptions
-	conn net.Conn
 
 	pendingRequests map[string]chan *Packet
 	prLock          sync.Mutex
+
+	writeChan chan *ServerWrite
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
 	return &FunnelClient{
 		opts:            opts,
 		pendingRequests: make(map[string]chan *Packet),
+		prLock:          sync.Mutex{},
+		writeChan:       make(chan *ServerWrite),
 	}
+}
+
+func (c *FunnelClient) writePackets(conn net.Conn) {
+
+	errCount := 0
+
+	for {
+
+		sw := <-c.writeChan
+
+		if sw == nil {
+			break
+		}
+
+		err := WritePacketFull(conn, sw.packet, sw.reqId)
+		if err != nil {
+			qq.Println("@FunnelClient/writePackets/1{ERROR}", err)
+			errCount++
+			if errCount > 10 {
+				qq.Println("@FunnelClient/writePackets/2{BREAK}")
+				break
+			}
+			continue
+		}
+
+		errCount = 0
+
+	}
+
 }
 
 func (c *FunnelClient) Start() error {
@@ -66,7 +98,8 @@ func (c *FunnelClient) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to funnel: %w", err)
 	}
-	c.conn = conn
+
+	go c.writePackets(conn)
 
 	// Start handling incoming requests from funnel
 	err = c.handleFunnelConnection(conn)
@@ -75,9 +108,8 @@ func (c *FunnelClient) Start() error {
 }
 
 func (c *FunnelClient) Stop() {
-	if c.conn != nil {
-		c.conn.Close()
-	}
+	c.writeChan <- nil
+	close(c.writeChan)
 }
 
 func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
@@ -188,30 +220,28 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 		return
 	}
 
-	// Write response header packet
-	err = WritePacketFull(conn, &Packet{
-		PType:  PTypeSendHeader,
-		Offset: 0,
-		Total:  int32(resp.ContentLength),
-		Data:   out,
-	}, reqId)
-	if err != nil {
-		qq.Println("@FunnelClient/handleHttpRequest/3{ERROR}", err)
-		return
+	c.writeChan <- &ServerWrite{
+		packet: &Packet{
+			PType:  PTypeSendHeader,
+			Offset: 0,
+			Total:  int32(resp.ContentLength),
+			Data:   out,
+		},
+		reqId: reqId,
 	}
 
 	if resp.ContentLength == 0 {
 
 		qq.Println("@handleHttpRequest/case_zero_length")
 
-		err = WritePacketFull(conn, &Packet{
-			PType:  PtypeEndBody,
-			Offset: 0,
-			Total:  0,
-			Data:   []byte{},
-		}, reqId)
-		if err != nil {
-			qq.Println("@FunnelClient/handleHttpRequest/1{ERROR}", err)
+		c.writeChan <- &ServerWrite{
+			packet: &Packet{
+				PType:  PtypeEndBody,
+				Offset: 0,
+				Total:  0,
+				Data:   []byte{},
+			},
+			reqId: reqId,
 		}
 
 		return
@@ -240,15 +270,14 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 			if n == 0 {
 				// Send EndBody
 				qq.Println("@loop/4{SEND_END_BODY}")
-				err = WritePacketFull(conn, &Packet{
-					PType:  PtypeEndBody,
-					Offset: offset,
-					Total:  int32(resp.ContentLength),
-					Data:   []byte{},
-				}, reqId)
-				if err != nil {
-					qq.Println("@loop/5{ERROR}", err)
-					return
+				c.writeChan <- &ServerWrite{
+					packet: &Packet{
+						PType:  PtypeEndBody,
+						Offset: offset,
+						Total:  int32(resp.ContentLength),
+						Data:   []byte{},
+					},
+					reqId: reqId,
 				}
 
 				qq.Println("@loop/6{BREAK}")
@@ -266,15 +295,14 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 
 			qq.Println("@loop/9{SEND_BODY}")
 
-			err = WritePacketFull(conn, &Packet{
-				PType:  ptype,
-				Offset: offset,
-				Total:  int32(resp.ContentLength),
-				Data:   fbuf[:n],
-			}, reqId)
-			if err != nil {
-				qq.Println("@loop/10{ERROR}", err)
-				return
+			c.writeChan <- &ServerWrite{
+				packet: &Packet{
+					PType:  ptype,
+					Offset: offset,
+					Total:  int32(resp.ContentLength),
+					Data:   fbuf[:n],
+				},
+				reqId: reqId,
 			}
 
 			qq.Println("@loop/11{OFFSET}", offset)
@@ -302,12 +330,15 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 
 			if n == 0 {
 				// Send EndBody
-				err = WritePacketFull(conn, &Packet{
-					PType:  PtypeEndBody,
-					Offset: offset,
-					Total:  -1,
-					Data:   []byte{},
-				}, reqId)
+				c.writeChan <- &ServerWrite{
+					packet: &Packet{
+						PType:  PtypeEndBody,
+						Offset: offset,
+						Total:  -1,
+						Data:   []byte{},
+					},
+					reqId: reqId,
+				}
 				break
 			}
 
@@ -316,14 +347,14 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 				ptype = PtypeEndBody
 			}
 
-			err = WritePacketFull(conn, &Packet{
-				PType:  ptype,
-				Offset: offset,
-				Total:  -1,
-				Data:   fbuf[:n],
-			}, reqId)
-			if err != nil {
-				return
+			c.writeChan <- &ServerWrite{
+				packet: &Packet{
+					PType:  ptype,
+					Offset: offset,
+					Total:  -1,
+					Data:   fbuf[:n],
+				},
+				reqId: reqId,
 			}
 
 			offset += int32(n)
@@ -358,14 +389,14 @@ func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *
 			}
 
 			// Write WebSocket data as packet
-			err = WritePacketFull(conn, &Packet{
-				PType:  PtypeWebSocketData,
-				Offset: 0,
-				Total:  int32(len(msg)),
-				Data:   msg,
-			}, reqId)
-			if err != nil {
-				return
+			c.writeChan <- &ServerWrite{
+				packet: &Packet{
+					PType:  PtypeWebSocketData,
+					Offset: 0,
+					Total:  int32(len(msg)),
+					Data:   msg,
+				},
+				reqId: reqId,
 			}
 		}
 	}()
