@@ -4,7 +4,7 @@ import { getLoginData, getSpaceInfo, SpaceInfo } from "@/lib";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const extractDomainSPrefixRegex = /^(https?:\/\/)s-\d+\./;
+const extractDomainSPrefixRegex = /^(https?:\/\/)zz-\d+(?:-[a-zA-Z0-9]*)?\./;
 
 export default function InSpacePrePage() {
     const params = useSearchParams();
@@ -24,7 +24,7 @@ export default function InSpacePrePage() {
         // FIXME => in future if space is running on different domain, we need to change this to use the correct domain        
         // *.coolapps.com |>  xyzapp.coolapps.com -> xyzapp.coolapps.com/zz/pages/auth/space/in_space/pre_page -> coolapps.com/zz/pages/auth/space/in_host?redirect_back_url=/zz/space/xyzapp
 
-        // s-123.example.com -> example.com
+        // zz-123-main.example.com -> example.com
 
         let origin = window.location.origin;
         if (extractDomainSPrefixRegex.test(origin)) {

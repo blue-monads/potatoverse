@@ -167,6 +167,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
+	coreApi.GET("/engine/derivehost/:nskey", a.handleDeriveHost)
 
 	zg.Any("/space/:space_key/*subpath", spaceFile)
 	zg.Any("/plugin/:space_key/:plugin_id/*subpath", pluginFile)

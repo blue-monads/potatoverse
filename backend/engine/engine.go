@@ -4,8 +4,6 @@ import (
 	"errors"
 	"log/slog"
 	"maps"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -141,7 +140,7 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	qq.Println("@ServeSpaceFile/1")
 
 	spaceKey := ctx.Param("space_key")
-	spaceId := extractDomainSpaceId(ctx.Request.Host)
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
 	qq.Println("@ServeSpaceFile/3")
 
@@ -182,7 +181,7 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
 	capabilityName := ctx.Param("capability_name")
 
-	spaceId := extractDomainSpaceId(ctx.Request.Host)
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
 	index := e.getIndex(spaceKey, spaceId)
 
@@ -202,7 +201,7 @@ func (e *Engine) ServeCapabilityRoot(ctx *gin.Context) {
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
-	spaceId := extractDomainSpaceId(ctx.Request.Host)
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
 	qq.Println("@SpaceApi/3", spaceKey, spaceId)
 
@@ -241,10 +240,12 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 	var index *SpaceRouteIndexItem
 
 	if hostName != "" {
-		spaceId := extractDomainSpaceId(hostName)
-		if spaceId != 0 {
-			index = e.getIndex(nsKey, spaceId)
-		}
+		spaceId := xutils.ExtractSpaceId(hostName)
+
+		// fixme => should i check if spaceId == 0 ?
+
+		index = e.getIndex(nsKey, spaceId)
+
 	}
 
 	if index == nil {
@@ -275,19 +276,6 @@ func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
 }
 
 // private
-
-// s-12.example.com
-var spaceIdPattern = regexp.MustCompile(`^s-(\d+)\.`)
-
-func extractDomainSpaceId(domain string) int64 {
-	qq.Println("@extractDomainSpaceId/1", domain)
-
-	if matches := spaceIdPattern.FindStringSubmatch(domain); matches != nil {
-		sid, _ := strconv.ParseInt(matches[1], 10, 64)
-		return sid
-	}
-	return 0
-}
 
 func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
 	nameParts := strings.Split(filePath, "/")

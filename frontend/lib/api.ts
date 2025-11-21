@@ -342,6 +342,19 @@ export const getSpaceInfo = async (space_key: string, host_name: string) => {
     return iaxios.get<SpaceInfo>(`/core/engine/space_info/${space_key}?host_name=${encodedParams.toString()}`);
 }
 
+export interface DeriveHostResponse {
+    host: string;
+    space_id: number;
+}
+
+export const deriveHost = async (nskey: string, spaceId?: string) => {
+    const hostname = window.location.hostname;
+
+    return iaxios.get<DeriveHostResponse>(
+        `/core/engine/derivehost/${nskey}?host_name=${hostname}&space_id=${spaceId}`
+    );
+}
+
 
 export const authorizeSpace = async (space_key: string, space_id: number) => {
     return iaxios.post<{ token: string }>(`/core/space/authorize/${space_key}`, { space_id });

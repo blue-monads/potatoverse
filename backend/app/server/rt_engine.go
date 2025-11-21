@@ -12,6 +12,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
@@ -201,6 +202,33 @@ func (a *Server) handlePluginFile() func(ctx *gin.Context) {
 }
 
 func (a *Server) handlePluginApi(ctx *gin.Context) {}
+
+func (a *Server) handleDeriveHost(ctx *gin.Context) {
+	nskey := ctx.Param("nskey")
+	hostName := ctx.Query("host_name")
+	spaceIdStr := ctx.Query("space_id")
+	spaceId, _ := strconv.ParseInt(spaceIdStr, 10, 64)
+
+	if hostName == "" {
+		hostName = ctx.Request.Host
+	}
+
+	if spaceId == 0 {
+		spaceInfo, err := a.engine.SpaceInfo(nskey, hostName)
+		if err != nil {
+			httpx.WriteErr(ctx, err)
+			return
+		}
+		spaceId = spaceInfo.ID
+	}
+
+	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, a.opt.ServerKey)
+	httpx.WriteJSON(ctx, gin.H{
+		"host":     execHost,
+		"space_id": spaceId,
+	}, nil)
+
+}
 
 func (a *Server) handleSpaceInfo(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
