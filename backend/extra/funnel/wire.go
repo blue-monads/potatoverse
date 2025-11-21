@@ -28,6 +28,16 @@ type Packet struct {
 
 const FragmentSize = 1024 * 512
 
+func WritePacketFull(conn net.Conn, packet *Packet, reqId string) error {
+
+	_, err := conn.Write([]byte(reqId))
+	if err != nil {
+		return err
+	}
+
+	return WritePacket(conn, packet)
+}
+
 // WritePacket writes a packet to a net.Conn
 func WritePacket(conn net.Conn, packet *Packet) error {
 	// write packet type

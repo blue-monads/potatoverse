@@ -19,8 +19,12 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
+func buildFunnelBaseUrl(serverId string, port string) string {
+	return fmt.Sprintf("http://%s.localhost:%s", serverId, port)
+}
+
 func buildFunnelUrl(serverId string, port string) string {
-	return fmt.Sprintf("http://%s.localhost:%s/%s", serverId, port, serverId)
+	return fmt.Sprintf("%s/funnel/register/%s", buildFunnelBaseUrl(serverId, port), serverId)
 }
 
 // setupLocalServer creates a local HTTP server for testing
@@ -107,7 +111,7 @@ func setupFunnelServer(t *testing.T) (*Funnel, *httptest.Server, string) {
 	router.NoRoute(func(c *gin.Context) {
 		// http://serverid.localhost/path
 
-		url := c.Request.URL.Host
+		url := c.Request.Host
 		serverId := strings.Split(url, ".")[0]
 		funnel.HandleRoute(serverId, c)
 	})
@@ -174,7 +178,7 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := clientHTTP.Get(buildFunnelUrl("test-server", fport) + "/test")
+	resp, err := clientHTTP.Get(buildFunnelBaseUrl("test-server", fport) + "/test")
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}
@@ -238,7 +242,7 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 
 	postData := "Hello, Funnel!"
 	resp, err := clientHTTP.Post(
-		buildFunnelUrl("test-server", fport)+"/echo",
+		buildFunnelBaseUrl("test-server", fport)+"/echo",
 		"text/plain",
 		strings.NewReader(postData),
 	)
@@ -298,7 +302,7 @@ func TestFunnel_WebSocket(t *testing.T) {
 	t.Log("@TestFunnel_WebSocket/6")
 
 	// Connect to WebSocket through funnel
-	u, err := url.Parse(buildFunnelUrl("test-server", fport) + "/ws")
+	u, err := url.Parse(buildFunnelBaseUrl("test-server", fport) + "/ws")
 	if err != nil {
 		t.Fatalf("Failed to parse WebSocket URL: %v", err)
 	}
@@ -379,7 +383,7 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 
-			u, err := url.Parse(buildFunnelUrl("test-server", fport) + "/ws")
+			u, err := url.Parse(buildFunnelBaseUrl("test-server", fport) + "/ws")
 			if err != nil {
 				errors <- fmt.Errorf("connection %d: failed to parse URL: %v", id, err)
 				return
@@ -475,7 +479,7 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 
-			resp, err := clientHTTP.Get(buildFunnelUrl("test-server", fport) + "/test")
+			resp, err := clientHTTP.Get(buildFunnelBaseUrl("test-server", fport) + "/test")
 			if err != nil {
 				errors <- fmt.Errorf("request %d: failed to make request: %v", id, err)
 				return
@@ -525,7 +529,7 @@ func TestFunnel_ServerNotConnected(t *testing.T) {
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := clientHTTP.Get(buildFunnelUrl("non-existent-server", fport) + "/test")
+	resp, err := clientHTTP.Get(buildFunnelBaseUrl("non-existent-server", fport) + "/test")
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}

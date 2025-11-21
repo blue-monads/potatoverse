@@ -1,12 +1,17 @@
 package funnel
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httputil"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
+	"github.com/k0kubun/pp"
 )
 
 // Route routes an HTTP request to the specified server and writes the response back to gin.Context
@@ -21,7 +26,7 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	qq.Println("@Funnel/routeHttp/2{SERVER_CONN}")
 
 	if !exists {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "server not connected"})
+		c.Error(errors.New("server not connected"))
 		return
 	}
 
@@ -29,181 +34,140 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	reqId := GetRequestId()
 	reqIdBytes := []byte(reqId)
 
-	// Create pending request
-	pending := &PendingRequest{
-		ResponseChan: make(chan *http.Response, 1),
-		ErrorChan:    make(chan error, 1),
-	}
+	pendingReqChan := make(chan *Packet)
+	f.pendingReqLock.Lock()
+	f.pendingReq[reqId] = pendingReqChan
+	f.pendingReqLock.Unlock()
 
-	f.prLock.Lock()
-	f.pendingRequests[reqId] = pending
-	f.prLock.Unlock()
-
-	// Clean up pending request when done
 	defer func() {
-		f.prLock.Lock()
-		delete(f.pendingRequests, reqId)
-		f.prLock.Unlock()
+		f.pendingReqLock.Lock()
+		delete(f.pendingReq, reqId)
+		f.pendingReqLock.Unlock()
 	}()
 
 	// Dump request
 	req := c.Request
 	out, err := httputil.DumpRequest(req, false)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.Error(err)
 		return
 	}
 
 	// Write request ID
-	_, err = serverConn.Conn.Write(reqIdBytes)
+	_, err = serverConn.Write(reqIdBytes)
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request id"})
+		c.Error(err)
 		return
 	}
 
 	// Write request header packet
-	err = WritePacket(serverConn.Conn, &Packet{
+	err = WritePacket(serverConn, &Packet{
 		PType:  PTypeSendHeader,
 		Offset: 0,
 		Total:  int32(req.ContentLength),
 		Data:   out,
 	})
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request header"})
+		c.Error(err)
 		return
 	}
 
-	// If request has body, send it
-	if req.Body != nil && req.ContentLength > 0 {
-		offset := int32(0)
+	if req.ContentLength > 0 {
+
 		fbuf := make([]byte, FragmentSize)
-		sentEndBody := false
+		offset := int32(0)
 
 		for {
-			n, err := req.Body.Read(fbuf)
-			if err != nil && err != io.EOF {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
 
-			if n == 0 {
-				// Send EndBody if we haven't already
-				if !sentEndBody {
-					err = WritePacket(serverConn.Conn, &Packet{
-						PType:  PtypeEndBody,
-						Offset: offset,
-						Total:  int32(req.ContentLength),
-						Data:   []byte{},
-					})
-					if err != nil {
-						c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request body end"})
-						return
-					}
-					sentEndBody = true
+			last := false
+			n, err := req.Body.Read(fbuf)
+			if err != nil {
+				if err == io.EOF {
+					log.Println("EOF")
+					last = true
+				} else {
+					log.Println("@err/Read", err.Error())
+					panic(err)
 				}
-				break
 			}
 
 			ptype := PtypeSendBody
-			if err == io.EOF {
+			if last {
 				ptype = PtypeEndBody
-				sentEndBody = true
 			}
 
 			toSend := fbuf[:n]
-			err = WritePacket(serverConn.Conn, &Packet{
+
+			err = WritePacket(serverConn, &Packet{
 				PType:  ptype,
-				Offset: offset,
+				Offset: int32(offset),
 				Total:  int32(req.ContentLength),
 				Data:   toSend,
 			})
 
 			if err != nil {
-				c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request body"})
+				c.Error(err)
 				return
 			}
 
 			offset += int32(n)
 
-			if err == io.EOF {
+			if offset >= int32(req.ContentLength) {
 				break
 			}
+
+			if last {
+				break
+			}
+
 		}
-	} else if req.Body != nil {
-		// Body exists but ContentLength is unknown or 0, read until EOF
-		offset := int32(0)
-		fbuf := make([]byte, FragmentSize)
 
-		for {
-			n, err := req.Body.Read(fbuf)
-			if err != nil && err != io.EOF {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-
-			if n == 0 {
-				// Send EndBody
-				err = WritePacket(serverConn.Conn, &Packet{
-					PType:  PtypeEndBody,
-					Offset: offset,
-					Total:  -1, // Unknown total
-					Data:   []byte{},
-				})
-				if err != nil {
-					c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request body end"})
-					return
-				}
-				break
-			}
-
-			ptype := PtypeSendBody
-			if err == io.EOF {
-				ptype = PtypeEndBody
-			}
-
-			toSend := fbuf[:n]
-			err = WritePacket(serverConn.Conn, &Packet{
-				PType:  ptype,
-				Offset: offset,
-				Total:  -1, // Unknown total
-				Data:   toSend,
-			})
-
-			if err != nil {
-				c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request body"})
-				return
-			}
-
-			offset += int32(n)
-
-			if err == io.EOF {
-				break
-			}
-		}
 	}
 
-	// Wait for response
-	select {
-	case resp := <-pending.ResponseChan:
-		defer resp.Body.Close()
-
-		// Copy response headers
-		for key, values := range resp.Header {
-			for _, value := range values {
-				c.Writer.Header().Add(key, value)
-			}
-		}
-		c.Writer.WriteHeader(resp.StatusCode)
-
-		// Copy response body
-		_, err := io.Copy(c.Writer, resp.Body)
-		if err != nil {
-			// Response already started, can't send error
-			return
-		}
-
-	case err := <-pending.ErrorChan:
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+	wpack := <-pendingReqChan
+	if wpack.PType != PTypeSendHeader {
+		c.Error(errors.New("invalid packet type"))
 		return
 	}
+
+	reader := bytes.NewReader(wpack.Data)
+	resp, err := http.ReadResponse(bufio.NewReader(reader), c.Request)
+	if err != nil {
+		log.Println("@err/ReadResponse", err.Error())
+		panic(err)
+	}
+
+	header := c.Writer.Header()
+	if resp.ContentLength > -1 {
+		header.Del("Content-Length")
+	}
+	for k, v := range resp.Header {
+		header[k] = v
+	}
+
+	c.Writer.WriteHeader(resp.StatusCode)
+
+	for {
+		wpack := <-pendingReqChan
+		if wpack == nil {
+			break
+		}
+
+		for {
+			n, err := c.Writer.Write(wpack.Data)
+			if err != nil {
+				pp.Println("@err/Write", err.Error())
+				break
+			}
+			wpack.Data = wpack.Data[n:]
+			if len(wpack.Data) == 0 {
+				break
+			}
+		}
+
+		if wpack.PType == PtypeEndBody {
+			break
+		}
+	}
+
 }

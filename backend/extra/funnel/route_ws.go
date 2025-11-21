@@ -34,14 +34,14 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 	}
 
 	// Write request ID
-	_, err = serverConn.Conn.Write(reqIdBytes)
+	_, err = serverConn.Write(reqIdBytes)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "failed to write request id"})
 		return
 	}
 
 	// Write request header packet
-	err = WritePacket(serverConn.Conn, &Packet{
+	err = WritePacket(serverConn, &Packet{
 		PType:  PTypeSendHeader,
 		Offset: 0,
 		Total:  0, // WebSocket doesn't have a body in the initial request
@@ -67,7 +67,7 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		for {
 			// Read request ID first
 			reqIdBuf := make([]byte, 16)
-			_, err := io.ReadFull(serverConn.Conn, reqIdBuf)
+			_, err := io.ReadFull(serverConn, reqIdBuf)
 			if err != nil {
 				if err != io.EOF {
 					// Connection error
@@ -80,7 +80,7 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 			if string(reqIdBuf) != reqId {
 				// This message is for a different request, skip it
 				// Read the packet to consume it
-				packet, err := ReadPacket(serverConn.Conn)
+				packet, err := ReadPacket(serverConn)
 				if err != nil {
 					clientConn.Close()
 					return
@@ -94,7 +94,7 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 			}
 
 			// Read WebSocket data packet
-			packet, err := ReadPacket(serverConn.Conn)
+			packet, err := ReadPacket(serverConn)
 			if err != nil {
 				clientConn.Close()
 				return
@@ -126,13 +126,13 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 		}
 
 		// Write request ID
-		_, err = serverConn.Conn.Write(reqIdBytes)
+		_, err = serverConn.Write(reqIdBytes)
 		if err != nil {
 			break
 		}
 
 		// Write WebSocket data as packet
-		err = WritePacket(serverConn.Conn, &Packet{
+		err = WritePacket(serverConn, &Packet{
 			PType:  PtypeWebSocketData,
 			Offset: 0,
 			Total:  int32(len(msg)),

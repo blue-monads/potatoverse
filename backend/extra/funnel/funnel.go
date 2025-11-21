@@ -2,7 +2,6 @@ package funnel
 
 import (
 	"net"
-	"net/http"
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -12,28 +11,21 @@ import (
 // Funnel is a service that routes all http requests to a node(server) which are connected
 // to the service through websocket becase the service is not accessible from the internet (behind NAT)
 
-type ServerConnection struct {
-	Conn net.Conn
-}
-
-type PendingRequest struct {
-	ResponseChan chan *http.Response
-	ErrorChan    chan error
-}
-
 type Funnel struct {
-	serverConnections map[string]*ServerConnection
+	serverConnections map[string]net.Conn
 	scLock            sync.RWMutex
 
-	pendingRequests map[string]*PendingRequest
-	prLock          sync.RWMutex
+	pendingReq     map[string]chan *Packet
+	pendingReqLock sync.Mutex
 }
 
 // New creates a new Funnel instance
 func New() *Funnel {
 	return &Funnel{
-		serverConnections: make(map[string]*ServerConnection),
-		pendingRequests:   make(map[string]*PendingRequest),
+		serverConnections: make(map[string]net.Conn),
+		scLock:            sync.RWMutex{},
+		pendingReq:        make(map[string]chan *Packet),
+		pendingReqLock:    sync.Mutex{},
 	}
 }
 
