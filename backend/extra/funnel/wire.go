@@ -11,11 +11,12 @@ import (
 type PacketType = uint8
 
 const (
-	PTypeSendHeader   PacketType = iota
-	PtypeSendBody     PacketType = iota
-	PtypeEndBody      PacketType = iota
-	PtypeReSendBody   PacketType = iota
+	PTypeSendHeader    PacketType = iota
+	PtypeSendBody      PacketType = iota
+	PtypeEndBody       PacketType = iota
+	PtypeReSendBody    PacketType = iota
 	PtypeWebSocketData PacketType = iota
+	PtypeEndSocket     PacketType = iota
 )
 
 type Packet struct {
@@ -124,7 +125,7 @@ func ReadPacket(conn net.Conn) (*Packet, error) {
 	return packet, nil
 }
 
-var idgen, _ = nanoid.ASCII(16)
+var idgen, _ = nanoid.Standard(16)
 
 func GetRequestId() string {
 	id := idgen()

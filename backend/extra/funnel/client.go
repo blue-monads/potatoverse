@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/kosher"
@@ -30,6 +31,9 @@ type FunnelClient struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	conn   net.Conn
+
+	pendingRequests map[string]chan *Packet
+	prLock          sync.Mutex
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
@@ -127,7 +131,24 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		}
 
 		if headerPacket.PType != PTypeSendHeader {
-			// Invalid packet type, skip
+
+			c.prLock.Lock()
+			pendingRequest := c.pendingRequests[reqId]
+			c.prLock.Unlock()
+
+			if pendingRequest == nil {
+				qq.Println("@FunnelClient/handleFunnelConnection/4{PENDING_REQUEST_NOT_FOUND}")
+				continue
+			}
+
+			pendingRequest <- headerPacket
+
+			if headerPacket.PType == PtypeEndBody || headerPacket.PType == PtypeEndSocket {
+				c.prLock.Lock()
+				delete(c.pendingRequests, reqId)
+				c.prLock.Unlock()
+			}
+
 			continue
 		}
 
@@ -161,8 +182,24 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 
 	// Set up request body reader if needed
 	if req.ContentLength > 0 {
+
+		pendingRequest := make(chan *Packet)
+
+		c.prLock.Lock()
+		c.pendingRequests[reqId] = pendingRequest
+		c.prLock.Unlock()
+
+		defer func() {
+			c.prLock.Lock()
+			delete(c.pendingRequests, reqId)
+			c.prLock.Unlock()
+		}()
+
 		req.Body = &requestReader{
-			conn: conn,
+			pendingRequest: pendingRequest,
+			total:          req.ContentLength,
+			received:       0,
+			buffer:         make([]byte, FragmentSize),
 		}
 	}
 
@@ -389,10 +426,10 @@ func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *
 
 // requestReader reads request body from packets
 type requestReader struct {
-	conn     net.Conn
-	total    int64
-	received int64
-	buffer   []byte
+	pendingRequest chan *Packet
+	total          int64
+	received       int64
+	buffer         []byte
 }
 
 func (r *requestReader) Read(p []byte) (int, error) {
@@ -405,13 +442,9 @@ func (r *requestReader) Read(p []byte) (int, error) {
 	}
 
 	// Read next packet
-	packet, err := ReadPacket(r.conn)
-	if err != nil {
-		return 0, err
-	}
-
-	if packet.PType != PtypeSendBody && packet.PType != PtypeEndBody {
-		return 0, io.ErrUnexpectedEOF
+	packet, ok := <-r.pendingRequest
+	if !ok {
+		return 0, io.EOF
 	}
 
 	// Copy data to buffer
