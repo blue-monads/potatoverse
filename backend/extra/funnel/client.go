@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gobwas/ws"
@@ -26,21 +25,16 @@ type FunnelClientOptions struct {
 }
 
 type FunnelClient struct {
-	opts   FunnelClientOptions
-	ctx    context.Context
-	cancel context.CancelFunc
-	conn   net.Conn
+	opts FunnelClientOptions
+	conn net.Conn
 
 	pendingRequests map[string]chan *Packet
 	prLock          sync.Mutex
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
-	ctx, cancel := context.WithCancel(context.Background())
 	return &FunnelClient{
 		opts:            opts,
-		ctx:             ctx,
-		cancel:          cancel,
 		pendingRequests: make(map[string]chan *Packet),
 	}
 }
@@ -68,7 +62,7 @@ func (c *FunnelClient) Start() error {
 	qq.Println("@FunnelClient/Start/2{FINAL_URL}", finalUrl)
 
 	// Connect to remote funnel via websocket
-	conn, _, _, err := ws.Dial(c.ctx, finalUrl)
+	conn, _, _, err := ws.Dial(context.Background(), finalUrl)
 	if err != nil {
 		return fmt.Errorf("failed to connect to funnel: %w", err)
 	}
@@ -81,7 +75,6 @@ func (c *FunnelClient) Start() error {
 }
 
 func (c *FunnelClient) Stop() {
-	c.cancel()
 	if c.conn != nil {
 		c.conn.Close()
 	}
@@ -92,33 +85,10 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 	reqIdBuf := make([]byte, 16)
 
 	for {
-		// Check if context is cancelled
-		select {
-		case <-c.ctx.Done():
-			return c.ctx.Err()
-		default:
-		}
-
-		// Set read deadline to allow context cancellation to work
-		conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 		_, err := io.ReadFull(conn, reqIdBuf)
 		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			// Check if it's a timeout (expected for context cancellation)
-			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-				// Check context again
-				select {
-				case <-c.ctx.Done():
-					return c.ctx.Err()
-				default:
-					continue
-				}
-			}
-			return err
+			continue
 		}
-		conn.SetReadDeadline(time.Time{}) // Clear deadline
 
 		reqId := string(reqIdBuf)
 
@@ -127,7 +97,8 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		// Read header packet
 		headerPacket, err := ReadPacket(conn)
 		if err != nil {
-			return err
+			qq.Println("@FunnelClient/handleFunnelConnection/3{ERROR}", err)
+			continue
 		}
 
 		if headerPacket.PType != PTypeSendHeader {
@@ -203,11 +174,10 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 		}
 	}
 
-	// Make request to local server
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Send error response
+		qq.Println("@FunnelClient/handleHttpRequest/2{ERROR}", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -218,79 +188,109 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 		return
 	}
 
-	// Write request ID
-	_, err = conn.Write([]byte(reqId))
-	if err != nil {
-		return
-	}
-
 	// Write response header packet
-	err = WritePacket(conn, &Packet{
+	err = WritePacketFull(conn, &Packet{
 		PType:  PTypeSendHeader,
 		Offset: 0,
 		Total:  int32(resp.ContentLength),
 		Data:   out,
-	})
+	}, reqId)
 	if err != nil {
+		qq.Println("@FunnelClient/handleHttpRequest/3{ERROR}", err)
 		return
 	}
 
-	// Send response body
-	if resp.ContentLength > 0 {
-		offset := int32(0)
-		fbuf := make([]byte, FragmentSize)
+	if resp.ContentLength == 0 {
 
-		for {
-			n, err := resp.Body.Read(fbuf)
-			if err != nil && err != io.EOF {
-				return
-			}
+		qq.Println("@handleHttpRequest/case_zero_length")
 
-			if n == 0 {
-				// Send EndBody
-				err = WritePacket(conn, &Packet{
-					PType:  PtypeEndBody,
-					Offset: offset,
-					Total:  int32(resp.ContentLength),
-					Data:   []byte{},
-				})
-				break
-			}
-
-			ptype := PtypeSendBody
-			if err == io.EOF {
-				ptype = PtypeEndBody
-			}
-
-			err = WritePacket(conn, &Packet{
-				PType:  ptype,
-				Offset: offset,
-				Total:  int32(resp.ContentLength),
-				Data:   fbuf[:n],
-			})
-			if err != nil {
-				return
-			}
-
-			offset += int32(n)
-
-			if err == io.EOF {
-				break
-			}
-		}
-	} else if resp.ContentLength == 0 {
-		// Explicitly send EndBody for zero-length responses
-		err = WritePacket(conn, &Packet{
+		err = WritePacketFull(conn, &Packet{
 			PType:  PtypeEndBody,
 			Offset: 0,
 			Total:  0,
 			Data:   []byte{},
-		})
+		}, reqId)
 		if err != nil {
-			return
+			qq.Println("@FunnelClient/handleHttpRequest/1{ERROR}", err)
+		}
+
+		return
+
+	}
+
+	// Send response body
+	if resp.ContentLength > 0 {
+		qq.Println("@handleHttpRequest/case_positive_length")
+
+		offset := int32(0)
+		fbuf := make([]byte, FragmentSize)
+
+		for {
+
+			qq.Println("@loop/1")
+
+			n, err := resp.Body.Read(fbuf)
+			if err != nil && err != io.EOF {
+				qq.Println("@loop/2{ERROR}", err)
+				return
+			}
+
+			qq.Println("@loop/3{N}", n)
+
+			if n == 0 {
+				// Send EndBody
+				qq.Println("@loop/4{SEND_END_BODY}")
+				err = WritePacketFull(conn, &Packet{
+					PType:  PtypeEndBody,
+					Offset: offset,
+					Total:  int32(resp.ContentLength),
+					Data:   []byte{},
+				}, reqId)
+				if err != nil {
+					qq.Println("@loop/5{ERROR}", err)
+					return
+				}
+
+				qq.Println("@loop/6{BREAK}")
+
+				break
+			}
+
+			qq.Println("@loop/7{SEND_BODY}")
+
+			ptype := PtypeSendBody
+			if err == io.EOF {
+				qq.Println("@loop/8{SEND_END_BODY}")
+				ptype = PtypeEndBody
+			}
+
+			qq.Println("@loop/9{SEND_BODY}")
+
+			err = WritePacketFull(conn, &Packet{
+				PType:  ptype,
+				Offset: offset,
+				Total:  int32(resp.ContentLength),
+				Data:   fbuf[:n],
+			}, reqId)
+			if err != nil {
+				qq.Println("@loop/10{ERROR}", err)
+				return
+			}
+
+			qq.Println("@loop/11{OFFSET}", offset)
+
+			offset += int32(n)
+
+			if err == io.EOF {
+				qq.Println("@loop/12{BREAK}")
+				break
+			}
+
+			qq.Println("@loop/13{LOOP}")
 		}
 	} else {
-		// ContentLength < 0 means unknown/chunked, read until EOF
+		qq.Println("@handleHttpRequest/case_negative_length/chunked")
+
 		offset := int32(0)
 		fbuf := make([]byte, FragmentSize)
 
@@ -302,12 +302,12 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 
 			if n == 0 {
 				// Send EndBody
-				err = WritePacket(conn, &Packet{
+				err = WritePacketFull(conn, &Packet{
 					PType:  PtypeEndBody,
 					Offset: offset,
-					Total:  -1, // Unknown total
+					Total:  -1,
 					Data:   []byte{},
-				})
+				}, reqId)
 				break
 			}
 
@@ -316,12 +316,12 @@ func (c *FunnelClient) handleHttpRequest(conn net.Conn, reqId string, req *http.
 				ptype = PtypeEndBody
 			}
 
-			err = WritePacket(conn, &Packet{
+			err = WritePacketFull(conn, &Packet{
 				PType:  ptype,
 				Offset: offset,
-				Total:  -1, // Unknown total
+				Total:  -1,
 				Data:   fbuf[:n],
-			})
+			}, reqId)
 			if err != nil {
 				return
 			}
@@ -348,8 +348,6 @@ func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *
 	}
 	defer localWS.Close()
 
-	reqIdBytes := []byte(reqId)
-
 	// After sending the header packet, websocket communication uses packets with request ID
 	// Forward from local WS to funnel
 	go func() {
@@ -359,19 +357,13 @@ func (c *FunnelClient) handleWebSocketRequest(conn net.Conn, reqId string, req *
 				return
 			}
 
-			// Write request ID
-			_, err = conn.Write(reqIdBytes)
-			if err != nil {
-				return
-			}
-
 			// Write WebSocket data as packet
-			err = WritePacket(conn, &Packet{
+			err = WritePacketFull(conn, &Packet{
 				PType:  PtypeWebSocketData,
 				Offset: 0,
 				Total:  int32(len(msg)),
 				Data:   msg,
-			})
+			}, reqId)
 			if err != nil {
 				return
 			}

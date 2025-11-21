@@ -72,7 +72,7 @@ func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
 		f.pendingReqLock.Unlock()
 
 		if pendingReqChan == nil {
-			break
+			continue
 		}
 
 		pendingReqChan <- packet

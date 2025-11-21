@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"maps"
 	"net/http"
 	"net/http/httputil"
 
@@ -16,23 +17,27 @@ import (
 
 // Route routes an HTTP request to the specified server and writes the response back to gin.Context
 func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
-	qq.Println("@Funnel/routeHttp/1{SERVER_ID}", serverId)
+	qq.Println("@routeHttp/1", serverId)
 
 	// Get server connection
 	f.scLock.RLock()
 	serverConn, exists := f.serverConnections[serverId]
 	f.scLock.RUnlock()
 
-	qq.Println("@Funnel/routeHttp/2{SERVER_CONN}")
+	qq.Println("@routeHttp/2")
 
 	if !exists {
+		qq.Println("@routeHttp/2{SERVER_NOT_CONNECTED}")
 		c.Error(errors.New("server not connected"))
 		return
 	}
 
+	qq.Println("@routeHttp/2.1")
+
 	// Generate request ID
 	reqId := GetRequestId()
-	reqIdBytes := []byte(reqId)
+
+	qq.Println("@routeHttp/2.2")
 
 	pendingReqChan := make(chan *Packet)
 	f.pendingReqLock.Lock()
@@ -40,10 +45,13 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	f.pendingReqLock.Unlock()
 
 	defer func() {
+		qq.Println("@cleanup/1{REQ_ID}", reqId)
 		f.pendingReqLock.Lock()
 		delete(f.pendingReq, reqId)
 		f.pendingReqLock.Unlock()
 	}()
+
+	qq.Println("@routeHttp/3")
 
 	// Dump request
 	req := c.Request
@@ -53,31 +61,32 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 		return
 	}
 
-	// Write request ID
-	_, err = serverConn.Write(reqIdBytes)
-	if err != nil {
-		c.Error(err)
-		return
-	}
+	qq.Println("@routeHttp/4")
 
 	// Write request header packet
-	err = WritePacket(serverConn, &Packet{
+	err = WritePacketFull(serverConn, &Packet{
 		PType:  PTypeSendHeader,
 		Offset: 0,
 		Total:  int32(req.ContentLength),
 		Data:   out,
-	})
+	}, reqId)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
+	qq.Println("@routeHttp/6")
+
 	if req.ContentLength > 0 {
+
+		qq.Println("@routeHttp/7")
 
 		fbuf := make([]byte, FragmentSize)
 		offset := int32(0)
 
 		for {
+
+			qq.Println("@routeHttp/8")
 
 			last := false
 			n, err := req.Body.Read(fbuf)
@@ -141,9 +150,8 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	if resp.ContentLength > -1 {
 		header.Del("Content-Length")
 	}
-	for k, v := range resp.Header {
-		header[k] = v
-	}
+
+	maps.Copy(header, resp.Header)
 
 	c.Writer.WriteHeader(resp.StatusCode)
 
