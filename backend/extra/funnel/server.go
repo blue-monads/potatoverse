@@ -32,11 +32,17 @@ func (f *Funnel) registerServer(serverId string, conn net.Conn) {
 
 	swchan := make(chan *ServerWrite)
 
+	existIng := f.serverConnections[serverId]
+
 	f.serverConnections[serverId] = &ServerHandle{
 		conn:      conn,
 		writeChan: swchan,
 	}
 	f.scLock.Unlock()
+
+	if existIng != nil && existIng.conn != nil {
+		existIng.conn.Close()
+	}
 
 	// Start goroutine to handle incoming responses from this server
 	go f.handleServerConnection(serverId, swchan, conn)
