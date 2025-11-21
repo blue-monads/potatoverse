@@ -1,6 +1,7 @@
 package funnel
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -164,7 +166,7 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := clientHTTP.Get(fmt.Sprintf("http://test-server.localhost:%d/test", localPort))
+	resp, err := clientHTTP.Get(fmt.Sprintf("http://test-server.localhost:%s/test", fport))
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}
@@ -185,20 +187,25 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 	}
 }
 
-/*
-
 func TestFunnel_HTTP_PostRequest(t *testing.T) {
+	t.Log("@TestFunnel_HTTP_PostRequest/1")
 	// Setup local server
 	localServer, localPort := setupLocalServer(t)
 	defer localServer.Close()
 
+	t.Log("@TestFunnel_HTTP_PostRequest/2")
+
 	// Setup funnel server
-	funnel, funnelServer, funnelURL := setupFunnelServer(t)
+	_, funnelServer, fport := setupFunnelServer(t)
 	defer funnelServer.Close()
 
+	t.Log("@TestFunnel_HTTP_PostRequest/3")
+
 	// Setup funnel client
-	client := NewFunnelClient(localPort, funnelURL, "test-server")
+	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
 	defer client.Stop()
+
+	t.Log("@TestFunnel_HTTP_PostRequest/4")
 
 	// Start client in background
 	clientDone := make(chan error, 1)
@@ -206,31 +213,25 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 		clientDone <- client.Start()
 	}()
 
-	// Wait for client to connect and verify connection
-	connected := false
-	for i := 0; i < 10; i++ {
-		time.Sleep(100 * time.Millisecond)
-		funnel.scLock.RLock()
-		_, exists := funnel.serverConnections["test-server"]
-		funnel.scLock.RUnlock()
-		if exists {
-			connected = true
-			break
-		}
-	}
+	t.Log("@TestFunnel_HTTP_PostRequest/5")
 
-	if !connected {
-		t.Fatalf("Client failed to connect to funnel")
-	}
+	time.Sleep(2 * time.Second)
 
-	// Make POST request through funnel with timeout
+	t.Log("@TestFunnel_HTTP_PostRequest/6")
+
+	// Make POST request through funnel
 	clientHTTP := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	body := strings.NewReader("test body content")
-	resp, err := clientHTTP.Post(fmt.Sprintf("%s/route/test-server/echo", funnelURL), "text/plain", body)
+
+	postData := "Hello, Funnel!"
+	resp, err := clientHTTP.Post(
+		fmt.Sprintf("http://test-server.localhost:%s/echo", fport),
+		"text/plain",
+		strings.NewReader(postData),
+	)
 	if err != nil {
-		t.Fatalf("Failed to make request: %v", err)
+		t.Fatalf("Failed to make POST request: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -238,29 +239,35 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 		t.Fatalf("Expected status 200, got %d", resp.StatusCode)
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatalf("Failed to read response: %v", err)
 	}
 
-	expected := "test body content"
-	if string(respBody) != expected {
-		t.Fatalf("Expected %s, got %s", expected, string(respBody))
+	if string(body) != postData {
+		t.Fatalf("Expected %s, got %s", postData, string(body))
 	}
 }
 
 func TestFunnel_WebSocket(t *testing.T) {
+	t.Log("@TestFunnel_WebSocket/1")
 	// Setup local server
 	localServer, localPort := setupLocalServer(t)
 	defer localServer.Close()
 
+	t.Log("@TestFunnel_WebSocket/2")
+
 	// Setup funnel server
-	funnel, funnelServer, funnelURL := setupFunnelServer(t)
+	_, funnelServer, fport := setupFunnelServer(t)
 	defer funnelServer.Close()
 
+	t.Log("@TestFunnel_WebSocket/3")
+
 	// Setup funnel client
-	client := NewFunnelClient(localPort, funnelURL, "test-server")
+	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
 	defer client.Stop()
+
+	t.Log("@TestFunnel_WebSocket/4")
 
 	// Start client in background
 	clientDone := make(chan error, 1)
@@ -268,39 +275,34 @@ func TestFunnel_WebSocket(t *testing.T) {
 		clientDone <- client.Start()
 	}()
 
-	// Wait for client to connect and verify connection
-	connected := false
-	for i := 0; i < 10; i++ {
-		time.Sleep(100 * time.Millisecond)
-		funnel.scLock.RLock()
-		_, exists := funnel.serverConnections["test-server"]
-		funnel.scLock.RUnlock()
-		if exists {
-			connected = true
-			break
-		}
-	}
+	t.Log("@TestFunnel_WebSocket/5")
 
-	if !connected {
-		t.Fatalf("Client failed to connect to funnel")
-	}
+	time.Sleep(2 * time.Second)
 
-	// Connect to funnel via websocket
-	wsURL := strings.Replace(funnelURL, "http://", "ws://", 1)
-	wsURL = fmt.Sprintf("%s/route/test-server/ws", wsURL)
+	t.Log("@TestFunnel_WebSocket/6")
 
-	conn, _, _, err := ws.Dial(context.TODO(), wsURL)
+	// Connect to WebSocket through funnel
+	u, err := url.Parse(fmt.Sprintf("ws://test-server.localhost:%s/ws", fport))
 	if err != nil {
-		t.Fatalf("Failed to connect to websocket: %v", err)
+		t.Fatalf("Failed to parse WebSocket URL: %v", err)
+	}
+
+	conn, _, _, err := ws.Dial(context.Background(), u.String())
+	if err != nil {
+		t.Fatalf("Failed to connect to WebSocket: %v", err)
 	}
 	defer conn.Close()
 
-	// Send message
-	testMsg := []byte("hello websocket")
-	err = wsutil.WriteClientText(conn, testMsg)
+	t.Log("@TestFunnel_WebSocket/7")
+
+	// Send test message
+	testMessage := "Hello, WebSocket!"
+	err = wsutil.WriteClientText(conn, []byte(testMessage))
 	if err != nil {
 		t.Fatalf("Failed to write message: %v", err)
 	}
+
+	t.Log("@TestFunnel_WebSocket/8")
 
 	// Read echo response
 	msg, _, err := wsutil.ReadServerData(conn)
@@ -308,23 +310,32 @@ func TestFunnel_WebSocket(t *testing.T) {
 		t.Fatalf("Failed to read message: %v", err)
 	}
 
-	if !bytes.Equal(msg, testMsg) {
-		t.Fatalf("Expected %s, got %s", string(testMsg), string(msg))
+	if string(msg) != testMessage {
+		t.Fatalf("Expected %s, got %s", testMessage, string(msg))
 	}
+
+	t.Log("@TestFunnel_WebSocket/9")
 }
 
-func TestFunnel_MultipleRequests(t *testing.T) {
+func TestFunnel_MultipleWebSocket(t *testing.T) {
+	t.Log("@TestFunnel_MultipleWebSocket/1")
 	// Setup local server
 	localServer, localPort := setupLocalServer(t)
 	defer localServer.Close()
 
+	t.Log("@TestFunnel_MultipleWebSocket/2")
+
 	// Setup funnel server
-	funnel, funnelServer, funnelURL := setupFunnelServer(t)
+	_, funnelServer, fport := setupFunnelServer(t)
 	defer funnelServer.Close()
 
+	t.Log("@TestFunnel_MultipleWebSocket/3")
+
 	// Setup funnel client
-	client := NewFunnelClient(localPort, funnelURL, "test-server")
+	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
 	defer client.Stop()
+
+	t.Log("@TestFunnel_MultipleWebSocket/4")
 
 	// Start client in background
 	clientDone := make(chan error, 1)
@@ -332,65 +343,184 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 		clientDone <- client.Start()
 	}()
 
-	// Wait for client to connect and verify connection
-	connected := false
-	for i := 0; i < 10; i++ {
-		time.Sleep(100 * time.Millisecond)
-		funnel.scLock.RLock()
-		_, exists := funnel.serverConnections["test-server"]
-		funnel.scLock.RUnlock()
-		if exists {
-			connected = true
-			break
-		}
+	t.Log("@TestFunnel_MultipleWebSocket/5")
+
+	time.Sleep(2 * time.Second)
+
+	t.Log("@TestFunnel_MultipleWebSocket/6")
+
+	// Connect multiple WebSocket connections
+	numConnections := 5
+	var wg sync.WaitGroup
+	errors := make(chan error, numConnections)
+
+	for i := 0; i < numConnections; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+
+			u, err := url.Parse(fmt.Sprintf("ws://test-server.localhost:%s/ws", fport))
+			if err != nil {
+				errors <- fmt.Errorf("connection %d: failed to parse URL: %v", id, err)
+				return
+			}
+
+			conn, _, _, err := ws.Dial(context.Background(), u.String())
+			if err != nil {
+				errors <- fmt.Errorf("connection %d: failed to connect: %v", id, err)
+				return
+			}
+			defer conn.Close()
+
+			// Send unique message
+			testMessage := fmt.Sprintf("Message from connection %d", id)
+			err = wsutil.WriteClientText(conn, []byte(testMessage))
+			if err != nil {
+				errors <- fmt.Errorf("connection %d: failed to write: %v", id, err)
+				return
+			}
+
+			// Read echo response
+			msg, _, err := wsutil.ReadServerData(conn)
+			if err != nil {
+				errors <- fmt.Errorf("connection %d: failed to read: %v", id, err)
+				return
+			}
+
+			if string(msg) != testMessage {
+				errors <- fmt.Errorf("connection %d: expected %s, got %s", id, testMessage, string(msg))
+				return
+			}
+		}(i)
 	}
 
-	if !connected {
-		t.Fatalf("Client failed to connect to funnel")
+	wg.Wait()
+	close(errors)
+
+	// Check for errors
+	for err := range errors {
+		t.Error(err)
 	}
 
-	// Make multiple requests with timeout
+	t.Log("@TestFunnel_MultipleWebSocket/7")
+}
+
+func TestFunnel_MultipleRequests(t *testing.T) {
+	t.Log("@TestFunnel_MultipleRequests/1")
+	// Setup local server
+	localServer, localPort := setupLocalServer(t)
+	defer localServer.Close()
+
+	t.Log("@TestFunnel_MultipleRequests/2")
+
+	// Setup funnel server
+	_, funnelServer, fport := setupFunnelServer(t)
+	defer funnelServer.Close()
+
+	t.Log("@TestFunnel_MultipleRequests/3")
+
+	// Setup funnel client
+	client := NewFunnelClient(localPort, fmt.Sprintf("http://localhost:%s", fport), "test-server")
+	defer client.Stop()
+
+	t.Log("@TestFunnel_MultipleRequests/4")
+
+	// Start client in background
+	clientDone := make(chan error, 1)
+	go func() {
+		clientDone <- client.Start()
+	}()
+
+	t.Log("@TestFunnel_MultipleRequests/5")
+
+	time.Sleep(2 * time.Second)
+
+	t.Log("@TestFunnel_MultipleRequests/6")
+
+	// Make multiple concurrent requests
+	numRequests := 10
+	var wg sync.WaitGroup
+	errors := make(chan error, numRequests)
+
 	clientHTTP := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	for i := 0; i < 5; i++ {
-		resp, err := clientHTTP.Get(fmt.Sprintf("%s/route/test-server/test", funnelURL))
-		if err != nil {
-			t.Fatalf("Failed to make request %d: %v", i, err)
-		}
-		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
-			t.Fatalf("Request %d: Expected status 200, got %d", i, resp.StatusCode)
-		}
+	for i := 0; i < numRequests; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatalf("Request %d: Failed to read response: %v", i, err)
-		}
+			resp, err := clientHTTP.Get(fmt.Sprintf("http://test-server.localhost:%s/test", fport))
+			if err != nil {
+				errors <- fmt.Errorf("request %d: failed to make request: %v", id, err)
+				return
+			}
+			defer resp.Body.Close()
 
-		expected := `{"message":"test response"}`
-		if string(body) != expected {
-			t.Fatalf("Request %d: Expected %s, got %s", i, expected, string(body))
-		}
+			if resp.StatusCode != http.StatusOK {
+				errors <- fmt.Errorf("request %d: expected status 200, got %d", id, resp.StatusCode)
+				return
+			}
+
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				errors <- fmt.Errorf("request %d: failed to read response: %v", id, err)
+				return
+			}
+
+			expected := `{"message":"test response"}`
+			if string(body) != expected {
+				errors <- fmt.Errorf("request %d: expected %s, got %s", id, expected, string(body))
+				return
+			}
+		}(i)
 	}
+
+	wg.Wait()
+	close(errors)
+
+	// Check for errors
+	for err := range errors {
+		t.Error(err)
+	}
+
+	t.Log("@TestFunnel_MultipleRequests/7")
 }
 
 func TestFunnel_ServerNotConnected(t *testing.T) {
-	// Setup funnel server without client
-	_, funnelServer, funnelURL := setupFunnelServer(t)
+	t.Log("@TestFunnel_ServerNotConnected/1")
+	// Setup funnel server without connecting a client
+	_, funnelServer, fport := setupFunnelServer(t)
 	defer funnelServer.Close()
 
-	// Try to make request to non-existent server
-	resp, err := http.Get(fmt.Sprintf("%s/route/non-existent-server/test", funnelURL))
+	t.Log("@TestFunnel_ServerNotConnected/2")
+
+	// Make request to non-existent server
+	clientHTTP := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	resp, err := clientHTTP.Get(fmt.Sprintf("http://non-existent-server.localhost:%s/test", fport))
 	if err != nil {
 		t.Fatalf("Failed to make request: %v", err)
 	}
 	defer resp.Body.Close()
 
+	// Should get 502 Bad Gateway
 	if resp.StatusCode != http.StatusBadGateway {
 		t.Fatalf("Expected status 502, got %d", resp.StatusCode)
 	}
-}
 
-*/
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response: %v", err)
+	}
+
+	// Response should contain error message
+	if !strings.Contains(string(body), "server not connected") {
+		t.Fatalf("Expected error message about server not connected, got: %s", string(body))
+	}
+
+	t.Log("@TestFunnel_ServerNotConnected/3")
+}
