@@ -382,7 +382,7 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 	var wg sync.WaitGroup
 	errors := make(chan error, numConnections)
 
-	for i := 0; i < numConnections; i++ {
+	for i := range numConnections {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
@@ -478,7 +478,7 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 		Timeout: 5 * time.Second,
 	}
 
-	for i := 0; i < numRequests; i++ {
+	for i := range numRequests {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
