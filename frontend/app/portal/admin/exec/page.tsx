@@ -46,7 +46,12 @@ export default function Page() {
             }
         
             setIframeSrc(buildIframeSrc(nskey, resp.data.host));
-            setIsLoading(false);
+
+            setTimeout(() => {
+                setIsLoading(false);
+            }, 300)
+
+
         } catch (error) {
             console.error(error);
         }
@@ -77,7 +82,7 @@ export default function Page() {
                     </div>
                 )}
 
-                {iframeRef && (<>
+                {iframeSrc && (<>
                     <iframe
 
                         ref={iframeRef}
