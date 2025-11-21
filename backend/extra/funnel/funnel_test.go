@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -45,6 +46,9 @@ func setupLocalServer(t *testing.T) (*httptest.Server, int) {
 	// POST endpoint with body
 	mux.HandleFunc("/echo", func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
+
+		qq.Println("@setupLocalServer/echo/1{BODY}", string(body))
+
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 		w.Write(body)

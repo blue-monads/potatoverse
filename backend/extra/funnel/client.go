@@ -204,9 +204,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 
 		req.Body = &requestReader{
 			pendingRequest: pch,
-			total:          req.ContentLength,
-			received:       0,
-			buffer:         make([]byte, FragmentSize),
+			buffer:         make([]byte, 0, FragmentSize),
 		}
 	}
 
@@ -257,9 +255,10 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 		qq.Println("@handleHttpRequest/case_positive_length")
 
 		offset := int32(0)
-		fbuf := make([]byte, FragmentSize)
 
 		for {
+
+			fbuf := make([]byte, FragmentSize)
 
 			qq.Println("@loop/1")
 
@@ -430,72 +429,45 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *Packet, reqId string, re
 // requestReader reads request body from packets
 type requestReader struct {
 	pendingRequest chan *Packet
-	total          int64
-	received       int64
+	closed         bool
 	buffer         []byte
 }
 
 func (r *requestReader) Read(p []byte) (int, error) {
-	// Check if we've already read all the data
-	if r.total > 0 && r.received >= r.total {
+	if r.closed {
+		if len(r.buffer) != 0 {
+			n := copy(p, r.buffer)
+			r.buffer = r.buffer[n:]
+
+			return n, nil
+		}
+
 		return 0, io.EOF
 	}
 
-	// If we have buffered data, return it first
-	if len(r.buffer) > 0 {
-		// Limit copy to remaining bytes if total is set
-		toCopy := r.buffer
-		if r.total > 0 {
-			remaining := r.total - r.received
-			if int64(len(toCopy)) > remaining {
-				toCopy = toCopy[:remaining]
-			}
-		}
-		n := copy(p, toCopy)
-		r.buffer = r.buffer[n:]
-		r.received += int64(n)
-
-		// Check if we're done
-		if r.total > 0 && r.received >= r.total {
-			return n, io.EOF
-		}
-		return n, nil
-	}
-
-	// Read next packet
+	// Check if we've already read all the data
 	packet, ok := <-r.pendingRequest
 	if !ok {
+
+		r.closed = true
+
 		return 0, io.EOF
 	}
 
-	// Limit data to copy based on total if set
-	dataToCopy := packet.Data
-	if r.total > 0 {
-		remaining := r.total - r.received
-		if int64(len(dataToCopy)) > remaining {
-			dataToCopy = dataToCopy[:remaining]
-		}
+	n := copy(p, packet.Data)
+
+	if n < len(packet.Data) {
+		r.buffer = packet.Data[n:]
 	}
 
-	// Copy data to buffer
-	n := copy(p, dataToCopy)
-	r.received += int64(n)
-
-	// If there's remaining data in dataToCopy that we couldn't fit in p, buffer it
-	if n < len(dataToCopy) {
-		r.buffer = dataToCopy[n:]
-	}
-
-	// Check if we're done
-	if packet.PType == PtypeEndBody || (r.total > 0 && r.received >= r.total) {
-		if len(r.buffer) == 0 {
-			return n, io.EOF
-		}
+	if packet.PType == PtypeEndBody {
+		r.closed = true
 	}
 
 	return n, nil
 }
 
 func (r *requestReader) Close() error {
+	r.closed = true
 	return nil
 }
