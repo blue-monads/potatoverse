@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -23,7 +22,7 @@ func (f *Funnel) handleServerWebSocket(serverId string, c *gin.Context) {
 		return
 	}
 
-	qq.Println("@Funnel/handleServerWebSocket/2{CONN}", conn)
+	qq.Println("@Funnel/handleServerWebSocket/2{CONN}")
 
 	// Register the server connection
 	f.registerServer(serverId, conn)
@@ -59,7 +58,7 @@ func (f *Funnel) handleServerConnection(serverId string, conn net.Conn) {
 			break
 		}
 
-		reqId := kosher.Str(reqIdBuf)
+		reqId := string(reqIdBuf)
 
 		qq.Println("@Funnel/handleServerConnection/3{REQ_ID}", reqId)
 

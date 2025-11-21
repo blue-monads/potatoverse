@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -39,9 +38,10 @@ type FunnelClient struct {
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &FunnelClient{
-		opts:   opts,
-		ctx:    ctx,
-		cancel: cancel,
+		opts:            opts,
+		ctx:             ctx,
+		cancel:          cancel,
+		pendingRequests: make(map[string]chan *Packet),
 	}
 }
 
@@ -120,7 +120,7 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		}
 		conn.SetReadDeadline(time.Time{}) // Clear deadline
 
-		reqId := kosher.Str(reqIdBuf)
+		reqId := string(reqIdBuf)
 
 		qq.Println("@FunnelClient/handleFunnelConnection/3{REQ_ID}", reqId)
 
