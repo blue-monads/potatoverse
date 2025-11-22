@@ -101,7 +101,7 @@ func (r *Room) Broadcast(message []byte) error {
 func (r *Room) Publish(topicName string, message []byte) error {
 	msg := Message{
 		Id:   time.Now().UnixNano(),
-		Type: "server_publish",
+		Type: MessageTypePublish,
 		Data: message,
 	}
 
@@ -120,7 +120,7 @@ func (r *Room) Publish(topicName string, message []byte) error {
 func (r *Room) DirectMessage(targetConnId int64, message []byte) error {
 	msg := Message{
 		Id:   time.Now().UnixNano(),
-		Type: "server_direct_message",
+		Type: MessageTypeDirectMessage,
 		Data: message,
 	}
 

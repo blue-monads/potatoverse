@@ -7,13 +7,13 @@ import (
 )
 
 const (
-	MessageTypeBroadcast           = "server_broadcast"
-	MessageTypePublish             = "server_publish"
-	MessageTypeDirectMessage       = "server_direct_message"
-	ClientMessageTypeBroadcast     = "client_broadcast"
-	ClientMessageTypePublish       = "client_publish"
-	ClientMessageTypeDirectMessage = "client_direct_message"
-	ClientMessageTypeGetPresence   = "client_get_presence"
+	MessageTypeBroadcast           = "sbroadcast"
+	MessageTypePublish             = "spublish"
+	MessageTypeDirectMessage       = "sdirect"
+	ClientMessageTypeBroadcast     = "cbroadcast"
+	ClientMessageTypePublish       = "cpublish"
+	ClientMessageTypeDirectMessage = "cdirect"
+	ClientMessageTypeGetPresence   = "cpresence"
 )
 
 type HigherSockd struct {
