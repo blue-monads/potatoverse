@@ -2,7 +2,9 @@ package higher
 
 import (
 	"encoding/json"
+	"errors"
 	"maps"
+	"net"
 	"sync"
 	"time"
 
@@ -37,13 +39,130 @@ func (r *Room) run() {
 			r.handleDirectMessage(dm.targetConnId, dm.message, time.Second*2)
 
 		case connId := <-r.disconnect:
-
 			r.cleanup(connId)
-
-			//			r.notifyPresenceAll(r.name)
 		}
 	}
 }
+
+func (r *Room) AddConn(userId int64, conn net.Conn, connId int64) (int64, error) {
+	sess := &session{
+		room:   r,
+		connId: connId,
+		userId: userId,
+		conn:   conn,
+		send:   make(chan []byte, 16),
+	}
+
+	r.sLock.Lock()
+	existingSess := r.sessions[sess.connId]
+	r.sessions[sess.connId] = sess
+	r.sLock.Unlock()
+
+	if existingSess != nil {
+		existingSess.teardown()
+	}
+
+	go sess.writePump()
+	go sess.readPump()
+
+	return sess.connId, nil
+}
+
+func (r *Room) RemoveConn(userId int64, connId int64) error {
+	tcan := time.After(time.Second * 10)
+
+	select {
+	case r.disconnect <- connId:
+		return nil
+	case <-tcan:
+		return errors.New("room is very busy or dead")
+	}
+}
+
+// Broadcast sends a message to all users in the room
+func (r *Room) Broadcast(message []byte) error {
+	msg := Message{
+		Id:   time.Now().UnixNano(),
+		Type: MessageTypeBroadcast,
+		Data: message,
+	}
+
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	r.handleBroadcast(data, time.Second*2)
+
+	return nil
+}
+
+// Publish sends a message to all subscribers of a topic in the room
+func (r *Room) Publish(topicName string, message []byte) error {
+	msg := Message{
+		Id:   time.Now().UnixNano(),
+		Type: "server_publish",
+		Data: message,
+	}
+
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	r.handlePublish(topicName, data, time.Second*5)
+
+	return nil
+
+}
+
+// DirectMessage sends a message to a specific user
+func (r *Room) DirectMessage(targetConnId int64, message []byte) error {
+	msg := Message{
+		Id:   time.Now().UnixNano(),
+		Type: "server_direct_message",
+		Data: message,
+	}
+
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+
+	r.handleDirectMessage(targetConnId, data, time.Second*5)
+
+	return nil
+
+}
+
+// Subscribe adds a connection to a topic subscription
+func (r *Room) Subscribe(topicName string, connId int64) error {
+	r.tLock.Lock()
+	if r.topics[topicName] == nil {
+		r.topics[topicName] = make(map[int64]bool)
+	}
+	r.topics[topicName][connId] = true
+	r.tLock.Unlock()
+
+	return nil
+}
+
+// Unsubscribe removes a connection from a topic subscription
+func (r *Room) Unsubscribe(topicName string, connId int64) error {
+
+	r.tLock.Lock()
+	if subMap, ok := r.topics[topicName]; ok {
+		delete(subMap, connId)
+		if len(subMap) == 0 {
+			delete(r.topics, topicName)
+		}
+	}
+	r.tLock.Unlock()
+
+	return nil
+}
+
+// private
 
 func (r *Room) handleBroadcast(message []byte, maxWait time.Duration) {
 	copySess := make([]*session, 0, len(r.sessions))
