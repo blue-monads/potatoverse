@@ -1,6 +1,7 @@
 package ccurd
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
 	"strings"
@@ -8,15 +9,19 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
 
 type CcurdCapability struct {
-	spaceId int64
-	db      datahub.DBLowOps
-	signer  *signer.Signer
-	methods map[string]*Methods
+	db       datahub.DBLowOps
+	signer   *signer.Signer
+	eventHub xtypes.Engine
+
+	spaceId   int64
+	installId int64
+	methods   map[string]*Methods
 }
 
 func (p *CcurdCapability) Reload(opts xtypes.LazyData) (xtypes.Capability, error) {
@@ -90,7 +95,30 @@ func (p *CcurdCapability) Handle(ctx *gin.Context) {
 			return
 		}
 
-		httpx.WriteJSON(ctx, gin.H{"id": id}, nil)
+		if method.EventName != "" {
+			edata := map[string]any{
+				"id":    id,
+				"table": method.Table,
+			}
+
+			jsonData, err := json.Marshal(edata)
+			if err == nil {
+				err = p.eventHub.PublishEvent(&xtypes.EventOptions{
+					InstallId:  p.installId,
+					Name:       method.EventName,
+					Payload:    jsonData,
+					ResourceId: fmt.Sprintf("%s:%d", method.Table, id),
+				})
+
+				if err != nil {
+					qq.Println("@Handle/PublishEvent/error", err)
+				}
+
+			}
+
+			httpx.WriteJSON(ctx, gin.H{"id": id}, nil)
+
+		}
 
 	case "batch_insert":
 		data := []map[string]any{}
