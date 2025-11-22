@@ -214,11 +214,7 @@ func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, er
 			return "", fmt.Errorf("package not found: %s", packageName)
 		}
 
-		if pkg.UpdateUrl == "" {
-			return "", fmt.Errorf("package %s has no download URL", packageName)
-		}
-
-		resp, err = http.Get(pkg.UpdateUrl)
+		resp, err = http.Get(pkg.CanonicalUrl)
 		if err != nil {
 			return "", fmt.Errorf("failed to download package: %w", err)
 		}

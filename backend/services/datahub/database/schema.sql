@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS InstalledPackages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL DEFAULT '',  
   install_repo TEXT NOT NULL DEFAULT '',
-  update_url TEXT NOT NULL DEFAULT '',
+  canonical_url TEXT NOT NULL DEFAULT '',
   storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
   active_install_id INTEGER NOT NULL DEFAULT 0,
   installed_by INTEGER NOT NULL DEFAULT 0,
@@ -125,7 +125,9 @@ CREATE TABLE IF NOT EXISTS PackageVersion (
   author_site TEXT NOT NULL DEFAULT '',
   source_code TEXT NOT NULL DEFAULT '',
   license TEXT NOT NULL DEFAULT '',
-  version TEXT NOT NULL DEFAULT ''
+  version TEXT NOT NULL DEFAULT '',
+  init_page TEXT NOT NULL DEFAULT '',
+  update_page TEXT NOT NULL DEFAULT ''
 );
 
 
