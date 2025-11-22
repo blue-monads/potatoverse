@@ -1,6 +1,7 @@
 package xtypes
 
 import (
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/gin-gonic/gin"
 )
 
@@ -8,7 +9,7 @@ type Capability interface {
 	Handle(ctx *gin.Context)
 	ListActions() ([]string, error)
 	Execute(name string, params LazyData) (map[string]any, error)
-	Reload(opts LazyData) (Capability, error)
+	Reload(model *dbmodels.SpaceCapability) (Capability, error)
 	Close() error
 }
 
@@ -33,7 +34,7 @@ type CapabilityOptionField struct {
 
 type CapabilityBuilder interface {
 	Name() string
-	Build(installId, spaceId int64, opts LazyData) (Capability, error)
+	Build(model *dbmodels.SpaceCapability) (Capability, error)
 	Serve(ctx *gin.Context)
 }
 

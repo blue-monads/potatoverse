@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -24,9 +26,9 @@ type CcurdCapability struct {
 	methods   map[string]*Methods
 }
 
-func (p *CcurdCapability) Reload(opts xtypes.LazyData) (xtypes.Capability, error) {
+func (p *CcurdCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
 
-	methods, err := LoadMethods(opts)
+	methods, err := LoadMethods(xtypes.LazyDataBytes(kosher.Byte(model.Options)))
 	if err != nil {
 		return nil, err
 	}

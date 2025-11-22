@@ -2,6 +2,7 @@ package ping
 
 import (
 	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
@@ -35,10 +36,10 @@ type PingBuilder struct {
 	app xtypes.App
 }
 
-func (b *PingBuilder) Build(installId, spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
+func (b *PingBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
 	return &PingCapability{
 		app:     b.app,
-		spaceId: spaceId,
+		spaceId: model.SpaceID,
 	}, nil
 }
 
@@ -58,7 +59,7 @@ type PingCapability struct {
 	spaceId int64
 }
 
-func (p *PingCapability) Reload(opts xtypes.LazyData) (xtypes.Capability, error) {
+func (p *PingCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
 	return p, nil
 }
 

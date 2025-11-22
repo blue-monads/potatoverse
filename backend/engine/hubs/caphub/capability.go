@@ -7,7 +7,6 @@ import (
 
 	_ "github.com/blue-monads/turnix/backend/engine/capabilities/ping"
 	"github.com/blue-monads/turnix/backend/engine/registry"
-	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
@@ -74,9 +73,7 @@ func (gh *CapabilityHub) Reload(installId int64, spaceId int64, name string) err
 		return err
 	}
 
-	opts := xtypes.LazyDataBytes(kosher.Byte(cap.Options))
-
-	next, err := gg.Reload(opts)
+	next, err := gg.Reload(cap)
 	if err != nil {
 		return err
 	}
@@ -183,9 +180,7 @@ func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capa
 			return nil, err
 		}
 
-		opts := xtypes.LazyDataBytes(kosher.Byte(cap.Options))
-
-		instance, err := gbFactory.Build(installId, spaceId, opts)
+		instance, err := gbFactory.Build(cap)
 		if err != nil {
 			return nil, err
 		}
