@@ -1,4 +1,4 @@
-package sockethub
+package notifier
 
 import "net"
 
