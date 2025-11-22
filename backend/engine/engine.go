@@ -49,6 +49,7 @@ type EngineOption struct {
 	WorkingFolder string
 	Logger        *slog.Logger
 	Repos         []xtypes.RepoOptions
+	HttpPort      int
 }
 
 func NewEngine(opt EngineOption) *Engine {
@@ -71,7 +72,7 @@ func NewEngine(opt EngineOption) *Engine {
 		fullReload:       make(chan struct{}, 1),
 
 		eventHub: eventhub.NewEventHub(opt.DB),
-		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub")),
+		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
 	e.runtime.parent = e

@@ -20,7 +20,7 @@ type RepoHub struct {
 	logger *slog.Logger
 }
 
-func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger) *RepoHub {
+func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger, port int) *RepoHub {
 	hub := &RepoHub{
 		repos:  make(map[string]*xtypes.RepoOptions),
 		logger: logger,
@@ -33,9 +33,24 @@ func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger) *RepoHub {
 		if key == "" {
 			key = repo.Name
 		}
-		if key != "" {
-			hub.repos[key] = repo
+		if key == "" {
+			panic("repo slug or name is required")
 		}
+
+		if repo.Type == "" {
+			panic("repo type is required")
+		}
+
+		if repo.Type == "http" && repo.URL == "" {
+			panic("http repo url is required")
+		}
+
+		if repo.Type == "http" && !strings.HasPrefix(repo.URL, "http") {
+			repo.URL = fmt.Sprintf("http://localhost:%d%s", port, repo.URL)
+		}
+
+		hub.repos[key] = repo
+
 	}
 
 	return hub
@@ -48,6 +63,7 @@ func (h *RepoHub) ListRepos() []xtypes.RepoOptions {
 	for _, repo := range h.repos {
 		result = append(result, *repo)
 	}
+
 	return result
 }
 
@@ -68,7 +84,7 @@ func (h *RepoHub) ListPackages(repoSlug string) ([]models.PotatoPackage, error) 
 	}
 
 	switch repo.Type {
-	case "embeded", "embedded":
+	case "embed", "embeded", "embedded":
 		return h.listEmbeddedPackages()
 	case "http":
 		return h.listHttpPackages(repo.URL)
@@ -85,7 +101,7 @@ func (h *RepoHub) ZipPackage(repoSlug string, packageName string) (string, error
 	}
 
 	switch repo.Type {
-	case "embeded", "embedded":
+	case "embed", "embeded", "embedded":
 		return h.zipEmbeddedPackage(packageName)
 	case "http":
 		return h.zipHttpPackage(repo.URL, packageName)

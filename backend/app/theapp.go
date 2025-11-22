@@ -46,6 +46,7 @@ func New(opt Option) *App {
 		WorkingFolder: path.Join(opt.WorkingFolderBase, "engine"),
 		Logger:        opt.Logger,
 		Repos:         opt.AppOpts.Repos,
+		HttpPort:      opt.AppOpts.Port,
 	})
 
 	happ := &App{

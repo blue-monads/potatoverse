@@ -49,6 +49,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 			Name:         options.Name,
 			SocketFile:   options.SocketFile,
 			Mailer:       options.Mailer,
+			Repos:        options.Repos,
 		},
 		Mailer:            m,
 		WorkingFolderBase: options.WorkingDir,
@@ -119,6 +120,20 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	if config.SocketFile == "" {
 		config.SocketFile = path.Join(config.WorkingDir, "./potatoverse.sock")
+	}
+
+	if len(config.Repos) == 0 {
+		config.Repos = []xtypes.RepoOptions{
+			{
+				Slug: "Test",
+				URL:  "/zz/static/repo/repo.json",
+				Type: "http",
+			},
+			{
+				Type: "embeded",
+				Slug: "Dev",
+			},
+		}
 	}
 
 	app, err := BuildApp(config, seedDB)
