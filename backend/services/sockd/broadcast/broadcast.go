@@ -117,7 +117,5 @@ func (s *BroadcastSockd) Broadcast(roomName string, message []byte) error {
 		}
 	}
 
-	room.sLock.RUnlock()
-
 	return nil
 }
