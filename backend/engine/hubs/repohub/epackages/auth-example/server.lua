@@ -79,11 +79,16 @@ function add_task(ctx)
         return
     end
 
-    potato.core.publish_json_event("add_task", {
-        kvKey = key,
-        userId = userId,
-        kvId = id,
+    local err = potato.core.publish_event({
+        name = "add_task",
+        payload = {
+            kvKey = key,
+            userId = userId,
+        }
     })
+    if err then
+        print("publish_event error:", tostring(err))
+    end
 
     
     
@@ -121,10 +126,16 @@ function delete_task(ctx)
         return
     end
     
-    potato.core.publish_json_event("delete_task", {
-        kvKey = key,
-        userId = userId,
+    local err = potato.core.publish_event({
+        name = "delete_task",
+        payload = {
+            kvKey = key,
+            userId = userId,
+        }
     })
+    if err then
+        print("publish_event error:", tostring(err))
+    end
     
     req.json(200, {})
 end
