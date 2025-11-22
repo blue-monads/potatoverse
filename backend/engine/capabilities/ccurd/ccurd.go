@@ -47,6 +47,11 @@ func (p *CcurdCapability) Close() error {
 	return nil
 }
 
+type Event struct {
+	Id    int64  `json:"id"`
+	Table string `json:"table"`
+}
+
 func (p *CcurdCapability) Handle(ctx *gin.Context) {
 	token := ctx.Request.Header.Get("x-cap-token")
 	if token == "" {
@@ -98,9 +103,9 @@ func (p *CcurdCapability) Handle(ctx *gin.Context) {
 		}
 
 		if method.EventName != "" {
-			edata := map[string]any{
-				"id":    id,
-				"table": method.Table,
+			edata := &Event{
+				Id:    id,
+				Table: method.Table,
 			}
 
 			jsonData, err := json.Marshal(edata)
