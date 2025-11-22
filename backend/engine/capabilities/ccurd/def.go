@@ -49,11 +49,13 @@ func (b *CcurdBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability
 	}
 
 	return &CcurdCapability{
-		db:        b.app.Database().GetLowCapabilityDBOps(fmt.Sprint(model.SpaceID)),
-		signer:    b.app.Signer(),
-		methods:   methods,
-		spaceId:   model.SpaceID,
-		installId: model.InstallID,
+		db:           b.app.Database().GetLowCapabilityDBOps(fmt.Sprint(model.SpaceID)),
+		signer:       b.app.Signer(),
+		methods:      methods,
+		spaceId:      model.SpaceID,
+		installId:    model.InstallID,
+		capabilityId: model.ID,
+		engine:       b.app.Engine().(xtypes.Engine),
 	}, nil
 }
 

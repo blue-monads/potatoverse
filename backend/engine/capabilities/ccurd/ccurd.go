@@ -17,13 +17,14 @@ import (
 )
 
 type CcurdCapability struct {
-	db       datahub.DBLowOps
-	signer   *signer.Signer
-	eventHub xtypes.Engine
+	db     datahub.DBLowOps
+	signer *signer.Signer
+	engine xtypes.Engine
 
-	spaceId   int64
-	installId int64
-	methods   map[string]*Methods
+	spaceId      int64
+	installId    int64
+	capabilityId int64
+	methods      map[string]*Methods
 }
 
 func (p *CcurdCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
@@ -69,6 +70,16 @@ func (p *CcurdCapability) Handle(ctx *gin.Context) {
 		httpx.WriteErrString(ctx, "token `error")
 	}
 
+	if claim.InstallId != p.installId {
+		httpx.WriteErrString(ctx, "install id error")
+		return
+	}
+
+	if claim.CapabilityId != p.capabilityId {
+		httpx.WriteErrString(ctx, "capability id error")
+		return
+	}
+
 	subpath := ctx.Param("subpath")
 	methodName := strings.Split(subpath, "/")[0]
 	method := p.methods[methodName]
@@ -110,7 +121,7 @@ func (p *CcurdCapability) Handle(ctx *gin.Context) {
 
 			jsonData, err := json.Marshal(edata)
 			if err == nil {
-				err = p.eventHub.PublishEvent(&xtypes.EventOptions{
+				err = p.engine.PublishEvent(&xtypes.EventOptions{
 					InstallId:  p.installId,
 					Name:       method.EventName,
 					Payload:    jsonData,
