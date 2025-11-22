@@ -39,7 +39,7 @@ type CcurdBuilder struct {
 	app xtypes.App
 }
 
-func (b *CcurdBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
+func (b *CcurdBuilder) Build(installId, spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
 
 	methods, err := LoadMethods(opts)
 	if err != nil {

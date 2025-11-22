@@ -35,7 +35,7 @@ type PingBuilder struct {
 	app xtypes.App
 }
 
-func (b *PingBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
+func (b *PingBuilder) Build(installId, spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
 	return &PingCapability{
 		app:     b.app,
 		spaceId: spaceId,

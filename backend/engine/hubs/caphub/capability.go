@@ -185,7 +185,7 @@ func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capa
 
 		opts := xtypes.LazyDataBytes(kosher.Byte(cap.Options))
 
-		instance, err := gbFactory.Build(spaceId, opts)
+		instance, err := gbFactory.Build(installId, spaceId, opts)
 		if err != nil {
 			return nil, err
 		}

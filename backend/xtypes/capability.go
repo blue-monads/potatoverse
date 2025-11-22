@@ -33,7 +33,7 @@ type CapabilityOptionField struct {
 
 type CapabilityBuilder interface {
 	Name() string
-	Build(spaceId int64, opts LazyData) (Capability, error)
+	Build(installId, spaceId int64, opts LazyData) (Capability, error)
 	Serve(ctx *gin.Context)
 }
 
