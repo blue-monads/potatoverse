@@ -1,202 +1,167 @@
 package sockd
 
 import (
+	"errors"
 	"net"
-	"regexp"
-	"strconv"
-	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 type Sockd struct {
-	rooms map[string]*SockdRoom
-	rLock sync.RWMutex
+	rooms map[string]*Room
+	mu    sync.RWMutex
+
+	counter atomic.Int32
 }
 
-type Connection struct {
-	id        int64
-	conn      net.Conn
-	selfAttrs map[string]string
+func NewSockd() *Sockd {
+	return &Sockd{
+		rooms: make(map[string]*Room),
+	}
 }
 
-type SockdRoom struct {
-	connections       map[int64]*Connection
-	connectionsLock   sync.RWMutex
-	roomType          string // server_process, client_broadcast, client_p2p, client_cond
-	broadcastPresence bool
+func newRoom(name string) *Room {
+	r := &Room{
+		name:       name,
+		disconnect: make(chan int32, 32), // Buffer for burst disconnects
+		topics:     make(map[string]map[int32]bool),
+		sessions:   make(map[int32]*session),
+	}
+
+	// Start the Room Event Loop
+	go r.run()
+
+	return r
 }
 
-type Condition struct {
-	Key   string
-	Value string
-	Op    string
-	Sub   []Condition
-	Or    bool
+func (s *Sockd) AddConn(userId int64, conn net.Conn, roomName string) (int32, error) {
+	s.mu.Lock()
+	room, exists := s.rooms[roomName]
+	if !exists {
+		room = newRoom(roomName)
+		s.rooms[roomName] = room
+	}
+	s.mu.Unlock()
+
+	sess := &session{
+		room:   room, // Link back to room
+		connId: s.counter.Add(1),
+		userId: userId,
+		conn:   conn,
+		send:   make(chan []byte, 16),
+	}
+
+	room.sLock.Lock()
+	if _, ok := room.sessions[sess.connId]; ok {
+		room.sLock.Unlock()
+		return 0, errors.New("connId collision")
+	}
+	room.sessions[sess.connId] = sess
+	room.sLock.Unlock()
+
+	go sess.writePump()
+
+	return sess.connId, nil
 }
 
-func (s *SockdRoom) SendWithCondition(cond Condition, data []byte) {
+func (s *Sockd) RemoveConn(userId int64, connId int32, roomName string) error {
+	s.mu.RLock()
+	room, exists := s.rooms[roomName]
+	s.mu.RUnlock()
 
-	s.connectionsLock.RLock()
-	defer s.connectionsLock.RUnlock()
+	if !exists {
+		return nil
+	}
 
-	matches := make(map[int64]bool)
-
-	for _, conn := range s.connections {
-		if checkCondition(conn.selfAttrs, cond) {
-			matches[conn.id] = true
+	// We simply push to the disconnect channel.
+	// The event loop (run) handles the actual locking and map deletion.
+	// This keeps logic centralized and prevents race conditions between
+	// manual removal and network-error removal.
+	select {
+	case room.disconnect <- connId:
+		// Signal sent
+	default:
+		time.Sleep(time.Second * 2)
+		select {
+		case room.disconnect <- connId:
+			// Signal sent
+		default:
+			return errors.New("room is very busy or dead")
 		}
 	}
 
-	for _, conn := range s.connections {
-		if matches[conn.id] {
-			conn.conn.Write(data)
-		}
-	}
-
+	return nil
 }
 
-func checkCondition(attrs map[string]string, cond Condition) bool {
+func (s *Sockd) Publish(roomName string, topicName string, message []byte) error {
+	s.mu.RLock()
+	room, exists := s.rooms[roomName]
+	s.mu.RUnlock()
 
-	if cond.Sub != nil {
-		if cond.Or {
-			match := false
-			for _, sub := range cond.Sub {
-				if checkCondition(attrs, sub) {
-					match = true
-				}
-			}
+	if !exists {
+		return nil
+	}
 
-			if !match {
-				return false
-			}
-		} else {
-			match := true
-			for _, sub := range cond.Sub {
-				if !checkCondition(attrs, sub) {
-					match = false
-					break
-				}
-			}
-			if !match {
-				return false
-			}
+	// Get Subscribers
+	room.tLock.RLock()
+	subMap, ok := room.topics[topicName]
+	if !ok || len(subMap) == 0 {
+		room.tLock.RUnlock()
+		return nil
+	}
+
+	// Snapshot IDs
+	ids := make([]int32, 0, len(subMap))
+	for id := range subMap {
+		ids = append(ids, id)
+	}
+	room.tLock.RUnlock()
+
+	// Send
+
+	room.sLock.RLock()
+
+	sessions := make([]*session, 0, len(subMap))
+	for _, id := range ids {
+		if sess, ok := room.sessions[id]; ok {
+			sessions = append(sessions, sess)
 		}
-
 	}
 
-	targetValue := attrs[cond.Key]
+	for _, sess := range sessions {
 
-	if cond.Op == ">" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-		return fval > cval
-	}
-	if cond.Op == "<" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
+		tcan := time.After(time.Second * 5)
 
-		return fval < cval
-	}
-
-	if cond.Op == ">=" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-		return fval >= cval
-	}
-
-	if cond.Op == "<=" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-		return fval <= cval
-	}
-
-	if cond.Op == "==" {
-		return targetValue == cond.Value
-	}
-
-	if cond.Op == "!=" {
-		return targetValue != cond.Value
-	}
-
-	if cond.Op == "contains" {
-		return strings.Contains(targetValue, cond.Value)
-	}
-
-	if cond.Op == "notcontains" {
-		return !strings.Contains(targetValue, cond.Value)
-	}
-
-	if cond.Op == "startswith" {
-		return strings.HasPrefix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "endswith" {
-		return strings.HasSuffix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "notstartswith" {
-		return !strings.HasPrefix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "notendswith" {
-		return !strings.HasSuffix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "regex" {
-		re, err := regexp.Compile(cond.Value)
-		if err != nil {
-			return false
+		select {
+		case sess.send <- message:
+			continue
+		case <-tcan:
+			qq.Println("@publish/timeout", sess.connId)
+			continue
 		}
-
-		return re.MatchString(targetValue)
 	}
 
-	if cond.Op == "notregex" {
-		re, err := regexp.Compile(cond.Value)
-		if err != nil {
-			return false
-		}
-		return !re.MatchString(targetValue)
-	}
+	room.sLock.RUnlock()
 
-	return false
+	return nil
 }
 
-/*
+func (s *Sockd) AddSub(roomName string, topicName string, userId int64, connId int32, conn net.Conn) error {
+	s.mu.RLock()
+	room, exists := s.rooms[roomName]
+	s.mu.RUnlock()
+	if !exists {
+		return errors.New("room not found")
+	}
 
-{
-	key: "age"
-	op: ">"
-	value: "10"
-	or: false
-	sub: [
-		{
-			key: "city"
-			op: "=="
-			value: "new york"
-		},
-		{
-			key: "country"
-			op: "=="
-			value: "usa"
-		}
-	]
+	room.tLock.Lock()
+	if room.topics[topicName] == nil {
+		room.topics[topicName] = make(map[int32]bool)
+	}
+	room.topics[topicName][connId] = true
+	room.tLock.Unlock()
+	return nil
 }
-
-*/
-
-/*
-
---metadata-start-5643126--
-{meta_data: 1}
---metadata-end-5643126--
-{actual_payload: 1}
-
-
-
-selfAttrs:
-	age -> 11
-	city -> new york
-	country -> usa
-
-*/
