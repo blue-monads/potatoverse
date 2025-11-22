@@ -52,17 +52,16 @@ func (r *Room) run() {
 
 }
 
-// cleanup performs the heavy lifting of removing the user from all maps
 func (r *Room) cleanup(connId int64) {
-	// 1. Remove from Session Map
+
 	r.sLock.Lock()
 	sess, exists := r.sessions[connId]
-	if !exists {
-		r.sLock.Unlock()
-		return // Already cleaned up
-	}
 	delete(r.sessions, connId)
 	r.sLock.Unlock()
+
+	if !exists {
+		return
+	}
 
 	sess.teardown()
 
