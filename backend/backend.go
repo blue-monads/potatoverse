@@ -124,14 +124,15 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	if len(config.Repos) == 0 {
 		config.Repos = []xtypes.RepoOptions{
+
+			{
+				Type: "embeded",
+				Slug: "Dev",
+			},
 			{
 				Slug: "Test",
 				URL:  "/zz/static/repo/repo.json",
 				Type: "http",
-			},
-			{
-				Type: "embeded",
-				Slug: "Dev",
 			},
 		}
 	}
