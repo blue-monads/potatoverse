@@ -47,17 +47,21 @@ const StoreDirectory = () => {
         if (gapp.isInitialized) {
             listRepos().then(res => {
                 if (res.status === 200 && res.data) {
-                    setRepos(res.data);
-                    // Set default to first repo or empty string for default behavior
-                    if (res.data.length > 0 && !selectedRepo) {
-                        setSelectedRepo(res.data[0].slug || '');
-                    }
+                    setRepos(res.data);                   
                 }
             }).catch(err => {
                 console.error('Failed to load repos:', err);
             });
         }
     }, [gapp.isInitialized]);
+
+    useEffect(() => {
+        if (repos.length > 0 && !selectedRepo) {
+            setSelectedRepo(repos[0].slug || '');
+        }
+    }, [repos, selectedRepo]);
+
+
 
     const loader = useSimpleDataLoader<EPackage[]>({
         loader: () => listEPackages(selectedRepo || undefined),
