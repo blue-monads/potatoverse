@@ -480,22 +480,27 @@ func TestCoreModule(t *testing.T) {
 
 		-- Access methods directly
 		local publishEvent = core.publish_event
-		local publishJSONEvent = core.publish_json_event
 		local fileToken = core.file_token
 		local adviseryToken = core.advisery_token
 
-		-- Test publish_event
-		local err = publishEvent("test_event", "test payload")
-		assert(err == nil, "publish_event should not error")
-		print("✓ core.publish_event works")
-
-		-- Test publish_json_event
-		local err2 = publishJSONEvent("test_json_event", {
-			key = "value",
-			number = 42
+		-- Test publish_event with string payload
+		local err = publishEvent({
+			name = "test_event",
+			payload = "test payload"
 		})
-		assert(err2 == nil, "publish_json_event should not error")
-		print("✓ core.publish_json_event works")
+		assert(err == nil, "publish_event should not error")
+		print("✓ core.publish_event works (string payload)")
+
+		-- Test publish_event with table payload (will be marshaled to JSON)
+		local err2 = publishEvent({
+			name = "test_json_event",
+			payload = {
+				key = "value",
+				number = 42
+			}
+		})
+		assert(err2 == nil, "publish_event should not error")
+		print("✓ core.publish_event works (table payload)")
 
 		-- Test file_token
 		local token, err3 = fileToken({

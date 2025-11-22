@@ -67,11 +67,6 @@ func coreModuleIndex(L *lua.LState) int {
 			return corePublishEvent(mod, L)
 		}))
 		return 1
-	case "publish_json_event":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return corePublishJSONEvent(mod, L)
-		}))
-		return 1
 	case "file_token":
 		L.Push(L.NewFunction(func(L *lua.LState) int {
 			return coreSignFsPresignedToken(mod, L)
@@ -87,46 +82,45 @@ func coreModuleIndex(L *lua.LState) int {
 	return 0
 }
 
+type PublishEventOptions struct {
+	Name       string `json:"name"`
+	Payload    any    `json:"payload"`
+	ResourceId string `json:"resource_id"`
+}
+
 func corePublishEvent(mod *luaCoreModule, L *lua.LState) int {
-	name := L.CheckString(1)
-	payload := L.CheckString(2)
-	err := mod.engine.PublishEvent(&xtypes.EventOptions{
-		InstallId:  mod.installId,
-		Name:       name,
-		Payload:    []byte(payload),
-		ResourceId: "",
-	})
+	opts := &PublishEventOptions{}
+	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
 		return 1
 	}
-	L.Push(lua.LNil)
-	return 1
-}
 
-/*
-
-type PublishJSONEventOptions struct {
-	Name       string         `json:"name"`
-	Payload    map[string]any `json:"payload"`
-	ResourceId string         `json:"resource_id"`
-}
-
-*/
-
-func corePublishJSONEvent(mod *luaCoreModule, L *lua.LState) int {
-	name := L.CheckString(1)
-	payload := L.CheckTable(2)
-	payloadMap := luaplus.TableToMap(L, payload)
-	jsonData, err := json.Marshal(payloadMap)
-	if err != nil {
-		L.Push(lua.LString(err.Error()))
-		return 1
+	var payloadBytes []byte
+	if opts.Payload == nil {
+		payloadBytes = []byte{}
+	} else {
+		switch v := opts.Payload.(type) {
+		case string:
+			payloadBytes = []byte(v)
+		case []byte:
+			payloadBytes = v
+		default:
+			// Marshal to JSON for other types (maps, arrays, etc.)
+			jsonData, err := json.Marshal(v)
+			if err != nil {
+				L.Push(lua.LString(err.Error()))
+				return 1
+			}
+			payloadBytes = jsonData
+		}
 	}
+
 	err = mod.engine.PublishEvent(&xtypes.EventOptions{
-		InstallId: mod.installId,
-		Name:      name,
-		Payload:   jsonData,
+		InstallId:  mod.installId,
+		Name:       opts.Name,
+		Payload:    payloadBytes,
+		ResourceId: opts.ResourceId,
 	})
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
