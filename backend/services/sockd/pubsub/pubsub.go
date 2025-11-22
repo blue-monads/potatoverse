@@ -1,4 +1,4 @@
-package sockd
+package pubsub
 
 import (
 	"errors"
@@ -14,8 +14,8 @@ type PubSubSockd struct {
 	mu    sync.RWMutex
 }
 
-func NewSockd() *PubSubSockd {
-	return &PubSubSockd{
+func NewSockd() PubSubSockd {
+	return PubSubSockd{
 		rooms: make(map[string]*Room),
 	}
 }

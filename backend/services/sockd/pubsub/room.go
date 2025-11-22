@@ -1,4 +1,4 @@
-package sockd
+package pubsub
 
 import "sync"
 

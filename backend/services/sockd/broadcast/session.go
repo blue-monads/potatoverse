@@ -1,4 +1,4 @@
-package sockd
+package broadcast
 
 import (
 	"net"
@@ -45,11 +45,10 @@ func (s *session) writePump() {
 				return
 			}
 
-			errCount = 0
-
 			continue
 
 		}
+		errCount = 0
 	}
 }
 

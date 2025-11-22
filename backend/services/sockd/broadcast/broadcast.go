@@ -1,4 +1,4 @@
-package sockd
+package broadcast
 
 import (
 	"errors"
@@ -14,9 +14,10 @@ type BroadcastSockd struct {
 	mu    sync.RWMutex
 }
 
-func NewSockd() *BroadcastSockd {
-	return &BroadcastSockd{
+func NewSockd() BroadcastSockd {
+	return BroadcastSockd{
 		rooms: make(map[string]*Room),
+		mu:    sync.RWMutex{},
 	}
 }
 

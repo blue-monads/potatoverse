@@ -1,4 +1,4 @@
-package sockd
+package pubsub
 
 import (
 	"net"
@@ -27,12 +27,29 @@ func (s *session) writePump() {
 		s.room.disconnect <- s.connId
 	}()
 
+	errCount := 0
+
 	for msg := range s.send {
-		err := wsutil.WriteServerText(s.conn, msg)
-		if err != nil {
-			// Error writing (broken pipe, etc.) -> Loop breaks -> Defer runs
+
+		if errCount > 10 {
+			s.room.disconnect <- s.connId
 			return
 		}
+
+		err := wsutil.WriteServerText(s.conn, msg)
+		if err != nil {
+
+			errCount++
+			if errCount > 10 {
+				s.room.disconnect <- s.connId
+				return
+			}
+
+			continue
+
+		}
+
+		errCount = 0
 	}
 }
 
