@@ -9,13 +9,13 @@ import (
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
-type Sockd struct {
+type SimpleSockd struct {
 	rooms map[string]*Room
 	mu    sync.RWMutex
 }
 
-func NewSockd() *Sockd {
-	return &Sockd{
+func NewSockd() *SimpleSockd {
+	return &SimpleSockd{
 		rooms: make(map[string]*Room),
 	}
 }
@@ -34,7 +34,7 @@ func newRoom(name string) *Room {
 	return r
 }
 
-func (s *Sockd) AddConn(userId int64, conn net.Conn, connId int64, roomName string) (int64, error) {
+func (s *SimpleSockd) AddConn(userId int64, conn net.Conn, connId int64, roomName string) (int64, error) {
 	s.mu.Lock()
 	room, exists := s.rooms[roomName]
 	if !exists {
@@ -64,7 +64,7 @@ func (s *Sockd) AddConn(userId int64, conn net.Conn, connId int64, roomName stri
 	return sess.connId, nil
 }
 
-func (s *Sockd) RemoveConn(userId int64, connId int64, roomName string) error {
+func (s *SimpleSockd) RemoveConn(userId int64, connId int64, roomName string) error {
 	s.mu.RLock()
 	room, exists := s.rooms[roomName]
 	s.mu.RUnlock()
@@ -93,7 +93,7 @@ func (s *Sockd) RemoveConn(userId int64, connId int64, roomName string) error {
 	return nil
 }
 
-func (s *Sockd) Publish(roomName string, topicName string, message []byte) error {
+func (s *SimpleSockd) Publish(roomName string, topicName string, message []byte) error {
 	s.mu.RLock()
 	room, exists := s.rooms[roomName]
 	s.mu.RUnlock()
@@ -146,7 +146,7 @@ func (s *Sockd) Publish(roomName string, topicName string, message []byte) error
 	return nil
 }
 
-func (s *Sockd) AddSub(roomName string, topicName string, userId int64, connId int64, conn net.Conn) error {
+func (s *SimpleSockd) AddSub(roomName string, topicName string, userId int64, connId int64, conn net.Conn) error {
 	s.mu.RLock()
 	room, exists := s.rooms[roomName]
 	s.mu.RUnlock()
