@@ -90,7 +90,12 @@ func coreModuleIndex(L *lua.LState) int {
 func corePublishEvent(mod *luaCoreModule, L *lua.LState) int {
 	name := L.CheckString(1)
 	payload := L.CheckString(2)
-	err := mod.engine.PublishEvent(mod.installId, name, []byte(payload))
+	err := mod.engine.PublishEvent(&xtypes.EventOptions{
+		InstallId:  mod.installId,
+		Name:       name,
+		Payload:    []byte(payload),
+		ResourceId: "",
+	})
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
 		return 1
@@ -98,6 +103,16 @@ func corePublishEvent(mod *luaCoreModule, L *lua.LState) int {
 	L.Push(lua.LNil)
 	return 1
 }
+
+/*
+
+type PublishJSONEventOptions struct {
+	Name       string         `json:"name"`
+	Payload    map[string]any `json:"payload"`
+	ResourceId string         `json:"resource_id"`
+}
+
+*/
 
 func corePublishJSONEvent(mod *luaCoreModule, L *lua.LState) int {
 	name := L.CheckString(1)
@@ -108,7 +123,11 @@ func corePublishJSONEvent(mod *luaCoreModule, L *lua.LState) int {
 		L.Push(lua.LString(err.Error()))
 		return 1
 	}
-	err = mod.engine.PublishEvent(mod.installId, name, jsonData)
+	err = mod.engine.PublishEvent(&xtypes.EventOptions{
+		InstallId: mod.installId,
+		Name:      name,
+		Payload:   jsonData,
+	})
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
 		return 1

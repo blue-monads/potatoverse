@@ -313,9 +313,9 @@ func (e *Engine) GetRepoHub() *repohub.RepoHub {
 	return e.repoHub
 }
 
-func (e *Engine) PublishEvent(installId int64, name string, payload []byte) error {
+func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {
 
-	return e.eventHub.Publish(installId, name, payload)
+	return e.eventHub.Publish(opts)
 }
 
 func (e *Engine) RefreshEventIndex() {

@@ -7,6 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type EventOptions struct {
+	InstallId  int64
+	SpaceId    int64
+	Name       string
+	Payload    []byte
+	ResourceId string
+}
+
 type Engine interface {
 	GetCapabilityHub() any
 	GetDebugData() map[string]any
@@ -21,7 +29,7 @@ type Engine interface {
 	ServeSpaceFile(ctx *gin.Context)
 	SpaceApi(ctx *gin.Context)
 
-	PublishEvent(installId int64, name string, payload []byte) error
+	PublishEvent(opts *EventOptions) error
 	RefreshEventIndex()
 }
 

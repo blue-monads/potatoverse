@@ -7,6 +7,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
 type EventHub struct {
@@ -54,7 +55,10 @@ func (e *EventHub) Start() error {
 	return nil
 }
 
-func (e *EventHub) Publish(installId int64, name string, payload []byte) error {
+func (e *EventHub) Publish(opts *xtypes.EventOptions) error {
+	installId := opts.InstallId
+	name := opts.Name
+	payload := opts.Payload
 
 	qq.Println("@Publish/1")
 

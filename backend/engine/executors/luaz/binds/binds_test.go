@@ -72,7 +72,7 @@ func (m *mockEngine) ServeCapabilityRoot(ctx *gin.Context) {}
 func (m *mockEngine) ServeSpaceFile(ctx *gin.Context)      {}
 func (m *mockEngine) SpaceApi(ctx *gin.Context)            {}
 
-func (m *mockEngine) PublishEvent(installId int64, name string, payload []byte) error {
+func (m *mockEngine) PublishEvent(opts *xtypes.EventOptions) error {
 	return nil
 }
 

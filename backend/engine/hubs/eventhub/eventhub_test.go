@@ -11,6 +11,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
 func BuildDBHandle() (datahub.Database, error) {
@@ -92,7 +93,11 @@ func TestEventHub_PublishWithSubscription(t *testing.T) {
 
 	// Test 1: Publish an event that has a subscription
 	payload := []byte(`{"message": "test payload", "value": 42}`)
-	err = hub.Publish(installId, eventKey, payload)
+	err = hub.Publish(&xtypes.EventOptions{
+		InstallId: installId,
+		Name:      eventKey,
+		Payload:   payload,
+	})
 	if err != nil {
 		t.Fatalf("Failed to publish event: %v", err)
 	}
@@ -159,7 +164,11 @@ func TestEventHub_PublishWithoutSubscription(t *testing.T) {
 	eventKey := "unsubscribed.event"
 	payload := []byte(`{"message": "test payload"}`)
 
-	err = hub.Publish(installId, eventKey, payload)
+	err = hub.Publish(&xtypes.EventOptions{
+		InstallId: installId,
+		Name:      eventKey,
+		Payload:   payload,
+	})
 	if err != nil {
 		t.Fatalf("Failed to publish event: %v", err)
 	}
@@ -253,7 +262,11 @@ func TestEventHub_FullFlow(t *testing.T) {
 	}
 
 	// Use Publish method which checks for subscriptions first
-	err = hub.Publish(installId, eventKey, payloadBytes)
+	err = hub.Publish(&xtypes.EventOptions{
+		InstallId: installId,
+		Name:      eventKey,
+		Payload:   payloadBytes,
+	})
 	if err != nil {
 		t.Fatalf("Failed to publish event: %v", err)
 	}
