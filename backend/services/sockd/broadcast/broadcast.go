@@ -4,9 +4,6 @@ import (
 	"errors"
 	"net"
 	"sync"
-	"time"
-
-	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
 type BroadcastSockd struct {
@@ -36,87 +33,54 @@ func newRoom(name string) *Room {
 	return r
 }
 
-func (s *BroadcastSockd) AddConn(userId int64, conn net.Conn, connId int64, roomName string) (int64, error) {
-	s.mu.Lock()
+func (s *BroadcastSockd) getRoom(roomName string, createIfNotExists bool) *Room {
+	s.mu.RLock()
 	room, exists := s.rooms[roomName]
+	s.mu.RUnlock()
 	if !exists {
-		room = newRoom(roomName)
-		s.rooms[roomName] = room
+		if createIfNotExists {
+			room = newRoom(roomName)
+			s.mu.Lock()
+			defer s.mu.Unlock()
+			sneakyRoom := s.rooms[roomName]
+			if sneakyRoom != nil {
+				return sneakyRoom
+			}
+			s.rooms[roomName] = room
+
+			go room.run()
+		}
+		return room
 	}
-	s.mu.Unlock()
+	return room
+}
 
-	sess := &session{
-		room:   room,
-		connId: connId,
-		userId: userId,
-		conn:   conn,
-		send:   make(chan []byte, 16),
-	}
-
-	room.sLock.Lock()
-	existingSess := room.sessions[sess.connId]
-	room.sessions[sess.connId] = sess
-	room.sLock.Unlock()
-
-	go sess.writePump()
-	go sess.readPump()
-
-	if existingSess != nil {
-		existingSess.teardown()
+func (s *BroadcastSockd) AddConn(userId int64, conn net.Conn, connId int64, roomName string) (int64, error) {
+	room := s.getRoom(roomName, true)
+	if room == nil {
+		return 0, errors.New("room not found")
 	}
 
-	return sess.connId, nil
+	return room.AddConn(userId, conn, connId)
 }
 
 func (s *BroadcastSockd) RemoveConn(userId int64, connId int64, roomName string) error {
-	s.mu.RLock()
-	room, exists := s.rooms[roomName]
-	s.mu.RUnlock()
 
-	if !exists {
+	room := s.getRoom(roomName, false)
+	if room == nil {
 		return nil
 	}
 
-	tcan := time.After(time.Second * 10)
-
-	select {
-	case room.disconnect <- connId:
-		return nil
-	case <-tcan:
-		return errors.New("room is very busy or dead")
-	}
-
+	return room.RemoveConn(userId, connId)
 }
 
 func (s *BroadcastSockd) Broadcast(roomName string, message []byte) error {
-	s.mu.RLock()
-	room, exists := s.rooms[roomName]
-	s.mu.RUnlock()
 
-	if !exists {
+	room := s.getRoom(roomName, false)
+	if room == nil {
 		return nil
 	}
 
-	sessions := make([]*session, 0, len(room.sessions))
+	return room.Broadcast(message)
 
-	room.sLock.RLock()
-	for _, sess := range room.sessions {
-		sessions = append(sessions, sess)
-	}
-	room.sLock.RUnlock()
-
-	for _, sess := range sessions {
-
-		tcan := time.After(time.Second * 5)
-
-		select {
-		case sess.send <- message:
-			continue
-		case <-tcan:
-			qq.Println("@publish/timeout", sess.connId)
-			continue
-		}
-	}
-
-	return nil
 }

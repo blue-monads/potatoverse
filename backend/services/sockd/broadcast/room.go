@@ -1,6 +1,8 @@
 package broadcast
 
 import (
+	"errors"
+	"net"
 	"sync"
 	"time"
 
@@ -17,6 +19,71 @@ type Room struct {
 	sessions map[int64]*session
 	sLock    sync.RWMutex
 }
+
+func (r *Room) AddConn(userId int64, conn net.Conn, connId int64) (int64, error) {
+	sess := &session{
+		room:   r,
+		connId: connId,
+		userId: userId,
+		conn:   conn,
+		send:   make(chan []byte, 16),
+	}
+
+	r.sLock.Lock()
+	existingSess := r.sessions[sess.connId]
+	r.sessions[sess.connId] = sess
+	r.sLock.Unlock()
+
+	go sess.writePump()
+	go sess.readPump()
+
+	if existingSess != nil {
+		existingSess.teardown()
+	}
+
+	return sess.connId, nil
+}
+
+func (r *Room) RemoveConn(userId int64, connId int64) error {
+
+	tcan := time.After(time.Second * 10)
+
+	select {
+	case r.disconnect <- connId:
+		return nil
+	case <-tcan:
+		return errors.New("room is very busy or dead")
+	}
+
+}
+
+func (r *Room) Broadcast(message []byte) error {
+
+	sessions := make([]*session, 0, len(r.sessions))
+
+	r.sLock.RLock()
+	for _, sess := range r.sessions {
+		sessions = append(sessions, sess)
+	}
+	r.sLock.RUnlock()
+
+	for _, sess := range sessions {
+
+		tcan := time.After(time.Second * 5)
+
+		select {
+		case sess.send <- message:
+			continue
+		case <-tcan:
+			qq.Println("@publish/timeout", sess.connId)
+			continue
+		}
+	}
+
+	return nil
+}
+
+// private
 
 func (r *Room) run() {
 

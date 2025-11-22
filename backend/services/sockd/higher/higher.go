@@ -60,6 +60,8 @@ func (h *HigherSockd) getRoom(roomName string, createIfNotExists bool) *Room {
 				return sneakyRoom
 			}
 			h.rooms[roomName] = room
+
+			go room.run()
 		}
 
 		return room
