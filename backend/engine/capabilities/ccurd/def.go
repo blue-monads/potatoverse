@@ -14,11 +14,11 @@ var (
 	Icon         = ""
 	OptionFields = []xtypes.CapabilityOptionField{
 		{
-			Name:        "Add Radom number to the result",
-			Key:         "add_random_number",
-			Description: "Add a random number to the result",
-			Type:        "boolean",
-			Default:     "false",
+			Name:        "Methods",
+			Key:         "methods",
+			Description: "Define the methods to use",
+			Type:        "object",
+			Default:     "{}",
 		},
 	}
 )
@@ -41,16 +41,34 @@ type CcurdBuilder struct {
 
 func (b *CcurdBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
 
-	methods := map[string]*Methods{}
-
-	if err := opts.AsJson(&methods); err != nil {
+	methods, err := LoadMethods(opts)
+	if err != nil {
 		return nil, err
 	}
 
-	for _, method := range methods {
+	return &CcurdCapability{
+		db:      b.app.Database().GetLowCapabilityDBOps(fmt.Sprint(spaceId)),
+		signer:  b.app.Signer(),
+		methods: methods,
+		spaceId: spaceId,
+	}, nil
+}
+
+type CcurdOptions struct {
+	Methods map[string]*Methods `json:"methods"`
+}
+
+func LoadMethods(opts xtypes.LazyData) (map[string]*Methods, error) {
+
+	optsData := CcurdOptions{}
+	if err := opts.AsJson(&optsData); err != nil {
+		return nil, err
+	}
+
+	for _, method := range optsData.Methods {
 		for _, validator := range method.Validators {
-			if validator.RegexPattern != "" {
-				cr, err := regexp.Compile(validator.RegexPattern)
+			if validator.Regex != "" {
+				cr, err := regexp.Compile(validator.Regex)
 				if err != nil {
 					return nil, err
 				}
@@ -60,12 +78,7 @@ func (b *CcurdBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capabi
 		}
 	}
 
-	return &PingCapability{
-		db:      b.app.Database().GetLowCapabilityDBOps(fmt.Sprint(spaceId)),
-		signer:  b.app.Signer(),
-		methods: methods,
-		spaceId: spaceId,
-	}, nil
+	return optsData.Methods, nil
 }
 
 func (b *CcurdBuilder) Serve(ctx *gin.Context) {}

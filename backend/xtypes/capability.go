@@ -24,7 +24,7 @@ type CapabilityOptionField struct {
 	Name        string `json:"name"`
 	Key         string `json:"key"`
 	Description string `json:"description"`
-	// text, number, date, api_key, boolean, select, multi_select, textarea
+	// text, number, date, api_key, boolean, select, multi_select, textarea, object
 	Type     string   `json:"type"`
 	Default  string   `json:"default"`
 	Options  []string `json:"options"`
