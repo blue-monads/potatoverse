@@ -10,16 +10,14 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
 type RepoHub struct {
-	repos   map[string]*xtypes.RepoOptions
-	reposMu sync.RWMutex
-	logger  *slog.Logger
+	repos  map[string]*xtypes.RepoOptions
+	logger *slog.Logger
 }
 
 func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger) *RepoHub {
@@ -45,8 +43,6 @@ func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger) *RepoHub {
 
 // ListRepos returns all available repos
 func (h *RepoHub) ListRepos() []xtypes.RepoOptions {
-	h.reposMu.RLock()
-	defer h.reposMu.RUnlock()
 
 	result := make([]xtypes.RepoOptions, 0, len(h.repos))
 	for _, repo := range h.repos {
@@ -57,9 +53,6 @@ func (h *RepoHub) ListRepos() []xtypes.RepoOptions {
 
 // GetRepo returns a repo by slug
 func (h *RepoHub) GetRepo(slug string) (*xtypes.RepoOptions, error) {
-	h.reposMu.RLock()
-	defer h.reposMu.RUnlock()
-
 	repo, ok := h.repos[slug]
 	if !ok {
 		return nil, fmt.Errorf("repo not found: %s", slug)
@@ -104,40 +97,6 @@ func (h *RepoHub) ZipPackage(repoSlug string, packageName string) (string, error
 // listEmbeddedPackages lists packages from embedded filesystem
 func (h *RepoHub) listEmbeddedPackages() ([]models.PotatoPackage, error) {
 	return listEmbeddedPackagesFromFS()
-}
-
-func listEmbeddedPackagesFromFS() ([]models.PotatoPackage, error) {
-	files, err := embedPackages.ReadDir("epackages")
-	if err != nil {
-		return nil, err
-	}
-
-	epackages := []models.PotatoPackage{}
-
-	for _, file := range files {
-		if !file.IsDir() {
-			continue
-		}
-
-		fileName := fmt.Sprintf("epackages/%s/potato.json", file.Name())
-
-		jsonFile, err := embedPackages.ReadFile(fileName)
-		if err != nil {
-			// Skip if potato.json doesn't exist
-			continue
-		}
-
-		epackage := models.PotatoPackage{}
-		err = json.Unmarshal(jsonFile, &epackage)
-		if err != nil {
-			// Skip invalid packages
-			continue
-		}
-
-		epackages = append(epackages, epackage)
-	}
-
-	return epackages, nil
 }
 
 // listHttpPackages fetches package list from HTTP endpoint

@@ -2,6 +2,8 @@ package repohub
 
 import (
 	"embed"
+	"encoding/json"
+	"fmt"
 
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
@@ -32,4 +34,38 @@ func ZipEPackageFromRepo(repoHub *RepoHub, repoSlug string, packageName string) 
 		return zipEmbeddedPackageFromFS(packageName)
 	}
 	return repoHub.ZipPackage(repoSlug, packageName)
+}
+
+func listEmbeddedPackagesFromFS() ([]models.PotatoPackage, error) {
+	files, err := embedPackages.ReadDir("epackages")
+	if err != nil {
+		return nil, err
+	}
+
+	epackages := []models.PotatoPackage{}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
+		}
+
+		fileName := fmt.Sprintf("epackages/%s/potato.json", file.Name())
+
+		jsonFile, err := embedPackages.ReadFile(fileName)
+		if err != nil {
+			// Skip if potato.json doesn't exist
+			continue
+		}
+
+		epackage := models.PotatoPackage{}
+		err = json.Unmarshal(jsonFile, &epackage)
+		if err != nil {
+			// Skip invalid packages
+			continue
+		}
+
+		epackages = append(epackages, epackage)
+	}
+
+	return epackages, nil
 }
