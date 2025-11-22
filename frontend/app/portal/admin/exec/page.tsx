@@ -40,18 +40,25 @@ export default function Page() {
         setIsLoading(true);        
 
         try {
+
+            const startTime = Date.now();
             const resp = await deriveHost(nskey, space_id || undefined);
             if (resp.status !== 200) {
                 console.error("failed to derive host");
                 return;
             }
-        
+     
+            const endTime = Date.now();
+
+            const duration = endTime - startTime;
+            console.log(`deriveHost took ${duration}ms`);
+
+            
             setIframeSrc(buildIframeSrc(nskey, resp.data.host));
 
             setTimeout(() => {
                 setIsLoading(false);
-            }, 300)
-
+            }, Math.min( Math.max(300, duration), 10000))
 
         } catch (error) {
             console.error(error);
