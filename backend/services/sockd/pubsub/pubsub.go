@@ -52,14 +52,15 @@ func (s *PubSubSockd) AddConn(userId int64, conn net.Conn, connId int64, roomNam
 	}
 
 	room.sLock.Lock()
-	if _, ok := room.sessions[sess.connId]; ok {
-		room.sLock.Unlock()
-		return 0, errors.New("connId collision")
-	}
+	existingSess := room.sessions[sess.connId]
 	room.sessions[sess.connId] = sess
 	room.sLock.Unlock()
 
 	go sess.writePump()
+
+	if existingSess != nil {
+		existingSess.teardown()
+	}
 
 	return sess.connId, nil
 }
