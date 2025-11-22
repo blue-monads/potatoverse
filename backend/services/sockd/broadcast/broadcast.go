@@ -54,15 +54,16 @@ func (s *BroadcastSockd) AddConn(userId int64, conn net.Conn, connId int64, room
 	}
 
 	room.sLock.Lock()
-	if _, ok := room.sessions[sess.connId]; ok {
-		room.sLock.Unlock()
-		return 0, errors.New("connId collision")
-	}
+	existingSess := room.sessions[sess.connId]
 	room.sessions[sess.connId] = sess
 	room.sLock.Unlock()
 
 	go sess.writePump()
 	go sess.readPump()
+
+	if existingSess != nil {
+		existingSess.teardown()
+	}
 
 	return sess.connId, nil
 }

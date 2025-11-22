@@ -408,7 +408,7 @@ func TestSession_Teardown(t *testing.T) {
 	sess.teardown()
 	sess.teardown()
 
-	if !sess.closed {
+	if !sess.closedAndCleaned {
 		t.Error("Expected session to be closed after teardown")
 	}
 

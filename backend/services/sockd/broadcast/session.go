@@ -18,17 +18,20 @@ type session struct {
 	userId int64
 	conn   net.Conn
 
-	send   chan []byte
-	once   sync.Once
-	closed bool
+	send             chan []byte
+	once             sync.Once
+	closedAndCleaned bool
 }
 
 func (s *session) writePump() {
 	// Safety net: Ensure cleanup happens when the loop exits (connection dies)
 	defer func() {
 		s.conn.Close()
-		// Trigger the Room Event Loop
-		s.room.disconnect <- s.connId
+
+		if !s.closedAndCleaned {
+			s.room.disconnect <- s.connId
+		}
+
 	}()
 
 	errCount := 0
@@ -58,7 +61,7 @@ func (s *session) readPump() {
 
 	for {
 
-		if s.closed {
+		if s.closedAndCleaned {
 			break
 		}
 
@@ -115,6 +118,6 @@ func (s *session) teardown() {
 	s.once.Do(func() {
 		close(s.send)
 		s.conn.Close()
-		s.closed = true
+		s.closedAndCleaned = true
 	})
 }
