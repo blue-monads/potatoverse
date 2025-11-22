@@ -27,6 +27,7 @@ export default function Page() {
     const searchParams = useSearchParams();
     const nskey = searchParams.get('nskey');
     const space_id = searchParams.get('space_id');
+    const load_page = searchParams.get('load_page');
     const [isLoading, setIsLoading] = useState(true);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [iframeSrc, setIframeSrc] = useState('');
@@ -86,7 +87,7 @@ export default function Page() {
                     <iframe
 
                         ref={iframeRef}
-                        src={iframeSrc}
+                        src={load_page ? `${iframeSrc}/${load_page}` : iframeSrc}
                         // src={`/zz/test_page.html`}
                         className={isLoading ? 'h-[1px] w-[1px]' : 'w-full h-full flex-grow'}
                     ></iframe>

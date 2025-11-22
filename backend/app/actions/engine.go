@@ -61,23 +61,23 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 
 }
 
-func (c *Controller) InstallPackageByUrl(userId int64, url string) (int64, error) {
+func (c *Controller) InstallPackageByUrl(userId int64, url string) (*InstallPackageResult, error) {
 
 	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer os.Remove(tmpFile.Name())
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	_, err = io.Copy(tmpFile, resp.Body)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	file := tmpFile.Name()
@@ -113,7 +113,7 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 	})
 }
 
-func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug string) (int64, error) {
+func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug string) (*InstallPackageResult, error) {
 	var file string
 	var err error
 
@@ -127,7 +127,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 	}
 
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	defer os.Remove(file)
@@ -135,29 +135,39 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 	return c.InstallPackageByFile(userId, file)
 }
 
-func (c *Controller) InstallPackageByFile(userId int64, file string) (int64, error) {
+func (c *Controller) InstallPackageByFile(userId int64, file string) (*InstallPackageResult, error) {
 	id, err := InstallPackageByFile(c.database, c.logger, userId, file)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	c.engine.LoadRoutingIndexForPackages(id)
+	c.engine.LoadRoutingIndexForPackages(id.InstalledId)
 
 	return id, nil
 
 }
 
-func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (int64, error) {
+type InstallPackageResult struct {
+	InstalledId int64  `json:"installed_id"`
+	RootSpaceId int64  `json:"root_space_id"`
+	KeySpace    string `json:"key_space"`
+	InitPage    string `json:"init_page"`
+}
+
+func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (*InstallPackageResult, error) {
 
 	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, "embed", file)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	pkg, err := xutils.ReadPackageManifestFromZip(file)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
+
+	rootSpaceId := int64(0)
+	keySpace := pkg.Slug
 
 	for _, artifact := range pkg.Artifacts {
 		if artifact.Kind != "space" {
@@ -167,14 +177,23 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 
 		spaceId, err := installArtifact(database, userId, installedId, artifact)
 		if err != nil {
-			return 0, err
+			return nil, err
+		}
+
+		if pkg.Slug == artifact.Namespace {
+			rootSpaceId = spaceId
 		}
 
 		logger.Info("space installed", "space_id", spaceId)
 
 	}
 
-	return installedId, nil
+	return &InstallPackageResult{
+		InstalledId: installedId,
+		RootSpaceId: rootSpaceId,
+		KeySpace:    keySpace,
+		InitPage:    pkg.InitPage,
+	}, nil
 }
 
 func installArtifact(database datahub.Database, userId, installedId int64, artifact models.PotatoArtifact) (int64, error) {

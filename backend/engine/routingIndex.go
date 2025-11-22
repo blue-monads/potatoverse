@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
@@ -298,6 +299,18 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 	}
 
 	return indexItem, nil
+}
+
+func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
+	for i := 0; i < 5; i++ {
+		index := e.getIndex(spaceKey, spaceId)
+		if index != nil {
+			return index
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return nil
+
 }
 
 func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {

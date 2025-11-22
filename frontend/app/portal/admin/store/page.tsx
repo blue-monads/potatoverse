@@ -6,9 +6,10 @@ import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import AddButton from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { EPackage, getUsers, installPackage, installPackageEmbed, installPackageZip, listEPackages, listRepos, Repo, User } from '@/lib';
+import { EPackage, getUsers, installPackage, installPackageEmbed, InstallPackageResult, installPackageZip, listEPackages, listRepos, Repo, User } from '@/lib';
 import { staticGradients } from '@/app/utils';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
+import { useRouter } from 'next/navigation';
 
 
 
@@ -28,7 +29,7 @@ const StoreDirectory = () => {
     const [isRepoDropdownOpen, setIsRepoDropdownOpen] = useState(false);
     const [repos, setRepos] = useState<Repo[]>([]);
 
-    
+
     const gapp = useGApp();
 
     const categories = [
@@ -62,7 +63,7 @@ const StoreDirectory = () => {
         loader: () => listEPackages(selectedRepo || undefined),
         ready: gapp.isInitialized,
         dependencies: [selectedRepo],
-      });
+    });
 
 
 
@@ -85,7 +86,7 @@ const StoreDirectory = () => {
             rightContent={<>
                 <AddButton
                     name="+ Import"
-                    onClick={() => { 
+                    onClick={() => {
 
                         gapp.modal.openModal({
                             title: "Import Package",
@@ -250,7 +251,7 @@ const StoreItemCard = ({ item, index, selectedRepo }: { item: any, index: number
 
     return (
 
-        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient || " " } p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 cursor-pointer`}>
+        <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${item.gradient || " "} p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 cursor-pointer`}>
             <div className="flex flex-col h-full justify-between">
                 <div>
 
@@ -286,18 +287,18 @@ const StoreItemCard = ({ item, index, selectedRepo }: { item: any, index: number
 
                     <div className="flex gap-2">
 
-                        <button 
-                        className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
-                        onClick={() => {
-                            gapp.modal.openModal({
-                                title: "Install Package",
-                                content: <InstallPackageModal slug={item.slug} repoSlug={selectedRepo || undefined} gapp={gapp} />,
-                                size: "lg"
-                            });
-                            
+                        <button
+                            className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
+                            onClick={() => {
+                                gapp.modal.openModal({
+                                    title: "Install Package",
+                                    content: <InstallPackageModal slug={item.slug} repoSlug={selectedRepo || undefined} gapp={gapp} />,
+                                    size: "lg"
+                                });
 
-                        }}
-                        
+
+                            }}
+
                         >
                             <CloudDownload className="w-4 h-4" />
                             <span>Install</span>
@@ -326,6 +327,8 @@ const tabs = [
 const ImportSpaceModal = (props: ImportSpaceModalProps) => {
     const [activeTab, setActiveTab] = useState('url');
     const [mode, setMode] = useState<'enter_input' | 'importing' | 'success' | 'error'>('enter_input');
+    const [installResult, setInstallResult] = useState<InstallPackageResult | null>(null);
+
     const inputRef = useRef<HTMLInputElement>(null);
     const gapp = props.gapp;
 
@@ -396,6 +399,8 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                                     return;
                                 }
 
+                                setInstallResult(response.data);
+
                                 setMode('success');
 
                             } else {
@@ -440,8 +445,15 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
         {mode === 'success' && (<>
             <div className="space-y-1">
                 <p className="text-gray-600 dark:text-gray-300">
-                    Space imported successfully
+                    Package imported successfully
                 </p>
+
+                {installResult && (
+                    <PostInstallButtons
+                        installResult={installResult}
+                        onClose={() => gapp.modal.closeModal()}
+                    />
+                )}
             </div>
         </>)}
 
@@ -463,6 +475,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 
 
 const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?: string, gapp: GAppStateHandle }) => {
+    const [installResult, setInstallResult] = useState<InstallPackageResult | null>(null);
     const [mode, setMode] = useState<'verify' | 'importing' | 'success' | 'error'>('verify');
 
 
@@ -488,6 +501,7 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
                             setMode('error');
                             return;
                         }
+                        setInstallResult(resp.data);
                         setMode('success');
 
                     }}
@@ -517,6 +531,14 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
                 <p className="text-gray-600 dark:text-gray-300">
                     Package imported successfully
                 </p>
+
+                {installResult && (
+                    <PostInstallButtons
+                        installResult={installResult}
+                        onClose={() => gapp.modal.closeModal()}
+                    />
+                )}
+
             </div>
         </>)}
         {mode === 'error' && (<>
@@ -528,4 +550,50 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
         </>)}
 
     </>);
+}
+
+
+interface PostInstallButtonsProps {
+    installResult: InstallPackageResult;
+    onClose: () => void;
+}
+
+
+const PostInstallButtons = (props: PostInstallButtonsProps) => {
+    const router = useRouter();
+
+
+    return (
+        <div className="flex gap-2 justify-center">
+
+            {props.installResult.init_page ? (
+                <button
+                    onClick={() => {
+
+                        const fragment = new URLSearchParams();
+                        fragment.set('nskey', props.installResult.key_space);
+                        fragment.set('space_id', props.installResult.root_space_id.toString());
+                        fragment.set('load_page', props.installResult.init_page);
+
+                        router.push(`/portal/admin/exec?${fragment.toString()}`);
+
+                        props.onClose();
+
+
+                    }}
+
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Configure
+                </button>
+            ) : (
+                <button
+
+                    onClick={props.onClose}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Close
+                </button>
+            )}
+
+        </div>
+    )
 }

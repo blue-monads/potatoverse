@@ -28,12 +28,12 @@ func (a *Server) InstallPackage(claim *signer.AccessClaim, ctx *gin.Context) (an
 		return nil, err
 	}
 
-	packageId, err := a.ctrl.InstallPackageByUrl(claim.UserId, req.URL)
+	ipackage, err := a.ctrl.InstallPackageByUrl(claim.UserId, req.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"package_id": packageId}, nil
+	return ipackage, nil
 
 }
 
@@ -49,12 +49,12 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	if err != nil {
 		return nil, err
 	}
-	packageId, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
+	ipackage, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"package_id": packageId}, nil
+	return ipackage, nil
 }
 
 type InstallPackageEmbedRequest struct {
@@ -68,12 +68,12 @@ func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context
 		return nil, err
 	}
 
-	packageId, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
+	ipackage, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"package_id": packageId}, nil
+	return ipackage, nil
 }
 
 func (a *Server) ListEPackages(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {

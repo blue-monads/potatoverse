@@ -144,9 +144,10 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 
 	qq.Println("@ServeSpaceFile/3")
 
-	sIndex := e.getIndex(spaceKey, spaceId)
+	sIndex := e.getIndexRetry(spaceKey, spaceId)
 
 	if sIndex == nil {
+
 		keys := make([]string, 0)
 		for key := range e.RoutingIndex {
 			keys = append(keys, key)

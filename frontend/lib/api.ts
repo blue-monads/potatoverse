@@ -197,8 +197,16 @@ export const updateSelfBio = async (bio: string) => {
 }
 
 
+export interface InstallPackageResult {
+    installed_id: number;
+    root_space_id: number;
+    key_space: string;
+    init_page: string;
+}
+
+
 export const installPackage = async (url: string) => {
-    return iaxios.post<{ package_id: number }>(`/core/package/install`, { url });
+    return iaxios.post<InstallPackageResult>(`/core/package/install`, { url });
 }
 
 export const installPackageZip = async (zip: ArrayBuffer) => {
@@ -210,7 +218,7 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
 }
 
 export const installPackageEmbed = async (name: string, repoSlug?: string) => {
-    return iaxios.post<{ package_id: number }>(`/core/package/install/embed`, { 
+    return iaxios.post<InstallPackageResult>(`/core/package/install/embed`, { 
         name,
         repo_slug: repoSlug
     });
