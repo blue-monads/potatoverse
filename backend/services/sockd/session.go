@@ -11,7 +11,7 @@ type session struct {
 	// Pointer to parent room allows session to signal its own disconnect
 	room *Room
 
-	connId int32
+	connId int64
 	userId int64
 	conn   net.Conn
 

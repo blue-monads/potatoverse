@@ -5,13 +5,13 @@ import "sync"
 type Room struct {
 	name string
 
-	disconnect chan int32
+	disconnect chan int64
 
-	topics map[string]map[int32]bool
+	topics map[string]map[int64]bool
 	tLock  sync.RWMutex
 
 	// sessions: ConnId -> Session Object
-	sessions map[int32]*session
+	sessions map[int64]*session
 	sLock    sync.RWMutex
 }
 
@@ -22,7 +22,7 @@ func (r *Room) run() {
 }
 
 // cleanup performs the heavy lifting of removing the user from all maps
-func (r *Room) cleanup(connId int32) {
+func (r *Room) cleanup(connId int64) {
 	// 1. Remove from Session Map
 	r.sLock.Lock()
 	sess, exists := r.sessions[connId]

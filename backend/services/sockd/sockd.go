@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -13,8 +12,6 @@ import (
 type Sockd struct {
 	rooms map[string]*Room
 	mu    sync.RWMutex
-
-	counter atomic.Int32
 }
 
 func NewSockd() *Sockd {
@@ -26,9 +23,9 @@ func NewSockd() *Sockd {
 func newRoom(name string) *Room {
 	r := &Room{
 		name:       name,
-		disconnect: make(chan int32, 32), // Buffer for burst disconnects
-		topics:     make(map[string]map[int32]bool),
-		sessions:   make(map[int32]*session),
+		disconnect: make(chan int64, 32), // Buffer for burst disconnects
+		topics:     make(map[string]map[int64]bool),
+		sessions:   make(map[int64]*session),
 	}
 
 	// Start the Room Event Loop
@@ -37,7 +34,7 @@ func newRoom(name string) *Room {
 	return r
 }
 
-func (s *Sockd) AddConn(userId int64, conn net.Conn, roomName string) (int32, error) {
+func (s *Sockd) AddConn(userId int64, conn net.Conn, connId int64, roomName string) (int64, error) {
 	s.mu.Lock()
 	room, exists := s.rooms[roomName]
 	if !exists {
@@ -48,7 +45,7 @@ func (s *Sockd) AddConn(userId int64, conn net.Conn, roomName string) (int32, er
 
 	sess := &session{
 		room:   room, // Link back to room
-		connId: s.counter.Add(1),
+		connId: connId,
 		userId: userId,
 		conn:   conn,
 		send:   make(chan []byte, 16),
@@ -67,7 +64,7 @@ func (s *Sockd) AddConn(userId int64, conn net.Conn, roomName string) (int32, er
 	return sess.connId, nil
 }
 
-func (s *Sockd) RemoveConn(userId int64, connId int32, roomName string) error {
+func (s *Sockd) RemoveConn(userId int64, connId int64, roomName string) error {
 	s.mu.RLock()
 	room, exists := s.rooms[roomName]
 	s.mu.RUnlock()
@@ -114,7 +111,7 @@ func (s *Sockd) Publish(roomName string, topicName string, message []byte) error
 	}
 
 	// Snapshot IDs
-	ids := make([]int32, 0, len(subMap))
+	ids := make([]int64, 0, len(subMap))
 	for id := range subMap {
 		ids = append(ids, id)
 	}
@@ -149,7 +146,7 @@ func (s *Sockd) Publish(roomName string, topicName string, message []byte) error
 	return nil
 }
 
-func (s *Sockd) AddSub(roomName string, topicName string, userId int64, connId int32, conn net.Conn) error {
+func (s *Sockd) AddSub(roomName string, topicName string, userId int64, connId int64, conn net.Conn) error {
 	s.mu.RLock()
 	room, exists := s.rooms[roomName]
 	s.mu.RUnlock()
@@ -159,7 +156,7 @@ func (s *Sockd) AddSub(roomName string, topicName string, userId int64, connId i
 
 	room.tLock.Lock()
 	if room.topics[topicName] == nil {
-		room.topics[topicName] = make(map[int32]bool)
+		room.topics[topicName] = make(map[int64]bool)
 	}
 	room.topics[topicName][connId] = true
 	room.tLock.Unlock()
