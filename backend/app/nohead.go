@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/app/server"
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 
@@ -25,19 +26,21 @@ type Option struct {
 	WorkingFolderBase string
 }
 
-var _ xtypes.App = (*HeadLess)(nil)
+var _ xtypes.App = (*App)(nil)
 
 // headless means it has no http server attached to it
-type HeadLess struct {
+type App struct {
 	db      datahub.Database
 	signer  *signer.Signer
 	logger  *slog.Logger
 	ctrl    *actions.Controller
 	AppOpts *xtypes.AppOptions
 	engine  *engine.Engine
+
+	server *server.Server
 }
 
-func NewHeadLess(opt Option) *HeadLess {
+func New(opt Option) *App {
 
 	engine := engine.NewEngine(engine.EngineOption{
 		DB:            opt.Database,
@@ -46,7 +49,7 @@ func NewHeadLess(opt Option) *HeadLess {
 		Repos:         opt.AppOpts.Repos,
 	})
 
-	happ := &HeadLess{
+	happ := &App{
 		db:     opt.Database,
 		signer: opt.Signer,
 		logger: opt.Logger,
@@ -62,17 +65,34 @@ func NewHeadLess(opt Option) *HeadLess {
 		AppOpts: opt.AppOpts,
 	}
 
+	hosts := make([]string, len(happ.AppOpts.Hosts))
+	for i, host := range happ.AppOpts.Hosts {
+		hosts[i] = host.Name
+	}
+
+	server := server.NewServer(server.Option{
+		Port:        opt.AppOpts.Port,
+		Ctrl:        happ.ctrl,
+		Signer:      opt.Signer,
+		Engine:      engine,
+		Hosts:       hosts,
+		LocalSocket: opt.AppOpts.SocketFile,
+		SiteName:    opt.AppOpts.Name,
+	})
+
+	happ.server = server
+
 	return happ
 }
 
-func (h *HeadLess) Init() error {
+func (h *App) Init() error {
 
 	h.logger.Info("Initializing HeadLess application")
 
 	return nil
 }
 
-func (h *HeadLess) Start() error {
+func (h *App) Start() error {
 
 	err := h.engine.Start(h)
 	if err != nil {
@@ -119,32 +139,33 @@ func (h *HeadLess) Start() error {
 		h.logger.Warn("Master secret hash has changed, updating fingerprint")
 	}
 
-	return nil
+	return h.server.Start()
+
 }
 
-// shared methods for HeadLess
+// shared methods for App
 
-func (h *HeadLess) Database() datahub.Database {
+func (h *App) Database() datahub.Database {
 	return h.db
 }
 
-func (h *HeadLess) Signer() *signer.Signer {
+func (h *App) Signer() *signer.Signer {
 	return h.signer
 }
 
-func (h *HeadLess) Logger() *slog.Logger {
+func (h *App) Logger() *slog.Logger {
 	return h.logger
 }
 
-func (h *HeadLess) Controller() any {
+func (h *App) Controller() any {
 	return h.ctrl
 }
 
-func (h *HeadLess) Engine() any {
+func (h *App) Engine() any {
 	return h.engine
 }
 
-func (h *HeadLess) Config() any {
+func (h *App) Config() any {
 	return h.AppOpts
 }
 

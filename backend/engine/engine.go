@@ -97,15 +97,6 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
 
-	// Initialize repo hub
-	opts := app.Config().(*xtypes.AppOptions)
-	if opts != nil {
-		e.repoHub = repohub.NewRepoHub(opts.Repos, e.logger)
-	} else {
-		// Fallback: create empty repo hub
-		e.repoHub = repohub.NewRepoHub([]xtypes.RepoOptions{}, e.logger)
-	}
-
 	bfactories := registry.GetExecutorBuilderFactories()
 
 	for name, factory := range bfactories {

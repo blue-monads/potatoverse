@@ -36,7 +36,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		options.Name = "PotatoVerse"
 	}
 
-	happ := app.NewHeadLess(app.Option{
+	happ := app.New(app.Option{
 		Database: db,
 		Logger:   logger,
 		Signer:   signer.New([]byte(options.MasterSecret)),
@@ -101,7 +101,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	}
 
-	return app.NewApp(happ), nil
+	return happ, nil
 }
 
 func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
