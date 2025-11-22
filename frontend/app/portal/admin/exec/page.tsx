@@ -58,7 +58,7 @@ export default function Page() {
 
             setTimeout(() => {
                 setIsLoading(false);
-            }, Math.min( Math.max(300, duration), 10000))
+            }, Math.min( Math.max(50, duration), 10000))
 
         } catch (error) {
             console.error(error);
