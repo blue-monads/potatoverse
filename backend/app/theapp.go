@@ -28,7 +28,6 @@ type Option struct {
 
 var _ xtypes.App = (*App)(nil)
 
-// headless means it has no http server attached to it
 type App struct {
 	db      datahub.Database
 	signer  *signer.Signer
