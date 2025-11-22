@@ -6,22 +6,24 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
 type RepoHub struct {
-	repos  map[string]*xtypes.RepoOptions
-	logger *slog.Logger
+	repos    map[string]*xtypes.RepoOptions
+	logger   *slog.Logger
+	httpPort int
 }
 
 func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger, port int) *RepoHub {
 	hub := &RepoHub{
-		repos:  make(map[string]*xtypes.RepoOptions),
-		logger: logger,
+		repos:    make(map[string]*xtypes.RepoOptions),
+		logger:   logger,
+		httpPort: port,
 	}
 
 	for i := range repos {
@@ -154,6 +156,13 @@ func (h *RepoHub) zipEmbeddedPackage(name string) (string, error) {
 	return zipEmbeddedPackageFromFS(name)
 }
 
+type HttpPackage struct {
+	Name        string `json:"name" toml:"name"`
+	Slug        string `json:"slug" toml:"slug"`
+	Info        string `json:"info" toml:"info"`
+	DownloadUrl string `json:"download_url" toml:"download_url"`
+}
+
 // zipHttpPackage downloads and creates a zip file from HTTP package
 func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, error) {
 
@@ -162,63 +171,33 @@ func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, er
 		return "", err
 	}
 
-	qq.Println("pIndex", string(pIndex))
-
-	return "", nil
-}
-
-/*
-
-// Construct the package download URL
-	// This assumes the package URL follows a pattern like: baseURL/packages/{name}.zip
-	// or baseURL/{name}.zip
-	// We'll try both patterns
-	urls := []string{
-		fmt.Sprintf("%s/packages/%s.zip", strings.TrimSuffix(baseURL, "/"), packageName),
-		fmt.Sprintf("%s/%s.zip", strings.TrimSuffix(baseURL, "/"), packageName),
+	var packages []HttpPackage
+	err = json.Unmarshal(pIndex, &packages)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse package list: %w", err)
 	}
 
-	var resp *http.Response
-	var err error
-	for _, url := range urls {
-		resp, err = http.Get(url)
-		if err == nil && resp.StatusCode == http.StatusOK {
+	fileUrl := ""
+
+	for i := range packages {
+		pkg := &packages[i]
+		if pkg.Slug == packageName || pkg.Name == packageName {
+			fileUrl = pkg.DownloadUrl
 			break
 		}
-		if resp != nil {
-			resp.Body.Close()
-		}
 	}
 
-	if resp == nil || resp.StatusCode != http.StatusOK {
-		// If direct download doesn't work, try to get package info first
-		// and use the UpdateUrl if available
-		packages, err := h.listHttpPackages(baseURL)
-		if err != nil {
-			return "", fmt.Errorf("failed to get package info: %w", err)
-		}
+	if strings.HasPrefix(fileUrl, "/") {
+		fileUrl = fmt.Sprintf("http://localhost:%d%s", h.httpPort, fileUrl)
+	}
 
-		var pkg *models.PotatoPackage
-		for i := range packages {
-			if packages[i].Slug == packageName || packages[i].Name == packageName {
-				pkg = &packages[i]
-				break
-			}
-		}
+	if fileUrl == "" {
+		return "", fmt.Errorf("package not found: %s", packageName)
+	}
 
-		if pkg == nil {
-			return "", fmt.Errorf("package not found: %s", packageName)
-		}
-
-		resp, err = http.Get(pkg.CanonicalUrl)
-		if err != nil {
-			return "", fmt.Errorf("failed to download package: %w", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("failed to download package: status %d", resp.StatusCode)
-		}
+	resp, err := http.Get(fileUrl)
+	if err != nil {
+		return "", fmt.Errorf("failed to download package: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -236,4 +215,4 @@ func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, er
 
 	return tmpFile.Name(), nil
 
-*/
+}

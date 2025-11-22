@@ -1,0 +1,9 @@
+[
+    {
+        "name": "Click Me",
+        "slug": "click-me",
+        "info": "Click me counter",
+        "tags": [],
+        "download_url": "/zz/static/repo/click-me.zip"
+    }
+]
