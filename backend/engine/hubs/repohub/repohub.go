@@ -1,16 +1,14 @@
 package repohub
 
 import (
-	"archive/zip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
-	"path"
 	"strings"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
@@ -117,6 +115,21 @@ func (h *RepoHub) listEmbeddedPackages() ([]models.PotatoPackage, error) {
 
 // listHttpPackages fetches package list from HTTP endpoint
 func (h *RepoHub) listHttpPackages(url string) ([]models.PotatoPackage, error) {
+	body, err := h.getPackageIndexFromHttp(url)
+	if err != nil {
+		return nil, err
+	}
+
+	var packages []models.PotatoPackage
+	err = json.Unmarshal(body, &packages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse package list: %w", err)
+	}
+
+	return packages, nil
+}
+
+func (h *RepoHub) getPackageIndexFromHttp(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch package list: %w", err)
@@ -132,13 +145,8 @@ func (h *RepoHub) listHttpPackages(url string) ([]models.PotatoPackage, error) {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
-	var packages []models.PotatoPackage
-	err = json.Unmarshal(body, &packages)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse package list: %w", err)
-	}
+	return body, nil
 
-	return packages, nil
 }
 
 // zipEmbeddedPackage creates a zip file from embedded package
@@ -148,7 +156,20 @@ func (h *RepoHub) zipEmbeddedPackage(name string) (string, error) {
 
 // zipHttpPackage downloads and creates a zip file from HTTP package
 func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, error) {
-	// Construct the package download URL
+
+	pIndex, err := h.getPackageIndexFromHttp(baseURL)
+	if err != nil {
+		return "", err
+	}
+
+	qq.Println("pIndex", string(pIndex))
+
+	return "", nil
+}
+
+/*
+
+// Construct the package download URL
 	// This assumes the package URL follows a pattern like: baseURL/packages/{name}.zip
 	// or baseURL/{name}.zip
 	// We'll try both patterns
@@ -214,61 +235,5 @@ func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, er
 	tmpFile.Close()
 
 	return tmpFile.Name(), nil
-}
 
-// zipEmbeddedPackageFromFS creates a zip file from embedded package (internal helper)
-func zipEmbeddedPackageFromFS(name string) (string, error) {
-	zipFile, err := os.CreateTemp("", "turnix-package-*.zip")
-	if err != nil {
-		return "", err
-	}
-
-	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
-
-	err = includeSubFolderFromFS(name, "", zipWriter)
-	if err != nil {
-		return "", err
-	}
-
-	return zipFile.Name(), nil
-}
-
-// includeSubFolderFromFS recursively includes files from embedded filesystem
-func includeSubFolderFromFS(name, folder string, zipWriter *zip.Writer) error {
-	readPath := path.Join("epackages/", name, folder)
-
-	files, err := embedPackages.ReadDir(readPath)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		targetPath := path.Join(folder, file.Name())
-		targetPath = strings.TrimLeft(targetPath, "/")
-
-		if file.IsDir() {
-			err = includeSubFolderFromFS(name, targetPath, zipWriter)
-			if err != nil {
-				return err
-			}
-			continue
-		}
-		fileWriter, err := zipWriter.Create(targetPath)
-		if err != nil {
-			return err
-		}
-
-		finalpath := path.Join(readPath, file.Name())
-
-		fileData, err := embedPackages.ReadFile(finalpath)
-		if err != nil {
-			return err
-		}
-		_, err = fileWriter.Write(fileData)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+*/
