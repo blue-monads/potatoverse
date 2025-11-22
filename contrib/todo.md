@@ -3,7 +3,7 @@
 - sugify things (check validate entitity names if key has "<a>|<b>" then it has to disallow |) 
 - go through all services and fix logging
 - devices and sessions, hash password
-- low db txn support
+- low db txn support, add opentxn to closer in lua bindings
 - low db testing
 - event hub testing
 
