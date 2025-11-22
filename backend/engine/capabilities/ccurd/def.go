@@ -1,6 +1,9 @@
 package ccurd
 
 import (
+	"fmt"
+	"regexp"
+
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
@@ -37,8 +40,30 @@ type CcurdBuilder struct {
 }
 
 func (b *CcurdBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capability, error) {
+
+	methods := map[string]*Methods{}
+
+	if err := opts.AsJson(&methods); err != nil {
+		return nil, err
+	}
+
+	for _, method := range methods {
+		for _, validator := range method.Validators {
+			if validator.RegexPattern != "" {
+				cr, err := regexp.Compile(validator.RegexPattern)
+				if err != nil {
+					return nil, err
+				}
+
+				validator.compiledRegex = cr
+			}
+		}
+	}
+
 	return &PingCapability{
-		app:     b.app,
+		db:      b.app.Database().GetLowCapabilityDBOps(fmt.Sprint(spaceId)),
+		signer:  b.app.Signer(),
+		methods: methods,
 		spaceId: spaceId,
 	}, nil
 }
@@ -46,5 +71,5 @@ func (b *CcurdBuilder) Build(spaceId int64, opts xtypes.LazyData) (xtypes.Capabi
 func (b *CcurdBuilder) Serve(ctx *gin.Context) {}
 
 func (p *CcurdBuilder) Name() string {
-	return "ping"
+	return Name
 }

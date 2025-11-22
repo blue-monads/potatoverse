@@ -21,6 +21,9 @@ type Database interface {
 
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
+
+	GetLowPackageDBOps(ownerID string) DBLowOps
+	GetLowCapabilityDBOps(ownerID string) DBLowOps
 }
 
 type Core interface {
@@ -227,7 +230,7 @@ type DBLowOps interface {
 	ListTables() ([]string, error)
 	ListTableColumns(table string) ([]map[string]any, error)
 
-	DBLowTxnOps
+	DBLowCoreOps
 
 	StartTxn() (DBLowTxnOps, error)
 }
@@ -242,6 +245,8 @@ type DBLowCoreOps interface {
 	RunDDL(ddl string) error
 	RunQuery(query string, data ...any) ([]map[string]any, error)
 	RunQueryOne(query string, data ...any) (map[string]any, error)
+
+	Exec(query string, data ...any) (any, error)
 
 	Insert(table string, data map[string]any) (int64, error)
 	UpdateById(table string, id int64, data map[string]any) error

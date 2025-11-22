@@ -193,6 +193,17 @@ func (d *LowDB) RunQueryOne(query string, data ...any) (map[string]any, error) {
 	return result, nil
 }
 
+func (d *LowDB) Exec(query string, data ...any) (any, error) {
+	driver := d.sess.Driver().(*sql.DB)
+	transformedQuery, err := enforcer.TransformQuery(d.ownerType, d.ownerID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := driver.Exec(transformedQuery, data...)
+	return r, err
+}
+
 func (d *LowDB) Insert(table string, data map[string]any) (int64, error) {
 	collection := d.sess.Collection(d.tableName(table))
 	res, err := collection.Insert(data)
