@@ -13,6 +13,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/mailer"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/turnix/backend/services/sockd"
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
@@ -35,6 +36,7 @@ type App struct {
 	ctrl    *actions.Controller
 	AppOpts *xtypes.AppOptions
 	engine  *engine.Engine
+	sockd   *sockd.Sockd
 
 	server *server.Server
 }
@@ -49,6 +51,8 @@ func New(opt Option) *App {
 		HttpPort:      opt.AppOpts.Port,
 	})
 
+	sockd := sockd.NewSockd()
+
 	happ := &App{
 		db:     opt.Database,
 		signer: opt.Signer,
@@ -62,6 +66,7 @@ func New(opt Option) *App {
 			Mailer:   opt.Mailer,
 		}),
 		engine:  engine,
+		sockd:   sockd,
 		AppOpts: opt.AppOpts,
 	}
 
@@ -167,6 +172,10 @@ func (h *App) Engine() any {
 
 func (h *App) Config() any {
 	return h.AppOpts
+}
+
+func (h *App) Sockd() any {
+	return h.sockd
 }
 
 // private
