@@ -1,6 +1,8 @@
 package binds
 
 import (
+	"encoding/json"
+
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -13,6 +15,14 @@ type HostHandle interface {
 type LuaLazyData struct {
 	table *lua.LTable
 	L     *lua.LState
+}
+
+func (l *LuaLazyData) AsBytes() ([]byte, error) {
+	data, err := l.AsMap()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(data)
 }
 
 func (l *LuaLazyData) AsMap() (map[string]any, error) {

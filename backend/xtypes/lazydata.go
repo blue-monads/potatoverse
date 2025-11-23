@@ -3,12 +3,18 @@ package xtypes
 import "encoding/json"
 
 type LazyData interface {
+	AsBytes() ([]byte, error)
+
 	AsMap() (map[string]any, error)
 	// AsJSON struct target
 	AsJson(target any) error
 }
 
 type LazyDataBytes []byte
+
+func (l LazyDataBytes) AsBytes() ([]byte, error) {
+	return l, nil
+}
 
 func (l LazyDataBytes) AsMap() (map[string]any, error) {
 	var data map[string]any
