@@ -11,7 +11,7 @@
 - integrate sockd as a capability
 - add notifier
 - add funnel
-
+- build sqlite wasm file with bunch of exts enabled
 
 
 ## capabilities
