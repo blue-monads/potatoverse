@@ -74,7 +74,7 @@ func (d *EventOperations) CreateEventTargets(eventId int64) ([]int64, error) {
 	}
 
 	// Query subscriptions that match this event
-	subscriptions := make([]dbmodels.EventSubscriptionLite, 0)
+	subscriptions := make([]dbmodels.MQSubscriptionLite, 0)
 	err = d.subscriptionTable().Find(db.Cond{
 		"install_id": event.InstallID,
 		"event_key":  event.Name,

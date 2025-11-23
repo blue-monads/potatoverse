@@ -124,7 +124,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 }
 
 type TargetExecution struct {
-	Subscription *dbmodels.EventSubscription
+	Subscription *dbmodels.MQSubscription
 	Target       *dbmodels.MQEventTarget
 	Event        *dbmodels.MQEvent
 }

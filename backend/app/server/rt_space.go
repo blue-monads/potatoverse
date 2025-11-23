@@ -354,7 +354,7 @@ func (a *Server) CreateEventSubscription(claim *signer.AccessClaim, ctx *gin.Con
 
 	// fixme => permission check
 
-	var subscriptionData *dbmodels.EventSubscription
+	var subscriptionData *dbmodels.MQSubscription
 	if err := ctx.ShouldBindJSON(&subscriptionData); err != nil {
 		return nil, err
 	}

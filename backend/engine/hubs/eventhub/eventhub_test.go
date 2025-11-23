@@ -59,7 +59,7 @@ func TestEventHub_PublishWithSubscription(t *testing.T) {
 	// Create a subscription for a test event with log target
 	installId := int64(1)
 	eventKey := "test.event"
-	subscription := &dbmodels.EventSubscription{
+	subscription := &dbmodels.MQSubscription{
 		InstallID:      installId,
 		SpaceID:        0, // package-level
 		EventKey:       eventKey,
@@ -219,7 +219,7 @@ func TestEventHub_FullFlow(t *testing.T) {
 	// Create a subscription for a test event with log target
 	installId := int64(1)
 	eventKey := "test.flow"
-	subscription := &dbmodels.EventSubscription{
+	subscription := &dbmodels.MQSubscription{
 		InstallID:      installId,
 		SpaceID:        0,
 		EventKey:       eventKey,
@@ -342,7 +342,7 @@ func TestEventHub_TargetCreationAndProcessing(t *testing.T) {
 	// Create a subscription for a test event with log target
 	installId := int64(1)
 	eventKey := "test.targets"
-	subscription := &dbmodels.EventSubscription{
+	subscription := &dbmodels.MQSubscription{
 		InstallID:      installId,
 		SpaceID:        0,
 		EventKey:       eventKey,

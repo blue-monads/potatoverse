@@ -152,10 +152,10 @@ type SpaceOps interface {
 
 	// Event Subscriptions
 
-	QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.EventSubscriptionLite, error)
-	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error)
-	AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error)
-	GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error)
+	QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.MQSubscriptionLite, error)
+	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error)
+	AddEventSubscription(installId int64, data *dbmodels.MQSubscription) (int64, error)
+	GetEventSubscription(installId int64, id int64) (*dbmodels.MQSubscription, error)
 	UpdateEventSubscription(installId int64, id int64, data map[string]any) error
 	RemoveEventSubscription(installId int64, id int64) error
 }

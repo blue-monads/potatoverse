@@ -345,9 +345,9 @@ func (d *SpaceOperations) RemoveSpaceUser(installId int64, id int64) error {
 
 // Event Subscriptions
 
-func (d *SpaceOperations) QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.EventSubscriptionLite, error) {
+func (d *SpaceOperations) QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.MQSubscriptionLite, error) {
 	table := d.eventSubscriptionTable()
-	datas := make([]dbmodels.EventSubscriptionLite, 0)
+	datas := make([]dbmodels.MQSubscriptionLite, 0)
 	cond := db.Cond{}
 	if !includeDisabled {
 		cond["disabled"] = false
@@ -359,9 +359,9 @@ func (d *SpaceOperations) QueryAllEventSubscriptions(includeDisabled bool) ([]db
 	return datas, nil
 }
 
-func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error) {
+func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error) {
 	table := d.eventSubscriptionTable()
-	datas := make([]dbmodels.EventSubscription, 0)
+	datas := make([]dbmodels.MQSubscription, 0)
 
 	cond["install_id"] = installId
 
@@ -372,7 +372,7 @@ func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]
 	return datas, nil
 }
 
-func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error) {
+func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.MQSubscription) (int64, error) {
 	data.InstallID = installId
 	table := d.eventSubscriptionTable()
 	r, err := table.Insert(data)
@@ -382,9 +382,9 @@ func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.E
 	return r.ID().(int64), nil
 }
 
-func (d *SpaceOperations) GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error) {
+func (d *SpaceOperations) GetEventSubscription(installId int64, id int64) (*dbmodels.MQSubscription, error) {
 	table := d.eventSubscriptionTable()
-	data := &dbmodels.EventSubscription{}
+	data := &dbmodels.MQSubscription{}
 	err := table.Find(db.Cond{"install_id": installId, "id": id}).One(data)
 	if err != nil {
 		return nil, err
