@@ -21,8 +21,8 @@ type HigherSockd struct {
 	mu    sync.RWMutex
 }
 
-func NewSockd() *HigherSockd {
-	return &HigherSockd{
+func New() HigherSockd {
+	return HigherSockd{
 		rooms: make(map[string]*Room),
 		mu:    sync.RWMutex{},
 	}
