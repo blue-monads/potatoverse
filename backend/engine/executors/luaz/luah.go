@@ -103,7 +103,27 @@ func (l *LuaH) HandleEvent(event xtypes.EventExecution) error {
 
 	ctxt := l.L.NewTable()
 
-	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{})
+	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
+		"request": func(L *lua.LState) int {
+			app := l.parent.parent.app
+			installId := l.parent.handle.InstalledId
+			spaceId := l.parent.handle.SpaceId
+			greq := event.Request
+
+			genCtxUserdata := binds.GenericContextModule(app, installId, spaceId, L, greq)
+			L.Push(genCtxUserdata)
+			return 1
+		},
+		"type": func(L *lua.LState) int {
+			L.Push(lua.LString("event"))
+			return 1
+		},
+		"param": func(L *lua.LState) int {
+			key := L.CheckString(1)
+			L.Push(lua.LString(event.Params[key]))
+			return 1
+		},
+	})
 
 	return nil
 

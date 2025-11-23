@@ -61,10 +61,10 @@ type EventExecution struct {
 	Type       string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
-	Context    GenericContext
+	Request    GenericRequest
 }
 
-type GenericContext interface {
+type GenericRequest interface {
 	ListActions() ([]string, error)
 	ExecuteAction(name string, params LazyData) (map[string]any, error)
 }
