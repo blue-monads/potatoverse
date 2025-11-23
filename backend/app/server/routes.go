@@ -4,7 +4,10 @@ import (
 	"embed"
 	_ "embed"
 	"net/http"
+	"path"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/docs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,6 +44,16 @@ func (a *Server) bindRoutes() {
 		fullPath := "static/" + filePath
 
 		c.FileFromFS(fullPath, http.FS(StaticFiles))
+	})
+
+	coreApi.GET("/docs/*path", func(c *gin.Context) {
+		ppath := c.Param("path")
+		fpath := path.Join("contents", ppath)
+
+		qq.Println("@fpath", fpath)
+		qq.Println("@ppath", ppath)
+
+		c.FileFromFS(fpath, http.FS(docs.Docs))
 	})
 
 }
@@ -185,15 +198,5 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 }
 
 func (a *Server) helpRoutes(g *gin.RouterGroup) {
-
-	/*
-		- docs
-		- api_docs
-		- topics
-		- lua_bindings
-		- capabilities
-
-
-	*/
 
 }
