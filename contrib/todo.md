@@ -6,6 +6,11 @@
 - low db txn support, add opentxn to closer in lua bindings
 - low db testing
 - event hub testing
+- add subprocess bashed exec binary (cli server start-actual)
+- integrate litestream
+- integrate sockd as a capability
+- add notifier
+
 
 
 ## capabilities
