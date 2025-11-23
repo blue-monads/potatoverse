@@ -10,6 +10,7 @@
 - integrate litestream
 - integrate sockd as a capability
 - add notifier
+- add funnel
 
 
 
