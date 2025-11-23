@@ -3,7 +3,7 @@ package chighsock
 import (
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/sockd/higher"
+	"github.com/blue-monads/turnix/backend/services/sockd"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
@@ -34,14 +34,16 @@ type ChighsockBuilder struct {
 }
 
 func (b *ChighsockBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
-	hs := higher.New()
+
+	hs := b.app.Sockd().(*sockd.Sockd).GetHigher()
+
 	return &ChighsockCapability{
 		app:          b.app,
 		spaceId:      model.SpaceID,
 		installId:    model.InstallID,
 		capabilityId: model.ID,
 		signer:       b.app.Signer(),
-		higher:       &hs,
+		higher:       hs,
 	}, nil
 }
 

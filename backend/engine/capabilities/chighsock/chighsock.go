@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"sync/atomic"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/services/sockd/higher"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -24,7 +22,6 @@ type ChighsockCapability struct {
 	capabilityId int64
 	signer       *signer.Signer
 	higher       *higher.HigherSockd
-	connIdGen    atomic.Int64
 }
 
 func (c *ChighsockCapability) Handle(ctx *gin.Context) {
@@ -43,12 +40,10 @@ func (c *ChighsockCapability) Handle(ctx *gin.Context) {
 			}
 			userId = claim.UserId
 
-			if claim.ResourceId != "" {
-				connId, err = strconv.ParseInt(claim.ResourceId, 10, 64)
-				if err != nil {
-					httpx.WriteErrString(ctx, "Resource ID is not a valid integer")
-					return
-				}
+			connId, _ = strconv.ParseInt(claim.ResourceId, 10, 64)
+			if connId == 0 {
+				httpx.WriteErrString(ctx, "Resource ID is not a valid integer")
+				return
 			}
 
 		}
@@ -67,11 +62,6 @@ func (c *ChighsockCapability) Handle(ctx *gin.Context) {
 	if err != nil {
 		httpx.WriteErrString(ctx, "failed to upgrade websocket")
 		return
-	}
-
-	if connId == 0 {
-		qq.Println("Using atomic counter for connId")
-		connId = c.connIdGen.Add(1)
 	}
 
 	_, err = c.higher.AddConn(userId, conn, connId, roomName)
@@ -240,8 +230,7 @@ func (c *ChighsockCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Ca
 		installId:    model.InstallID,
 		capabilityId: model.ID,
 		signer:       c.signer,
-		higher:       c.higher, // Keep the same instance (pointer)
-		connIdGen:    atomic.Int64{},
+		higher:       c.higher,
 	}, nil
 }
 
