@@ -586,7 +586,7 @@ export interface CapabilityOptionField {
     description: string;
     type: string; // text, number, date, api_key, boolean, select, multi_select, textarea
     default: string;
-    options: string[];
+    options?: string[] | null;
     required: boolean;
 }
 

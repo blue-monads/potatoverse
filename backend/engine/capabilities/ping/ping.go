@@ -18,6 +18,72 @@ var (
 			Type:        "boolean",
 			Default:     "false",
 		},
+
+		// example fields for all field types
+		{
+			Name:        "Text",
+			Key:         "text",
+			Description: "Text field",
+			Type:        "text",
+			Default:     "",
+		},
+		{
+			Name:        "Number",
+			Key:         "number",
+			Description: "Number field",
+			Type:        "number",
+			Default:     "0",
+		},
+
+		{
+			Name:        "Date",
+			Key:         "date",
+			Description: "Date field",
+			Type:        "date",
+			Default:     "",
+		},
+
+		{
+			Name:        "API Key",
+			Key:         "api_key",
+			Description: "API Key field",
+			Type:        "api_key",
+			Default:     "",
+		},
+
+		{
+			Name:        "Select",
+			Key:         "select",
+			Description: "Select field",
+			Type:        "select",
+			Default:     "",
+			Options:     []string{"option1", "option2", "option3"},
+		},
+
+		{
+			Name:        "Multi Select",
+			Key:         "multi_select",
+			Description: "Multi Select field",
+			Type:        "multi_select",
+			Default:     "",
+			Options:     []string{"option1", "option2", "option3"},
+		},
+
+		{
+			Name:        "Textarea",
+			Key:         "textarea",
+			Description: "Textarea field",
+			Type:        "textarea",
+			Default:     "",
+		},
+
+		{
+			Name:        "Object",
+			Key:         "object",
+			Description: "Object field",
+			Type:        "object",
+			Default:     "{}",
+		},
 	}
 )
 

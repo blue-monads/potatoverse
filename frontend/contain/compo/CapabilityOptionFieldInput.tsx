@@ -48,9 +48,9 @@ export const CapabilityOptionFieldInput = ({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     required={field.required}
                 >
-                    {field.options.map(opt => (
+                    {field.options?.map(opt => (
                         <option key={opt} value={opt}>{opt}</option>
-                    ))}
+                    )) || []}
                 </select>
             ) : field.type === 'boolean' ? (
                 <label className="flex items-center gap-2">
