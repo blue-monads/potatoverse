@@ -44,15 +44,12 @@
         "items": [
           {
             "title": "Getting Started",
-            "description": "Introduction and quick start guide"
+            "description": "Introduction and quick start guide",
+            "url": "topics/getting_started.md"
           },
           {
             "title": "Core Concepts",
             "description": "Understanding the fundamental concepts"
-          },
-          {
-            "title": "Best Practices",
-            "description": "Recommended patterns and practices"
           },
           {
             "title": "Examples",
@@ -71,7 +68,8 @@
         "items": [
           {
             "title": "Luaz",
-            "description": "Luaz bindings for the Luaz executor."
+            "description": "Luaz bindings for the Luaz executor.",
+            "url": "bindings/luaz.md"
           }
         ]
       }
