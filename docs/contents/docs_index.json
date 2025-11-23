@@ -9,7 +9,8 @@
       "items": [
         {
           "title": "Core Concepts",
-          "description": "Understanding the fundamental concepts"
+          "description": "Understanding the fundamental concepts",
+          "url": "topics/core_concepts.md"
         },
         {
           "title": "Getting Started",
