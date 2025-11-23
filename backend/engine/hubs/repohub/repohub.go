@@ -156,13 +156,6 @@ func (h *RepoHub) zipEmbeddedPackage(name string) (string, error) {
 	return zipEmbeddedPackageFromFS(name)
 }
 
-type HttpPackage struct {
-	Name        string `json:"name" toml:"name"`
-	Slug        string `json:"slug" toml:"slug"`
-	Info        string `json:"info" toml:"info"`
-	DownloadUrl string `json:"download_url" toml:"download_url"`
-}
-
 // zipHttpPackage downloads and creates a zip file from HTTP package
 func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, error) {
 
@@ -171,7 +164,7 @@ func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, er
 		return "", err
 	}
 
-	var packages []HttpPackage
+	var packages HttpPackageIndexV1
 	err = json.Unmarshal(pIndex, &packages)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse package list: %w", err)
