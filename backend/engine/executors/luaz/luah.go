@@ -7,6 +7,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/cjoudrey/gluahttp"
 	"github.com/gin-gonic/gin"
 
@@ -62,7 +63,7 @@ type LuaContextOptions struct {
 	HandlerName string
 }
 
-func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]string) error {
+func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[string]string) error {
 	ctxt := l.L.NewTable()
 
 	l.logger().Info("handling http", "handler", handlerName, "params", params)
@@ -72,8 +73,8 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 			app := l.parent.parent.app
 			spaceId := l.parent.handle.SpaceId
 
-			table := binds.HttpModule(app, spaceId, L, ctx)
-			L.Push(table)
+			reqCtx := binds.HttpModule(app, spaceId, L, ctx)
+			L.Push(reqCtx)
 			return 1
 		},
 		"type": func(l *lua.LState) int {
@@ -93,6 +94,16 @@ func (l *LuaH) Handle(ctx *gin.Context, handlerName string, params map[string]st
 	if err != nil {
 		return err
 	}
+
+	return nil
+
+}
+
+func (l *LuaH) HandleEvent(event xtypes.EventExecution) error {
+
+	ctxt := l.L.NewTable()
+
+	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{})
 
 	return nil
 

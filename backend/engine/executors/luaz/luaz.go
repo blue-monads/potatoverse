@@ -40,7 +40,7 @@ func (l *LuazExecutor) HandleHttp(event xtypes.HttpExecution) error {
 
 	qq.Println("@handle/2", event.HandlerName, event.Params)
 
-	err = lh.Handle(event.Request, event.HandlerName, event.Params)
+	err = lh.HandleHTTP(event.Request, event.HandlerName, event.Params)
 	if err != nil {
 		return err
 	}

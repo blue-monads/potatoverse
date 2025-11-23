@@ -2,7 +2,7 @@ local potato = require("potato")
 
 function get_tasks(ctx)
     local req = ctx.request()
-    local userId, err = req.getUserId()
+    local userId, err = req.get_user_id()
 
     if err then
         req.json(401, {
@@ -32,12 +32,12 @@ function get_tasks(ctx)
         data = {}
     end
     
-    req.jsonArray(200, data)
+    req.json_array(200, data)
 end
 
 function add_task(ctx)
     local req = ctx.request()
-    local userId, err = req.getUserId()
+    local userId, err = req.get_user_id()
 
     if err then
         req.json(401, {
@@ -49,7 +49,7 @@ function add_task(ctx)
     print("userId:", userId)
 
     -- Parse request body
-    local body, err = req.bindJSON()
+    local body, err = req.bind_json()
     if err then
         req.json(400, {
             error = "Invalid JSON: " .. tostring(err)
@@ -99,7 +99,7 @@ function delete_task(ctx)
     local req = ctx.request()
     local path = ctx.param("subpath")
 
-    local userId, err = req.getUserId()
+    local userId, err = req.get_user_id()
     if err then
         req.json(401, {
             error = tostring(err)
