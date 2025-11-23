@@ -75,8 +75,8 @@ func (m *mockConn) SetDeadline(t time.Time) error      { return nil }
 func (m *mockConn) SetReadDeadline(t time.Time) error  { return nil }
 func (m *mockConn) SetWriteDeadline(t time.Time) error { return nil }
 
-func TestNewSockd(t *testing.T) {
-	sockd := NewSockd()
+func TestNew(t *testing.T) {
+	sockd := New()
 	if sockd.rooms == nil {
 		t.Error("Expected rooms map to be initialized")
 	}
@@ -86,7 +86,7 @@ func TestNewSockd(t *testing.T) {
 }
 
 func TestAddConn(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -130,7 +130,7 @@ func TestAddConn(t *testing.T) {
 }
 
 func TestAddConn_DuplicateConnId(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -151,7 +151,7 @@ func TestAddConn_DuplicateConnId(t *testing.T) {
 }
 
 func TestAddConn_MultipleRooms(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -193,7 +193,7 @@ func TestAddConn_MultipleRooms(t *testing.T) {
 }
 
 func TestAddSub(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -228,7 +228,7 @@ func TestAddSub(t *testing.T) {
 }
 
 func TestAddSub_NonExistentRoom(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -242,7 +242,7 @@ func TestAddSub_NonExistentRoom(t *testing.T) {
 }
 
 func TestAddSub_MultipleTopics(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -281,7 +281,7 @@ func TestAddSub_MultipleTopics(t *testing.T) {
 }
 
 func TestAddSub_MultipleSubscribers(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -325,7 +325,7 @@ func TestAddSub_MultipleSubscribers(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -381,7 +381,7 @@ func TestPublish(t *testing.T) {
 }
 
 func TestPublish_MultipleSubscribers(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	numSubscribers := 5
 	conns := make([]*mockConn, numSubscribers)
 
@@ -431,7 +431,7 @@ func TestPublish_MultipleSubscribers(t *testing.T) {
 }
 
 func TestPublish_NonExistentRoom(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	message := []byte("test message")
 
 	// Publishing to non-existent room should not error
@@ -442,7 +442,7 @@ func TestPublish_NonExistentRoom(t *testing.T) {
 }
 
 func TestPublish_NonExistentTopic(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -468,7 +468,7 @@ func TestPublish_NonExistentTopic(t *testing.T) {
 }
 
 func TestPublish_NoSubscribers(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -503,7 +503,7 @@ func TestPublish_NoSubscribers(t *testing.T) {
 }
 
 func TestPublish_MultipleTopics(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -581,7 +581,7 @@ doneCollecting:
 }
 
 func TestRemoveConn(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -646,7 +646,7 @@ func TestRemoveConn(t *testing.T) {
 }
 
 func TestRemoveConn_NonExistentRoom(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 
 	// Removing from non-existent room should not error
 	err := sockd.RemoveConn(1, 100, "non-existent")
@@ -656,7 +656,7 @@ func TestRemoveConn_NonExistentRoom(t *testing.T) {
 }
 
 func TestRemoveConn_NonExistentConnId(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -673,7 +673,7 @@ func TestRemoveConn_NonExistentConnId(t *testing.T) {
 }
 
 func TestSession_WritePump(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -712,7 +712,7 @@ func TestSession_WritePump(t *testing.T) {
 }
 
 func TestSession_Teardown(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -747,7 +747,7 @@ func TestSession_Teardown(t *testing.T) {
 }
 
 func TestRoom_Cleanup(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -803,7 +803,7 @@ func TestRoom_Cleanup(t *testing.T) {
 }
 
 func TestRoom_Cleanup_NonExistentSession(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -831,7 +831,7 @@ func TestRoom_Cleanup_NonExistentSession(t *testing.T) {
 }
 
 func TestRoom_Cleanup_RemovesEmptyTopics(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -875,7 +875,7 @@ func TestRoom_Cleanup_RemovesEmptyTopics(t *testing.T) {
 }
 
 func TestPublish_Concurrent(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -952,7 +952,7 @@ done:
 }
 
 func TestSession_WritePump_ErrorHandling(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 
 	_, err := sockd.AddConn(1, conn, 100, "test-room")
@@ -984,7 +984,7 @@ func TestSession_WritePump_ErrorHandling(t *testing.T) {
 }
 
 func TestPublish_Timeout(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 
 	// Create a connection with a blocked write channel
 	conn := newMockConn()
@@ -1033,7 +1033,7 @@ func TestPublish_Timeout(t *testing.T) {
 }
 
 func TestAddConn_SameConnId_DifferentRooms(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -1070,7 +1070,7 @@ func TestAddConn_SameConnId_DifferentRooms(t *testing.T) {
 }
 
 func TestRemoveConn_BusyRoom(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -1102,4 +1102,3 @@ func TestRemoveConn_BusyRoom(t *testing.T) {
 	// Wait a bit
 	time.Sleep(200 * time.Millisecond)
 }
-

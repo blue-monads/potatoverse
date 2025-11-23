@@ -95,6 +95,7 @@ func (m *mockApp) Logger() *slog.Logger       { return m.logger }
 func (m *mockApp) Controller() any            { return nil }
 func (m *mockApp) Engine() any                { return m.engine }
 func (m *mockApp) Config() any                { return m.config }
+func (m *mockApp) Sockd() any                 { return nil }
 
 // buildTestApp creates a test App instance for testing bindings
 func buildTestApp(t *testing.T) (xtypes.App, func()) {

@@ -75,8 +75,8 @@ func (m *mockConn) SetDeadline(t time.Time) error      { return nil }
 func (m *mockConn) SetReadDeadline(t time.Time) error  { return nil }
 func (m *mockConn) SetWriteDeadline(t time.Time) error { return nil }
 
-func TestNewSockd(t *testing.T) {
-	sockd := NewSockd()
+func TestNew(t *testing.T) {
+	sockd := New()
 	if sockd.rooms == nil {
 		t.Error("Expected rooms map to be initialized")
 	}
@@ -86,7 +86,7 @@ func TestNewSockd(t *testing.T) {
 }
 
 func TestAddConn(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -130,7 +130,7 @@ func TestAddConn(t *testing.T) {
 }
 
 func TestAddConn_DuplicateConnId(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -151,7 +151,7 @@ func TestAddConn_DuplicateConnId(t *testing.T) {
 }
 
 func TestAddConn_MultipleRooms(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -193,7 +193,7 @@ func TestAddConn_MultipleRooms(t *testing.T) {
 }
 
 func TestBroadcast(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -246,7 +246,7 @@ func TestBroadcast(t *testing.T) {
 }
 
 func TestBroadcast_NonExistentRoom(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	message := []byte("test message")
 
 	// Broadcasting to non-existent room should not error
@@ -257,7 +257,7 @@ func TestBroadcast_NonExistentRoom(t *testing.T) {
 }
 
 func TestRemoveConn(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -295,7 +295,7 @@ func TestRemoveConn(t *testing.T) {
 }
 
 func TestRemoveConn_NonExistentRoom(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 
 	// Removing from non-existent room should not error
 	err := sockd.RemoveConn(1, 100, "non-existent")
@@ -305,7 +305,7 @@ func TestRemoveConn_NonExistentRoom(t *testing.T) {
 }
 
 func TestRemoveConn_NonExistentConnId(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -322,7 +322,7 @@ func TestRemoveConn_NonExistentConnId(t *testing.T) {
 }
 
 func TestSession_ReadPump_TextMessage(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -346,7 +346,7 @@ func TestSession_ReadPump_TextMessage(t *testing.T) {
 }
 
 func TestSession_WritePump(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -385,7 +385,7 @@ func TestSession_WritePump(t *testing.T) {
 }
 
 func TestSession_Teardown(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -424,7 +424,7 @@ func TestSession_Teardown(t *testing.T) {
 }
 
 func TestRoom_Cleanup(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -459,7 +459,7 @@ func TestRoom_Cleanup(t *testing.T) {
 }
 
 func TestRoom_Cleanup_NonExistentSession(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 	defer conn.Close()
 
@@ -487,7 +487,7 @@ func TestRoom_Cleanup_NonExistentSession(t *testing.T) {
 }
 
 func TestBroadcast_MultipleSessions(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	numSessions := 5
 	conns := make([]*mockConn, numSessions)
 
@@ -531,7 +531,7 @@ func TestBroadcast_MultipleSessions(t *testing.T) {
 }
 
 func TestBroadcast_Concurrent(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()
@@ -597,7 +597,7 @@ done:
 }
 
 func TestSession_WritePump_ErrorHandling(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn := newMockConn()
 
 	_, err := sockd.AddConn(1, conn, 100, "test-room")
@@ -629,7 +629,7 @@ func TestSession_WritePump_ErrorHandling(t *testing.T) {
 }
 
 func TestRoom_Run_BroadcastTimeout(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 
 	// Create a connection with a blocked write channel
 	conn := newMockConn()
@@ -672,7 +672,7 @@ func TestRoom_Run_BroadcastTimeout(t *testing.T) {
 }
 
 func TestAddConn_SameConnId_DifferentRooms(t *testing.T) {
-	sockd := NewSockd()
+	sockd := New()
 	conn1 := newMockConn()
 	conn2 := newMockConn()
 	defer conn1.Close()

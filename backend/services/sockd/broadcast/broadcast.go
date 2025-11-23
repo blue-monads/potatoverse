@@ -11,7 +11,7 @@ type BroadcastSockd struct {
 	mu    sync.RWMutex
 }
 
-func NewSockd() BroadcastSockd {
+func New() BroadcastSockd {
 	return BroadcastSockd{
 		rooms: make(map[string]*Room),
 		mu:    sync.RWMutex{},

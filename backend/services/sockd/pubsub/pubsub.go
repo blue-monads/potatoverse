@@ -11,7 +11,7 @@ type PubSubSockd struct {
 	mu    sync.RWMutex
 }
 
-func NewSockd() PubSubSockd {
+func New() PubSubSockd {
 	return PubSubSockd{
 		rooms: make(map[string]*Room),
 	}
