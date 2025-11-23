@@ -106,11 +106,16 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                     targetData.smtpPassword = options.smtp_password || '';
                     targetData.smtpFrom = options.smtp_from || '';
                     targetData.smtpTo = options.smtp_to || '';
-                    targetData.targetSpaceId = initialData.target_space_id || 0;
                 } catch (e) {
                     console.error('Failed to parse target_options:', e);
                 }
             }
+
+            if (initialData.target_type === 'space_method') {
+                targetData.targetSpaceId = initialData.target_space_id || 0;
+                targetData.endpoint = initialData.target_endpoint || '';
+            }
+
 
             setTarget(targetData);
 
@@ -134,6 +139,16 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
 
         if (target.type === 'webhook' && !target.endpoint.trim()) {
             alert('Endpoint is required for webhook');
+            return;
+        }
+
+        if (target.type === 'space_method' && !target.targetSpaceId) {
+            alert('Space is required for space method');
+            return;
+        }
+
+        if (target.type === 'space_method' && !target.endpoint.trim()) {
+            alert('Event name is required for space method');
             return;
         }
 
@@ -180,7 +195,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             const data = {
                 event_key: eventKey,
                 target_type: target.type,
-                target_endpoint: target.type === 'webhook' ? target.endpoint : '',
+                target_endpoint: target.endpoint,
                 target_code: target.type === 'script' ? target.code : '',
                 target_options: targetOptions,
                 rules: JSON.stringify(rules),

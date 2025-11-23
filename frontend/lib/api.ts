@@ -728,6 +728,7 @@ export const createEventSubscription = async (installId: number, data: {
     target_endpoint?: string;
     target_options?: any; // Will be JSON stringified
     target_code?: string;
+    target_space_id?: number;
     rules?: any; // Will be JSON stringified
     transform?: any; // Will be JSON stringified
     delay_start?: number;
@@ -744,6 +745,7 @@ export const createEventSubscription = async (installId: number, data: {
         ...(data.target_endpoint && { target_endpoint: data.target_endpoint }),
         ...(data.target_options && { target_options: typeof data.target_options === 'string' ? data.target_options : JSON.stringify(data.target_options) }),
         ...(data.target_code && { target_code: data.target_code }),
+        ...(data.target_space_id !== undefined && { target_space_id: data.target_space_id }),
         ...(data.rules && { rules: typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules) }),
         ...(data.transform && { transform: typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform) }),
         ...(data.delay_start !== undefined && { delay_start: data.delay_start }),
