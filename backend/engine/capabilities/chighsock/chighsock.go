@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/services/sockd/higher"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -22,13 +24,14 @@ type ChighsockCapability struct {
 	capabilityId int64
 	signer       *signer.Signer
 	higher       *higher.HigherSockd
-	connIdGen    int64 // atomic counter
+	connIdGen    atomic.Int64
 }
 
 func (c *ChighsockCapability) Handle(ctx *gin.Context) {
 	// Try to get user ID from capability token first
 	var userId int64
 	var err error
+	var connId int64
 
 	token := ctx.Request.Header.Get("x-cap-token")
 	if token != "" {
@@ -39,6 +42,15 @@ func (c *ChighsockCapability) Handle(ctx *gin.Context) {
 				return
 			}
 			userId = claim.UserId
+
+			if claim.ResourceId != "" {
+				connId, err = strconv.ParseInt(claim.ResourceId, 10, 64)
+				if err != nil {
+					httpx.WriteErrString(ctx, "Resource ID is not a valid integer")
+					return
+				}
+			}
+
 		}
 	}
 
@@ -57,8 +69,10 @@ func (c *ChighsockCapability) Handle(ctx *gin.Context) {
 		return
 	}
 
-	// Generate connection ID
-	connId := atomic.AddInt64(&c.connIdGen, 1)
+	if connId == 0 {
+		qq.Println("Using atomic counter for connId")
+		connId = c.connIdGen.Add(1)
+	}
 
 	_, err = c.higher.AddConn(userId, conn, connId, roomName)
 	if err != nil {
@@ -227,7 +241,7 @@ func (c *ChighsockCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Ca
 		capabilityId: model.ID,
 		signer:       c.signer,
 		higher:       c.higher, // Keep the same instance (pointer)
-		connIdGen:    c.connIdGen,
+		connIdGen:    atomic.Int64{},
 	}, nil
 }
 
