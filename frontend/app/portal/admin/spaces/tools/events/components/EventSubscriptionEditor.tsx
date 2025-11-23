@@ -5,7 +5,7 @@ import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import { EventSubscription } from '@/lib';
 import RuleEditor, { Rule } from './RuleEditor';
 
-interface Target {
+interface TargetState {
     type: string;
     endpoint: string;
     code: string; // For script type
@@ -15,6 +15,7 @@ interface Target {
     smtpPassword: string;
     smtpFrom: string;
     smtpTo: string;
+    targetSpaceId: number;
 }
 
 
@@ -41,7 +42,7 @@ interface EventSubscriptionEditorProps {
 export default function EventSubscriptionEditor({ onSave, onBack, initialData }: EventSubscriptionEditorProps) {
     const [eventKey, setEventKey] = useState(initialData?.event_key || '');
     const [rules, setRules] = useState<Rule[]>([]);
-    const [target, setTarget] = useState<Target>({
+    const [target, setTarget] = useState<TargetState>({
         type: 'webhook',
         endpoint: '',
         code: '',
@@ -51,6 +52,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
         smtpPassword: '',
         smtpFrom: '',
         smtpTo: '',
+        targetSpaceId: 0,
     });
     const [disabled, setDisabled] = useState(initialData?.disabled || false);
     const [delayStart, setDelayStart] = useState(initialData?.delay_start || 0);
@@ -79,7 +81,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             }
 
             // Parse target from subscription
-            let targetData: Target = {
+            let targetData: TargetState = {
                 type: initialData.target_type || 'webhook',
                 endpoint: initialData.target_endpoint || '',
                 code: initialData.target_code || '',
@@ -89,13 +91,14 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 smtpPassword: '',
                 smtpFrom: '',
                 smtpTo: '',
+                targetSpaceId: 0,
             };
 
             // Parse target_options for SMTP credentials if email type
             if (initialData.target_type === 'email' && initialData.target_options) {
                 try {
-                    const options = typeof initialData.target_options === 'string' 
-                        ? JSON.parse(initialData.target_options) 
+                    const options = typeof initialData.target_options === 'string'
+                        ? JSON.parse(initialData.target_options)
                         : initialData.target_options;
                     targetData.smtpHost = options.smtp_host || '';
                     targetData.smtpPort = options.smtp_port || '587';
@@ -103,6 +106,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                     targetData.smtpPassword = options.smtp_password || '';
                     targetData.smtpFrom = options.smtp_from || '';
                     targetData.smtpTo = options.smtp_to || '';
+                    targetData.targetSpaceId = initialData.target_space_id || 0;
                 } catch (e) {
                     console.error('Failed to parse target_options:', e);
                 }
@@ -185,6 +189,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 retry_delay: retryDelay,
                 max_retries: maxRetries,
                 disabled: disabled,
+                target_space_id: target.targetSpaceId,
             };
 
             await onSave(data);
@@ -195,11 +200,12 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
         }
     };
 
-    const updateTarget = (updates: Partial<Target>) => {
+    const updateTarget = (updates: Partial<TargetState>) => {
         setTarget({ ...target, ...updates });
     };
 
     const targetTypes = [
+        { value: 'email', label: 'Email' },
         { value: 'webhook', label: 'Webhook' },
         { value: 'script', label: 'Script' },
         { value: 'log', label: 'Log' },
@@ -358,6 +364,39 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                                     </div>
                                 </div>
                             )}
+
+                            {target.type === 'space_method' && (<>
+
+                                <div className='flex flex-col gap-2'>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Space</label>
+                                    <div className='flex gap-2'>
+                                        <input
+                                            type="number"
+                                            placeholder="space_id"
+                                            value={target.targetSpaceId}
+                                            onChange={(e) => updateTarget({ targetSpaceId: parseInt(e.target.value) })}
+                                            className="w-11/12 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <button className='w-1/12 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-400 text-gray-00 hover:text-white'>
+                                            Pick
+                                        </button>
+                                    </div>
+
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
+                                    <input
+                                        type="text"
+                                        value={target.endpoint}
+                                        onChange={(e) => updateTarget({ endpoint: e.target.value })}
+                                        placeholder="notify_x_changed"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                                </div>
+
+
+                            </>)}
+
+
                         </div>
                     </div>
                 </div>

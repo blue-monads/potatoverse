@@ -692,6 +692,7 @@ export interface EventSubscription {
     space_id: number;
     event_key: string;
     target_type: string; // push, email, sms, webhook, script
+    target_space_id: number;
     target_endpoint: string;
     target_options: string; // JSON string
     target_code: string;
