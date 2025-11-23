@@ -1,4 +1,28 @@
 [
+  {
+    "id": "topics",
+    "title": "Topics",
+    "icon": "FileText",
+    "content": {
+      "title": "Documentation Topics",
+      "description": "Explore guides and tutorials on various topics.",
+      "items": [
+        {
+          "title": "Core Concepts",
+          "description": "Understanding the fundamental concepts"
+        },
+        {
+          "title": "Getting Started",
+          "description": "Introduction and quick start guide",
+          "url": "topics/getting_started.md"
+        },
+        {
+          "title": "Examples",
+          "description": "Real-world examples and use cases"
+        }
+      ]
+    }
+  },
     {
       "id": "api-docs",
       "title": "API Docs",
@@ -8,52 +32,34 @@
         "description": "Complete API reference for all available endpoints and methods.",
         "items": [
           {
-            "title": "Space",
-            "description": "Reference for all available endpoints and methods in the Space API."
-          },
-          {
-            "title": "Plugin",
-            "description": "Reference for all available endpoints and methods in the Plugin API."
-          },
-          {
-            "title": "Capability",
-            "description": "Reference for all available endpoints and methods in the Capability API."
-          },
-          {
-            "title": "Event",
-            "description": "Reference for all available endpoints and methods in the Event API."
-          },
-          {
-            "title": "Auth ",
-            "description": "Reference for all available endpoints and methods in the Auth API."
+            "title": "Auth",
+            "description": "Reference for all available endpoints and methods in the Auth API.",
+            "url": "api/auth.md"
           },
           {
             "title": "User",
-            "description": "Reference for all available endpoints and methods in the User API."
-          }
-        ]
-      }
-    },
-    {
-      "id": "topics",
-      "title": "Topics",
-      "icon": "FileText",
-      "content": {
-        "title": "Documentation Topics",
-        "description": "Explore guides and tutorials on various topics.",
-        "items": [
-          {
-            "title": "Getting Started",
-            "description": "Introduction and quick start guide",
-            "url": "topics/getting_started.md"
+            "description": "Reference for all available endpoints and methods in the User API.",
+            "url": "api/user.md"
           },
           {
-            "title": "Core Concepts",
-            "description": "Understanding the fundamental concepts"
+            "title": "Space",
+            "description": "Reference for all available endpoints and methods in the Space API.",
+            "url": "api/space.md"
           },
           {
-            "title": "Examples",
-            "description": "Real-world examples and use cases"
+            "title": "Package",
+            "description": "Reference for all available endpoints and methods in the Package API.",
+            "url": "api/package.md"
+          },
+          {
+            "title": "Capability",
+            "description": "Reference for all available endpoints and methods in the Capability API.",
+            "url": "api/capability.md"
+          },
+          {
+            "title": "Engine",
+            "description": "Reference for all available endpoints and methods in the Engine API.",
+            "url": "api/engine.md"
           }
         ]
       }
