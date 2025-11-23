@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/services/sockd/higher"
@@ -16,49 +15,6 @@ import (
 	"github.com/gobwas/ws"
 )
 
-var (
-	Name         = "chighsock"
-	Icon         = "socket"
-	OptionFields = []xtypes.CapabilityOptionField{}
-)
-
-var (
-	OKResponse = map[string]any{"success": true}
-)
-
-func init() {
-	registry.RegisterCapability(Name, xtypes.CapabilityBuilderFactory{
-		Builder: func(app xtypes.App) (xtypes.CapabilityBuilder, error) {
-			return &ChighsockBuilder{app: app}, nil
-		},
-		Name:         Name,
-		Icon:         Icon,
-		OptionFields: OptionFields,
-	})
-}
-
-type ChighsockBuilder struct {
-	app xtypes.App
-}
-
-func (b *ChighsockBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
-	hs := higher.New()
-	return &ChighsockCapability{
-		app:          b.app,
-		spaceId:      model.SpaceID,
-		installId:    model.InstallID,
-		capabilityId: model.ID,
-		signer:       b.app.Signer(),
-		higher:       &hs,
-	}, nil
-}
-
-func (b *ChighsockBuilder) Serve(ctx *gin.Context) {}
-
-func (b *ChighsockBuilder) Name() string {
-	return Name
-}
-
 type ChighsockCapability struct {
 	app          xtypes.App
 	spaceId      int64
@@ -67,23 +23,6 @@ type ChighsockCapability struct {
 	signer       *signer.Signer
 	higher       *higher.HigherSockd
 	connIdGen    int64 // atomic counter
-}
-
-func (c *ChighsockCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
-	return &ChighsockCapability{
-		app:          c.app,
-		spaceId:      model.SpaceID,
-		installId:    model.InstallID,
-		capabilityId: model.ID,
-		signer:       c.signer,
-		higher:       c.higher, // Keep the same instance (pointer)
-		connIdGen:    c.connIdGen,
-	}, nil
-}
-
-func (c *ChighsockCapability) Close() error {
-	// Cleanup can be done here if needed
-	return nil
 }
 
 func (c *ChighsockCapability) Handle(ctx *gin.Context) {
@@ -278,4 +217,21 @@ func (c *ChighsockCapability) executeUnsubscribe(params xtypes.LazyData) (map[st
 	}
 
 	return OKResponse, nil
+}
+
+func (c *ChighsockCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+	return &ChighsockCapability{
+		app:          c.app,
+		spaceId:      model.SpaceID,
+		installId:    model.InstallID,
+		capabilityId: model.ID,
+		signer:       c.signer,
+		higher:       c.higher, // Keep the same instance (pointer)
+		connIdGen:    c.connIdGen,
+	}, nil
+}
+
+func (c *ChighsockCapability) Close() error {
+	// Cleanup can be done here if needed
+	return nil
 }
