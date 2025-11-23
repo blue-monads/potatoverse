@@ -32,9 +32,10 @@ type InviteClaim struct {
 }
 
 type SpaceClaim struct {
-	Typeid  uint16 `json:"t,omitempty"`
-	SpaceId int64  `json:"s,omitempty"`
-	UserId  int64  `json:"u,omitempty"`
+	Typeid    uint16 `json:"t,omitempty"`
+	SpaceId   int64  `json:"s,omitempty"`
+	UserId    int64  `json:"u,omitempty"`
+	SessionId int64  `json:"i,omitempty"`
 }
 
 type SpaceAdvisieryClaim struct {

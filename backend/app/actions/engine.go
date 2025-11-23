@@ -14,7 +14,21 @@ import (
 	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/bwmarrin/snowflake"
 )
+
+var (
+	snode *snowflake.Node
+)
+
+func init() {
+	_snode, err := snowflake.NewNode(1)
+	if err != nil {
+		panic(err)
+	}
+
+	snode = _snode
+}
 
 func (c *Controller) GetEngineDebugData() map[string]any {
 	return c.engine.GetDebugData()
@@ -54,9 +68,10 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 	}
 
 	return c.signer.SignSpace(&signer.SpaceClaim{
-		SpaceId: req.SpaceId,
-		UserId:  userId,
-		Typeid:  signer.TokenTypeSpace,
+		SpaceId:   req.SpaceId,
+		UserId:    userId,
+		Typeid:    signer.TokenTypeSpace,
+		SessionId: snode.Generate().Int64(),
 	})
 
 }
