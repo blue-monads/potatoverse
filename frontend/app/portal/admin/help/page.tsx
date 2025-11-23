@@ -127,6 +127,12 @@ export default function Page() {
                                     {currentSection.content.items.map((item: any, index: number) => (
                                         <div
                                             key={index}
+                                            onClick={() => {
+                                                if (item.url) {
+                                                    setMarkdownPageUrl(item.url);
+                                                    setMode('markdown-page');
+                                                }
+                                            }}
                                             className="p-6 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer bg-white"
                                         >
                                             <h3 className="text-xl font-semibold text-gray-900 mb-2">
