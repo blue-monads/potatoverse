@@ -1,59 +1,39 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BookOpen, Code, FileText, ChevronRight } from 'lucide-react';
+import { getDocsIndex } from '@/lib/api';
+
+const ICONS = {
+    "BookOpen": BookOpen,
+    "Code": Code,
+    "FileText": FileText,
+    "ChevronRight": ChevronRight,
+} as const;
 
 type DocSection = 'api-docs' | 'topics' | 'bindings-docs';
 
 export default function Page() {
     const [activeSection, setActiveSection] = useState<DocSection>('api-docs');
     const [expandedSection, setExpandedSection] = useState<DocSection | null>('api-docs');
+    const [sections, setSections] = useState<any[]>([]);
 
-    const sections = [
-        {
-            id: 'api-docs' as DocSection,
-            title: 'API Docs',
-            icon: Code,
-            content: {
-                title: 'API Documentation',
-                description: 'Complete API reference for all available endpoints and methods.',
-                items: [
-                    { title: 'Space', description: 'Reference for all available endpoints and methods in the Space API.' },
-                    { title: 'Plugin', description: 'Reference for all available endpoints and methods in the Plugin API.' },
-                    { title: 'Capability', description: 'Reference for all available endpoints and methods in the Capability API.' },
-                    { title: 'Event', description: 'Reference for all available endpoints and methods in the Event API.' },
-                    { title: 'Auth ', description: 'Reference for all available endpoints and methods in the Auth API.' },
-                    { title: 'User', description: 'Reference for all available endpoints and methods in the User API.' },
-                ]
-            }
-        },
-        {
-            id: 'topics' as DocSection,
-            title: 'Topics',
-            icon: BookOpen,
-            content: {
-                title: 'Documentation Topics',
-                description: 'Explore guides and tutorials on various topics.',
-                items: [
-                    { title: 'Getting Started', description: 'Introduction and quick start guide' },
-                    { title: 'Core Concepts', description: 'Understanding the fundamental concepts' },
-                    { title: 'Best Practices', description: 'Recommended patterns and practices' },
-                    { title: 'Examples', description: 'Real-world examples and use cases' },
-                ]
-            }
-        },
-        {
-            id: 'bindings-docs' as DocSection,
-            title: 'Bindings Docs',
-            icon: FileText,
-            content: {
-                title: 'Executors Bindings Documentation',
-                description: 'Documentation for executors bindings.',
-                items: [
-                    { title: 'Luaz', description: 'Luaz bindings for the Luaz executor.' },
-                ]
-            }
-        },
-    ];
+    const loadIndex = async () => {
+        try {
+            const resp = await getDocsIndex();
+            setSections(resp.data);
+        } catch (error) {
+            console.error("@error/1", error);
+        }
+
+    }
+
+    useEffect(() => {
+
+        loadIndex();
+        
+    }, []);
+
+
 
     const currentSection = sections.find(s => s.id === activeSection);
 
@@ -66,7 +46,7 @@ export default function Page() {
                 </div>
                 <nav className="flex-1 overflow-y-auto p-2">
                     {sections.map((section) => {
-                        const Icon = section.icon;
+                        const Icon = ICONS[section.icon as keyof typeof ICONS];
                         const isActive = activeSection === section.id;
                         const isExpanded = expandedSection === section.id;
                         
@@ -84,7 +64,7 @@ export default function Page() {
                                     }`}
                                 >
                                     <div className="flex items-center gap-2">
-                                        <Icon className="w-4 h-4" />
+                                        {Icon && <Icon className="w-4 h-4" />}
                                         <span>{section.title}</span>
                                     </div>
                                     <ChevronRight 
@@ -94,7 +74,7 @@ export default function Page() {
                                 {isExpanded && (
                                     <div className="ml-6">
                                         <ul className="list-disc list-inside">
-                                                {section.content.items.map((item, index) => (
+                                                {section.content.items.map((item: any, index: number) => (
                                                 <li key={index} className="text-gray-600 text-sm py-1">
                                                     {item.title}
                                                 </li>
@@ -124,7 +104,7 @@ export default function Page() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                            {currentSection.content.items.map((item, index) => (
+                            {currentSection.content.items.map((item: any, index: number) => (
                                 <div
                                     key={index}
                                     className="p-6 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer bg-white"

@@ -1,1 +1,79 @@
-{}
+[
+    {
+      "id": "api-docs",
+      "title": "API Docs",
+      "icon": "BookOpen",
+      "content": {
+        "title": "API Documentation",
+        "description": "Complete API reference for all available endpoints and methods.",
+        "items": [
+          {
+            "title": "Space",
+            "description": "Reference for all available endpoints and methods in the Space API."
+          },
+          {
+            "title": "Plugin",
+            "description": "Reference for all available endpoints and methods in the Plugin API."
+          },
+          {
+            "title": "Capability",
+            "description": "Reference for all available endpoints and methods in the Capability API."
+          },
+          {
+            "title": "Event",
+            "description": "Reference for all available endpoints and methods in the Event API."
+          },
+          {
+            "title": "Auth ",
+            "description": "Reference for all available endpoints and methods in the Auth API."
+          },
+          {
+            "title": "User",
+            "description": "Reference for all available endpoints and methods in the User API."
+          }
+        ]
+      }
+    },
+    {
+      "id": "topics",
+      "title": "Topics",
+      "icon": "FileText",
+      "content": {
+        "title": "Documentation Topics",
+        "description": "Explore guides and tutorials on various topics.",
+        "items": [
+          {
+            "title": "Getting Started",
+            "description": "Introduction and quick start guide"
+          },
+          {
+            "title": "Core Concepts",
+            "description": "Understanding the fundamental concepts"
+          },
+          {
+            "title": "Best Practices",
+            "description": "Recommended patterns and practices"
+          },
+          {
+            "title": "Examples",
+            "description": "Real-world examples and use cases"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bindings-docs",
+      "title": "Bindings Docs",
+      "icon": "Code",
+      "content": {
+        "title": "Executors Bindings Documentation",
+        "description": "Documentation for executors bindings.",
+        "items": [
+          {
+            "title": "Luaz",
+            "description": "Luaz bindings for the Luaz executor."
+          }
+        ]
+      }
+    }
+  ]

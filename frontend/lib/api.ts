@@ -845,3 +845,13 @@ export const setMessageAsRead = async (id: number) => {
 export const setAllMessagesAsRead = async () => {
     return iaxios.post<{ message: string; read_head: number }>(`/core/user/messages/read-all`);
 }
+
+// docs api
+
+export const getDocsIndex = async () => {
+    return iaxios.get<any[]>(`/core/docs/docs_index.json`);
+}
+
+export const getDocsFile = async (filePath: string) => {
+    return iaxios.get<any>(`/core/docs/${filePath}`);
+}
