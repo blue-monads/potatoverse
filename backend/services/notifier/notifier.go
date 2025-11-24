@@ -18,16 +18,31 @@ type Notifier struct {
 	maxMsgId        int64
 
 	connIdCounter atomic.Int64
+
+	cleanConnChan chan int64
+}
+
+func (n *Notifier) run() {
+	for connId := range n.cleanConnChan {
+		room := n.getUserRoom(connId)
+		if room != nil {
+			room.performCleanupConn(connId)
+		}
+	}
 }
 
 // New creates a new Notifier instance
 func New(database datahub.UserOps) *Notifier {
-	return &Notifier{
+	n := &Notifier{
 		userConnections: make(map[int64]*UserRoom),
 		database:        database,
 		maxMsgId:        0,
 		connIdCounter:   atomic.Int64{},
 	}
+
+	go n.run()
+
+	return n
 }
 
 // getUserRoom gets or creates a UserRoom for a user

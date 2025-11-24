@@ -14,12 +14,12 @@ type Connection struct {
 	send             chan []byte
 	once             sync.Once
 	closedAndCleaned bool
+	userRoom         *UserRoom
 }
 
 func (c *Connection) writePump() {
 	defer func() {
-		c.conn.Close()
-		c.teardown()
+		c.userRoom.notifier.cleanConnChan <- c.connId
 	}()
 
 	errCount := 0
@@ -43,12 +43,12 @@ func (c *Connection) writePump() {
 
 func (c *Connection) teardown() {
 	c.once.Do(func() {
+		c.closedAndCleaned = true
 		if c.send != nil {
 			close(c.send)
 		}
 		if c.conn != nil {
 			c.conn.Close()
 		}
-		c.closedAndCleaned = true
 	})
 }
