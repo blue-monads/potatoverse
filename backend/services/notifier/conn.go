@@ -24,6 +24,10 @@ func (c *Connection) writePump() {
 
 	errCount := 0
 	for msg := range c.send {
+		if msg == nil {
+			return
+		}
+
 		if errCount > 10 {
 			return
 		}
@@ -45,7 +49,7 @@ func (c *Connection) teardown() {
 	c.once.Do(func() {
 		c.closedAndCleaned = true
 		if c.send != nil {
-			close(c.send)
+			c.send <- nil
 		}
 		if c.conn != nil {
 			c.conn.Close()
