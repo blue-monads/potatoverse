@@ -72,3 +72,5 @@ List gradients.
 
 **Response:** Array of gradient objects
 
+
+

@@ -35,3 +35,5 @@ Accept invite and create account.
 - `message` (string) - Success message
 - `user` (object) - Created user
 
+
+

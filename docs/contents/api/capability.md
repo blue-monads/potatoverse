@@ -6,3 +6,5 @@ List capability types.
 
 **Response:** Array of capability type definitions
 
+
+
