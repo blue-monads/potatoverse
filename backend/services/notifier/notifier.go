@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
@@ -86,25 +87,7 @@ func (n *Notifier) AddUserConnection(userId int64, groupName string, conn net.Co
 		return 0, errors.New("failed to get or create user room")
 	}
 
-	connection := &Connection{
-		connId:           connId,
-		conn:             conn,
-		send:             make(chan []byte, 16),
-		closedAndCleaned: false,
-	}
-
-	room.mu.Lock()
-	existingConn := room.connections[connId]
-	room.connections[connId] = connection
-	room.mu.Unlock()
-
-	go connection.writePump()
-
-	if existingConn != nil {
-		existingConn.teardown()
-	}
-
-	return connId, nil
+	return room.AddUserConnection(connId, conn)
 }
 
 func (n *Notifier) RemoveUserConnection(userId int64, connId int64) error {
@@ -113,58 +96,31 @@ func (n *Notifier) RemoveUserConnection(userId int64, connId int64) error {
 		return nil
 	}
 
-	room.mu.Lock()
-	conn, exists := room.connections[connId]
-	if exists {
-		delete(room.connections, connId)
-	}
-	room.mu.Unlock()
+	return room.RemoveUserConnection(connId)
 
-	if exists {
-		conn.teardown()
-	}
-
-	// Clean up empty rooms
-	room.mu.RLock()
-	isEmpty := len(room.connections) == 0
-	room.mu.RUnlock()
-
-	if isEmpty {
-		n.mu.Lock()
-		delete(n.userConnections, userId)
-		n.mu.Unlock()
-	}
-
-	return nil
 }
 
-func (n *Notifier) SendUser(userId int64, message string) error {
+func (n *Notifier) SendUserMessage(userId int64, msg *dbmodels.UserMessage) error {
+
 	room := n.getUserRoom(userId)
 	if room == nil {
 		return nil // User has no connections
 	}
 
-	messageBytes := []byte(message)
-	room.mu.RLock()
-	connections := make([]*Connection, 0, len(room.connections))
-	for _, conn := range room.connections {
-		connections = append(connections, conn)
-	}
-	room.mu.RUnlock()
+	return room.SendUserMessage(msg)
 
-	for _, conn := range connections {
-		select {
-		case conn.send <- messageBytes:
-		case <-time.After(time.Second * 5):
-			qq.Println("@SendUser/timeout", conn.connId)
-		}
-	}
-
-	return nil
 }
 
-func (n *Notifier) BroadcastGroup(groupName string, message string) error {
-	messageBytes := []byte(message)
+func (n *Notifier) SendUser(userId int64, message []byte) error {
+	room := n.getUserRoom(userId)
+	if room == nil {
+		return nil // User has no connections
+	}
+
+	return room.SendUser(message)
+}
+
+func (n *Notifier) BroadcastGroup(groupName string, message []byte) error {
 
 	n.mu.RLock()
 	rooms := make([]*UserRoom, 0)
@@ -185,7 +141,7 @@ func (n *Notifier) BroadcastGroup(groupName string, message string) error {
 
 		for _, conn := range connections {
 			select {
-			case conn.send <- messageBytes:
+			case conn.send <- message:
 			case <-time.After(time.Second * 5):
 				qq.Println("@BroadcastGroup/timeout", conn.connId)
 			}
@@ -195,8 +151,7 @@ func (n *Notifier) BroadcastGroup(groupName string, message string) error {
 	return nil
 }
 
-func (n *Notifier) BroadcastAll(message string) error {
-	messageBytes := []byte(message)
+func (n *Notifier) BroadcastAll(message []byte) error {
 
 	n.mu.RLock()
 	rooms := make([]*UserRoom, 0, len(n.userConnections))
@@ -215,7 +170,7 @@ func (n *Notifier) BroadcastAll(message string) error {
 
 		for _, conn := range connections {
 			select {
-			case conn.send <- messageBytes:
+			case conn.send <- message:
 			case <-time.After(time.Second * 5):
 				qq.Println("@BroadcastAll/timeout", conn.connId)
 			}

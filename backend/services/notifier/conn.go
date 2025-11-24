@@ -6,6 +6,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/tidwall/gjson"
 )
 
 type Connection struct {
@@ -28,8 +29,9 @@ func (c *Connection) writePump() {
 			return
 		}
 
-		if errCount > 10 {
-			return
+		id := gjson.GetBytes(msg, "id").Int()
+		if id > c.userRoom.maxMsgId {
+			c.userRoom.maxMsgId = id
 		}
 
 		err := wsutil.WriteServerText(c.conn, msg)
