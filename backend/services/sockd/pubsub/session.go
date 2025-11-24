@@ -34,6 +34,10 @@ func (s *session) writePump() {
 
 	for msg := range s.send {
 
+		if msg == nil {
+			return
+		}
+
 		if errCount > 10 {
 			s.room.disconnect <- s.connId
 			return
@@ -52,13 +56,19 @@ func (s *session) writePump() {
 
 		}
 
+		if s.closedAndCleaned {
+			return
+		}
+
 		errCount = 0
 	}
 }
 
 func (s *session) teardown() {
 	s.once.Do(func() {
-		close(s.send)
+
+		s.send <- nil
+
 		s.conn.Close()
 		s.closedAndCleaned = true
 	})

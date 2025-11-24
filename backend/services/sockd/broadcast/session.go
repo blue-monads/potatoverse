@@ -37,6 +37,10 @@ func (s *session) writePump() {
 	errCount := 0
 
 	for msg := range s.send {
+		if msg == nil {
+			return
+		}
+
 		err := wsutil.WriteServerText(s.conn, msg)
 		if err != nil {
 
@@ -52,6 +56,11 @@ func (s *session) writePump() {
 
 		}
 		errCount = 0
+
+		if s.closedAndCleaned {
+			return
+		}
+
 	}
 }
 
@@ -116,8 +125,11 @@ func (s *session) readPump() {
 
 func (s *session) teardown() {
 	s.once.Do(func() {
-		close(s.send)
-		s.conn.Close()
+
+		s.send <- nil
 		s.closedAndCleaned = true
+
+		s.conn.Close()
+
 	})
 }

@@ -54,10 +54,6 @@ func (r *Room) AddConn(userId int64, conn net.Conn, connId int64) (int64, error)
 
 func (r *Room) RemoveConn(userId int64, connId int64) error {
 
-	// We simply push to the disconnect channel.
-	// The event loop (run) handles the actual locking and map deletion.
-	// This keeps logic centralized and prevents race conditions between
-	// manual removal and network-error removal.
 	select {
 	case r.disconnect <- connId:
 		// Signal sent
