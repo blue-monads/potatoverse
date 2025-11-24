@@ -1,6 +1,6 @@
 
 
-const KEY = "_tnx_login_info_";
+const KEY = "_potato_login_info_";
 
 
 export const saveLoginData = (accessToken: string, userInfo: any) => {
