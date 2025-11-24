@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
@@ -15,7 +14,6 @@ import (
 type Notifier struct {
 	userConnections map[int64]*UserRoom
 	mu              sync.RWMutex
-	database        datahub.UserOps
 	maxMsgId        int64
 
 	connIdCounter atomic.Int64
@@ -23,7 +21,7 @@ type Notifier struct {
 	cleanConnChan chan int64
 }
 
-func (n *Notifier) run() {
+func (n *Notifier) Run() {
 	for connId := range n.cleanConnChan {
 		room := n.getUserRoom(connId)
 		if room != nil {
@@ -33,17 +31,13 @@ func (n *Notifier) run() {
 }
 
 // New creates a new Notifier instance
-func New(database datahub.UserOps) *Notifier {
-	n := &Notifier{
+func New() Notifier {
+
+	return Notifier{
 		userConnections: make(map[int64]*UserRoom),
-		database:        database,
 		maxMsgId:        0,
 		connIdCounter:   atomic.Int64{},
 	}
-
-	go n.run()
-
-	return n
 }
 
 // getUserRoom gets or creates a UserRoom for a user
