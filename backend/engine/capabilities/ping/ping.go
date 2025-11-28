@@ -145,7 +145,7 @@ func (p *PingCapability) ListActions() ([]string, error) {
 	return []string{"ping"}, nil
 }
 
-func (p *PingCapability) Execute(name string, params xtypes.LazyData) (map[string]any, error) {
+func (p *PingCapability) Execute(name string, params xtypes.LazyData) (any, error) {
 	if name == "ping" {
 		return map[string]any{
 			"result":   "pong",

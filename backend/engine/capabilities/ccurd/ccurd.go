@@ -236,7 +236,7 @@ func (p *CcurdCapability) ListActions() ([]string, error) {
 	return []string{"loaded_methods"}, nil
 }
 
-func (p *CcurdCapability) Execute(name string, params xtypes.LazyData) (map[string]any, error) {
+func (p *CcurdCapability) Execute(name string, params xtypes.LazyData) (any, error) {
 
 	switch name {
 	case "loaded_methods":

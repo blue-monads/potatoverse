@@ -82,7 +82,7 @@ func (c *ChighsockCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *ChighsockCapability) Execute(name string, params xtypes.LazyData) (map[string]any, error) {
+func (c *ChighsockCapability) Execute(name string, params xtypes.LazyData) (any, error) {
 	switch name {
 	case "broadcast":
 		return c.executeBroadcast(params)
@@ -99,7 +99,7 @@ func (c *ChighsockCapability) Execute(name string, params xtypes.LazyData) (map[
 	}
 }
 
-func (c *ChighsockCapability) executeBroadcast(params xtypes.LazyData) (map[string]any, error) {
+func (c *ChighsockCapability) executeBroadcast(params xtypes.LazyData) (any, error) {
 	message, err := params.AsBytes()
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ type PublishParams struct {
 	Message json.RawMessage `json:"message"`
 }
 
-func (c *ChighsockCapability) executePublish(params xtypes.LazyData) (map[string]any, error) {
+func (c *ChighsockCapability) executePublish(params xtypes.LazyData) (any, error) {
 	var p PublishParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ type DirectMessageParams struct {
 	Message      json.RawMessage `json:"message"`
 }
 
-func (c *ChighsockCapability) executeDirectMessage(params xtypes.LazyData) (map[string]any, error) {
+func (c *ChighsockCapability) executeDirectMessage(params xtypes.LazyData) (any, error) {
 	var p DirectMessageParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ type SubscribeParams struct {
 	ConnId int64  `json:"conn_id"`
 }
 
-func (c *ChighsockCapability) executeSubscribe(params xtypes.LazyData) (map[string]any, error) {
+func (c *ChighsockCapability) executeSubscribe(params xtypes.LazyData) (any, error) {
 	var p SubscribeParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
@@ -199,7 +199,7 @@ type UnsubscribeParams struct {
 	ConnId int64  `json:"conn_id"`
 }
 
-func (c *ChighsockCapability) executeUnsubscribe(params xtypes.LazyData) (map[string]any, error) {
+func (c *ChighsockCapability) executeUnsubscribe(params xtypes.LazyData) (any, error) {
 	var p UnsubscribeParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err

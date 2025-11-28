@@ -42,7 +42,7 @@ func (m *mockCapabilityHub) List(spaceId int64) ([]string, error) {
 	return []string{"test_capability"}, nil
 }
 
-func (m *mockCapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
+func (m *mockCapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (any, error) {
 	return map[string]any{"result": "ok"}, nil
 }
 

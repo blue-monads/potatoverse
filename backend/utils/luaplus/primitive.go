@@ -73,7 +73,9 @@ func GoTypeToLuaType(l *lua.LState, goValue any) lua.LValue {
 	case []any:
 		return arrayToTable(l, v)
 	case map[string]any:
-		return mapToTable(l, v)
+		return MapToTable(l, v)
+	case map[any]any:
+		panic("map[any]any not implemented")
 	default:
 		// For other types, try to convert to string
 		return lua.LString(fmt.Sprintf("%v", v))
@@ -148,17 +150,6 @@ func arrayToTable(l *lua.LState, arr []any) *lua.LTable {
 
 	for i, value := range arr {
 		table.RawSetInt(i+1, GoTypeToLuaType(l, value)) // Lua arrays are 1-indexed
-	}
-
-	return table
-}
-
-// Convert Go map to Lua table
-func mapToTable(l *lua.LState, m map[string]any) *lua.LTable {
-	table := l.NewTable()
-
-	for key, value := range m {
-		table.RawSetString(key, GoTypeToLuaType(l, value))
 	}
 
 	return table

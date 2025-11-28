@@ -122,7 +122,7 @@ func (gh *CapabilityHub) Methods(installId, spaceId int64, gname string) ([]stri
 	return gs.ListActions()
 }
 
-func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (map[string]any, error) {
+func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (any, error) {
 	gs, err := gh.get(gname, installId, spaceId)
 	if err != nil {
 		return nil, err

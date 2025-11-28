@@ -96,7 +96,7 @@ func capExecute(mod *luaCapModule, L *lua.LState) int {
 	if err != nil {
 		return pushError(L, err)
 	}
-	resultTable := luaplus.MapToTable(L, result)
+	resultTable := luaplus.GoTypeToLuaType(L, result)
 	L.Push(resultTable)
 	return 1
 }
