@@ -28,6 +28,8 @@ func GetPackageManifest(zipFile string) ([]byte, error) {
 				return data, nil
 			}
 
+			return data, nil
+
 		}
 	}
 
