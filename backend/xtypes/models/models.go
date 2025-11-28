@@ -38,7 +38,6 @@ type PotatoArtifact struct {
 	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
 	McpOptions      PotatoMcpOptions   `json:"mcp_options" toml:"mcp_options"`
 	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
-	DevOptions      PotatoDevOptions   `json:"dev_options" toml:"dev_options"`
 }
 
 type PotatoRouteOptions struct {
