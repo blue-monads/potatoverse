@@ -16,8 +16,8 @@
     "update_page": "update_1.html",
     "artifacts": [
         {
-            "namespace": "auth-example",
             "kind": "space",
+            "namespace": "auth-example",
             "executor_type": "luaz",
             "server_file": "server.lua",
             "route_options": {
@@ -28,7 +28,19 @@
             "mcp_options": {
                 "enabled": false
             }
+        },
+
+        {
+            "kind": "capability",
+            "name": "ping",
+            "type": "ping",
+            "options": {
+                "message": "Hello, world!",
+                "add_random_number": true
+            }
         }
+
+
     ],
 
     "developer": {
