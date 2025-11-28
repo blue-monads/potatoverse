@@ -13,8 +13,10 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
+	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/bwmarrin/snowflake"
+	"github.com/tidwall/gjson"
 )
 
 var (
@@ -176,7 +178,13 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return nil, err
 	}
 
-	pkg, err := xutils.ReadPackageManifestFromZip(file)
+	rawPkg, err := xutils.GetPackageManifest(file)
+	if err != nil {
+		return nil, err
+	}
+
+	pkg := &models.PotatoPackage{}
+	err = json.Unmarshal(rawPkg, pkg)
 	if err != nil {
 		return nil, err
 	}
@@ -184,22 +192,71 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	rootSpaceId := int64(0)
 	keySpace := pkg.Slug
 
-	for _, artifact := range pkg.Artifacts {
-		if artifact.Kind != "space" {
-			logger.Info("artifact is not a space", "artifact", artifact)
+	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
+
+	spaceMap := make(map[string]int64)
+
+	for index, artifact := range artifacts {
+		kind := &pkg.Artifacts[index]
+
+		if kind.Kind != "space" {
 			continue
 		}
 
-		spaceId, err := installArtifact(database, userId, installedId, artifact)
+		space := models.ArtifactSpace{}
+		err = json.Unmarshal(kosher.Byte(artifact.Raw), &space)
 		if err != nil {
 			return nil, err
 		}
 
-		if pkg.Slug == artifact.Namespace {
+		spaceId, err := installArtifact(database, userId, installedId, space)
+		if err != nil {
+			return nil, err
+		}
+
+		if pkg.Slug == space.Namespace {
 			rootSpaceId = spaceId
 		}
 
 		logger.Info("space installed", "space_id", spaceId)
+
+	}
+
+	for index, artifact := range artifacts {
+		kind := &pkg.Artifacts[index]
+
+		switch kind.Kind {
+		case "capability":
+
+			capability := models.ArtifactCapability{}
+			err = json.Unmarshal(kosher.Byte(artifact.Raw), &capability)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(capability.Spaces) != 0 {
+				for _, space := range capability.Spaces {
+					spaceId, ok := spaceMap[space]
+					if !ok {
+						return nil, errors.New("space not found")
+					}
+
+					err = installCapability(database, userId, installedId, spaceId, capability)
+					if err != nil {
+						return nil, err
+					}
+				}
+			} else {
+				err = installCapability(database, userId, installedId, 0, capability)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+		default:
+			logger.Info("artifact is not a space", "artifact", artifact)
+			continue
+		}
 
 	}
 
@@ -211,7 +268,21 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	}, nil
 }
 
-func installArtifact(database datahub.Database, userId, installedId int64, artifact models.PotatoArtifact) (int64, error) {
+func installCapability(database datahub.Database, userId, installedId, spaceId int64, capability models.ArtifactCapability) error {
+
+	spaceOps := database.GetSpaceOps()
+
+	return spaceOps.AddSpaceCapability(installedId, &dbmodels.SpaceCapability{
+		InstallID:      installedId,
+		Name:           capability.Name,
+		CapabilityType: capability.Type,
+		Options:        capability.Options,
+		SpaceID:        spaceId,
+		ExtraMeta:      "{}",
+	})
+}
+
+func installArtifact(database datahub.Database, userId, installedId int64, artifact models.ArtifactSpace) (int64, error) {
 	routeOptions, err := json.Marshal(artifact.RouteOptions)
 	if err != nil {
 		return 0, err
@@ -246,7 +317,13 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return 0, err
 	}
 
-	pkg, err := xutils.ReadPackageManifestFromZip(file)
+	rawPkg, err := xutils.GetPackageManifest(file)
+	if err != nil {
+		return 0, err
+	}
+
+	pkg := &models.PotatoPackage{}
+	err = json.Unmarshal(rawPkg, pkg)
 	if err != nil {
 		return 0, err
 	}
@@ -256,22 +333,32 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return 0, err
 	}
 
-	for _, artifact := range pkg.Artifacts {
-		if artifact.Kind != "space" {
+	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
+
+	for index, artifact := range artifacts {
+		kind := &pkg.Artifacts[index]
+
+		if kind.Kind != "space" {
 			continue
 		}
 
 		currentArtifactIndex := -1
 
+		space := models.ArtifactSpace{}
+		err = json.Unmarshal(kosher.Byte(artifact.Raw), &space)
+		if err != nil {
+			return 0, err
+		}
+
 		for i, oldSpace := range oldSpaces {
-			if oldSpace.NamespaceKey == artifact.Namespace {
+			if oldSpace.NamespaceKey == space.Namespace {
 				currentArtifactIndex = i
 				break
 			}
 		}
 
 		if currentArtifactIndex == -1 {
-			spaceId, err := installArtifact(c.database, userId, installedId, artifact)
+			spaceId, err := installArtifact(c.database, userId, installedId, space)
 			if err != nil {
 				return 0, err
 			}
@@ -283,24 +370,24 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 
 			if recreateArtifacts {
 
-				routeOptions, err := json.Marshal(artifact.RouteOptions)
+				routeOptions, err := json.Marshal(space.RouteOptions)
 				if err != nil {
 					return 0, err
 				}
 
-				mcpOptions, err := json.Marshal(artifact.McpOptions)
+				mcpOptions, err := json.Marshal(space.McpOptions)
 				if err != nil {
 					return 0, err
 				}
 
 				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
-					"namespace_key":       artifact.Namespace,
-					"executor_type":       artifact.ExecutorType,
-					"executor_sub_type":   artifact.ExecutorSubType,
+					"namespace_key":       space.Namespace,
+					"executor_type":       space.ExecutorType,
+					"executor_sub_type":   space.ExecutorSubType,
 					"space_type":          "App",
 					"route_options":       string(routeOptions),
-					"mcp_enabled":         artifact.McpOptions.Enabled,
-					"mcp_definition_file": artifact.McpOptions.DefinitionFile,
+					"mcp_enabled":         space.McpOptions.Enabled,
+					"mcp_definition_file": space.McpOptions.DefinitionFile,
 					"mcp_options":         string(mcpOptions),
 				})
 

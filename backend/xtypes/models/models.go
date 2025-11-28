@@ -30,6 +30,18 @@ type DeveloperOptions struct {
 }
 
 type PotatoArtifact struct {
+	Kind string `json:"kind" toml:"kind"`
+}
+
+type ArtifactCapability struct {
+	Kind    string   `json:"kind" toml:"kind"`
+	Name    string   `json:"name" toml:"name"`
+	Type    string   `json:"type" toml:"type"`
+	Options string   `json:"options" toml:"options"`
+	Spaces  []string `json:"spaces" toml:"spaces"`
+}
+
+type ArtifactSpace struct {
 	Namespace       string             `json:"namespace" toml:"namespace"`
 	Kind            string             `json:"kind" toml:"kind"`
 	ExecutorType    string             `json:"executor_type" toml:"executor_type"`
