@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, Plus, Edit, Trash2, Package, Layers, Settings, Eye } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState } from 'react';
+import { Filter, Edit, Trash2, Package, Layers, Settings } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
@@ -9,14 +9,14 @@ import { useGApp } from '@/hooks';
 import { 
     listSpaceCapabilities, 
     SpaceCapability, 
-    createSpaceCapability, 
     updateSpaceCapability, 
     deleteSpaceCapability,
     listCapabilityTypes,
-    CapabilityDefinition,
-    CapabilityOptionField
+    CapabilityDefinition
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
+import { CapabilityOptionsSection } from '@/contain/compo/CapabilityOptionsSection';
+import { buildCapabilityOptions } from '@/contain/compo/capabilityUtils';
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -38,7 +38,7 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
     const [selectedType, setSelectedType] = useState('');
     const [selectedScope, setSelectedScope] = useState<'all' | 'package' | 'space'>('all');
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const router = useRouter();
     const gapp = useGApp();
 
     const loader = useSimpleDataLoader<SpaceCapability[]>({
@@ -78,21 +78,11 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
     // Get unique capability types for filter dropdown
     const uniqueTypes = Array.from(new Set(loader.data?.map(cap => cap.capability_type) || []));
 
-    const handleCreate = async (data: {
-        name: string;
-        capability_type: string;
-        space_id?: number;
-        options?: any;
-        extrameta?: any;
-    }) => {
-        try {
-            await createSpaceCapability(installId, data);
-            loader.reload();
-            setIsCreateModalOpen(false);
-        } catch (error) {
-            console.error('Failed to create capability:', error);
-            alert('Failed to create capability: ' + (error as any)?.response?.data?.error || (error as any)?.message);
-        }
+    const handleCreateClick = () => {
+        const params = new URLSearchParams();
+        params.set('install_id', installId.toString());
+        if (spaceId) params.set('space_id', spaceId.toString());
+        router.push(`/portal/admin/spaces/tools/capabilities/create?${params.toString()}`);
     };
 
     const handleUpdate = async (id: number, data: {
@@ -133,7 +123,7 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
             rightContent={
                 <AddButton
                     name="+ Add Capability"
-                    onClick={() => setIsCreateModalOpen(true)}
+                    onClick={handleCreateClick}
                 />
             }
         >
@@ -225,16 +215,6 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
                     </div>
                 </div>
             </div>
-
-            {/* Create Modal */}
-            {isCreateModalOpen && (
-                <CapabilityFormModal
-                    capabilityTypes={capabilityTypesLoader.data || []}
-                    defaultSpaceId={spaceId || 0}
-                    onSave={handleCreate}
-                    onCancel={() => setIsCreateModalOpen(false)}
-                />
-            )}
         </WithAdminBodyLayout>
     );
 };
@@ -337,144 +317,6 @@ const CapabilityRow = ({
     );
 };
 
-const CapabilityFormModal = ({
-    capabilityTypes,
-    defaultSpaceId,
-    onSave,
-    onCancel
-}: {
-    capabilityTypes: CapabilityDefinition[];
-    defaultSpaceId: number;
-    onSave: (data: any) => void;
-    onCancel: () => void;
-}) => {
-    const [selectedType, setSelectedType] = useState('');
-    const [name, setName] = useState('');
-    const [spaceId, setSpaceId] = useState(defaultSpaceId);
-    const [formData, setFormData] = useState<Record<string, any>>({});
-
-    const definition = capabilityTypes.find(t => t.name === selectedType);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name || !selectedType) {
-            alert('Name and type are required');
-            return;
-        }
-
-        const options: Record<string, any> = {};
-        if (definition) {
-            definition.option_fields.forEach(field => {
-                if (formData[field.key] !== undefined) {
-                    options[field.key] = formData[field.key];
-                } else if (field.default) {
-                    options[field.key] = field.default;
-                }
-            });
-        }
-
-        onSave({
-            name,
-            capability_type: selectedType,
-            space_id: spaceId,
-            options: Object.keys(options).length > 0 ? options : undefined,
-        });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <h2 className="text-xl font-bold mb-4">Create Capability</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Capability Type *
-                        </label>
-                        <select
-                            value={selectedType}
-                            onChange={(e) => {
-                                setSelectedType(e.target.value);
-                                setFormData({});
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                            required
-                        >
-                            <option value="">Select a type...</option>
-                            {capabilityTypes.map(type => (
-                                <option key={type.name} value={type.name}>
-                                    {type.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Scope
-                        </label>
-                        <select
-                            value={spaceId}
-                            onChange={(e) => setSpaceId(parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        >
-                            <option value={0}>Package Level (root)</option>
-                            {defaultSpaceId > 0 && <option value={defaultSpaceId}>This Space (#{defaultSpaceId})</option>}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Package level applies to all spaces. Space level applies only to a specific space.
-                        </p>
-                    </div>
-
-                    {definition && definition.option_fields.length > 0 && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Configuration Options
-                            </label>
-                            <div className="space-y-3 border border-gray-200 rounded-lg p-4">
-                                {definition.option_fields.map(field => (
-                                    <CapabilityOptionFieldInput
-                                        key={field.key}
-                                        field={field}
-                                        value={formData[field.key] !== undefined ? formData[field.key] : field.default}
-                                        onChange={(value) => setFormData({ ...formData, [field.key]: value })}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="flex justify-end gap-2 pt-4">
-                        <button
-                            type="button"
-                            onClick={onCancel}
-                            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                            Create
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
 const CapabilityEditForm = ({
     capability,
     definition,
@@ -504,20 +346,13 @@ const CapabilityEditForm = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
-        const options: Record<string, any> = {};
-        if (currentDefinition) {
-            currentDefinition.option_fields.forEach(field => {
-                if (formData[field.key] !== undefined) {
-                    options[field.key] = formData[field.key];
-                }
-            });
-        }
+        const options = buildCapabilityOptions(currentDefinition, formData, false);
 
         onSave({
             name,
             capability_type: capabilityType,
             space_id: spaceId,
-            options: Object.keys(options).length > 0 ? options : undefined,
+            options,
         });
     };
 
@@ -571,22 +406,13 @@ const CapabilityEditForm = ({
                 </select>
             </div>
 
-            {currentDefinition && currentDefinition.option_fields.length > 0 && (
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Configuration Options
-                    </label>
-                    <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-white">
-                        {currentDefinition.option_fields.map(field => (
-                            <CapabilityOptionFieldInput
-                                key={field.key}
-                                field={field}
-                                value={formData[field.key] !== undefined ? formData[field.key] : field.default}
-                                onChange={(value) => setFormData({ ...formData, [field.key]: value })}
-                            />
-                        ))}
-                    </div>
-                </div>
+            {currentDefinition && (
+                <CapabilityOptionsSection
+                    definition={currentDefinition}
+                    formData={formData}
+                    onFieldChange={(key, value) => setFormData({ ...formData, [key]: value })}
+                    className="bg-white"
+                />
             )}
 
             <div className="flex justify-end gap-2">
@@ -608,75 +434,3 @@ const CapabilityEditForm = ({
     );
 };
 
-const CapabilityOptionFieldInput = ({
-    field,
-    value,
-    onChange
-}: {
-    field: CapabilityOptionField;
-    value: any;
-    onChange: (value: any) => void;
-}) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        let newValue: any = e.target.value;
-        
-        if (field.type === 'number') {
-            newValue = parseFloat(newValue) || 0;
-        } else if (field.type === 'boolean') {
-            newValue = (e.target as HTMLInputElement).checked;
-        }
-
-        onChange(newValue);
-    };
-
-    return (
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-                {field.name}
-                {field.required && <span className="text-red-500">*</span>}
-            </label>
-            {field.description && (
-                <p className="text-xs text-gray-500 mb-1">{field.description}</p>
-            )}
-            {field.type === 'textarea' ? (
-                <textarea
-                    value={value || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required={field.required}
-                    rows={3}
-                />
-            ) : field.type === 'select' ? (
-                <select
-                    value={value || field.default || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required={field.required}
-                >
-                    {field.options.map(opt => (
-                        <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                </select>
-            ) : field.type === 'boolean' ? (
-                <label className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        checked={value || false}
-                        onChange={handleChange}
-                        className="w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-700">Enabled</span>
-                </label>
-            ) : (
-                <input
-                    type={field.type === 'api_key' ? 'password' : field.type === 'number' ? 'number' : 'text'}
-                    value={value || ''}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required={field.required}
-                    placeholder={field.default}
-                />
-            )}
-        </div>
-    );
-};

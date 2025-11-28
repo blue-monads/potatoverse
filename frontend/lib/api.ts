@@ -197,8 +197,16 @@ export const updateSelfBio = async (bio: string) => {
 }
 
 
+export interface InstallPackageResult {
+    installed_id: number;
+    root_space_id: number;
+    key_space: string;
+    init_page: string;
+}
+
+
 export const installPackage = async (url: string) => {
-    return iaxios.post<{ package_id: number }>(`/core/package/install`, { url });
+    return iaxios.post<InstallPackageResult>(`/core/package/install`, { url });
 }
 
 export const installPackageZip = async (zip: ArrayBuffer) => {
@@ -210,7 +218,7 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
 }
 
 export const installPackageEmbed = async (name: string, repoSlug?: string) => {
-    return iaxios.post<{ package_id: number }>(`/core/package/install/embed`, { 
+    return iaxios.post<InstallPackageResult>(`/core/package/install/embed`, { 
         name,
         repo_slug: repoSlug
     });
@@ -340,6 +348,19 @@ export interface SpaceInfo {
 export const getSpaceInfo = async (space_key: string, host_name: string) => {
     const encodedParams = encodeURIComponent(host_name);
     return iaxios.get<SpaceInfo>(`/core/engine/space_info/${space_key}?host_name=${encodedParams.toString()}`);
+}
+
+export interface DeriveHostResponse {
+    host: string;
+    space_id: number;
+}
+
+export const deriveHost = async (nskey: string, spaceId?: string) => {
+    const hostname = window.location.hostname;
+
+    return iaxios.get<DeriveHostResponse>(
+        `/core/engine/derivehost/${nskey}?host_name=${hostname}&space_id=${spaceId}`
+    );
 }
 
 
@@ -565,7 +586,7 @@ export interface CapabilityOptionField {
     description: string;
     type: string; // text, number, date, api_key, boolean, select, multi_select, textarea
     default: string;
-    options: string[];
+    options?: string[] | null;
     required: boolean;
 }
 
@@ -671,11 +692,15 @@ export interface EventSubscription {
     space_id: number;
     event_key: string;
     target_type: string; // push, email, sms, webhook, script
+    target_space_id: number;
     target_endpoint: string;
     target_options: string; // JSON string
     target_code: string;
     rules: string; // JSON string
     transform: string; // JSON string
+    delay_start: number;
+    retry_delay: number;
+    max_retries: number;
     extrameta: string; // JSON string
     created_by: number;
     disabled: boolean;
@@ -703,8 +728,12 @@ export const createEventSubscription = async (installId: number, data: {
     target_endpoint?: string;
     target_options?: any; // Will be JSON stringified
     target_code?: string;
+    target_space_id?: number;
     rules?: any; // Will be JSON stringified
     transform?: any; // Will be JSON stringified
+    delay_start?: number;
+    retry_delay?: number;
+    max_retries?: number;
     extrameta?: any; // Will be JSON stringified
     disabled?: boolean;
 }) => {
@@ -716,8 +745,12 @@ export const createEventSubscription = async (installId: number, data: {
         ...(data.target_endpoint && { target_endpoint: data.target_endpoint }),
         ...(data.target_options && { target_options: typeof data.target_options === 'string' ? data.target_options : JSON.stringify(data.target_options) }),
         ...(data.target_code && { target_code: data.target_code }),
+        ...(data.target_space_id !== undefined && { target_space_id: data.target_space_id }),
         ...(data.rules && { rules: typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules) }),
         ...(data.transform && { transform: typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform) }),
+        ...(data.delay_start !== undefined && { delay_start: data.delay_start }),
+        ...(data.retry_delay !== undefined && { retry_delay: data.retry_delay }),
+        ...(data.max_retries !== undefined && { max_retries: data.max_retries }),
         ...(data.extrameta && { extrameta: typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta) }),
         ...(data.disabled !== undefined && { disabled: data.disabled }),
     };
@@ -736,6 +769,9 @@ export const updateEventSubscription = async (installId: number, subscriptionId:
     if (data.target_code !== undefined) payload.target_code = data.target_code;
     if (data.rules !== undefined) payload.rules = typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules);
     if (data.transform !== undefined) payload.transform = typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform);
+    if (data.delay_start !== undefined) payload.delay_start = data.delay_start;
+    if (data.retry_delay !== undefined) payload.retry_delay = data.retry_delay;
+    if (data.max_retries !== undefined) payload.max_retries = data.max_retries;
     if (data.extrameta !== undefined) payload.extrameta = typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta);
     if (data.disabled !== undefined) payload.disabled = data.disabled;
     
@@ -811,4 +847,14 @@ export const setMessageAsRead = async (id: number) => {
 
 export const setAllMessagesAsRead = async () => {
     return iaxios.post<{ message: string; read_head: number }>(`/core/user/messages/read-all`);
+}
+
+// docs api
+
+export const getDocsIndex = async () => {
+    return iaxios.get<any[]>(`/core/docs/docs_index.json`);
+}
+
+export const getDocsFile = async (filePath: string) => {
+    return iaxios.get<any>(`/core/docs/${filePath}`);
 }

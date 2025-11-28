@@ -117,7 +117,7 @@ type TSpace struct {
 
 func (d *SpaceOperations) ListThirdPartySpaces(userId int64, spaceType string) ([]dbmodels.Space, error) {
 	cond := db.Cond{
-		"userId": userId,
+		"user_id": userId,
 	}
 
 	projs := make([]TSpace, 0)
@@ -141,8 +141,7 @@ func (d *SpaceOperations) ListThirdPartySpaces(userId int64, spaceType string) (
 	datas := make([]dbmodels.Space, 0, len(projs))
 
 	err = d.spaceTable().Find(db.Cond{
-		"userId": userId,
-		"id IN":  projIds,
+		"id IN": projIds,
 	}).All(&datas)
 
 	if err != nil {
@@ -346,9 +345,23 @@ func (d *SpaceOperations) RemoveSpaceUser(installId int64, id int64) error {
 
 // Event Subscriptions
 
-func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error) {
+func (d *SpaceOperations) QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.MQSubscriptionLite, error) {
 	table := d.eventSubscriptionTable()
-	datas := make([]dbmodels.EventSubscription, 0)
+	datas := make([]dbmodels.MQSubscriptionLite, 0)
+	cond := db.Cond{}
+	if !includeDisabled {
+		cond["disabled"] = false
+	}
+	err := table.Find(cond).All(&datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
+}
+
+func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error) {
+	table := d.eventSubscriptionTable()
+	datas := make([]dbmodels.MQSubscription, 0)
 
 	cond["install_id"] = installId
 
@@ -359,7 +372,7 @@ func (d *SpaceOperations) QueryEventSubscriptions(installId int64, cond map[any]
 	return datas, nil
 }
 
-func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error) {
+func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.MQSubscription) (int64, error) {
 	data.InstallID = installId
 	table := d.eventSubscriptionTable()
 	r, err := table.Insert(data)
@@ -369,9 +382,9 @@ func (d *SpaceOperations) AddEventSubscription(installId int64, data *dbmodels.E
 	return r.ID().(int64), nil
 }
 
-func (d *SpaceOperations) GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error) {
+func (d *SpaceOperations) GetEventSubscription(installId int64, id int64) (*dbmodels.MQSubscription, error) {
 	table := d.eventSubscriptionTable()
-	data := &dbmodels.EventSubscription{}
+	data := &dbmodels.MQSubscription{}
 	err := table.Find(db.Cond{"install_id": installId, "id": id}).One(data)
 	if err != nil {
 		return nil, err
@@ -390,5 +403,5 @@ func (d *SpaceOperations) RemoveEventSubscription(installId int64, id int64) err
 }
 
 func (d *SpaceOperations) eventSubscriptionTable() db.Collection {
-	return d.db.Collection("EventSubscriptions")
+	return d.db.Collection("MQSubscriptions")
 }

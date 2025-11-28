@@ -1,62 +1,23 @@
 package actions
 
 import (
-	"errors"
-
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 )
 
-func (c *Controller) CreateEventSubscription(installId int64, data map[string]any) (*dbmodels.EventSubscription, error) {
-	// Validate required fields
-	eventKey, ok := data["event_key"].(string)
-	if !ok || eventKey == "" {
-		return nil, errors.New("event_key is required")
-	}
+func (c *Controller) CreateEventSubscription(installId int64, data *dbmodels.MQSubscription) (*dbmodels.MQSubscription, error) {
 
-	targetType, ok := data["target_type"].(string)
-	if !ok || targetType == "" {
-		return nil, errors.New("target_type is required")
-	}
-
-	// Extract optional fields
-	spaceId, _ := data["space_id"].(float64)
-	if spaceId < 0 {
-		return nil, errors.New("space_id must be >= 0")
-	}
-
-	targetEndpoint, _ := data["target_endpoint"].(string)
-	targetOptions, _ := data["target_options"].(string)
-	targetCode, _ := data["target_code"].(string)
-	rules, _ := data["rules"].(string)
-	transform, _ := data["transform"].(string)
-	extrameta, _ := data["extrameta"].(string)
-	createdBy, _ := data["created_by"].(float64)
-	disabled, _ := data["disabled"].(bool)
-
-	eventSub := &dbmodels.EventSubscription{
-		SpaceID:        int64(spaceId),
-		EventKey:       eventKey,
-		TargetType:     targetType,
-		TargetEndpoint: targetEndpoint,
-		TargetOptions:  targetOptions,
-		TargetCode:     targetCode,
-		Rules:          rules,
-		Transform:      transform,
-		ExtraMeta:      extrameta,
-		CreatedBy:      int64(createdBy),
-		Disabled:       disabled,
-	}
-
-	id, err := c.database.GetSpaceOps().AddEventSubscription(installId, eventSub)
+	id, err := c.database.GetSpaceOps().AddEventSubscription(installId, data)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the created event subscription
+	c.engine.RefreshEventIndex()
+
 	return c.database.GetSpaceOps().GetEventSubscription(installId, id)
 }
 
-func (c *Controller) UpdateEventSubscriptionByID(installId int64, eventSubscriptionId int64, data map[string]any) (*dbmodels.EventSubscription, error) {
+func (c *Controller) UpdateEventSubscriptionByID(installId int64, eventSubscriptionId int64, data map[string]any) (*dbmodels.MQSubscription, error) {
 	// Verify the event subscription exists
 	_, err := c.GetEventSubscriptionByID(installId, eventSubscriptionId)
 	if err != nil {
@@ -74,15 +35,20 @@ func (c *Controller) UpdateEventSubscriptionByID(installId int64, eventSubscript
 }
 
 func (c *Controller) DeleteEventSubscriptionByID(installId int64, eventSubscriptionId int64) error {
-	return c.database.GetSpaceOps().RemoveEventSubscription(installId, eventSubscriptionId)
+	err := c.database.GetSpaceOps().RemoveEventSubscription(installId, eventSubscriptionId)
+	if err != nil {
+		return err
+	}
+
+	c.engine.RefreshEventIndex()
+
+	return nil
 }
 
-func (c *Controller) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error) {
+func (c *Controller) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error) {
 	return c.database.GetSpaceOps().QueryEventSubscriptions(installId, cond)
 }
 
-func (c *Controller) GetEventSubscriptionByID(installId int64, eventSubscriptionId int64) (*dbmodels.EventSubscription, error) {
+func (c *Controller) GetEventSubscriptionByID(installId int64, eventSubscriptionId int64) (*dbmodels.MQSubscription, error) {
 	return c.database.GetSpaceOps().GetEventSubscription(installId, eventSubscriptionId)
 }
-
-

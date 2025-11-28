@@ -16,4 +16,5 @@ type App interface {
 	Controller() any
 	Engine() any
 	Config() any
+	Sockd() any
 }

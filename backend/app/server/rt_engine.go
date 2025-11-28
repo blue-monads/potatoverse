@@ -12,6 +12,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/services/signer"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
@@ -27,12 +28,12 @@ func (a *Server) InstallPackage(claim *signer.AccessClaim, ctx *gin.Context) (an
 		return nil, err
 	}
 
-	packageId, err := a.ctrl.InstallPackageByUrl(claim.UserId, req.URL)
+	ipackage, err := a.ctrl.InstallPackageByUrl(claim.UserId, req.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"package_id": packageId}, nil
+	return ipackage, nil
 
 }
 
@@ -48,12 +49,12 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	if err != nil {
 		return nil, err
 	}
-	packageId, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
+	ipackage, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"package_id": packageId}, nil
+	return ipackage, nil
 }
 
 type InstallPackageEmbedRequest struct {
@@ -67,12 +68,12 @@ func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context
 		return nil, err
 	}
 
-	packageId, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
+	ipackage, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"package_id": packageId}, nil
+	return ipackage, nil
 }
 
 func (a *Server) ListEPackages(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
@@ -201,6 +202,33 @@ func (a *Server) handlePluginFile() func(ctx *gin.Context) {
 }
 
 func (a *Server) handlePluginApi(ctx *gin.Context) {}
+
+func (a *Server) handleDeriveHost(ctx *gin.Context) {
+	nskey := ctx.Param("nskey")
+	hostName := ctx.Query("host_name")
+	spaceIdStr := ctx.Query("space_id")
+	spaceId, _ := strconv.ParseInt(spaceIdStr, 10, 64)
+
+	if hostName == "" {
+		hostName = ctx.Request.Host
+	}
+
+	if spaceId == 0 {
+		spaceInfo, err := a.engine.SpaceInfo(nskey, hostName)
+		if err != nil {
+			httpx.WriteErr(ctx, err)
+			return
+		}
+		spaceId = spaceInfo.ID
+	}
+
+	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, a.opt.ServerKey)
+	httpx.WriteJSON(ctx, gin.H{
+		"host":     execHost,
+		"space_id": spaceId,
+	}, nil)
+
+}
 
 func (a *Server) handleSpaceInfo(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")

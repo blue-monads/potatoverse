@@ -1,7 +1,6 @@
 package backend
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"path"
@@ -13,13 +12,19 @@ import (
 	"github.com/blue-monads/turnix/backend/services/mailer/stdio"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
+
+	_ "github.com/blue-monads/turnix/backend/engine/executors"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	logger := slog.Default()
 
-	db, err := database.NewDB(fmt.Sprintf("%s/data.db", options.WorkingDir), logger)
+	maindbDir := path.Join(options.WorkingDir, "maindb")
+
+	os.MkdirAll(maindbDir, 0755)
+
+	db, err := database.NewDB(path.Join(maindbDir, "data.sqlite"), logger)
 	if err != nil {
 		logger.Error("Failed to initialize database", "err", err)
 		return nil, err
@@ -31,7 +36,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		options.Name = "PotatoVerse"
 	}
 
-	happ := app.NewHeadLess(app.Option{
+	happ := app.New(app.Option{
 		Database: db,
 		Logger:   logger,
 		Signer:   signer.New([]byte(options.MasterSecret)),
@@ -44,6 +49,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 			Name:         options.Name,
 			SocketFile:   options.SocketFile,
 			Mailer:       options.Mailer,
+			Repos:        options.Repos,
 		},
 		Mailer:            m,
 		WorkingFolderBase: options.WorkingDir,
@@ -96,7 +102,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	}
 
-	return app.NewApp(happ), nil
+	return happ, nil
 }
 
 func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
@@ -114,6 +120,21 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	if config.SocketFile == "" {
 		config.SocketFile = path.Join(config.WorkingDir, "./potatoverse.sock")
+	}
+
+	if len(config.Repos) == 0 {
+		config.Repos = []xtypes.RepoOptions{
+
+			{
+				Type: "embeded",
+				Slug: "Dev",
+			},
+			{
+				Slug: "Test",
+				URL:  "/zz/static/repo/repo.json",
+				Type: "http",
+			},
+		}
 	}
 
 	app, err := BuildApp(config, seedDB)

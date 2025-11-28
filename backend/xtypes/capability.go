@@ -1,39 +1,45 @@
 package xtypes
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/gin-gonic/gin"
+)
 
 type Capability interface {
-	Name() string
 	Handle(ctx *gin.Context)
 	ListActions() ([]string, error)
-	ExecuteAction(name string, params LazyData) (map[string]any, error)
+	Execute(name string, params LazyData) (any, error)
+	Reload(model *dbmodels.SpaceCapability) (Capability, error)
+	Close() error
 }
 
 type CapabilityBuilderFactory struct {
-	Builder      func(app App) (CapabilityBuilder, error)
 	Name         string
 	Icon         string
 	OptionFields []CapabilityOptionField
+
+	Builder func(app App) (CapabilityBuilder, error)
 }
 
 type CapabilityOptionField struct {
-	Name        string   `json:"name"`
-	Key         string   `json:"key"`
-	Description string   `json:"description"`
-	Type        string   `json:"type"` // text, number, date, api_key, boolean, select, multi_select, textarea
-	Default     string   `json:"default"`
-	Options     []string `json:"options"`
-	Required    bool     `json:"required"`
+	Name        string `json:"name"`
+	Key         string `json:"key"`
+	Description string `json:"description"`
+	// text, number, date, api_key, boolean, select, multi_select, textarea, object
+	Type     string   `json:"type"`
+	Default  string   `json:"default"`
+	Options  []string `json:"options"`
+	Required bool     `json:"required"`
 }
 
 type CapabilityBuilder interface {
-	Build(spaceId int64) (Capability, error)
+	Name() string
+	Build(model *dbmodels.SpaceCapability) (Capability, error)
 	Serve(ctx *gin.Context)
 }
 
 type CapabilityHub interface {
 	List(spaceId int64) ([]string, error)
-	GetMeta(spaceId int64, gname, method string) (map[string]any, error)
-	Execute(spaceId int64, gname, method string, params LazyData) (map[string]any, error)
-	Methods(spaceId int64, gname string) ([]string, error)
+	Execute(installId, spaceId int64, gname, method string, params LazyData) (any, error)
+	Methods(installId, spaceId int64, gname string) ([]string, error)
 }

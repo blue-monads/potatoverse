@@ -10,42 +10,46 @@ import (
 )
 
 const (
-	TokenTypeAccess             uint8 = 1
-	TokenTypeEmailInvite        uint8 = 2
-	TokenTypePair               uint8 = 3
-	TokenTypeSpace              uint8 = 4
-	TokenTypeSpaceAdvisiery     uint8 = 5
-	TokenTypeSpaceFilePresigned uint8 = 6
-	ToekenPackageDev            uint8 = 7
+	TokenTypeAccess             uint16 = 1
+	TokenTypeEmailInvite        uint16 = 2
+	TokenTypePair               uint16 = 3
+	TokenTypeSpace              uint16 = 4
+	TokenTypeSpaceAdvisiery     uint16 = 5
+	TokenTypeSpaceFilePresigned uint16 = 6
+	ToekenPackageDev            uint16 = 7
+	TokenTypeCapability         uint16 = 8
 )
 
 type AccessClaim struct {
-	Typeid    uint8          `json:"t,omitempty"`
+	Typeid    uint16         `json:"t,omitempty"`
 	UserId    int64          `json:"u,omitempty"`
 	Extrameta map[string]any `json:"e,omitempty"`
 }
 
 type InviteClaim struct {
-	Typeid   uint8 `json:"t,omitempty"`
-	InviteId int64 `json:"p,omitempty"`
+	Typeid   uint16 `json:"t,omitempty"`
+	InviteId int64  `json:"p,omitempty"`
 }
 
 type SpaceClaim struct {
-	Typeid  uint8 `json:"t,omitempty"`
-	SpaceId int64 `json:"s,omitempty"`
-	UserId  int64 `json:"u,omitempty"`
+	Typeid    uint16 `json:"t,omitempty"`
+	SpaceId   int64  `json:"s,omitempty"`
+	UserId    int64  `json:"u,omitempty"`
+	SessionId int64  `json:"i,omitempty"`
 }
 
 type SpaceAdvisieryClaim struct {
-	Typeid       uint8          `json:"t,omitempty"`
-	TokenSubType string         `json:"st,omitempty"`
+	Typeid       uint16         `json:"t,omitempty"`
+	TokenSubType string         `json:"z,omitempty"`
+	InstallId    int64          `json:"i,omitempty"`
 	SpaceId      int64          `json:"s,omitempty"`
 	UserId       int64          `json:"u,omitempty"`
+	ResourceId   string         `json:"r,omitempty"`
 	Data         map[string]any `json:"d,omitempty"`
 }
 
 type SpaceFilePresignedClaim struct {
-	Typeid    uint8  `json:"t,omitempty"`
+	Typeid    uint16 `json:"t,omitempty"`
 	InstallId int64  `json:"i,omitempty"`
 	UserId    int64  `json:"u,omitempty"`
 	PathName  string `json:"pn,omitempty"`
@@ -54,9 +58,19 @@ type SpaceFilePresignedClaim struct {
 }
 
 type PackageDevClaim struct {
-	Typeid           uint8 `json:"t,omitempty"`
-	InstallPackageId int64 `json:"p,omitempty"`
-	UserId           int64 `json:"u,omitempty"`
+	Typeid           uint16 `json:"t,omitempty"`
+	InstallPackageId int64  `json:"p,omitempty"`
+	UserId           int64  `json:"u,omitempty"`
+}
+
+type CapabilityClaim struct {
+	Typeid       uint16         `json:"t,omitempty"`
+	CapabilityId int64          `json:"c,omitempty"`
+	InstallId    int64          `json:"i,omitempty"`
+	SpaceId      int64          `json:"s,omitempty"`
+	UserId       int64          `json:"u,omitempty"`
+	ResourceId   string         `json:"r,omitempty"`
+	ExtraMeta    map[string]any `json:"e,omitempty"`
 }
 
 // fixme => add expiry
@@ -227,6 +241,29 @@ func (ts *Signer) ParsePackageDev(tstr string) (*PackageDevClaim, error) {
 func (ts *Signer) SignPackageDev(claim *PackageDevClaim) (string, error) {
 
 	claim.Typeid = ToekenPackageDev
+
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParseCapability(tstr string) (*CapabilityClaim, error) {
+
+	claim := &CapabilityClaim{}
+
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	if claim.Typeid != TokenTypeCapability {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignCapability(claim *CapabilityClaim) (string, error) {
+
+	claim.Typeid = TokenTypeCapability
 
 	return ts.sign(claim)
 }

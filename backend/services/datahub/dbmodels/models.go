@@ -6,3 +6,7 @@ type GlobalConfig struct {
 	GroupName string `db:"group" json:"group"`
 	Value     string `db:"value" json:"value"`
 }
+
+type EntityId struct {
+	Id int64 `db:"id" json:"id"`
+}

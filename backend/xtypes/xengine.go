@@ -7,10 +7,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type EventOptions struct {
+	InstallId  int64
+	SpaceId    int64
+	Name       string
+	Payload    []byte
+	ResourceId string
+}
+
 type Engine interface {
 	GetCapabilityHub() any
 	GetDebugData() map[string]any
-	LoadRoutingIndex() error
+	LoadRoutingIndex()
 
 	PluginApi(ctx *gin.Context)
 	ServePluginFile(ctx *gin.Context)
@@ -20,11 +28,12 @@ type Engine interface {
 
 	ServeSpaceFile(ctx *gin.Context)
 	SpaceApi(ctx *gin.Context)
+
+	PublishEvent(opts *EventOptions) error
+	RefreshEventIndex()
 }
 
 type ExecutorBuilderOption struct {
-	App App
-
 	Logger *slog.Logger
 
 	WorkingFolder    string
@@ -34,10 +43,12 @@ type ExecutorBuilderOption struct {
 	FsRoot           *os.Root
 }
 
-type ExecutorBuilder struct {
-	Name  string
-	Icon  string
-	Build func(opt ExecutorBuilderOption) (*Executor, error)
+type ExecutorBuilderFactory func(app App) (ExecutorBuilder, error)
+
+type ExecutorBuilder interface {
+	Name() string
+	Icon() string
+	Build(opt *ExecutorBuilderOption) (Executor, error)
 }
 
 type HttpExecution struct {
@@ -46,19 +57,22 @@ type HttpExecution struct {
 	Request     *gin.Context
 }
 
-type GenericExecution struct {
+type EventExecution struct {
 	Type       string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
-	Context    GenericContext
+	Request    GenericRequest
 }
 
-type GenericContext interface {
+type GenericRequest interface {
 	ListActions() ([]string, error)
 	ExecuteAction(name string, params LazyData) (map[string]any, error)
 }
 
 type Executor interface {
+	Cleanup()
+	GetDebugData() map[string]any
+
 	HandleHttp(event HttpExecution) error
-	HandleGeneric(event GenericExecution) error
+	HandleEvent(event EventExecution) error
 }

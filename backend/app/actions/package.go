@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"github.com/blue-monads/turnix/backend/engine"
+	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
@@ -11,9 +11,9 @@ func (c *Controller) ListEPackages(repoSlug string) ([]models.PotatoPackage, err
 	repoHub := c.engine.GetRepoHub()
 	if repoHub == nil || repoSlug == "" {
 		// Fallback to default behavior for backward compatibility
-		return engine.ListEPackages()
+		return repohub.ListEPackages()
 	}
-	return engine.ListEPackagesFromRepo(repoHub, repoSlug)
+	return repohub.ListEPackagesFromRepo(repoHub, repoSlug)
 }
 
 func (c *Controller) ListRepos() ([]xtypes.RepoOptions, error) {

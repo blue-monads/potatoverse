@@ -4,6 +4,7 @@ type PotatoPackage struct {
 	Name          string           `json:"name" toml:"name"`
 	Slug          string           `json:"slug" toml:"slug"`
 	Info          string           `json:"info" toml:"info"`
+	CanonicalUrl  string           `json:"canonical_url" toml:"canonical_url"`
 	Tags          []string         `json:"tags" toml:"tags"`
 	FormatVersion string           `json:"format_version" toml:"format_version"`
 	AuthorName    string           `json:"author_name" toml:"author_name"`
@@ -12,8 +13,9 @@ type PotatoPackage struct {
 	SourceCode    string           `json:"source_code" toml:"source_code"`
 	License       string           `json:"license" toml:"license"`
 	Version       string           `json:"version" toml:"version"`
-	UpdateUrl     string           `json:"update_url" toml:"update_url"`
 	Artifacts     []PotatoArtifact `json:"artifacts" toml:"artifacts"`
+	InitPage      string           `json:"init_page" toml:"init_page"`
+	UpdatePage    string           `json:"update_page" toml:"update_page"`
 
 	// for local dev
 	Developer *DeveloperOptions `json:"developer,omitempty" toml:"developer,omitempty"`

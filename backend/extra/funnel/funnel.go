@@ -4,28 +4,53 @@ import (
 	"net"
 	"sync"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
-// root_<pub_key_hash>.freehttptunnel.com
-// <s-x>_<pub_key_hash>.freehttptunnel.com
+// Funnel is a service that routes all http requests to a node(server) which are connected
+// to the service through websocket becase the service is not accessible from the internet (behind NAT)
 
-type ServerConnection struct {
-	Conn net.Conn
+type ServerHandle struct {
+	conn      net.Conn
+	writeChan chan *ServerWrite
+}
+
+type ServerWrite struct {
+	packet *Packet
+	reqId  string
 }
 
 type Funnel struct {
-	ServerConnections map[string]*ServerConnection
+	serverConnections map[string]*ServerHandle
 	scLock            sync.RWMutex
+
+	pendingReq     map[string]chan *Packet
+	pendingReqLock sync.Mutex
 }
 
-func (f *Funnel) HandleVerify(c *gin.Context) {}
+// New creates a new Funnel instance
+func New() *Funnel {
+	return &Funnel{
+		serverConnections: make(map[string]*ServerHandle),
+		scLock:            sync.RWMutex{},
+		pendingReq:        make(map[string]chan *Packet),
+		pendingReqLock:    sync.Mutex{},
+	}
+}
 
-func (f *Funnel) HandleConnect(c *gin.Context) {}
+func (f *Funnel) HandleServerWebSocket(serverId string, c *gin.Context) {
+	qq.Println("@Funnel/HandleServerWebSocket/1{SERVER_ID}", serverId)
 
-// Schnorr Signatures for secp256k1
+	f.handleServerWebSocket(serverId, c)
+}
 
-func SignWithPubKey(pubKey, signPayload string) (string, error) {
+func (f *Funnel) HandleRoute(serverId string, c *gin.Context) {
 
-	return "", nil
+	if c.Request.Header.Get("Upgrade") == "websocket" {
+		f.routeWS(serverId, c)
+		return
+	}
+
+	f.routeHttp(serverId, c)
 }

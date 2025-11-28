@@ -1,202 +1,44 @@
 package sockd
 
 import (
-	"net"
-	"regexp"
-	"strconv"
-	"strings"
-	"sync"
+	"github.com/blue-monads/turnix/backend/services/sockd/broadcast"
+	"github.com/blue-monads/turnix/backend/services/sockd/higher"
+	"github.com/blue-monads/turnix/backend/services/sockd/notifier"
+	"github.com/blue-monads/turnix/backend/services/sockd/pubsub"
 )
 
 type Sockd struct {
-	rooms map[string]*SockdRoom
-	rLock sync.RWMutex
+	broadcast broadcast.BroadcastSockd
+	pubsub    pubsub.PubSubSockd
+	higher    higher.HigherSockd
+	notifier  notifier.Notifier
 }
 
-type Connection struct {
-	id        int64
-	conn      net.Conn
-	selfAttrs map[string]string
+func NewSockd() *Sockd {
+	s := &Sockd{
+		broadcast: broadcast.New(),
+		pubsub:    pubsub.New(),
+		higher:    higher.New(),
+		notifier:  notifier.New(),
+	}
+
+	go s.notifier.Run()
+
+	return s
 }
 
-type SockdRoom struct {
-	connections       map[int64]*Connection
-	connectionsLock   sync.RWMutex
-	roomType          string // server_process, client_broadcast, client_p2p, client_cond
-	broadcastPresence bool
+func (s *Sockd) GetBroadcast() *broadcast.BroadcastSockd {
+	return &s.broadcast
 }
 
-type Condition struct {
-	Key   string
-	Value string
-	Op    string
-	Sub   []Condition
-	Or    bool
+func (s *Sockd) GetPubSub() *pubsub.PubSubSockd {
+	return &s.pubsub
 }
 
-func (s *SockdRoom) SendWithCondition(cond Condition, data []byte) {
-
-	s.connectionsLock.RLock()
-	defer s.connectionsLock.RUnlock()
-
-	matches := make(map[int64]bool)
-
-	for _, conn := range s.connections {
-		if checkCondition(conn.selfAttrs, cond) {
-			matches[conn.id] = true
-		}
-	}
-
-	for _, conn := range s.connections {
-		if matches[conn.id] {
-			conn.conn.Write(data)
-		}
-	}
-
+func (s *Sockd) GetHigher() *higher.HigherSockd {
+	return &s.higher
 }
 
-func checkCondition(attrs map[string]string, cond Condition) bool {
-
-	if cond.Sub != nil {
-		if cond.Or {
-			match := false
-			for _, sub := range cond.Sub {
-				if checkCondition(attrs, sub) {
-					match = true
-				}
-			}
-
-			if !match {
-				return false
-			}
-		} else {
-			match := true
-			for _, sub := range cond.Sub {
-				if !checkCondition(attrs, sub) {
-					match = false
-					break
-				}
-			}
-			if !match {
-				return false
-			}
-		}
-
-	}
-
-	targetValue := attrs[cond.Key]
-
-	if cond.Op == ">" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-		return fval > cval
-	}
-	if cond.Op == "<" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-
-		return fval < cval
-	}
-
-	if cond.Op == ">=" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-		return fval >= cval
-	}
-
-	if cond.Op == "<=" {
-		fval, _ := strconv.ParseInt(targetValue, 10, 64)
-		cval, _ := strconv.ParseInt(cond.Value, 10, 64)
-		return fval <= cval
-	}
-
-	if cond.Op == "==" {
-		return targetValue == cond.Value
-	}
-
-	if cond.Op == "!=" {
-		return targetValue != cond.Value
-	}
-
-	if cond.Op == "contains" {
-		return strings.Contains(targetValue, cond.Value)
-	}
-
-	if cond.Op == "notcontains" {
-		return !strings.Contains(targetValue, cond.Value)
-	}
-
-	if cond.Op == "startswith" {
-		return strings.HasPrefix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "endswith" {
-		return strings.HasSuffix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "notstartswith" {
-		return !strings.HasPrefix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "notendswith" {
-		return !strings.HasSuffix(targetValue, cond.Value)
-	}
-
-	if cond.Op == "regex" {
-		re, err := regexp.Compile(cond.Value)
-		if err != nil {
-			return false
-		}
-
-		return re.MatchString(targetValue)
-	}
-
-	if cond.Op == "notregex" {
-		re, err := regexp.Compile(cond.Value)
-		if err != nil {
-			return false
-		}
-		return !re.MatchString(targetValue)
-	}
-
-	return false
+func (s *Sockd) GetNotifier() *notifier.Notifier {
+	return &s.notifier
 }
-
-/*
-
-{
-	key: "age"
-	op: ">"
-	value: "10"
-	or: false
-	sub: [
-		{
-			key: "city"
-			op: "=="
-			value: "new york"
-		},
-		{
-			key: "country"
-			op: "=="
-			value: "usa"
-		}
-	]
-}
-
-*/
-
-/*
-
---metadata-start-5643126--
-{meta_data: 1}
---metadata-end-5643126--
-{actual_payload: 1}
-
-
-
-selfAttrs:
-	age -> 11
-	city -> new york
-	country -> usa
-
-*/

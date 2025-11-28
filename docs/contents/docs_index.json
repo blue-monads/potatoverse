@@ -1,0 +1,84 @@
+[
+  {
+    "id": "topics",
+    "title": "Topics",
+    "icon": "FileText",
+    "content": {
+      "title": "Documentation Topics",
+      "description": "Explore guides and tutorials on various topics.",
+      "items": [
+        {
+          "title": "Core Concepts",
+          "description": "Understanding the fundamental concepts",
+          "url": "topics/core_concepts.md"
+        },
+        {
+          "title": "Getting Started",
+          "description": "Introduction and quick start guide",
+          "url": "topics/getting_started.md"
+        },
+        {
+          "title": "Examples",
+          "description": "Real-world examples and use cases"
+        }
+      ]
+    }
+  },
+    {
+      "id": "api-docs",
+      "title": "API Docs",
+      "icon": "BookOpen",
+      "content": {
+        "title": "API Documentation",
+        "description": "Complete API reference for all available endpoints and methods.",
+        "items": [
+          {
+            "title": "Auth",
+            "description": "Reference for all available endpoints and methods in the Auth API.",
+            "url": "api/auth.md"
+          },
+          {
+            "title": "User",
+            "description": "Reference for all available endpoints and methods in the User API.",
+            "url": "api/user.md"
+          },
+          {
+            "title": "Space",
+            "description": "Reference for all available endpoints and methods in the Space API.",
+            "url": "api/space.md"
+          },
+          {
+            "title": "Package",
+            "description": "Reference for all available endpoints and methods in the Package API.",
+            "url": "api/package.md"
+          },
+          {
+            "title": "Capability",
+            "description": "Reference for all available endpoints and methods in the Capability API.",
+            "url": "api/capability.md"
+          },
+          {
+            "title": "Engine",
+            "description": "Reference for all available endpoints and methods in the Engine API.",
+            "url": "api/engine.md"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bindings-docs",
+      "title": "Bindings Docs",
+      "icon": "Code",
+      "content": {
+        "title": "Executors Bindings Documentation",
+        "description": "Documentation for executors bindings.",
+        "items": [
+          {
+            "title": "Luaz",
+            "description": "Luaz bindings for the Luaz executor.",
+            "url": "bindings/luaz.md"
+          }
+        ]
+      }
+    }
+  ]

@@ -33,9 +33,18 @@ type Option struct {
 	GlobalJS    string
 	SiteName    string
 	LocalSocket string
+
+	// ServerKey just some identifier for the server, (lowercase a-z and numbers)
+	// it could be hash for public key if node is tunneling traffic for other nodes
+
+	ServerKey string
 }
 
 func NewServer(opt Option) *Server {
+	if opt.ServerKey == "" {
+		opt.ServerKey = "main"
+	}
+
 	return &Server{
 		ctrl:   opt.Ctrl,
 		signer: opt.Signer,

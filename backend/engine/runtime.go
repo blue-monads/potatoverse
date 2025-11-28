@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
 	"github.com/blue-monads/turnix/backend/utils/libx"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -17,9 +16,12 @@ import (
 )
 
 type Runtime struct {
-	execs     map[int64]*luaz.Luaz
-	execsLock sync.RWMutex
-	parent    *Engine
+	activeExecs     map[int64]xtypes.Executor
+	activeExecsLock sync.RWMutex
+
+	builders map[string]xtypes.ExecutorBuilder
+
+	parent *Engine
 }
 
 func (r *Runtime) cleanupExecs() {
@@ -29,12 +31,12 @@ func (r *Runtime) cleanupExecs() {
 	for range ticker.C {
 		qq.Println("@cleanup_execs/1")
 
-		r.execsLock.RLock()
-		for _, e := range r.execs {
+		r.activeExecsLock.RLock()
+		for _, e := range r.activeExecs {
 			e.Cleanup()
 		}
 
-		r.execsLock.RUnlock()
+		r.activeExecsLock.RUnlock()
 	}
 }
 
@@ -42,10 +44,10 @@ func (r *Runtime) GetDebugData() map[int64]any {
 
 	resp := make(map[int64]any)
 
-	r.execsLock.RLock()
-	defer r.execsLock.RUnlock()
+	r.activeExecsLock.RLock()
+	defer r.activeExecsLock.RUnlock()
 
-	for id, e := range r.execs {
+	for id, e := range r.activeExecs {
 		resp[id] = e.GetDebugData()
 	}
 
@@ -54,17 +56,17 @@ func (r *Runtime) GetDebugData() map[int64]any {
 }
 
 func (r *Runtime) ClearExecs(spaceIds ...int64) {
-	r.execsLock.Lock()
-	defer r.execsLock.Unlock()
+	r.activeExecsLock.Lock()
+	defer r.activeExecsLock.Unlock()
 	for _, spaceId := range spaceIds {
-		delete(r.execs, spaceId)
+		delete(r.activeExecs, spaceId)
 	}
 }
 
-func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (*luaz.Luaz, error) {
-	r.execsLock.RLock()
-	e := r.execs[spaceid]
-	r.execsLock.RUnlock()
+func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (xtypes.Executor, error) {
+	r.activeExecsLock.RLock()
+	e := r.activeExecs[spaceid]
+	r.activeExecsLock.RUnlock()
 	if e != nil {
 		return e, nil
 	}
@@ -73,13 +75,22 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 
 	os.MkdirAll(wd, 0755)
 
+	space, err := r.parent.db.GetSpaceOps().GetSpace(spaceid)
+	if err != nil {
+		return nil, errors.New("space not found")
+	}
+
+	builder, ok := r.builders[space.ExecutorType]
+	if !ok {
+		return nil, errors.New("executor builder not found")
+	}
+
 	rfs, err := os.OpenRoot(wd)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err = luaz.New(&xtypes.ExecutorBuilderOption{
-		App:              r.parent.app,
+	e, err = builder.Build(&xtypes.ExecutorBuilderOption{
 		Logger:           r.parent.app.Logger().With("package_id", pVersionId),
 		WorkingFolder:    wd,
 		SpaceId:          spaceid,
@@ -87,13 +98,14 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		PackageVersionId: pVersionId,
 		FsRoot:           rfs,
 	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	r.execsLock.Lock()
-	r.execs[spaceid] = e
-	r.execsLock.Unlock()
+	r.activeExecsLock.Lock()
+	r.activeExecs[spaceid] = e
+	r.activeExecsLock.Unlock()
 
 	return e, nil
 
@@ -140,7 +152,7 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 		params["subpath"] = subpath
 		params["method"] = opts.HttpContext.Request.Method
 
-		err := e.Handle(luaz.HttpEvent{
+		err := e.HandleHttp(xtypes.HttpExecution{
 			HandlerName: opts.HandlerName,
 			Params:      params,
 			Request:     opts.HttpContext,

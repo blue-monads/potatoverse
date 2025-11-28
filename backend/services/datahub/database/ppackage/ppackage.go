@@ -36,10 +36,10 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 	installedPackage := &dbmodels.InstalledPackage{
 		Name:            pkgManifest.Name,
 		InstallRepo:     repo,
-		UpdateUrl:       pkgManifest.UpdateUrl,
 		ActiveInstallID: userId,
 		InstalledBy:     userId,
 		InstalledAt:     &t,
+		CanonicalUrl:    pkgManifest.CanonicalUrl,
 	}
 
 	// Insert package
@@ -64,6 +64,8 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 		AuthorSite:    pkgManifest.AuthorSite,
 		SourceCode:    pkgManifest.SourceCode,
 		License:       pkgManifest.License,
+		InitPage:      pkgManifest.InitPage,
+		UpdatePage:    pkgManifest.UpdatePage,
 	}
 
 	versionResult, err := d.packageVersionsTable().Insert(version)

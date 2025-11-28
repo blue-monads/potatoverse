@@ -1,23 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Pencil, Filter, Target, Plus, Trash2, Layers } from 'lucide-react';
+import { Zap, Pencil, Target, Clock } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import { EventSubscription } from '@/lib';
+import RuleEditor, { Rule } from './RuleEditor';
 
-interface Rule {
-    id: string;
-    variable: string;
-    operator: string;
-    value: string;
-}
-
-interface LogicalGroup {
-    id: string;
-    type: 'AND' | 'OR';
-    rules: Rule[];
-}
-
-interface Target {
+interface TargetState {
     type: string;
     endpoint: string;
     code: string; // For script type
@@ -27,7 +15,23 @@ interface Target {
     smtpPassword: string;
     smtpFrom: string;
     smtpTo: string;
+    targetSpaceId: number;
 }
+
+
+
+/*
+
+Rule Example:
+    Variable      Operator       Value     ParentId
+1.  orderamount   greater_than   100            
+2.  $logical      group          AND                
+3.  deliveryFee   less_than      10         2    
+4.  paymode       equal_to       ONLINE     2    
+
+
+*/
+
 
 interface EventSubscriptionEditorProps {
     onSave: (data: any) => Promise<void>;
@@ -38,8 +42,7 @@ interface EventSubscriptionEditorProps {
 export default function EventSubscriptionEditor({ onSave, onBack, initialData }: EventSubscriptionEditorProps) {
     const [eventKey, setEventKey] = useState(initialData?.event_key || '');
     const [rules, setRules] = useState<Rule[]>([]);
-    const [logicalGroups, setLogicalGroups] = useState<LogicalGroup[]>([]);
-    const [target, setTarget] = useState<Target>({
+    const [target, setTarget] = useState<TargetState>({
         type: 'webhook',
         endpoint: '',
         code: '',
@@ -49,33 +52,28 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
         smtpPassword: '',
         smtpFrom: '',
         smtpTo: '',
+        targetSpaceId: 0,
     });
     const [disabled, setDisabled] = useState(initialData?.disabled || false);
+    const [delayStart, setDelayStart] = useState(initialData?.delay_start || 0);
+    const [retryDelay, setRetryDelay] = useState(initialData?.retry_delay || 0);
+    const [maxRetries, setMaxRetries] = useState(initialData?.max_retries || 0);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (initialData) {
-            // Parse rules from JSON string
+            // Parse rules from JSON string and convert to flat array structure
             try {
-                const rulesData = initialData.rules ? JSON.parse(initialData.rules) : {};
-                if (rulesData.rules && Array.isArray(rulesData.rules)) {
-                    setRules(rulesData.rules.map((r: any, idx: number) => ({
-                        id: r.id || `rule-${idx}`,
+                const rulesData = initialData.rules ? JSON.parse(initialData.rules) : [] as Rule[];
+
+                // If rulesData is already a flat array (new format)
+                if (Array.isArray(rulesData) && rulesData.length > 0 && rulesData[0].id) {
+                    setRules(rulesData.map((r: any) => ({
+                        id: r.id || `rule-${Date.now()}`,
                         variable: r.variable || '',
                         operator: r.operator || '',
                         value: r.value || '',
-                    })));
-                }
-                if (rulesData.groups && Array.isArray(rulesData.groups)) {
-                    setLogicalGroups(rulesData.groups.map((g: any, idx: number) => ({
-                        id: g.id || `group-${idx}`,
-                        type: g.type || 'AND',
-                        rules: (g.rules || []).map((r: any, rIdx: number) => ({
-                            id: r.id || `rule-${idx}-${rIdx}`,
-                            variable: r.variable || '',
-                            operator: r.operator || '',
-                            value: r.value || '',
-                        })),
+                        parentId: r.parent_id || r.parentId || undefined,
                     })));
                 }
             } catch (e) {
@@ -83,7 +81,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             }
 
             // Parse target from subscription
-            let targetData: Target = {
+            let targetData: TargetState = {
                 type: initialData.target_type || 'webhook',
                 endpoint: initialData.target_endpoint || '',
                 code: initialData.target_code || '',
@@ -93,13 +91,14 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 smtpPassword: '',
                 smtpFrom: '',
                 smtpTo: '',
+                targetSpaceId: 0,
             };
 
             // Parse target_options for SMTP credentials if email type
             if (initialData.target_type === 'email' && initialData.target_options) {
                 try {
-                    const options = typeof initialData.target_options === 'string' 
-                        ? JSON.parse(initialData.target_options) 
+                    const options = typeof initialData.target_options === 'string'
+                        ? JSON.parse(initialData.target_options)
                         : initialData.target_options;
                     targetData.smtpHost = options.smtp_host || '';
                     targetData.smtpPort = options.smtp_port || '587';
@@ -112,7 +111,18 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 }
             }
 
+            if (initialData.target_type === 'space_method') {
+                targetData.targetSpaceId = initialData.target_space_id || 0;
+                targetData.endpoint = initialData.target_endpoint || '';
+            }
+
+
             setTarget(targetData);
+
+            // Set retry and delay fields
+            setDelayStart(initialData.delay_start || 0);
+            setRetryDelay(initialData.retry_delay || 0);
+            setMaxRetries(initialData.max_retries || 0);
         }
     }, [initialData]);
 
@@ -129,6 +139,16 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
 
         if (target.type === 'webhook' && !target.endpoint.trim()) {
             alert('Endpoint is required for webhook');
+            return;
+        }
+
+        if (target.type === 'space_method' && !target.targetSpaceId) {
+            alert('Space is required for space method');
+            return;
+        }
+
+        if (target.type === 'space_method' && !target.endpoint.trim()) {
+            alert('Event name is required for space method');
             return;
         }
 
@@ -158,11 +178,6 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
 
         setSaving(true);
         try {
-            // Build rules JSON
-            const rulesData = {
-                rules: rules,
-                groups: logicalGroups,
-            };
 
             // Build target_options based on type
             let targetOptions: any = {};
@@ -180,12 +195,16 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             const data = {
                 event_key: eventKey,
                 target_type: target.type,
-                target_endpoint: target.type === 'webhook' ? target.endpoint : '',
+                target_endpoint: target.endpoint,
                 target_code: target.type === 'script' ? target.code : '',
                 target_options: targetOptions,
-                rules: JSON.stringify(rulesData),
+                rules: JSON.stringify(rules),
                 transform: '{}',
+                delay_start: delayStart,
+                retry_delay: retryDelay,
+                max_retries: maxRetries,
                 disabled: disabled,
+                target_space_id: target.targetSpaceId,
             };
 
             await onSave(data);
@@ -196,93 +215,16 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
         }
     };
 
-    const addRule = () => {
-        setRules([...rules, {
-            id: `rule-${Date.now()}`,
-            variable: '',
-            operator: 'equal_to',
-            value: '',
-        }]);
-    };
-
-    const updateRule = (id: string, updates: Partial<Rule>) => {
-        setRules(rules.map(r => r.id === id ? { ...r, ...updates } : r));
-    };
-
-    const deleteRule = (id: string) => {
-        setRules(rules.filter(r => r.id !== id));
-    };
-
-    const addLogicalGroup = () => {
-        setLogicalGroups([...logicalGroups, {
-            id: `group-${Date.now()}`,
-            type: 'AND',
-            rules: [{
-                id: `rule-${Date.now()}-1`,
-                variable: '',
-                operator: 'equal_to',
-                value: '',
-            }],
-        }]);
-    };
-
-    const addRuleToGroup = (groupId: string) => {
-        setLogicalGroups(logicalGroups.map(g => 
-            g.id === groupId 
-                ? { ...g, rules: [...g.rules, { id: `rule-${Date.now()}`, variable: '', operator: 'equal_to', value: '' }] }
-                : g
-        ));
-    };
-
-    const updateRuleInGroup = (groupId: string, ruleId: string, updates: Partial<Rule>) => {
-        setLogicalGroups(logicalGroups.map(g =>
-            g.id === groupId
-                ? { ...g, rules: g.rules.map(r => r.id === ruleId ? { ...r, ...updates } : r) }
-                : g
-        ));
-    };
-
-    const deleteRuleFromGroup = (groupId: string, ruleId: string) => {
-        setLogicalGroups(logicalGroups.map(g =>
-            g.id === groupId
-                ? { ...g, rules: g.rules.filter(r => r.id !== ruleId) }
-                : g
-        ));
-    };
-
-    const toggleGroupType = (groupId: string) => {
-        setLogicalGroups(logicalGroups.map(g =>
-            g.id === groupId
-                ? { ...g, type: g.type === 'AND' ? 'OR' : 'AND' }
-                : g
-        ));
-    };
-
-    const deleteGroup = (groupId: string) => {
-        setLogicalGroups(logicalGroups.filter(g => g.id !== groupId));
-    };
-
-    const updateTarget = (updates: Partial<Target>) => {
+    const updateTarget = (updates: Partial<TargetState>) => {
         setTarget({ ...target, ...updates });
     };
 
-    const operators = [
-        { value: 'equal_to', label: 'Equal To' },
-        { value: 'not_equal_to', label: 'Not Equal To' },
-        { value: 'greater_than', label: 'Greater Than' },
-        { value: 'less_than', label: 'Less Than' },
-        { value: 'greater_than_or_equal', label: 'Greater Than Or Equal' },
-        { value: 'less_than_or_equal', label: 'Less Than Or Equal' },
-        { value: 'contains', label: 'Contains' },
-        { value: 'not_contains', label: 'Not Contains' },
-        { value: 'before', label: 'Before' },
-        { value: 'after', label: 'After' },
-    ];
-
     const targetTypes = [
-        { value: 'webhook', label: 'Webhook' },
         { value: 'email', label: 'Email' },
+        { value: 'webhook', label: 'Webhook' },
         { value: 'script', label: 'Script' },
+        { value: 'log', label: 'Log' },
+        { value: 'space_method', label: 'Space Method' },
     ];
 
     return (
@@ -311,145 +253,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                 </div>
 
                 {/* Rules Section */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Filter className="w-5 h-5 text-gray-500" />
-                        <h3 className="text-lg font-semibold text-gray-900">Rules</h3>
-                    </div>
-
-                    {/* Individual Rules */}
-                    <div className="space-y-3 mb-4">
-                        {rules.map((rule) => (
-                            <div key={rule.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
-                                <input
-                                    type="text"
-                                    value={rule.variable}
-                                    onChange={(e) => updateRule(rule.id, { variable: e.target.value })}
-                                    placeholder="Variable"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <select
-                                    value={rule.operator}
-                                    onChange={(e) => updateRule(rule.id, { operator: e.target.value })}
-                                    className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    {operators.map(op => (
-                                        <option key={op.value} value={op.value}>{op.label}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="text"
-                                    value={rule.value}
-                                    onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                                    placeholder="Value"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                                <button
-                                    onClick={() => deleteRule(rule.id)}
-                                    className="text-red-600 hover:text-red-900"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="flex gap-2 mb-4">
-                        <button
-                            onClick={addRule}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add Rule
-                        </button>
-                        <button
-                            onClick={addLogicalGroup}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Logical Group (AND)
-                        </button>
-                        <button
-                            onClick={addLogicalGroup}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Logical Group (OR)
-                        </button>
-                    </div>
-
-                    {/* Logical Groups */}
-                    <div className="space-y-3">
-                        {logicalGroups.map((group) => (
-                            <div key={group.id} className="border border-green-300 rounded-lg p-4 bg-green-50">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <Layers className="w-4 h-4 text-green-700" />
-                                        <span className="font-medium text-green-900">
-                                            Logical Group ({group.type})
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => toggleGroupType(group.id)}
-                                            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-                                        >
-                                            Switch to {group.type === 'AND' ? 'OR' : 'AND'}
-                                        </button>
-                                        <button
-                                            onClick={() => deleteGroup(group.id)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    {group.rules.map((rule) => (
-                                        <div key={rule.id} className="flex items-center gap-3 p-2 bg-white rounded">
-                                            <input
-                                                type="text"
-                                                value={rule.variable}
-                                                onChange={(e) => updateRuleInGroup(group.id, rule.id, { variable: e.target.value })}
-                                                placeholder="Variable"
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
-                                            />
-                                            <select
-                                                value={rule.operator}
-                                                onChange={(e) => updateRuleInGroup(group.id, rule.id, { operator: e.target.value })}
-                                                className="px-3 py-2 border border-gray-300 rounded text-sm"
-                                            >
-                                                {operators.map(op => (
-                                                    <option key={op.value} value={op.value}>{op.label}</option>
-                                                ))}
-                                            </select>
-                                            <input
-                                                type="text"
-                                                value={rule.value}
-                                                onChange={(e) => updateRuleInGroup(group.id, rule.id, { value: e.target.value })}
-                                                placeholder="Value"
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm"
-                                            />
-                                            <button
-                                                onClick={() => deleteRuleFromGroup(group.id, rule.id)}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => addRuleToGroup(group.id)}
-                                    className="mt-3 flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Add Rule
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <RuleEditor rules={rules} onRulesChange={setRules} />
 
                 {/* Target Section */}
                 <div className="bg-white rounded-lg shadow p-6">
@@ -575,6 +379,85 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                                     </div>
                                 </div>
                             )}
+
+                            {target.type === 'space_method' && (<>
+
+                                <div className='flex flex-col gap-2'>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Space</label>
+                                    <div className='flex gap-2'>
+                                        <input
+                                            type="number"
+                                            placeholder="space_id"
+                                            value={target.targetSpaceId}
+                                            onChange={(e) => updateTarget({ targetSpaceId: parseInt(e.target.value) })}
+                                            className="w-11/12 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <button className='w-1/12 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-400 text-gray-00 hover:text-white'>
+                                            Pick
+                                        </button>
+                                    </div>
+
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
+                                    <input
+                                        type="text"
+                                        value={target.endpoint}
+                                        onChange={(e) => updateTarget({ endpoint: e.target.value })}
+                                        placeholder="notify_x_changed"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                                </div>
+
+
+                            </>)}
+
+
+                        </div>
+                    </div>
+                </div>
+
+                {/* Retry and Delay Settings */}
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Clock className="w-5 h-5 text-gray-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">Retry & Delay Settings</h3>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Delay Start (seconds)</label>
+                            <input
+                                type="number"
+                                value={delayStart}
+                                onChange={(e) => setDelayStart(parseInt(e.target.value) || 0)}
+                                min="0"
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Delay before processing starts</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Retry Delay (seconds)</label>
+                            <input
+                                type="number"
+                                value={retryDelay}
+                                onChange={(e) => setRetryDelay(parseInt(e.target.value) || 0)}
+                                min="0"
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Delay between retry attempts</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Max Retries</label>
+                            <input
+                                type="number"
+                                value={maxRetries}
+                                onChange={(e) => setMaxRetries(parseInt(e.target.value) || 0)}
+                                min="0"
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">Maximum number of retry attempts</p>
                         </div>
                     </div>
                 </div>

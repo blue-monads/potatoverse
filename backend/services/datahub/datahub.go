@@ -17,6 +17,13 @@ type Database interface {
 	GetPackageInstallOps() PackageInstallOps
 	GetFileOps() FileOps
 	GetPackageFileOps() FileOps
+	GetMQSynk() MQSynk
+
+	// ownerType: P -> Package, C -> Capability
+	GetLowDBOps(ownerType string, ownerID string) DBLowOps
+
+	GetLowPackageDBOps(ownerID string) DBLowOps
+	GetLowCapabilityDBOps(ownerID string) DBLowOps
 }
 
 type Core interface {
@@ -144,9 +151,11 @@ type SpaceOps interface {
 	RemoveSpaceUser(installId int64, id int64) error
 
 	// Event Subscriptions
-	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.EventSubscription, error)
-	AddEventSubscription(installId int64, data *dbmodels.EventSubscription) (int64, error)
-	GetEventSubscription(installId int64, id int64) (*dbmodels.EventSubscription, error)
+
+	QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.MQSubscriptionLite, error)
+	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error)
+	AddEventSubscription(installId int64, data *dbmodels.MQSubscription) (int64, error)
+	GetEventSubscription(installId int64, id int64) (*dbmodels.MQSubscription, error)
 	UpdateEventSubscription(installId int64, id int64, data map[string]any) error
 	RemoveEventSubscription(installId int64, id int64) error
 }
@@ -189,4 +198,86 @@ type FileOps interface {
 	GetSharedFile(ownerID int64, id string, w http.ResponseWriter) error
 	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
 	RemoveFileShare(ownerID int64, userId int64, id string) error
+}
+
+type FindQuery struct {
+	Table  string      `json:"table"`
+	Offset int         `json:"offset"`
+	Limit  int         `json:"limit"`
+	Cond   map[any]any `json:"cond"`
+	Order  string      `json:"order"`
+	Fields []string    `json:"fields"`
+}
+
+type FindByJoin struct {
+	Joins  []Join      `json:"joins"`
+	Cond   map[any]any `json:"cond"`
+	Order  string      `json:"order,omitempty"`
+	Fields []string    `json:"fields,omitempty"`
+}
+
+type Join struct {
+	LeftTable  string `json:"left_table"`
+	RightTable string `json:"right_table"`
+	LeftOn     string `json:"left_on"`
+	RightOn    string `json:"right_on"`
+	LeftAs     string `json:"left_as,omitempty"`
+	RightAs    string `json:"right_as,omitempty"`
+	JoinType   string `json:"join_type,omitempty"`
+}
+
+type DBLowOps interface {
+	ListTables() ([]string, error)
+	ListTableColumns(table string) ([]map[string]any, error)
+
+	DBLowCoreOps
+
+	StartTxn() (DBLowTxnOps, error)
+}
+
+type DBLowTxnOps interface {
+	Commit() error
+	Rollback() error
+	DBLowCoreOps
+}
+
+type DBLowCoreOps interface {
+	RunDDL(ddl string) error
+	RunQuery(query string, data ...any) ([]map[string]any, error)
+	RunQueryOne(query string, data ...any) (map[string]any, error)
+
+	Exec(query string, data ...any) (any, error)
+
+	Insert(table string, data map[string]any) (int64, error)
+	UpdateById(table string, id int64, data map[string]any) error
+	DeleteById(table string, id int64) error
+	FindById(table string, id int64) (map[string]any, error)
+
+	UpdateByCond(table string, cond map[any]any, data map[string]any) error
+	DeleteByCond(table string, cond map[any]any) error
+
+	FindAllByCond(table string, cond map[any]any) ([]map[string]any, error)
+	FindOneByCond(table string, cond map[any]any) (map[string]any, error)
+	FindAllByQuery(query *FindQuery) ([]map[string]any, error)
+
+	FindByJoin(query *FindByJoin) ([]map[string]any, error)
+}
+
+type MQSynk interface {
+	AddEvent(installId int64, name string, payload []byte) (int64, error)
+	GetEvent(id int64) (*dbmodels.MQEvent, error)
+	UpdateEvent(id int64, data map[string]any) error
+
+	QueryNewEvents() ([]int64, error)
+	CreateEventTargets(eventId int64) ([]int64, error)
+	QueryNewEventTargets() ([]int64, error)
+	QueryDelayExpiredTargets() ([]int64, error)
+	QueryEventTargetsByEventId(eventId int64) ([]int64, error)
+	UpdateEventTarget(id int64, data map[string]any) error
+
+	TransitionTargetStart(targetId int64) (*dbmodels.MQEventTarget, error)
+	TransitionTargetStartDelayed(targetId int64, eventId, delay int64) error
+	TransitionTargetDelay(targetId int64, eventId, delay, retryCount int64) error
+	TransitionTargetComplete(eventId, targetId int64) error
+	TransitionTargetFail(eventId, targetId int64, error string) error
 }

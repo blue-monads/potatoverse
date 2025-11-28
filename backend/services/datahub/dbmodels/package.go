@@ -6,7 +6,7 @@ type InstalledPackage struct {
 	ID              int64      `json:"id" db:"id,omitempty"`
 	Name            string     `json:"name" db:"name"`
 	InstallRepo     string     `json:"install_repo" db:"install_repo"`
-	UpdateUrl       string     `json:"update_url" db:"update_url"`
+	CanonicalUrl    string     `json:"canonical_url" db:"canonical_url,omitempty"`
 	StorageType     string     `json:"storage_type" db:"storage_type"`
 	ActiveInstallID int64      `json:"active_install_id" db:"active_install_id"`
 	InstalledBy     int64      `json:"installed_by" db:"installed_by"`
@@ -27,4 +27,6 @@ type PackageVersion struct {
 	SourceCode    string `json:"source_code" db:"source_code"`
 	License       string `json:"license" db:"license"`
 	Version       string `json:"version" db:"version"`
+	InitPage      string `json:"init_page" db:"init_page,omitempty"`
+	UpdatePage    string `json:"update_page" db:"update_page,omitempty"`
 }

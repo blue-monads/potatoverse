@@ -4,13 +4,15 @@ import (
 	"errors"
 	"log/slog"
 	"maps"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
+	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
+	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
+	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
+	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -18,13 +20,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var _ xtypes.Engine = (*Engine)(nil)
+
 type Engine struct {
 	db            datahub.Database
 	RoutingIndex  map[string]*SpaceRouteIndexItem
 	riLock        sync.RWMutex
 	workingFolder string
-
-	capabilities CapabilityHub
 
 	runtime Runtime
 
@@ -32,33 +34,48 @@ type Engine struct {
 
 	app xtypes.App
 
-	repoHub *RepoHub
+	repoHub *repohub.RepoHub
+
+	eventHub *eventhub.EventHub
+
+	capHub *caphub.CapabilityHub
 
 	reloadPackageIds chan int64
 	fullReload       chan struct{}
 }
 
-func NewEngine(db datahub.Database, workingFolder string) *Engine {
+type EngineOption struct {
+	DB            datahub.Database
+	WorkingFolder string
+	Logger        *slog.Logger
+	Repos         []xtypes.RepoOptions
+	HttpPort      int
+}
+
+func NewEngine(opt EngineOption) *Engine {
+
+	elogger := opt.Logger.With("module", "engine")
+
 	e := &Engine{
-		db:            db,
-		workingFolder: workingFolder,
+		db:            opt.DB,
+		workingFolder: opt.WorkingFolder,
 		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
-			execs:     make(map[int64]*luaz.Luaz),
-			execsLock: sync.RWMutex{},
+			activeExecs:     make(map[int64]xtypes.Executor),
+			activeExecsLock: sync.RWMutex{},
+			builders:        make(map[string]xtypes.ExecutorBuilder),
 		},
-		logger: slog.Default().With("module", "engine"),
-		capabilities: CapabilityHub{
-			goodies:  make(map[string]xtypes.Capability),
-			glock:    sync.RWMutex{},
-			builders: make(map[string]xtypes.CapabilityBuilder),
-		},
+		logger:           elogger,
+		capHub:           caphub.NewCapabilityHub(),
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
+
+		eventHub: eventhub.NewEventHub(opt.DB),
+		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
-	e.capabilities.parent = e
+	e.runtime.parent = e
 
 	return e
 }
@@ -81,17 +98,23 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
 
-	// Initialize repo hub
-	opts := app.Config().(*xtypes.AppOptions)
-	if opts != nil {
-		e.repoHub = NewRepoHub(opts.Repos, e.logger)
-	} else {
-		// Fallback: create empty repo hub
-		e.repoHub = NewRepoHub([]xtypes.RepoOptions{}, e.logger)
+	bfactories := registry.GetExecutorBuilderFactories()
+
+	for name, factory := range bfactories {
+		builder, err := factory(app)
+		if err != nil {
+			return err
+		}
+		e.runtime.builders[name] = builder
 	}
 
 	// Initialize capabilities hub
-	err := e.capabilities.Init()
+	err := e.capHub.Init(app)
+	if err != nil {
+		return err
+	}
+
+	err = e.eventHub.Start()
 	if err != nil {
 		return err
 	}
@@ -109,13 +132,14 @@ func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
 	qq.Println("@ServeSpaceFile/1")
 
 	spaceKey := ctx.Param("space_key")
-	spaceId := extractDomainSpaceId(ctx.Request.Host)
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
 	qq.Println("@ServeSpaceFile/3")
 
-	sIndex := e.getIndex(spaceKey, spaceId)
+	sIndex := e.getIndexRetry(spaceKey, spaceId)
 
 	if sIndex == nil {
+
 		keys := make([]string, 0)
 		for key := range e.RoutingIndex {
 			keys = append(keys, key)
@@ -150,7 +174,7 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
 	capabilityName := ctx.Param("capability_name")
 
-	spaceId := extractDomainSpaceId(ctx.Request.Host)
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
 	index := e.getIndex(spaceKey, spaceId)
 
@@ -159,18 +183,18 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 		return
 	}
 
-	e.capabilities.Handle(spaceId, capabilityName, ctx)
+	e.capHub.Handle(index.installedId, spaceId, capabilityName, ctx)
 
 }
 
 func (e *Engine) ServeCapabilityRoot(ctx *gin.Context) {
 	capabilityName := ctx.Param("capability_name")
-	e.capabilities.HandleRoot(capabilityName, ctx)
+	e.capHub.HandleRoot(capabilityName, ctx)
 }
 
 func (e *Engine) SpaceApi(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
-	spaceId := extractDomainSpaceId(ctx.Request.Host)
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
 	qq.Println("@SpaceApi/3", spaceKey, spaceId)
 
@@ -209,10 +233,12 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 	var index *SpaceRouteIndexItem
 
 	if hostName != "" {
-		spaceId := extractDomainSpaceId(hostName)
-		if spaceId != 0 {
-			index = e.getIndex(nsKey, spaceId)
-		}
+		spaceId := xutils.ExtractSpaceId(hostName)
+
+		// fixme => should i check if spaceId == 0 ?
+
+		index = e.getIndex(nsKey, spaceId)
+
 	}
 
 	if index == nil {
@@ -238,20 +264,11 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 
 }
 
-// private
-
-// s-12.example.com
-var spaceIdPattern = regexp.MustCompile(`^s-(\d+)\.`)
-
-func extractDomainSpaceId(domain string) int64 {
-	qq.Println("@extractDomainSpaceId/1", domain)
-
-	if matches := spaceIdPattern.FindStringSubmatch(domain); matches != nil {
-		sid, _ := strconv.ParseInt(matches[1], 10, 64)
-		return sid
-	}
-	return 0
+func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
+	return e.capHub.Definations()
 }
+
+// private
 
 func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
 	nameParts := strings.Split(filePath, "/")
@@ -281,10 +298,19 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 	return name, path
 }
 
-func (e *Engine) GetCapabilityHub() *CapabilityHub {
-	return &e.capabilities
+func (e *Engine) GetCapabilityHub() any {
+	return e.capHub
 }
 
-func (e *Engine) GetRepoHub() *RepoHub {
+func (e *Engine) GetRepoHub() *repohub.RepoHub {
 	return e.repoHub
+}
+
+func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {
+
+	return e.eventHub.Publish(opts)
+}
+
+func (e *Engine) RefreshEventIndex() {
+	e.eventHub.RefreshFullIndex()
 }

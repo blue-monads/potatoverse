@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
@@ -300,6 +301,18 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 	return indexItem, nil
 }
 
+func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
+	for i := 0; i < 5; i++ {
+		index := e.getIndex(spaceKey, spaceId)
+		if index != nil {
+			return index
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return nil
+
+}
+
 func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
 	e.riLock.RLock()
 	defer e.riLock.RUnlock()
@@ -392,10 +405,10 @@ func (e *Engine) copyFilesRecursive(fileOps datahub.FileOps, packageVersionId in
 		if file.Path == sourceFolderPath {
 			// File is directly in the source folder
 			targetFilePath = path.Join(targetBasePath, file.Name)
-		} else if strings.HasPrefix(file.Path, sourceFolderPath+"/") {
+		} else if after, ok := strings.CutPrefix(file.Path, sourceFolderPath+"/"); ok {
 			// File is in a subdirectory
 			// Get the relative path from sourceFolderPath
-			relPath := strings.TrimPrefix(file.Path, sourceFolderPath+"/")
+			relPath := after
 			targetFilePath = path.Join(targetBasePath, relPath, file.Name)
 		} else {
 			// This shouldn't happen, but handle it

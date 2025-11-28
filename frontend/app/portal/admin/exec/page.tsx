@@ -1,79 +1,23 @@
 "use client";
+import { deriveHost } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 
 // /portal/admin/exec?nskey=test&space_id=1
 
-const findBestHost = (hosts: string[], currHost: string) => {
-    let bestHost = null;
-    for (let host of hosts) {
-        if (host.includes('*')) {
-            const maybe = host.replace('*.', "");
-            if (currHost.startsWith(maybe)) {
-                bestHost = host;
-                break;
-            }
-        }
-    }
+const buildIframeSrc = (nskey: string, host: string) => {
 
-    if (!bestHost) {
-        for (let host of hosts) {
-            if (host.includes('*')) {
-                bestHost = host;
-                break
-            }
-        }
-    }
+    let src = `/zz/space/${nskey}`;
 
-    return bestHost;
-}
-
-/*
-
-
-const currUrl = new URL("http://localhost:3000/");
-
-
-findBestHost([
-    "*.eeeee.com", 
-    "aa.localhost", 
-    "specific.com", 
-    "*.localhost", 
-    "*.example.com"], 
-    currUrl.host
-)
-
-*/ 
-
-
-const buildIframeSrc = (nskey: string, space_id: string) => {
-    const attrs = (window as any).__potato_attrs__ || {};
-    let hostsRaw = attrs.site_hosts || '';
-    let hosts = hostsRaw.split(',') as string[];
-
-    let bestHost = findBestHost(hosts, window.location.host);
-
-    let host = bestHost || hosts[0];
-
-    let src = '';
     if (host) {
         const origin = window.location.origin;
         const isSecure = origin.startsWith("https//");
         const hasPort = origin.includes(":");
         const port = hasPort ? origin.split(":").at(-1) : "";
-        if (host === "*") {
-            host = `*.${window.location.host.split(":")[0]}`;
-        }
 
-        if (host.includes('*')) {
-            src = `${isSecure ? "https://" : "http://"}${host.replace('*', "s-" + space_id)}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
-        } else {
-            src = `${isSecure ? "https://" : "http://"}${host}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
-        }
-    } else {
-        src = `/zz/space/${nskey}`;
-    }
+        src = `${isSecure ? "https://" : "http://"}${host}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
+    } 
 
     return src;
 }
@@ -83,24 +27,55 @@ export default function Page() {
     const searchParams = useSearchParams();
     const nskey = searchParams.get('nskey');
     const space_id = searchParams.get('space_id');
+    const load_page = searchParams.get('load_page');
     const [isLoading, setIsLoading] = useState(true);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [iframeSrc, setIframeSrc] = useState('');
+
+    const loadHost = async () => {
+        if (!nskey) {
+            return;
+        }
+
+        setIsLoading(true);        
+
+        try {
+
+            const startTime = Date.now();
+            const resp = await deriveHost(nskey, space_id || undefined);
+            if (resp.status !== 200) {
+                console.error("failed to derive host");
+                return;
+            }
+     
+            const endTime = Date.now();
+
+            const duration = endTime - startTime;
+            console.log(`deriveHost took ${duration}ms`);
+
+            
+            setIframeSrc(buildIframeSrc(nskey, resp.data.host));
+
+            setTimeout(() => {
+                setIsLoading(false);
+            }, Math.min( Math.max(50, duration), 10000))
+
+        } catch (error) {
+            console.error(error);
+        }
+
+
+    }
+
+
 
     useEffect(() => {
         if (!nskey || !space_id) {
             return;
         }
 
-
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 300);
-
-        setIframeSrc(buildIframeSrc(nskey, space_id));
-
-
-        return () => clearTimeout(timer);
+        loadHost();
+        
     }, [nskey, space_id]);
 
     console.log(iframeSrc);
@@ -115,11 +90,11 @@ export default function Page() {
                     </div>
                 )}
 
-                {iframeRef && (<>
+                {iframeSrc && (<>
                     <iframe
 
                         ref={iframeRef}
-                        src={iframeSrc}
+                        src={load_page ? `${iframeSrc}/${load_page}` : iframeSrc}
                         // src={`/zz/test_page.html`}
                         className={isLoading ? 'h-[1px] w-[1px]' : 'w-full h-full flex-grow'}
                     ></iframe>
