@@ -209,7 +209,7 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			return nil, err
 		}
 
-		spaceId, err := installArtifact(database, userId, installedId, space)
+		spaceId, err := installArtifactSpace(database, userId, installedId, space)
 		if err != nil {
 			return nil, err
 		}
@@ -241,13 +241,13 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 						return nil, errors.New("space not found")
 					}
 
-					err = installCapability(database, userId, installedId, spaceId, capability)
+					err = installCapability(database, installedId, spaceId, capability)
 					if err != nil {
 						return nil, err
 					}
 				}
 			} else {
-				err = installCapability(database, userId, installedId, 0, capability)
+				err = installCapability(database, installedId, 0, capability)
 				if err != nil {
 					return nil, err
 				}
@@ -268,21 +268,26 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	}, nil
 }
 
-func installCapability(database datahub.Database, userId, installedId, spaceId int64, capability models.ArtifactCapability) error {
+func installCapability(database datahub.Database, installedId, spaceId int64, capability models.ArtifactCapability) error {
 
 	spaceOps := database.GetSpaceOps()
+
+	options, err := json.Marshal(capability.Options)
+	if err != nil {
+		return err
+	}
 
 	return spaceOps.AddSpaceCapability(installedId, &dbmodels.SpaceCapability{
 		InstallID:      installedId,
 		Name:           capability.Name,
 		CapabilityType: capability.Type,
-		Options:        capability.Options,
+		Options:        string(options),
 		SpaceID:        spaceId,
 		ExtraMeta:      "{}",
 	})
 }
 
-func installArtifact(database datahub.Database, userId, installedId int64, artifact models.ArtifactSpace) (int64, error) {
+func installArtifactSpace(database datahub.Database, userId, installedId int64, artifact models.ArtifactSpace) (int64, error) {
 	routeOptions, err := json.Marshal(artifact.RouteOptions)
 	if err != nil {
 		return 0, err
@@ -358,7 +363,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		}
 
 		if currentArtifactIndex == -1 {
-			spaceId, err := installArtifact(c.database, userId, installedId, space)
+			spaceId, err := installArtifactSpace(c.database, userId, installedId, space)
 			if err != nil {
 				return 0, err
 			}

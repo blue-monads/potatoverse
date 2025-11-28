@@ -34,11 +34,11 @@ type PotatoArtifact struct {
 }
 
 type ArtifactCapability struct {
-	Kind    string   `json:"kind" toml:"kind"`
-	Name    string   `json:"name" toml:"name"`
-	Type    string   `json:"type" toml:"type"`
-	Options string   `json:"options" toml:"options"`
-	Spaces  []string `json:"spaces" toml:"spaces"`
+	Kind    string         `json:"kind" toml:"kind"`
+	Name    string         `json:"name" toml:"name"`
+	Type    string         `json:"type" toml:"type"`
+	Options map[string]any `json:"options" toml:"options"`
+	Spaces  []string       `json:"spaces" toml:"spaces"`
 }
 
 type ArtifactSpace struct {
