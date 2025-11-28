@@ -12,6 +12,7 @@ reload_runtime
 list_capabilities
 add_capability
 update_capability
+get_capability
 reload_caphub
 
 
