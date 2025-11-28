@@ -10,8 +10,6 @@ import (
 )
 
 // presign package file presigned token
-// package_get_file
-// package_list_folder
 // write_temporary_file
 // read_temporary_file
 // delete_temporary_file
