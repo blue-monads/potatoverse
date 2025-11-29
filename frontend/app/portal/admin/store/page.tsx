@@ -425,6 +425,8 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                                     return;
                                 }
 
+                                setInstallResult(response.data);
+
                                 setMode('success');
                             }
 
