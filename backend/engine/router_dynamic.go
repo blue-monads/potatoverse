@@ -98,7 +98,7 @@ func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	qq.Println("@static path", path)
 
 	pFileOps := e.db.GetPackageFileOps()
-	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx.Writer)
+	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"mime"
-	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/gin-gonic/gin"
 
 	"github.com/upper/db/v4"
 )
@@ -321,7 +321,8 @@ func (f *FileOperations) StreamFileByPath(ownerID int64, path string, name strin
 	return f.streamFileByMeta(file, w)
 }
 
-func (f *FileOperations) StreamFileToHTTP(ownerID int64, path, name string, w http.ResponseWriter) error {
+func (f *FileOperations) StreamFileToHTTP(ownerID int64, path, name string, ctx *gin.Context) error {
+	w := ctx.Writer
 	file, err := f.GetFileMetaByPath(ownerID, path, name)
 	if err != nil {
 		return err
@@ -332,7 +333,11 @@ func (f *FileOperations) StreamFileToHTTP(ownerID int64, path, name string, w ht
 		return err
 	}
 
-	f.setupHTTPHeaders(w, file)
+	isCached := f.setupHTTPHeaders(ctx, file)
+	if isCached {
+		return nil
+	}
+
 	return f.streamFileByMeta(file, w)
 }
 

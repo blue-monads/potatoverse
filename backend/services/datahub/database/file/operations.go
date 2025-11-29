@@ -11,6 +11,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/gin-gonic/gin"
 	"github.com/upper/db/v4"
 )
 
@@ -145,10 +146,27 @@ func (f *FileOperations) validateFileOwnership(file *dbmodels.FileMeta, ownerID 
 	return nil
 }
 
-func (f *FileOperations) setupHTTPHeaders(w http.ResponseWriter, file *dbmodels.FileMeta) {
+// return true if the file is cached
+
+func (f *FileOperations) setupHTTPHeaders(ctx *gin.Context, file *dbmodels.FileMeta) bool {
+	header := ctx.Writer.Header()
 	if file.Mime != "" {
-		w.Header().Set("Content-Type", file.Mime)
+		header.Set("Content-Type", file.Mime)
 	}
 
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", file.Size))
+	if ifhash := header.Get("If-None-Match"); ifhash != "" {
+		if ifhash == file.Hash {
+			ctx.Writer.WriteHeader(http.StatusNotModified)
+			return true
+		}
+	}
+
+	if file.Hash != "" {
+		header.Set("ETag", file.Hash)
+		header.Set("Cache-Control", "public, max-age=31536000")
+	}
+
+	header.Set("Content-Length", fmt.Sprintf("%d", file.Size))
+
+	return false
 }
