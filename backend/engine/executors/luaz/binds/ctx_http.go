@@ -678,7 +678,6 @@ func reqSSEvent(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 	return 0
 }
 
-// HttpModule is kept for backward compatibility but now returns userdata instead of table
 func HttpModule(app xtypes.App, spaceId int64, L *lua.LState, ctx *gin.Context) *lua.LUserData {
 	return NewHttpRequestContext(L, app, spaceId, ctx)
 }
