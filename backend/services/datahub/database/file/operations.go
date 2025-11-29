@@ -146,5 +146,9 @@ func (f *FileOperations) validateFileOwnership(file *dbmodels.FileMeta, ownerID 
 }
 
 func (f *FileOperations) setupHTTPHeaders(w http.ResponseWriter, file *dbmodels.FileMeta) {
+	if file.Mime != "" {
+		w.Header().Set("Content-Type", file.Mime)
+	}
+
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", file.Size))
 }

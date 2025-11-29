@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path"
 	"strings"
@@ -155,6 +156,15 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 
 	now := time.Now()
 
+	exts := strings.Split(req.Name, ".")
+	mimeType := ""
+	if len(exts) > 1 {
+		fullext := "." + exts[len(exts)-1]
+		mimeType = mime.TypeByExtension(fullext)
+	}
+
+	qq.Println("@mimeType", mimeType)
+
 	fileMeta := &dbmodels.FileMeta{
 		OwnerID:   ownerID,
 		Name:      req.Name,
@@ -166,6 +176,7 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 		Size:      0,
 		UpdatedBy: req.CreatedBy,
 		UpdatedAt: &now,
+		Mime:      mimeType,
 	}
 
 	fileMeta.StoreType = int64(f.storeType)
