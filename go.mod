@@ -12,6 +12,7 @@ require (
 	github.com/gobwas/ws v1.4.0
 	github.com/hako/branca v0.0.0-20200807062402-6052ac720505
 	github.com/jaevor/go-nanoid v1.4.0
+	github.com/joho/godotenv v1.5.1
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/modelcontextprotocol/go-sdk v1.0.0
