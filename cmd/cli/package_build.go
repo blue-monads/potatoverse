@@ -53,7 +53,7 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 
 	potatoToml.Developer = nil
 
-	potatoJson, err := json.Marshal(potatoToml)
+	potatoMap, err := readPotatoMap(potatoTomlFile)
 	if err != nil {
 		return "", err
 	}
@@ -62,6 +62,12 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	potatoJson, err := json.Marshal(potatoMap)
+	if err != nil {
+		return "", err
+	}
+
 	_, err = pfile.Write(potatoJson)
 	if err != nil {
 		return "", err

@@ -209,7 +209,11 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			return nil, err
 		}
 
-		spaceId, err := installArtifactSpace(database, userId, installedId, space)
+		if space.Namespace == "" {
+			return nil, errors.New("space namespace is required")
+		}
+
+		spaceId, err := installArtifactSpace(database, userId, installedId, &space)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +291,7 @@ func installCapability(database datahub.Database, installedId, spaceId int64, ca
 	})
 }
 
-func installArtifactSpace(database datahub.Database, userId, installedId int64, artifact models.ArtifactSpace) (int64, error) {
+func installArtifactSpace(database datahub.Database, userId, installedId int64, artifact *models.ArtifactSpace) (int64, error) {
 	routeOptions, err := json.Marshal(artifact.RouteOptions)
 	if err != nil {
 		return 0, err
@@ -362,8 +366,12 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 			}
 		}
 
+		if space.Namespace == "" {
+			return 0, errors.New("space namespace is required")
+		}
+
 		if currentArtifactIndex == -1 {
-			spaceId, err := installArtifactSpace(c.database, userId, installedId, space)
+			spaceId, err := installArtifactSpace(c.database, userId, installedId, &space)
 			if err != nil {
 				return 0, err
 			}

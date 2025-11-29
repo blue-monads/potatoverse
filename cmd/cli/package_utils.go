@@ -15,23 +15,33 @@ import (
 
 func readPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
 
-	potatoTomlFileData, err := os.ReadFile(potatoTomlFile)
+	potatoToml := &models.PotatoPackage{}
+	err := readPotato(potatoTomlFile, potatoToml)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoTomlFile, err)
 	}
 
-	potatoToml := models.PotatoPackage{}
-	if strings.HasSuffix(potatoTomlFile, ".json") {
-		err = json.Unmarshal(potatoTomlFileData, &potatoToml)
-	} else {
-		err = toml.Unmarshal(potatoTomlFileData, &potatoToml)
-	}
+	return potatoToml, nil
+}
 
+func readPotatoMap(potatoJsonFile string) (map[string]any, error) {
+	potatoMap := make(map[string]any)
+	err := readPotato(potatoJsonFile, &potatoMap)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal potato manifest: %s %w", potatoTomlFile, err)
+		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoJsonFile, err)
+	}
+	return potatoMap, nil
+}
+
+func readPotato(potatoJsonFile string, target any) error {
+	pdata, err := os.ReadFile(potatoJsonFile)
+	if strings.HasSuffix(potatoJsonFile, ".json") {
+		err = json.Unmarshal(pdata, target)
+	} else {
+		err = toml.Unmarshal(pdata, target)
 	}
 
-	return &potatoToml, nil
+	return err
 }
 
 // includePatternInfo holds information about an include pattern and its optional destination
