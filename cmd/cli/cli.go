@@ -34,7 +34,7 @@ type SingletonStartCmd struct {
 
 func loadEnv() {
 
-	godotenv.Load(".env.potatoverse")
+	godotenv.Load(".env.potato")
 
 }
 
