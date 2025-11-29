@@ -108,30 +108,48 @@ const InSpaceAuthorizerWrapper = () => {
 
 
     const redirectWithoutSpaceToken = () => {
+        console.log("@redirectWithoutSpaceToken", params.toString());
+
         const redirect_back_url = params.get('redirect_back_url');
         if (!redirect_back_url) {
             console.log("@redirect_back_url is not set");
             return;
         }
 
+        const actual_page = params.get('actual_page');
+
         const redirect_back_url_url = new URL(redirect_back_url);
+        if (actual_page) {
+            redirect_back_url_url.searchParams.set('actual_page', actual_page);
+        }
         redirect_back_url_url.searchParams.set("deny_space_token", "true");
         window.location.href = redirect_back_url_url.toString();
     }
 
 
     const redirrectToLoginPage = () => {
+        console.log("@redirrectToLoginPage", params.toString());
+
         const redirect_back_url = params.get('redirect_back_url');
         if (!redirect_back_url) {
             console.log("@redirect_back_url is not set");
             return;
         }
+        
+        const actual_page = params.get('actual_page');
+
 
         window.sessionStorage.setItem('redirect_back_url', redirect_back_url);
         const loginPageUrl = new URL('/zz/pages/auth/login', window.location.origin);
 
         const finalRedirectBackUrl = new URL("/zz/pages/auth/space/in_host", window.location.origin);
         finalRedirectBackUrl.searchParams.set('redirect_back_url', redirect_back_url);
+
+        if (actual_page) {
+            finalRedirectBackUrl.searchParams.set('actual_page', actual_page);
+        }
+
+        console.log("@finalRedirectBackUrl", finalRedirectBackUrl.toString());
 
         loginPageUrl.searchParams.set('after_login_redirect_back_url', finalRedirectBackUrl.toString());
         window.location.href = loginPageUrl.toString();
@@ -229,20 +247,31 @@ const InSpaceAuthorizerWrapper = () => {
 
                     <div className="flex justify-center items-center">
                         <button onClick={() => {
+
+                            console.log("@in_host/post_page", params.toString());
+
+
                             const redirect_back_url = params.get('redirect_back_url');
                             if (!redirect_back_url) {
                                 console.log("@redirect_back_url is not set");
                                 return;
                             }
 
-
-                            
+                            const actual_page = params.get('actual_page');
 
                             const redirect_back_url_url = new URL("/zz/pages/auth/space/in_space/post_page", redirect_back_url);
                             //const redirect_back_url_url = new URL("/zz/pages/auth/space/in_space/post_page", window.origin);
                             redirect_back_url_url.searchParams.set("redirect_back_url", redirect_back_url);
                             redirect_back_url_url.searchParams.set("space_token", spaceToken!);
                             redirect_back_url_url.searchParams.set("nskey", spaceInfo!.namespace_key);
+
+                            if (actual_page) {
+                                redirect_back_url_url.searchParams.set('actual_page', actual_page);
+                            }
+
+
+
+
                             window.location.href = redirect_back_url_url.toString();
                         }}>
                             Redirect to space

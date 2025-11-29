@@ -59,8 +59,18 @@ export default function InSpacePostPage() {
             return;
         }
 
-        
-        window.location.href = redirect_back_url;
+        const actual_page = params.get('actual_page')
+
+        console.log("@actual_page", actual_page);
+
+        if (actual_page) {
+            const finalRedirectBackUrl = new URL(redirect_back_url, window.location.origin);
+            finalRedirectBackUrl.pathname = finalRedirectBackUrl.pathname + "/" + actual_page;
+
+            window.location.href = finalRedirectBackUrl.toString();
+        } else {
+            window.location.href = redirect_back_url;
+        }
 
 
         
