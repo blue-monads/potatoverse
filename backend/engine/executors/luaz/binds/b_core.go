@@ -2,6 +2,7 @@ package binds
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
@@ -75,9 +76,15 @@ func coreModuleIndex(L *lua.LState) int {
 			return coreSignAdviseryToken(mod, L)
 		}))
 		return 1
+	case "read_package_file":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return readPackageFile(mod, L)
+		}))
+		return 1
+	default:
+		return 0
 	}
 
-	return 0
 }
 
 type PublishEventOptions struct {
@@ -177,4 +184,27 @@ func coreSignAdviseryToken(mod *luaCoreModule, L *lua.LState) int {
 	L.Push(lua.LString(signature))
 	L.Push(lua.LNil)
 	return 2
+}
+
+func readPackageFile(mod *luaCoreModule, L *lua.LState) int {
+	fpath := L.CheckString(1)
+
+	fileName := fpath
+	dirPath := ""
+
+	if strings.Contains(fpath, "/") {
+		parts := strings.Split(fpath, "/")
+		fileName = parts[len(parts)-1]
+		dirPath = strings.Join(parts[:len(parts)-1], "/")
+	}
+
+	pops := mod.app.Database().GetPackageFileOps()
+	fileData, err := pops.GetFileContentByPath(mod.installId, dirPath, fileName)
+	if err != nil {
+		return pushError(L, err)
+	}
+	L.Push(lua.LString(fileData))
+	L.Push(lua.LNil)
+	return 2
+
 }

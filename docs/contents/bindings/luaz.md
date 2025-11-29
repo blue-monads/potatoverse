@@ -60,6 +60,7 @@ Core system operations.
 - `publish_event(opts)` - Publish event. `opts`: `{name, payload, resource_id}`
 - `file_token(opts)` - Generate file presigned token. `opts`: `{path, file_name, user_id}`
 - `advisery_token(opts)` - Generate advisery token. `opts`: `{token_sub_type, user_id, data}`
+- `read_package_file(fpath)` - read package file contents
 
 ## http.request
 
