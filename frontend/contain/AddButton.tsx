@@ -11,7 +11,7 @@ export const AddButton: React.FC<PropsType> = (props: PropsType) => {
         <button
             onClick={props.onClick}
             disabled={props.disabled}
-            className="btn btn-base preset-filled"
+            className="btn btn-base preset-filled bg-primary-600 text-white"
             >
             {props.name || "Add"}
         </button>

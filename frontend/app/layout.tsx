@@ -21,7 +21,8 @@ export default function RootLayout({
       data-theme="cerberus"
     >
       <body
-        className={`antialiased`}
+        className={`antialiased text-gray-900`}
+
         // suppressHydrationWarning
       >
         <script src="/zz/api/core/global.js" />

@@ -16,13 +16,13 @@ const GModalWrapper = () => {
                 onClick={closeModal}
             />
             
-            <div className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl ${getSizeClasses(modalContent.size)} max-h-[90vh] overflow-hidden`}>
+            <div className={`relative bg-white rounded-lg shadow-2xl ${getSizeClasses(modalContent.size)} max-h-[90vh] overflow-hidden`}>
 
                 <CloseButton onClose={closeModal} />
 
                  {modalContent.title && (
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                        <h2 className="text-xl font-semibold text-gray-900">
                             {modalContent.title}
                         </h2>
 
@@ -50,7 +50,7 @@ interface CloseButtonProps {
 const CloseButton = ({ onClose }: CloseButtonProps) => {
     return (
         <button
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full p-1 transition-colors"
+            className="text-gray-400 hover:text-gray-600 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full p-1 transition-colors"
             aria-label="close"
             onClick={onClose}
         >
