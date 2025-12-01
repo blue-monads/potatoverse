@@ -92,7 +92,10 @@ const WithTabbedToolsLayout = (props: PropsType) => {
                 }}>
                 <Tabs.List>
                     {tabs.map((tab) => (
-                        <Tabs.Control classes='uppercase' key={tab.value} value={tab.value}>{tab.label}</Tabs.Control>
+                        <Tabs.Control 
+                        classes={ 'uppercase' + (activeTab === tab.value ? ' !border-b-2 !border-primary-400' : ' !border-transparent')} 
+                        key={tab.value} 
+                        value={tab.value}>{tab.label}</Tabs.Control>
                     ))}
                 </Tabs.List>
                 <Tabs.Content>

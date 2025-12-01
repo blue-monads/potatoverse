@@ -21,7 +21,7 @@ export default function PortalLayout({
   return (
     <>
       <Suspense fallback={<SkeletonLoader />}>
-        <div className="flex">
+        <div className="flex bg-surface-50">
           <Sidebar onMessageClick={() => setIsMessagePanelOpen(!isMessagePanelOpen)} />
 
           <div className="ml-14 w-full">
