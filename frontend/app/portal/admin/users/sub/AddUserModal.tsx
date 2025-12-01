@@ -87,37 +87,37 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">User Created Successfully!</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    <h3 className="text-lg font-medium text-gray-900">User Created Successfully!</h3>
+                    <p className="text-sm text-gray-500 mt-2">
                         The user has been created and can now log in with the generated password.
                     </p>
                 </div>
 
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-3">
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
-                        <p className="text-sm text-gray-900 dark:text-white">{createdUser.name}</p>
+                        <label className="text-sm font-medium text-gray-700">Name</label>
+                        <p className="text-sm text-gray-900">{createdUser.name}</p>
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                        <p className="text-sm text-gray-900 dark:text-white">{createdUser.email}</p>
+                        <label className="text-sm font-medium text-gray-700">Email</label>
+                        <p className="text-sm text-gray-900">{createdUser.email}</p>
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                        <p className="text-sm text-gray-900 dark:text-white">{createdUser.username}</p>
+                        <label className="text-sm font-medium text-gray-700">Username</label>
+                        <p className="text-sm text-gray-900">{createdUser.username}</p>
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
-                        <p className="text-sm text-gray-900 dark:text-white capitalize">{createdUser.utype}</p>
+                        <label className="text-sm font-medium text-gray-700">Type</label>
+                        <p className="text-sm text-gray-900 capitalize">{createdUser.utype}</p>
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Group</label>
-                        <p className="text-sm text-gray-900 dark:text-white capitalize">{createdUser.ugroup}</p>
+                        <label className="text-sm font-medium text-gray-700">User Group</label>
+                        <p className="text-sm text-gray-900 capitalize">{createdUser.ugroup}</p>
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Generated Password</label>
+                        <label className="text-sm font-medium text-gray-700">Generated Password</label>
                         <div className="flex items-center space-x-2">
-                            <p className="text-sm font-mono text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
+                            <p className="text-sm font-mono text-gray-900 bg-gray-100 px-2 py-1 rounded">
                                 {createdUser.password}
                             </p>
                             <button
@@ -128,7 +128,7 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                                 Copy
                             </button>
                         </div>
-                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                        <p className="text-xs text-red-600 mt-1">
                             ⚠️ Please save this password securely. It won't be shown again.
                         </p>
                     </div>
@@ -149,15 +149,15 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
     return (
         <div className="space-y-4 md:w-md">
             <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Create New User</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <h3 className="text-lg font-medium text-gray-900">Create New User</h3>
+                <p className="text-sm text-gray-500 mt-1">
                     Create a new user account directly. A random password will be generated.
                 </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         Full Name *
                     </label>
                     <input
@@ -165,14 +165,14 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                         id="name"
                         value={formData.name}
                         onChange={(e) => handleInputChange("name", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter full name"
                         required
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email Address *
                     </label>
                     <input
@@ -180,14 +180,14 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                         id="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter email address"
                         required
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                         Username *
                     </label>
                     <input
@@ -195,21 +195,21 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                         id="username"
                         value={formData.username}
                         onChange={(e) => handleInputChange("username", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter username"
                         required
                     />
                 </div>
 
                 <div>
-                    <label htmlFor="utype" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="utype" className="block text-sm font-medium text-gray-700 mb-1">
                         User Type *
                     </label>
                     <select
                         id="utype"
                         value={formData.utype}
                         onChange={(e) => handleInputChange("utype", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                     >
                         {utypeOptions.map((option) => (
@@ -221,14 +221,14 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                 </div>
 
                 <div>
-                    <label htmlFor="ugroup" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="ugroup" className="block text-sm font-medium text-gray-700 mb-1">
                         User Group *
                     </label>
                     <select
                         id="ugroup"
                         value={formData.ugroup}
                         onChange={(e) => handleInputChange("ugroup", e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         required
                         disabled={loadingGroups}
                     >
@@ -248,8 +248,8 @@ export default function AddUserModal({ onUserAdded }: AddUserModalProps) {
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-                        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                        <p className="text-sm text-red-600">{error}</p>
                     </div>
                 )}
 

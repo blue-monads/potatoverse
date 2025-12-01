@@ -235,8 +235,8 @@ const InSpaceAuthorizerWrapper = () => {
         </>)}
 
         {mode === "space_token_loaded" && (<>
-            <div className="flex items-center justify-center min-h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+            <div className="flex items-center justify-center min-h-[500px] bg-gray-100 p-4">
+                <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                     <div className="flex mb-6 space-x-4 items-center justify-center">
                         <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                     </div>
@@ -302,8 +302,8 @@ interface PromptCardProps {
 
 const AuthorizePromptCard = (props: PromptCardProps) => {
     return (
-        <div className="flex items-center justify-center h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+        <div className="flex items-center justify-center h-[500px] bg-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
                     <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                 </div>
@@ -327,15 +327,15 @@ const AuthorizePromptCard = (props: PromptCardProps) => {
                     </button>
                     <button
                         onClick={props.onDeny}
-                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out"
                     >
                         Deny
                     </button>
                 </div>
 
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-center text-sm text-gray-500">
                     Logged in as <span className="font-medium">{props.loggedInUser}</span>.{" "}
-                    <button onClick={props.onChangeAccount} className="text-blue-600 hover:underline dark:text-blue-400">
+                    <button onClick={props.onChangeAccount} className="text-blue-600 hover:underline">
                         Change account
                     </button>
                 </p>
@@ -352,8 +352,8 @@ interface NotAuthorizedPromptCardProps {
 const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
 
     return (
-        <div className="flex items-center justify-center h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+        <div className="flex items-center justify-center h-[500px] bg-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
                     <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                 </div>
@@ -370,7 +370,7 @@ const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
                     </button>
                     <button
                         onClick={props.onDeny}
-                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out"
                     >
                         Deny
                     </button>

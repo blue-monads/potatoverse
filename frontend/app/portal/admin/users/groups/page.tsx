@@ -241,7 +241,7 @@ function CreateGroupForm({ onSubmit }: CreateGroupFormProps) {
         <div className="space-y-4 md:w-md">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         Group Name *
                     </label>
                     <input
@@ -249,28 +249,28 @@ function CreateGroupForm({ onSubmit }: CreateGroupFormProps) {
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter group name"
                         required
                     />
                 </div>
                 <div>
-                    <label htmlFor="info" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="info" className="block text-sm font-medium text-gray-700 mb-1">
                         Description
                     </label>
                     <textarea
                         id="info"
                         value={info}
                         onChange={(e) => setInfo(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter group description (optional)"
                         rows={3}
                     />
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-                        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                        <p className="text-sm text-red-600">{error}</p>
                     </div>
                 )}
 
@@ -324,7 +324,7 @@ function EditGroupForm({ group, onSubmit }: EditGroupFormProps) {
         <div className="space-y-4 md:w-md">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                         Group Name
                     </label>
                     <input
@@ -332,26 +332,26 @@ function EditGroupForm({ group, onSubmit }: EditGroupFormProps) {
                         id="name"
                         value={group.name}
                         disabled
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
                     />
                 </div>
                 <div>
-                    <label htmlFor="info" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="info" className="block text-sm font-medium text-gray-700 mb-1">
                         Description
                     </label>
                     <textarea
                         id="info"
                         value={info}
                         onChange={(e) => setInfo(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Enter group description (optional)"
                         rows={3}
                     />
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
-                        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                        <p className="text-sm text-red-600">{error}</p>
                     </div>
                 )}
 

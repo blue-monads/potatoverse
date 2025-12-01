@@ -272,8 +272,8 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
                         <Key className="w-6 h-6" />
                         Development Token
                     </h2>
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-sm text-gray-600 mb-4">
                             Generate a development token for CLI package push operations. 
                             This token allows you to update this package from the command line.
                         </p>
@@ -290,12 +290,12 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
                         ) : (
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
-                                    <div className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono text-sm break-all">
+                                    <div className="flex-1 bg-white border border-gray-300 rounded-lg p-3 font-mono text-sm break-all">
                                         {devToken}
                                     </div>
                                     <button
                                         onClick={handleCopyToken}
-                                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
+                                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                                     >
                                         {copied ? (
                                             <>
@@ -336,13 +336,13 @@ interface DetailCardProps {
 
 const DetailCard = ({ icon, label, value, link }: DetailCardProps) => {
     return (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-start gap-3">
-                <div className="text-blue-500 dark:text-blue-400 mt-1">
+                <div className="text-blue-500 mt-1">
                     {icon}
                 </div>
                 <div className="flex-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+                    <p className="text-sm text-gray-500 mb-1">{label}</p>
                     {link ? (
                         <a
                             href={link}
@@ -354,7 +354,7 @@ const DetailCard = ({ icon, label, value, link }: DetailCardProps) => {
                             <ExternalLink className="w-3 h-3" />
                         </a>
                     ) : (
-                        <p className="text-gray-900 dark:text-white font-medium break-words">
+                        <p className="text-gray-900 font-medium break-words">
                             {value}
                         </p>
                     )}
@@ -377,10 +377,10 @@ interface VersionCardProps {
 
 const VersionCard = ({ version, isActive }: VersionCardProps) => {
     return (
-        <div className={`relative overflow-hidden rounded-lg bg-gray-50 dark:bg-gray-800 p-4 border-2 ${isActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+        <div className={`relative overflow-hidden rounded-lg bg-gray-50 p-4 border-2 ${isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
             <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">#{version.id}</span>
+                    <span className="text-sm font-semibold text-gray-600">#{version.id}</span>
                     {isActive && (
                         <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
                             Active
@@ -389,13 +389,13 @@ const VersionCard = ({ version, isActive }: VersionCardProps) => {
                 </div>
                 
                 <div>
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">{version.name}</h3>
+                    <h3 className="font-bold text-lg text-gray-900">{version.name}</h3>
                     <div className="flex items-center gap-2 mt-2">
-                        <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs">
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
                             v{version.version}
                         </span>
                         {version.format_version && (
-                            <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
+                            <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
                                 Format: {version.format_version}
                             </span>
                         )}
@@ -403,20 +403,20 @@ const VersionCard = ({ version, isActive }: VersionCardProps) => {
                 </div>
 
                 {version.info && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                         {version.info}
                     </p>
                 )}
 
                 <div className="flex items-center gap-4 text-xs mt-2">
                     {version.slug && (
-                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1 text-gray-500">
                             <Code2 className="w-3 h-3" />
                             <span>{version.slug}</span>
                         </div>
                     )}
                     {version.license && (
-                        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-1 text-gray-500">
                             <Scale className="w-3 h-3" />
                             <span>{version.license}</span>
                         </div>
