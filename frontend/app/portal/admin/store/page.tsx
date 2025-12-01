@@ -431,7 +431,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                             }
 
                         }}
-                        className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                        className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
                     >
                         Import
                     </button>
@@ -511,7 +511,7 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
                         setMode('success');
 
                     }}
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                     Install
                 </button>
@@ -588,14 +588,14 @@ const PostInstallButtons = (props: PostInstallButtonsProps) => {
 
                     }}
 
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Configure
                 </button>
             ) : (
                 <button
 
                     onClick={props.onClose}
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Close
                 </button>
             )}
