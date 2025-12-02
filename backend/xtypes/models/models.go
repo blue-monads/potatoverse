@@ -24,6 +24,7 @@ type PotatoPackage struct {
 type DeveloperOptions struct {
 	ServerUrl     string   `json:"server_url" toml:"server_url"`
 	Token         string   `json:"token" toml:"token"`
+	TokenEnv      string   `json:"token_env" toml:"token_env"`
 	OutputZipFile string   `json:"output_zip_file,omitempty" toml:"output_zip_file,omitempty"`
 	IncludeFiles  []string `json:"include_files,omitempty" toml:"include_files,omitempty"`
 	ExcludeFiles  []string `json:"exclude_files,omitempty" toml:"exclude_files,omitempty"`

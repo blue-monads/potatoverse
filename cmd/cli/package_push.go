@@ -38,7 +38,14 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 
 	token := potatoToml.Developer.Token
 	if token == "" {
-		return errors.New("token is required")
+		if potatoToml.Developer.TokenEnv == "" {
+			return errors.New("token is required")
+		}
+
+		token = os.Getenv(potatoToml.Developer.TokenEnv)
+		if token == "" {
+			return errors.New("token is required")
+		}
 	}
 
 	url := fmt.Sprintf("%s/zz/api/core/package/push", serverUrl)
