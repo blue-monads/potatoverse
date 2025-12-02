@@ -34,9 +34,7 @@ require (
 
 // replace github.com/psanford/sqlite3vfs => ../sqlite3vfs
 
-// go get github.com/blue-monads/db/v4@mj-change-sqlite-driver
-
-// replace github.com/upper/db/v4 => github.com/blue-monads/db/v4 v4.0.0-20251111024918-ce036f164885
+replace github.com/upper/db/v4 => github.com/blue-monads/db/v4 v4.0.0-20251111024918-ce036f164885
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
