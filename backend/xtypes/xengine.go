@@ -8,11 +8,12 @@ import (
 )
 
 type EventOptions struct {
-	InstallId  int64
-	SpaceId    int64
-	Name       string
-	Payload    []byte
-	ResourceId string
+	InstallId   int64
+	SpaceId     int64
+	Name        string
+	Payload     []byte
+	ResourceId  string
+	CollapseKey string
 }
 
 type Engine interface {

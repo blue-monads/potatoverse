@@ -88,9 +88,10 @@ func coreModuleIndex(L *lua.LState) int {
 }
 
 type PublishEventOptions struct {
-	Name       string `json:"name"`
-	Payload    any    `json:"payload"`
-	ResourceId string `json:"resource_id"`
+	Name        string `json:"name"`
+	Payload     any    `json:"payload"`
+	ResourceId  string `json:"resource_id"`
+	CollapseKey string `json:"collapse_key"`
 }
 
 func corePublishEvent(mod *luaCoreModule, L *lua.LState) int {
@@ -122,10 +123,12 @@ func corePublishEvent(mod *luaCoreModule, L *lua.LState) int {
 	}
 
 	err = mod.engine.PublishEvent(&xtypes.EventOptions{
-		InstallId:  mod.installId,
-		Name:       opts.Name,
-		Payload:    payloadBytes,
-		ResourceId: opts.ResourceId,
+		InstallId:   mod.installId,
+		Name:        opts.Name,
+		Payload:     payloadBytes,
+		ResourceId:  opts.ResourceId,
+		CollapseKey: opts.CollapseKey,
+		SpaceId:     mod.spaceId,
 	})
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
