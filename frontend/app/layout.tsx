@@ -21,7 +21,7 @@ export default function RootLayout({
       data-theme="cerberus"
     >
       <body
-        className={`antialiased text-gray-900`}
+        className={`antialiased text-gray-900 bg-surface-50`}
 
         // suppressHydrationWarning
       >
