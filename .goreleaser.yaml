@@ -21,6 +21,8 @@ builds:
       - >-
         {{- if eq .Os "darwin" }}
           {{- if index .Env "SDK_PATH" }}CGO_ENABLED=1{{ else }}CGO_ENABLED=0{{ end }}
+        {{- else if eq .Os "linux" }}
+          CGO_ENABLED=0
         {{- else }}CGO_ENABLED=1{{- end }}
       # macOS builds (use clang with SDK)
       - >-
