@@ -1,12 +1,13 @@
 project_name: potatoverse
+version: 2
 before:
   hooks:
     - go mod tidy
 builds:
   - goos:
-      - darwin
+      # - darwin
       - linux
-      - windows
+      # - windows
     goarch:
       - amd64
       - arm64
@@ -14,9 +15,6 @@ builds:
       - -s -w
     flags:
       - -trimpath
-      # Note: PIE disabled for Linux when using static linking with musl
-      # - >-
-      #   {{- if eq .Os "linux" }}-buildmode=pie{{- end }}
     env:
       - >-
         {{- if eq .Os "darwin" }}
@@ -36,18 +34,30 @@ builds:
       # Linux builds (use zig for cross-compilation with musl)
       - >-
         {{- if eq .Os "linux" }}
-          {{- if eq .Arch "amd64" }}CC=zig cc -target x86_64-linux-musl{{- end }}
-          {{- if eq .Arch "arm64" }}CC=zig cc -target aarch64-linux-musl{{- end }}
+          {{- if eq .Arch "amd64" }}
+           # CC=zig cc -target x86_64-linux-musl
+          {{- end }}
+          {{- if eq .Arch "arm64" }}
+            # CC=zig cc -target aarch64-linux-musl
+            CC=aarch64-linux-gnu-gcc
+            # sysroot=/usr/aarch64-linux-gnu
+            CGO_CFLAGS=-isysroot /usr/aarch64-linux-gnu
+            CGO_CXXFLAGS=-isysroot /usr/aarch64-linux-gnu
+          {{- end }}
         {{- end }}
       - >-
         {{- if eq .Os "linux" }}
-          {{- if eq .Arch "amd64" }}CXX=zig c++ -target x86_64-linux-musl{{- end }}
-          {{- if eq .Arch "arm64" }}CXX=zig c++ -target aarch64-linux-musl{{- end }}
-        {{- end }}
-      - >-
-        {{- if eq .Os "linux" }}
-        CGO_LDFLAGS=-static
-        CGO_ENABLED=0
+          {{- if eq .Arch "amd64" }}
+          # CXX=zig c++ -target x86_64-linux-musl
+          {{- end }}
+
+          {{- if eq .Arch "arm64" }}
+            #CXX=zig c++ -target aarch64-linux-musl
+            CXX=aarch64-linux-gnu-g++
+            # sysroot=/usr/aarch64-linux-gnu
+            CGO_CFLAGS=-isysroot /usr/aarch64-linux-gnu
+            CGO_CXXFLAGS=-isysroot /usr/aarch64-linux-gnu
+          {{- end }}
         {{- end }}
       # Windows builds (use zig for cross-compilation)
       - >-
@@ -76,24 +86,8 @@ builds:
           {{- end }}
         {{- end }}
 
-archives:
-  - format: tar.gz
-    # this name template makes the OS and Arch compatible with the results of uname.
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-      - goos: windows
-        format: zip
 checksum:
   name_template: "checksums.txt"
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
