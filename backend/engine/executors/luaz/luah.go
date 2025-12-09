@@ -68,12 +68,19 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 
 	l.logger().Info("handling http", "handler", handlerName, "params", params)
 
+	var reqCtx *lua.LUserData
+
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
 		"request": func(L *lua.LState) int {
 			app := l.parent.parent.app
 			spaceId := l.parent.handle.SpaceId
 
-			reqCtx := binds.HttpModule(app, spaceId, L, ctx)
+			if reqCtx == nil {
+				reqCtx = binds.HttpModule(app, spaceId, L, ctx)
+				L.Push(reqCtx)
+				return 1
+			}
+
 			L.Push(reqCtx)
 			return 1
 		},

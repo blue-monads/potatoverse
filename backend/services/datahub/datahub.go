@@ -2,9 +2,9 @@ package datahub
 
 import (
 	"io"
-	"net/http"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/gin-gonic/gin"
 	"github.com/upper/db/v4"
 )
 
@@ -190,12 +190,12 @@ type FileOps interface {
 	RemoveFile(ownerID int64, id int64) error
 	StreamFile(ownerID int64, id int64, w io.Writer) error
 	StreamFileByPath(ownerID int64, path, name string, w io.Writer) error
-	StreamFileToHTTP(ownerID int64, path, name string, w http.ResponseWriter) error
+	StreamFileToHTTP(ownerID int64, path, name string, ctx *gin.Context) error
 	UpdateFile(ownerID int64, id int64, stream io.Reader) error
 	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
 
 	AddFileShare(ownerID int64, fileId int64, userId int64) (string, error)
-	GetSharedFile(ownerID int64, id string, w http.ResponseWriter) error
+	GetSharedFile(ownerID int64, id string, ctx *gin.Context) error
 	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
 	RemoveFileShare(ownerID int64, userId int64, id string) error
 }

@@ -14,12 +14,12 @@ export default function PortalLayout({
 
   return (
     <>
-      <nav className="bg-white border border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2.5 rounded dark:bg-gray-800 shadow">
+      <nav className="bg-white border border-gray-200 px-2 sm:px-4 py-2.5 rounded shadow">
         <div className="container flex flex-wrap justify-between items-center mx-auto">
           <a href="/pages/portal" className="flex items-center gap-1">
 
             <Image
-              className="dark:invert p-1 border "
+              className="p-1 border "
               src="/zz/pages/logo.png"
               alt="Turnix Logo"
               width={42}
@@ -27,7 +27,7 @@ export default function PortalLayout({
               priority
             />
 
-            <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
+            <span className="self-center text-xl font-semibold whitespace-nowrap">
               Turnix Portal
             </span>
           </a>
@@ -37,7 +37,7 @@ export default function PortalLayout({
 
               <div className="flex items-center justify-center mr-2">
                 <button
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
+                  className="text-gray-500 hover:text-gray-700 focus:outline-none"
 
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -53,7 +53,7 @@ export default function PortalLayout({
                     <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShta_GXR2xdnsxSzj_GTcJHcNykjVKrCBrZ9qouUl0usuJWG2Rpr_PbTDu3sA9auNUH64&usqp=CAU" alt="profile" className="shadow rounded-full object-cover" />
                   </div>
                 </div>
-                <div className="hidden md:block text-sm md:text-md text-black dark:text-white">John Doe</div>
+                <div className="hidden md:block text-sm md:text-md text-black">John Doe</div>
               </div>
 
               {/* Notification icon */}

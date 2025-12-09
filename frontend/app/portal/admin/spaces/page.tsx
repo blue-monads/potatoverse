@@ -166,27 +166,27 @@ const SpacesDirectory = () => {
                                             content: (
                                                 <div className="space-y-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                                                            <Trash2Icon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                                        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                                            <Trash2Icon className="w-5 h-5 text-red-600" />
                                                         </div>
                                                         <div>
-                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                            <h3 className="text-lg font-semibold text-gray-900">
                                                                 Are you sure you want to delete this space?
                                                             </h3>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                            <p className="text-sm text-gray-600">
                                                                 This action cannot be undone. All data associated with this space will be permanently removed.
                                                             </p>
                                                         </div>
                                                     </div>
                                                     
-                                                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                                    <div className="bg-gray-50 p-4 rounded-lg">
                                                         <div className="flex items-center gap-3">
                                                             <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-sm font-semibold`}>
                                                                 #{space.id}
                                                             </div>
                                                             <div>
-                                                                <p className="font-medium text-gray-900 dark:text-white">{pkg.name}</p>
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400">{pkg.description || pkg.info}</p>
+                                                                <p className="font-medium text-gray-900">{pkg.name}</p>
+                                                                <p className="text-sm text-gray-600">{pkg.description || pkg.info}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -194,7 +194,7 @@ const SpacesDirectory = () => {
                                                     <div className="flex gap-3 justify-end">
                                                         <button
                                                             onClick={() => gapp.modal.closeModal()}
-                                                            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg transition-colors"
+                                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                                         >
                                                             Cancel
                                                         </button>

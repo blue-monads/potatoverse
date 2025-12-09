@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/joho/godotenv"
 )
 
 type CLI struct {
@@ -31,6 +32,12 @@ type SingletonStartCmd struct {
 
 // extra
 
+func loadEnv() {
+
+	godotenv.Load(".env.potato")
+
+}
+
 func Run() {
 	var cli CLI
 	parser := kong.Must(&cli,
@@ -38,6 +45,8 @@ func Run() {
 		kong.Description("Potatoverse: Platform for apps."),
 		kong.UsageOnError(),
 	)
+
+	loadEnv()
 
 	ctx, err := parser.Parse(os.Args[1:])
 	if err != nil {

@@ -24,12 +24,25 @@ type PotatoPackage struct {
 type DeveloperOptions struct {
 	ServerUrl     string   `json:"server_url" toml:"server_url"`
 	Token         string   `json:"token" toml:"token"`
+	TokenEnv      string   `json:"token_env" toml:"token_env"`
 	OutputZipFile string   `json:"output_zip_file,omitempty" toml:"output_zip_file,omitempty"`
 	IncludeFiles  []string `json:"include_files,omitempty" toml:"include_files,omitempty"`
 	ExcludeFiles  []string `json:"exclude_files,omitempty" toml:"exclude_files,omitempty"`
 }
 
 type PotatoArtifact struct {
+	Kind string `json:"kind" toml:"kind"`
+}
+
+type ArtifactCapability struct {
+	Kind    string         `json:"kind" toml:"kind"`
+	Name    string         `json:"name" toml:"name"`
+	Type    string         `json:"type" toml:"type"`
+	Options map[string]any `json:"options" toml:"options"`
+	Spaces  []string       `json:"spaces" toml:"spaces"`
+}
+
+type ArtifactSpace struct {
 	Namespace       string             `json:"namespace" toml:"namespace"`
 	Kind            string             `json:"kind" toml:"kind"`
 	ExecutorType    string             `json:"executor_type" toml:"executor_type"`
@@ -38,7 +51,6 @@ type PotatoArtifact struct {
 	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
 	McpOptions      PotatoMcpOptions   `json:"mcp_options" toml:"mcp_options"`
 	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
-	DevOptions      PotatoDevOptions   `json:"dev_options" toml:"dev_options"`
 }
 
 type PotatoRouteOptions struct {

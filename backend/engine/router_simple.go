@@ -18,7 +18,7 @@ func (e *Engine) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIndexIt
 	qq.Println("@simple_route/path", path)
 
 	pFileOps := e.db.GetPackageFileOps()
-	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx.Writer)
+	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

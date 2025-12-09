@@ -1,8 +1,6 @@
 "use client";
-import { UserInfo } from "@/hooks";
-import { getLoginData, getSpaceInfo, SpaceInfo } from "@/lib";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const extractDomainSPrefixRegex = /^(https?:\/\/)zz-\d+(?:-[a-zA-Z0-9]*)?\./;
 
@@ -14,10 +12,18 @@ export default function InSpacePrePage() {
             return;
         }
 
+        console.log("@InSpacePrePage", params.toString());
+
+
         const redirect_back_url = params.get('redirect_back_url');
         if (!redirect_back_url) {
             console.log("@redirect_back_url is not set");
             return;
+        }
+
+        const actual_page = params.get('actual_page');
+        if (actual_page) {
+            console.log("@actual_page", actual_page);
         }
 
         
@@ -33,8 +39,14 @@ export default function InSpacePrePage() {
 
         const authorizerPageUrl = new URL('/zz/pages/auth/space/in_host', origin);
         const finalRedirectBackUrl = new URL(redirect_back_url, window.location.origin);
-        authorizerPageUrl.searchParams.set('redirect_back_url', finalRedirectBackUrl.toString());
 
+        if (actual_page) {
+            authorizerPageUrl.searchParams.set('actual_page', actual_page);
+            finalRedirectBackUrl.searchParams.set('actual_page', actual_page);
+        }
+
+
+        authorizerPageUrl.searchParams.set('redirect_back_url', finalRedirectBackUrl.toString());
         window.location.href = authorizerPageUrl.toString();
 
         

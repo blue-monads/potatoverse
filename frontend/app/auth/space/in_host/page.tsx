@@ -108,30 +108,48 @@ const InSpaceAuthorizerWrapper = () => {
 
 
     const redirectWithoutSpaceToken = () => {
+        console.log("@redirectWithoutSpaceToken", params.toString());
+
         const redirect_back_url = params.get('redirect_back_url');
         if (!redirect_back_url) {
             console.log("@redirect_back_url is not set");
             return;
         }
 
+        const actual_page = params.get('actual_page');
+
         const redirect_back_url_url = new URL(redirect_back_url);
+        if (actual_page) {
+            redirect_back_url_url.searchParams.set('actual_page', actual_page);
+        }
         redirect_back_url_url.searchParams.set("deny_space_token", "true");
         window.location.href = redirect_back_url_url.toString();
     }
 
 
     const redirrectToLoginPage = () => {
+        console.log("@redirrectToLoginPage", params.toString());
+
         const redirect_back_url = params.get('redirect_back_url');
         if (!redirect_back_url) {
             console.log("@redirect_back_url is not set");
             return;
         }
+        
+        const actual_page = params.get('actual_page');
+
 
         window.sessionStorage.setItem('redirect_back_url', redirect_back_url);
         const loginPageUrl = new URL('/zz/pages/auth/login', window.location.origin);
 
         const finalRedirectBackUrl = new URL("/zz/pages/auth/space/in_host", window.location.origin);
         finalRedirectBackUrl.searchParams.set('redirect_back_url', redirect_back_url);
+
+        if (actual_page) {
+            finalRedirectBackUrl.searchParams.set('actual_page', actual_page);
+        }
+
+        console.log("@finalRedirectBackUrl", finalRedirectBackUrl.toString());
 
         loginPageUrl.searchParams.set('after_login_redirect_back_url', finalRedirectBackUrl.toString());
         window.location.href = loginPageUrl.toString();
@@ -217,8 +235,8 @@ const InSpaceAuthorizerWrapper = () => {
         </>)}
 
         {mode === "space_token_loaded" && (<>
-            <div className="flex items-center justify-center min-h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+            <div className="flex items-center justify-center min-h-[500px] bg-gray-100 p-4">
+                <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                     <div className="flex mb-6 space-x-4 items-center justify-center">
                         <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                     </div>
@@ -229,20 +247,31 @@ const InSpaceAuthorizerWrapper = () => {
 
                     <div className="flex justify-center items-center">
                         <button onClick={() => {
+
+                            console.log("@in_host/post_page", params.toString());
+
+
                             const redirect_back_url = params.get('redirect_back_url');
                             if (!redirect_back_url) {
                                 console.log("@redirect_back_url is not set");
                                 return;
                             }
 
-
-                            
+                            const actual_page = params.get('actual_page');
 
                             const redirect_back_url_url = new URL("/zz/pages/auth/space/in_space/post_page", redirect_back_url);
                             //const redirect_back_url_url = new URL("/zz/pages/auth/space/in_space/post_page", window.origin);
                             redirect_back_url_url.searchParams.set("redirect_back_url", redirect_back_url);
                             redirect_back_url_url.searchParams.set("space_token", spaceToken!);
                             redirect_back_url_url.searchParams.set("nskey", spaceInfo!.namespace_key);
+
+                            if (actual_page) {
+                                redirect_back_url_url.searchParams.set('actual_page', actual_page);
+                            }
+
+
+
+
                             window.location.href = redirect_back_url_url.toString();
                         }}>
                             Redirect to space
@@ -273,8 +302,8 @@ interface PromptCardProps {
 
 const AuthorizePromptCard = (props: PromptCardProps) => {
     return (
-        <div className="flex items-center justify-center h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+        <div className="flex items-center justify-center h-[500px] bg-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
                     <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                 </div>
@@ -298,15 +327,15 @@ const AuthorizePromptCard = (props: PromptCardProps) => {
                     </button>
                     <button
                         onClick={props.onDeny}
-                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out"
                     >
                         Deny
                     </button>
                 </div>
 
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-center text-sm text-gray-500">
                     Logged in as <span className="font-medium">{props.loggedInUser}</span>.{" "}
-                    <button onClick={props.onChangeAccount} className="text-blue-600 hover:underline dark:text-blue-400">
+                    <button onClick={props.onChangeAccount} className="text-blue-600 hover:underline">
                         Change account
                     </button>
                 </p>
@@ -323,8 +352,8 @@ interface NotAuthorizedPromptCardProps {
 const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
 
     return (
-        <div className="flex items-center justify-center h-[500px] bg-gray-100 dark:bg-gray-900 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
+        <div className="flex items-center justify-center h-[500px] bg-gray-100 p-4">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
                     <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
                 </div>
@@ -341,7 +370,7 @@ const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
                     </button>
                     <button
                         onClick={props.onDeny}
-                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                        className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 ease-in-out"
                     >
                         Deny
                     </button>

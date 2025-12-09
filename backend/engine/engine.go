@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"maps"
+	"path"
 	"strings"
 	"sync"
 
@@ -274,13 +275,14 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 	nameParts := strings.Split(filePath, "/")
 	name := nameParts[len(nameParts)-1]
 	pathParts := nameParts[:len(nameParts)-1]
-	pathParts = append(pathParts, ropt.ServeFolder)
 
-	path := strings.Join(pathParts, "/")
-	path = strings.TrimLeft(path, "/")
+	ppath := strings.Join(pathParts, "/")
+	ppath = path.Join(ropt.ServeFolder, ppath)
+
+	ppath = strings.TrimLeft(ppath, "/")
 
 	if ropt.TrimPathPrefix != "" {
-		path = strings.TrimPrefix(path, ropt.TrimPathPrefix)
+		ppath = strings.TrimPrefix(ppath, ropt.TrimPathPrefix)
 	}
 
 	if ropt.ForceIndexHtmlFile && name == "" {
@@ -293,9 +295,9 @@ func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (str
 
 	qq.Println("@ropt", ropt)
 	qq.Println("@name", name)
-	qq.Println("@path", path)
+	qq.Println("@path", ppath)
 
-	return name, path
+	return name, ppath
 }
 
 func (e *Engine) GetCapabilityHub() any {

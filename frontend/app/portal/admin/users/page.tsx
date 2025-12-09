@@ -104,7 +104,7 @@ export default function Page() {
           actions={[
             {
               label: "View",
-              className: "bg-primary-500",
+              className: "bg-primary-600",
               onClick: (rowData: User) => {
                 router.push(`/portal/admin/users/profile?user=${rowData.id}`);
               },

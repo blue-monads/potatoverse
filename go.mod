@@ -12,6 +12,7 @@ require (
 	github.com/gobwas/ws v1.4.0
 	github.com/hako/branca v0.0.0-20200807062402-6052ac720505
 	github.com/jaevor/go-nanoid v1.4.0
+	github.com/joho/godotenv v1.5.1
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/modelcontextprotocol/go-sdk v1.0.0
@@ -33,9 +34,7 @@ require (
 
 // replace github.com/psanford/sqlite3vfs => ../sqlite3vfs
 
-// go get github.com/blue-monads/db/v4@mj-change-sqlite-driver
-
-// replace github.com/upper/db/v4 => github.com/blue-monads/db/v4 v4.0.0-20251111024918-ce036f164885
+replace github.com/upper/db/v4 => github.com/blue-monads/db/v4 v4.0.0-20251111024918-ce036f164885
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect

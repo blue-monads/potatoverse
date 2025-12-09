@@ -1,10 +1,10 @@
 package file
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/gin-gonic/gin"
 	nanoid "github.com/jaevor/go-nanoid"
 	"github.com/upper/db/v4"
 )
@@ -28,7 +28,7 @@ func (f *FileOperations) AddFileShare(ownerID int64, fileId int64, userId int64)
 
 	return id, nil
 }
-func (f *FileOperations) GetSharedFile(ownerID int64, id string, w http.ResponseWriter) error {
+func (f *FileOperations) GetSharedFile(ownerID int64, id string, ctx *gin.Context) error {
 	fileShare := &dbmodels.FileShare{}
 	err := f.fileShareTable().Find(db.Cond{
 		"id": id,
@@ -47,8 +47,12 @@ func (f *FileOperations) GetSharedFile(ownerID int64, id string, w http.Response
 		return err
 	}
 
-	f.setupHTTPHeaders(w, file)
-	return f.streamFileByMeta(file, w)
+	isCached := f.setupHTTPHeaders(ctx, file)
+	if isCached {
+		return nil
+	}
+
+	return f.streamFileByMeta(file, ctx.Writer)
 }
 
 func (f *FileOperations) ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error) {

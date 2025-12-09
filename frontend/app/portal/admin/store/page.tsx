@@ -343,7 +343,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
         {mode === 'enter_input' && (<>
 
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Directly import packages from a URL or upload a zip file.
                 </p>
 
@@ -425,11 +425,13 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                                     return;
                                 }
 
+                                setInstallResult(response.data);
+
                                 setMode('success');
                             }
 
                         }}
-                        className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                        className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
                     >
                         Import
                     </button>
@@ -440,7 +442,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 
         {mode === 'importing' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Importing space...
                 </p>
             </div>
@@ -448,7 +450,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 
         {mode === 'success' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Package imported successfully
                 </p>
 
@@ -463,7 +465,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 
         {mode === 'error' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Error importing space
                 </p>
             </div>
@@ -486,7 +488,7 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
     return (<>
         {mode === 'verify' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Are you sure you want to install this package?
                 </p>
                 {repoSlug && (
@@ -509,7 +511,7 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
                         setMode('success');
 
                     }}
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                     Install
                 </button>
@@ -525,14 +527,14 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
         </>)}
         {mode === 'importing' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Importing package...
                 </p>
             </div>
         </>)}
         {mode === 'success' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Package imported successfully
                 </p>
 
@@ -547,7 +549,7 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
         </>)}
         {mode === 'error' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600">
                     Error importing package
                 </p>
             </div>
@@ -586,14 +588,14 @@ const PostInstallButtons = (props: PostInstallButtonsProps) => {
 
                     }}
 
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Configure
                 </button>
             ) : (
                 <button
 
                     onClick={props.onClose}
-                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">
                     Close
                 </button>
             )}

@@ -4,11 +4,12 @@ import (
 	"archive/zip"
 	"encoding/json"
 	"errors"
+	"io"
 
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 )
 
-func ReadPackageManifestFromZip(zipFile string) (*models.PotatoPackage, error) {
+func GetPackageManifest(zipFile string) ([]byte, error) {
 	zipReader, err := zip.OpenReader(zipFile)
 	if err != nil {
 		return nil, err
@@ -22,15 +23,31 @@ func ReadPackageManifestFromZip(zipFile string) (*models.PotatoPackage, error) {
 				return nil, err
 			}
 
-			pkg := &models.PotatoPackage{}
-			err = json.NewDecoder(jsonFile).Decode(&pkg)
+			data, err := io.ReadAll(jsonFile)
 			if err != nil {
-				return nil, err
+				return data, nil
 			}
 
-			return pkg, nil
+			return data, nil
+
 		}
 	}
 
 	return nil, errors.New("potato.json not found")
+}
+
+func ReadPackageManifestFromZip(zipFile string) (*models.PotatoPackage, error) {
+
+	data, err := GetPackageManifest(zipFile)
+	if err != nil {
+		return nil, err
+	}
+
+	pkg := &models.PotatoPackage{}
+	err = json.Unmarshal(data, pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	return pkg, nil
 }

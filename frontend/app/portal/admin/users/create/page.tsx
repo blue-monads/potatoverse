@@ -95,58 +95,58 @@ export default function CreateUserPage() {
         {createdUser ? (
           <>
             <div className="text-center mb-8">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
-                <svg className="h-8 w-8 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">User Created Successfully!</h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">
+              <h2 className="text-2xl font-bold text-gray-900">User Created Successfully!</h2>
+              <p className="text-gray-600 mt-2">
                 The user has been created and can now log in with the generated password.
               </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">User Details</h3>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">User Details</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1">{createdUser.name}</p>
+                  <label className="text-sm font-medium text-gray-700">Full Name</label>
+                  <p className="text-sm text-gray-900 mt-1">{createdUser.name}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1">{createdUser.email}</p>
+                  <label className="text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-sm text-gray-900 mt-1">{createdUser.email}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1">{createdUser.username}</p>
+                  <label className="text-sm font-medium text-gray-700">Username</label>
+                  <p className="text-sm text-gray-900 mt-1">{createdUser.username}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Type</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1 capitalize">{createdUser.utype}</p>
+                  <label className="text-sm font-medium text-gray-700">User Type</label>
+                  <p className="text-sm text-gray-900 mt-1 capitalize">{createdUser.utype}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Group</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1 capitalize">{createdUser.ugroup}</p>
+                  <label className="text-sm font-medium text-gray-700">User Group</label>
+                  <p className="text-sm text-gray-900 mt-1 capitalize">{createdUser.ugroup}</p>
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Generated Password</label>
+              <div className="border-t border-gray-200 pt-4">
+                <label className="text-sm font-medium text-gray-700">Generated Password</label>
                 <div className="flex items-center space-x-2 mt-2">
-                  <p className="text-sm font-mono text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded border flex-1">
+                  <p className="text-sm font-mono text-gray-900 bg-gray-100 px-3 py-2 rounded border flex-1">
                     {createdUser.password}
                   </p>
                   <button
                     type="button"
                     onClick={() => navigator.clipboard.writeText(createdUser.password)}
-                    className="px-3 py-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium border border-blue-200 dark:border-blue-700 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    className="px-3 py-2 text-blue-600 hover:text-blue-800 text-sm font-medium border border-blue-200 rounded hover:bg-blue-50 transition-colors"
                   >
                     Copy
                   </button>
                 </div>
-                <p className="text-xs text-red-600 dark:text-red-400 mt-2 flex items-center gap-1">
+                <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
@@ -173,14 +173,14 @@ export default function CreateUserPage() {
         ) : (
           <>
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Create New User</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Create a new user account directly. A random password will be generated.</p>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">Create New User</h2>
+              <p className="text-sm text-gray-600">Create a new user account directly. A random password will be generated.</p>
             </div>
             
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name *
                   </label>
                   <input
@@ -188,14 +188,14 @@ export default function CreateUserPage() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter full name"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address *
                   </label>
                   <input
@@ -203,14 +203,14 @@ export default function CreateUserPage() {
                     id="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter email address"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                     Username *
                   </label>
                   <input
@@ -218,21 +218,21 @@ export default function CreateUserPage() {
                     id="username"
                     value={formData.username}
                     onChange={(e) => handleInputChange("username", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter username"
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="utype" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="utype" className="block text-sm font-medium text-gray-700 mb-2">
                     User Type *
                   </label>
                   <select
                     id="utype"
                     value={formData.utype}
                     onChange={(e) => handleInputChange("utype", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   >
                     {utypeOptions.map((option) => (
@@ -244,14 +244,14 @@ export default function CreateUserPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="ugroup" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label htmlFor="ugroup" className="block text-sm font-medium text-gray-700 mb-2">
                     User Group *
                   </label>
                   <select
                     id="ugroup"
                     value={formData.ugroup}
                     onChange={(e) => handleInputChange("ugroup", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                     disabled={loadingGroups}
                   >
@@ -272,12 +272,12 @@ export default function CreateUserPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={handleBack}
