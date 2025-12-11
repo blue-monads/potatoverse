@@ -31,7 +31,7 @@ func (e *Engine) startEloop() {
 		}
 	}
 
-	sTimer := time.NewTicker(time.Second * 5)
+	sTimer := time.NewTicker(time.Second * 2)
 	defer sTimer.Stop()
 
 	for range sTimer.C {
