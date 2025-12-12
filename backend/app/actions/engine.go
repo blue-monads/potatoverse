@@ -297,25 +297,18 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		return 0, err
 	}
 
-	mcpOptions, err := json.Marshal(artifact.McpOptions)
-	if err != nil {
-		return 0, err
-	}
-
 	return database.GetSpaceOps().AddSpace(&dbmodels.Space{
-		InstalledId:       installedId,
-		NamespaceKey:      artifact.Namespace,
-		ExecutorType:      artifact.ExecutorType,
-		ExecutorSubType:   artifact.ExecutorSubType,
-		SpaceType:         "App",
-		RouteOptions:      string(routeOptions),
-		McpEnabled:        artifact.McpOptions.Enabled,
-		McpDefinitionFile: artifact.McpOptions.DefinitionFile,
-		McpOptions:        string(mcpOptions),
-		DevServePort:      int64(artifact.DevServePort),
-		OwnerID:           userId,
-		IsInitilized:      false,
-		IsPublic:          true,
+		InstalledId:     installedId,
+		NamespaceKey:    artifact.Namespace,
+		ExecutorType:    artifact.ExecutorType,
+		ExecutorSubType: artifact.ExecutorSubType,
+		SpaceType:       "App",
+		RouteOptions:    string(routeOptions),
+		SpecFile:        artifact.SpecFile,
+		DevServePort:    int64(artifact.DevServePort),
+		OwnerID:         userId,
+		IsInitilized:    false,
+		IsPublic:        true,
 	})
 }
 
@@ -388,20 +381,12 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					return 0, err
 				}
 
-				mcpOptions, err := json.Marshal(space.McpOptions)
-				if err != nil {
-					return 0, err
-				}
-
 				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
-					"namespace_key":       space.Namespace,
-					"executor_type":       space.ExecutorType,
-					"executor_sub_type":   space.ExecutorSubType,
-					"space_type":          "App",
-					"route_options":       string(routeOptions),
-					"mcp_enabled":         space.McpOptions.Enabled,
-					"mcp_definition_file": space.McpOptions.DefinitionFile,
-					"mcp_options":         string(mcpOptions),
+					"namespace_key":     space.Namespace,
+					"executor_type":     space.ExecutorType,
+					"executor_sub_type": space.ExecutorSubType,
+					"space_type":        "App",
+					"route_options":     string(routeOptions),
 				})
 
 			} else {

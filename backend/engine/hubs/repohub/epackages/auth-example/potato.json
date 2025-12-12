@@ -24,9 +24,6 @@
                 "serve_folder": "public",
                 "force_html_extension": false,
                 "force_index_html_file": true
-            },
-            "mcp_options": {
-                "enabled": false
             }
         },
 

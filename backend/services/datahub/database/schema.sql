@@ -140,9 +140,7 @@ CREATE TABLE IF NOT EXISTS Spaces (
   executor_type TEXT NOT NULL DEFAULT '', 
   executor_sub_type TEXT NOT NULL DEFAULT '',
   route_options JSON NOT NULL DEFAULT '{}',
-  mcp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-  mcp_definition_file TEXT NOT NULL DEFAULT '',
-  mcp_options JSON NOT NULL DEFAULT '{}',
+  spec_file TEXT NOT NULL DEFAULT '',
   server_file TEXT NOT NULL DEFAULT '',
   
   overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  

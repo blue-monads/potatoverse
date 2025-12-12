@@ -49,7 +49,7 @@ type ArtifactSpace struct {
 	ExecutorSubType string             `json:"executor_sub_type" toml:"executor_sub_type"`
 	ServerFile      string             `json:"server_file" toml:"server_file"`
 	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
-	McpOptions      PotatoMcpOptions   `json:"mcp_options" toml:"mcp_options"`
+	SpecFile        string             `json:"spec_file" toml:"spec_file"`
 	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
 }
 
@@ -69,11 +69,6 @@ type PotatoRoute struct {
 	Type    string `json:"type" toml:"type"`
 	Handler string `json:"handler" toml:"handler"`
 	File    string `json:"file" toml:"file"`
-}
-
-type PotatoMcpOptions struct {
-	Enabled        bool   `json:"enabled" toml:"enabled"`
-	DefinitionFile string `json:"definition_file" toml:"definition_file"`
 }
 
 type PotatoDevOptions struct {

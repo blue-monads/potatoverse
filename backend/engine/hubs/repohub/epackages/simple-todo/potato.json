@@ -15,8 +15,7 @@
             "kind": "space",
             "executor_type": "luaz",
             "server_file": "server.lua",
-            "route_options": { "serve_folder": "public", "force_html_extension": false, "force_index_html_file": true },
-            "mcp_options": { "enabled": false }
+            "route_options": { "serve_folder": "public", "force_html_extension": false, "force_index_html_file": true }
         }
     ]
 }
