@@ -85,8 +85,13 @@ Resources:
 - bindings docs
 - tutorial
 
+## Ideas
+KitchenSinkTest
+
 ## Terminology
 
 
-## Ideas
-KitchenSinkTest
+- Permissions
+- Events
+- Handler Slots
+- Handler API
