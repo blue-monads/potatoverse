@@ -49,7 +49,6 @@ type ArtifactSpace struct {
 	ExecutorSubType string             `json:"executor_sub_type" toml:"executor_sub_type"`
 	ServerFile      string             `json:"server_file" toml:"server_file"`
 	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
-	SpecFile        string             `json:"spec_file" toml:"spec_file"`
 	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
 }
 

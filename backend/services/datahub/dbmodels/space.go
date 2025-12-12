@@ -10,7 +10,6 @@ type Space struct {
 	ExecutorSubType string `json:"executor_sub_type" db:"executor_sub_type,omitempty"`
 	SpaceType       string `json:"space_type" db:"space_type,omitempty"`
 	RouteOptions    string `json:"route_options" db:"route_options,omitempty"`
-	SpecFile        string `json:"spec_file" db:"spec_file,omitempty"`
 	DevServePort    int64  `json:"dev_serve_port" db:"dev_serve_port,omitempty"`
 	ServerFile      string `json:"server_file" db:"server_file,omitempty"`
 
