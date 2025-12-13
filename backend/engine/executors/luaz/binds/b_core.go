@@ -2,6 +2,7 @@ package binds
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -72,9 +73,14 @@ func coreModuleIndex(L *lua.LState) int {
 			return coreSignFsPresignedToken(mod, L)
 		}))
 		return 1
-	case "advisery_token":
+	case "sign_advisery_token":
 		L.Push(L.NewFunction(func(L *lua.LState) int {
 			return coreSignAdviseryToken(mod, L)
+		}))
+		return 1
+	case "parse_advisery_token":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return coreParseAdviseryToken(mod, L)
 		}))
 		return 1
 	case "read_package_file":
@@ -186,6 +192,32 @@ func coreSignAdviseryToken(mod *luaCoreModule, L *lua.LState) int {
 		return pushError(L, err)
 	}
 	L.Push(lua.LString(signature))
+	L.Push(lua.LNil)
+	return 2
+}
+
+func coreParseAdviseryToken(mod *luaCoreModule, L *lua.LState) int {
+	token := L.CheckString(1)
+	claim, err := mod.sig.ParseSpaceAdvisiery(token)
+	if err != nil {
+		return pushError(L, err)
+	}
+
+	if claim.InstallId != mod.installId {
+		return pushError(L, errors.New("wrong install id"))
+	}
+
+	if claim.SpaceId != mod.spaceId {
+		return pushError(L, errors.New("wrong space id"))
+	}
+
+	resultTable := L.NewTable()
+
+	resultTable.RawSetString("token_sub_type", lua.LString(claim.TokenSubType))
+	resultTable.RawSetString("user_id", lua.LNumber(claim.UserId))
+	resultTable.RawSetString("data", luaplus.MapToTable(L, claim.Data))
+
+	L.Push(resultTable)
 	L.Push(lua.LNil)
 	return 2
 }
