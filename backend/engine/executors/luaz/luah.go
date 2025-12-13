@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	lua "github.com/yuin/gopher-lua"
+	luaJson "layeh.com/gopher-json"
 )
 
 var luaHttpClient = &http.Client{}
@@ -175,6 +176,7 @@ func (l *LuaH) registerModules() error {
 	l.L.PreloadModule("pmcp", binds.BindMCP)
 	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, packageVersionId, spaceId))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
+	l.L.PreloadModule("json", luaJson.Loader)
 
 	return nil
 }
