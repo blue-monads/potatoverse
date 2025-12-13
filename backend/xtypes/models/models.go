@@ -57,6 +57,7 @@ type PotatoRouteOptions struct {
 	ServeFolder        string        `json:"serve_folder" toml:"serve_folder"`
 	ForceHtmlExtension bool          `json:"force_html_extension" toml:"force_html_extension"`
 	ForceIndexHtmlFile bool          `json:"force_index_html_file" toml:"force_index_html_file"`
+	OnNotFoundFile     string        `json:"on_not_found_file" toml:"on_not_found_file"`
 	TrimPathPrefix     string        `json:"trim_path_prefix" toml:"trim_path_prefix"`
 	TemplateFolder     string        `json:"template_folder" toml:"template_folder"`
 	Routes             []PotatoRoute `json:"routes" toml:"routes"`

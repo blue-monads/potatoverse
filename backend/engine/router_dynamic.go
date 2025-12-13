@@ -91,18 +91,7 @@ func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 		filePath = ctx.Request.URL.Path
 	}
 
-	// Build the package file path
-	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
-
-	qq.Println("@static name", name)
-	qq.Println("@static path", path)
-
-	pFileOps := e.db.GetPackageFileOps()
-	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx)
-	if err != nil {
-		httpx.WriteErr(ctx, err)
-		return
-	}
+	e.processSimpleRoute(ctx, filePath, indexItem)
 }
 
 func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
