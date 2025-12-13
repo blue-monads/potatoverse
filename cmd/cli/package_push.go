@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -39,12 +40,12 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	token := potatoToml.Developer.Token
 	if token == "" {
 		if potatoToml.Developer.TokenEnv == "" {
-			return errors.New("token is required")
+			return errors.New("token is required/1")
 		}
 
 		token = os.Getenv(potatoToml.Developer.TokenEnv)
 		if token == "" {
-			return errors.New("token is required")
+			return errors.New("token is required/2")
 		}
 	}
 
@@ -53,7 +54,7 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", potatoToml.Developer.Token)
+	req.Header.Set("Authorization", token)
 	req.Header.Set("Content-Type", "application/zip")
 
 	client := &http.Client{}
@@ -64,7 +65,12 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to push package: %s", resp.Status)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("failed to push package: %s %s", resp.Status, string(body))
+
 	}
 
 	return nil
