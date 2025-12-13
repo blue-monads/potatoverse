@@ -170,9 +170,10 @@ func (l *LuaH) registerModules() error {
 	installId := l.parent.handle.InstalledId
 	spaceId := l.parent.handle.SpaceId
 	app := l.parent.parent.app
+	packageVersionId := l.parent.handle.PackageVersionId
 
 	l.L.PreloadModule("pmcp", binds.BindMCP)
-	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, spaceId))
+	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, packageVersionId, spaceId))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 
 	return nil

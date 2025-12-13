@@ -23,6 +23,8 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 // simple.czip
 
 func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
+	fmt.Printf("PackageFiles start\n")
+
 	potatoToml, err := readPotatoToml(potatoTomlFile)
 	if err != nil {
 		return "", err

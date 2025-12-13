@@ -33,15 +33,16 @@ func registerCoreModuleType(L *lua.LState) {
 	L.SetField(mt, "__index", L.NewFunction(coreModuleIndex))
 }
 
-func newCoreModule(L *lua.LState, app xtypes.App, installId int64, spaceId int64) *lua.LUserData {
+func newCoreModule(L *lua.LState, app xtypes.App, installId int64, packageVersionId int64, spaceId int64) *lua.LUserData {
 	engine := app.Engine().(xtypes.Engine)
 	ud := L.NewUserData()
 	ud.Value = &luaCoreModule{
-		app:       app,
-		installId: installId,
-		spaceId:   spaceId,
-		engine:    engine,
-		sig:       app.Signer(),
+		app:              app,
+		installId:        installId,
+		packageVersionId: packageVersionId,
+		spaceId:          spaceId,
+		engine:           engine,
+		sig:              app.Signer(),
 	}
 	L.SetMetatable(ud, L.GetTypeMetatable(luaCoreModuleTypeName))
 	return ud
@@ -202,7 +203,7 @@ func readPackageFile(mod *luaCoreModule, L *lua.LState) int {
 	}
 
 	pops := mod.app.Database().GetPackageFileOps()
-	fileData, err := pops.GetFileContentByPath(mod.installId, dirPath, fileName)
+	fileData, err := pops.GetFileContentByPath(mod.packageVersionId, dirPath, fileName)
 	if err != nil {
 		return pushError(L, err)
 	}

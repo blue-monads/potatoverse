@@ -157,7 +157,7 @@ func TestKVModule(t *testing.T) {
 	defer L.Close()
 
 	installId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, 1))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, 1))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -233,7 +233,7 @@ func TestDBModule(t *testing.T) {
 	defer L.Close()
 
 	installId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, 1))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, 1))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -354,7 +354,7 @@ func TestTxnModule(t *testing.T) {
 	defer L.Close()
 
 	installId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, 1))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, 1))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -433,7 +433,7 @@ func TestCapModule(t *testing.T) {
 
 	installId := int64(1)
 	spaceId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, spaceId))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, spaceId))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -473,7 +473,7 @@ func TestCoreModule(t *testing.T) {
 
 	installId := int64(1)
 	spaceId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, spaceId))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, spaceId))
 
 	err := L.DoString(`
 		local potato = require("potato")

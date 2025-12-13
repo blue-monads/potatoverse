@@ -20,7 +20,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/psanford/sqlite3vfs v0.0.0-20240315230605-24e1d98cf361
-	github.com/rqlite/sql v0.0.0-20250623131620-453fa49cad04
+	github.com/rqlite/sql v0.0.0-20251204023435-65660522892e
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/spf13/afero v1.15.0
 	github.com/tidwall/gjson v1.18.0

@@ -28,8 +28,13 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 	// Split input into individual statements by semicolon
 	statements := splitStatements(input)
 
+	qq.Println("statements", statements)
+
 	var transformedStatements []string
-	for _, stmtStr := range statements {
+	for i, stmtStr := range statements {
+
+		qq.Println("stmtStr", i, stmtStr)
+
 		stmtStr = strings.TrimSpace(stmtStr)
 		if stmtStr == "" {
 			continue
@@ -38,11 +43,15 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 		parser := sql.NewParser(strings.NewReader(stmtStr))
 		stmt, err := parser.ParseStatement()
 		if err != nil {
+			qq.Println("failed to parse SQL", i, err, "stmtStr:", stmtStr)
 			return "", fmt.Errorf("failed to parse SQL: %w", err)
 		}
 
 		// Transform the AST by walking and modifying table names
 		transformedStmt, err := sql.Walk(sql.VisitEndFunc(func(n sql.Node) (sql.Node, error) {
+			// Log node type for debugging
+			qq.Println("node type", i, fmt.Sprintf("%T", n))
+
 			switch node := n.(type) {
 			case *sql.QualifiedTableName:
 				// Transform table name in FROM, JOIN, etc.
@@ -160,15 +169,20 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 				return node, nil
 			}
 
+			qq.Println("node/end", i)
+
 			return n, nil
 		}), stmt)
 
 		if err != nil {
+			qq.Println("failed to transform SQL", i, err, "stmtStr:", stmtStr)
 			return "", fmt.Errorf("failed to transform SQL: %w", err)
 		}
 
 		transformedSQL := transformedStmt.String()
 		transformedStatements = append(transformedStatements, transformedSQL)
+
+		qq.Println("transformedSQL", i, transformedSQL)
 	}
 
 	result := strings.Join(transformedStatements, ";\n\n")

@@ -97,11 +97,15 @@ func (d *LowDB) Rollback() error {
 }
 
 func (d *LowDB) RunDDL(ddl string) error {
+	fmt.Println("RunDDL/0", ddl)
 	driver := d.sess.Driver().(*sql.DB)
 	transformedDDL, err := enforcer.TransformQuery(d.ownerType, d.ownerID, ddl)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("RunDDL/1", transformedDDL)
+
 	_, err = driver.Exec(transformedDDL)
 	if err != nil {
 		return err
