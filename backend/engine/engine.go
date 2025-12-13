@@ -224,7 +224,6 @@ type SpaceInfo struct {
 	NamespaceKey  string `json:"namespace_key"`
 	OwnsNamespace bool   `json:"owns_namespace"`
 	PackageName   string `json:"package_name"`
-	PackageInfo   string `json:"package_info"`
 }
 
 func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
@@ -251,7 +250,7 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 		return nil, err
 	}
 
-	pkg, err := e.db.GetPackageInstallOps().GetPackageVersion(space.InstalledId)
+	pkg, err := e.db.GetPackageInstallOps().GetPackage(space.InstalledId)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +259,6 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 		ID:           space.ID,
 		NamespaceKey: space.NamespaceKey,
 		PackageName:  pkg.Name,
-		PackageInfo:  pkg.Info,
 	}, nil
 
 }
