@@ -96,6 +96,6 @@ type Executor interface {
 	Cleanup()
 	GetDebugData() map[string]any
 
-	HandleHttp(event HttpExecution) error
-	HandleAction(event ActionExecution) error
+	HandleHttp(event *HttpExecution) error
+	HandleAction(event *ActionExecution) error
 }

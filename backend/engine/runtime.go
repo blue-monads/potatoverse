@@ -154,7 +154,7 @@ func (r *Runtime) ExecHttp(opts *xtypes.EngineHttpExecution) error {
 			opts.HandlerName = "on_http"
 		}
 
-		err := e.Executor.HandleHttp(xtypes.HttpExecution{
+		err := e.Executor.HandleHttp(&xtypes.HttpExecution{
 			HandlerName: opts.HandlerName,
 			Params:      opts.Params,
 			Request:     opts.Request,
@@ -190,7 +190,7 @@ func (r *Runtime) ExecAction(opts *xtypes.EngineActionExecution) error {
 	opts.Params["action_name"] = opts.ActionName
 
 	err = libx.PanicWrapper(func() {
-		err := e.Executor.HandleAction(xtypes.ActionExecution{
+		err := e.Executor.HandleAction(&xtypes.ActionExecution{
 			ActionType: opts.ActionType,
 			ActionName: opts.ActionName,
 			Params:     opts.Params,

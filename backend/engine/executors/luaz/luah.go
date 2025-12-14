@@ -115,7 +115,7 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 
 }
 
-func (l *LuaH) HandleAction(event xtypes.ActionExecution) error {
+func (l *LuaH) HandleAction(event *xtypes.ActionExecution) error {
 
 	ctxt := l.L.NewTable()
 
