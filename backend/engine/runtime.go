@@ -111,51 +111,38 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 
 }
 
-type ExecuteOptions struct {
-	NSKey            string
-	PackageVersionId int64
-	InstalledId      int64
-	SpaceId          int64
-	HandlerName      string
-	HttpContext      *gin.Context
-	Params           map[string]string
-}
+func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId int64, ctx *gin.Context) error {
 
-func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
-
-	e, err := r.GetExec(opts.NSKey, opts.InstalledId, opts.PackageVersionId, opts.SpaceId)
+	e, err := r.GetExec(nsKey, installedId, packageVersionId, spaceId)
 	if err != nil {
 		qq.Println("@exec_http/1", "error getting exec", err)
-		httpx.WriteErr(opts.HttpContext, err)
+		httpx.WriteErr(ctx, err)
 		return err
 	}
 
 	if e == nil {
 		qq.Println("@exec_http/1", "exec is nil")
-		httpx.WriteErr(opts.HttpContext, errors.New("exec is nil"))
+		httpx.WriteErr(ctx, errors.New("exec is nil"))
 		return errors.New("exec is nil")
 	}
 
 	// print stack trace
 
 	err = libx.PanicWrapper(func() {
-		subpath := opts.HttpContext.Param("subpath")
+		subpath := ctx.Param("subpath")
 
-		params := opts.Params
-		if params == nil {
-			params = make(map[string]string)
-		}
+		params := make(map[string]string)
 
-		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
-		params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
-		params["package_version_id"] = fmt.Sprintf("%d", opts.PackageVersionId)
+		params["space_id"] = fmt.Sprintf("%d", spaceId)
+		params["install_id"] = fmt.Sprintf("%d", installedId)
+		params["package_version_id"] = fmt.Sprintf("%d", packageVersionId)
 		params["subpath"] = subpath
-		params["method"] = opts.HttpContext.Request.Method
+		params["method"] = ctx.Request.Method
 
 		err := e.HandleHttp(xtypes.HttpExecution{
-			HandlerName: opts.HandlerName,
+			HandlerName: "on_http",
 			Params:      params,
-			Request:     opts.HttpContext,
+			Request:     ctx,
 		})
 		if err != nil {
 			qq.Println("@exec_http/2", "error handling http", err)
@@ -164,27 +151,6 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
 	})
 
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}
-
-func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId int64, ctx *gin.Context) {
-	err := r.ExecuteHttp(ExecuteOptions{
-		NSKey:            nsKey,
-		InstalledId:      installedId,
-		PackageVersionId: packageVersionId,
-		SpaceId:          spaceId,
-		HandlerName:      "on_http",
-		HttpContext:      ctx,
-		Params:           make(map[string]string),
-	})
-	if err != nil {
-		httpx.WriteErr(ctx, err)
-		return
-	}
+	return err
 
 }

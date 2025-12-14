@@ -104,15 +104,11 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		NSKey:            spaceKey,
-		PackageVersionId: indexItem.packageVersionId,
-		InstalledId:      indexItem.installedId,
-		SpaceId:          indexItem.spaceId,
-		HandlerName:      routeMatch.Handler,
-		HttpContext:      ctx,
-		Params:           pathParams,
-	})
+	err := e.runtime.ExecHttp(spaceKey, indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
 
 	tmpl, ok := indexItem.compiledTemplates[routeMatch.File]
 	if !ok {
@@ -143,20 +139,12 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 
 	// Execute the handler
 	spaceKey := ctx.Param("space_key")
-	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		NSKey:            spaceKey,
-		PackageVersionId: indexItem.packageVersionId,
-		InstalledId:      indexItem.installedId,
-		SpaceId:          indexItem.spaceId,
-		HandlerName:      routeMatch.Handler,
-		HttpContext:      ctx,
-		Params:           pathParams,
-	})
-
+	err := e.runtime.ExecHttp(spaceKey, indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
+
 }
 
 func (e *Engine) findMatchingRoute(indexItem *SpaceRouteIndexItem, requestPath, requestMethod string) (*models.PotatoRoute, map[string]string) {
