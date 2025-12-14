@@ -16,6 +16,23 @@ type EventOptions struct {
 	CollapseKey string
 }
 
+// Engine types
+
+type EngineHttpExecution struct {
+	SpaceId     int64
+	HandlerName string
+	Params      map[string]string
+	Request     *gin.Context
+}
+
+type EngineActionExecution struct {
+	SpaceId    int64
+	ActionType string // ws, ws_callback, event_target, mcp_call
+	ActionName string
+	Params     map[string]string
+	Request    ActionRequest
+}
+
 type Engine interface {
 	GetCapabilityHub() any
 	GetDebugData() map[string]any
@@ -32,7 +49,12 @@ type Engine interface {
 
 	PublishEvent(opts *EventOptions) error
 	RefreshEventIndex()
+
+	ExecHttp(opts *EngineHttpExecution) error
+	ExecAction(opts *EngineActionExecution) error
 }
+
+// Executor types
 
 type ExecutorBuilderOption struct {
 	Logger *slog.Logger
@@ -58,14 +80,14 @@ type HttpExecution struct {
 	Request     *gin.Context
 }
 
-type EventExecution struct {
-	Type       string // ws, ws_callback, event_target, mcp_call
+type ActionExecution struct {
+	ActionType string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
-	Request    GenericRequest
+	Request    ActionRequest
 }
 
-type GenericRequest interface {
+type ActionRequest interface {
 	ListActions() ([]string, error)
 	ExecuteAction(name string, params LazyData) (map[string]any, error)
 }
@@ -75,5 +97,5 @@ type Executor interface {
 	GetDebugData() map[string]any
 
 	HandleHttp(event HttpExecution) error
-	HandleEvent(event EventExecution) error
+	HandleAction(event ActionExecution) error
 }

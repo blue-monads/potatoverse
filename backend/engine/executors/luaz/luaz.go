@@ -53,8 +53,26 @@ func (l *LuazExecutor) HandleHttp(event xtypes.HttpExecution) error {
 
 }
 
-func (l *LuazExecutor) HandleEvent(event xtypes.EventExecution) error {
+func (l *LuazExecutor) HandleAction(event xtypes.ActionExecution) error {
+
+	lh, err := l.pool.Get()
+	if err != nil {
+		return err
+	}
+
+	if lh == nil {
+		return errors.New("Could not get lua state")
+	}
+
+	err = lh.HandleAction(event)
+	if err != nil {
+		return err
+	}
+
+	l.pool.Put(lh)
+
 	return nil
+
 }
 
 func (l *LuazExecutor) GetDebugData() map[string]any {

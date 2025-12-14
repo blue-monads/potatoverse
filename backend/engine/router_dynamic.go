@@ -6,6 +6,7 @@ import (
 
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
@@ -104,13 +105,11 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttpWithOptions(ExecHttpOptions{
-		InstalledId:      indexItem.installedId,
-		PackageVersionId: indexItem.packageVersionId,
-		SpaceId:          indexItem.spaceId,
-		Ctx:              ctx,
-		HandlerName:      routeMatch.Handler,
-		Params:           pathParams,
+	err := e.runtime.ExecHttp(&xtypes.EngineHttpExecution{
+		SpaceId:     indexItem.spaceId,
+		Request:     ctx,
+		HandlerName: routeMatch.Handler,
+		Params:      pathParams,
 	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)
@@ -144,13 +143,11 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttpWithOptions(ExecHttpOptions{
-		InstalledId:      indexItem.installedId,
-		PackageVersionId: indexItem.packageVersionId,
-		SpaceId:          indexItem.spaceId,
-		Ctx:              ctx,
-		HandlerName:      routeMatch.Handler,
-		Params:           pathParams,
+	err := e.runtime.ExecHttp(&xtypes.EngineHttpExecution{
+		SpaceId:     indexItem.spaceId,
+		Request:     ctx,
+		HandlerName: routeMatch.Handler,
+		Params:      pathParams,
 	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)

@@ -62,7 +62,7 @@ func NewEngine(opt EngineOption) *Engine {
 		workingFolder: opt.WorkingFolder,
 		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
-			activeExecs:     make(map[int64]xtypes.Executor),
+			activeExecs:     make(map[int64]*RunningExec),
 			activeExecsLock: sync.RWMutex{},
 			builders:        make(map[string]xtypes.ExecutorBuilder),
 		},
@@ -92,6 +92,14 @@ func (e *Engine) GetDebugData() map[string]any {
 		"routing_index": indexCopy,
 	}
 
+}
+
+func (e *Engine) ExecHttp(opts *xtypes.EngineHttpExecution) error {
+	return e.runtime.ExecHttp(opts)
+}
+
+func (e *Engine) ExecAction(opts *xtypes.EngineActionExecution) error {
+	return e.runtime.ExecAction(opts)
 }
 
 func (e *Engine) Start(app xtypes.App) error {
@@ -205,7 +213,7 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 		return
 	}
 
-	e.runtime.ExecHttp(
+	e.runtime.ExecHttpQ(
 		sIndex.installedId,
 		sIndex.packageVersionId,
 		sIndex.spaceId,

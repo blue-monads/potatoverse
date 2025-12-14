@@ -2,6 +2,7 @@ package luaz
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -114,7 +115,7 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 
 }
 
-func (l *LuaH) HandleEvent(event xtypes.EventExecution) error {
+func (l *LuaH) HandleAction(event xtypes.ActionExecution) error {
 
 	ctxt := l.L.NewTable()
 
@@ -139,6 +140,13 @@ func (l *LuaH) HandleEvent(event xtypes.EventExecution) error {
 			return 1
 		},
 	})
+
+	method := fmt.Sprintf("on_%s", event.ActionType)
+
+	err := callHandler(l, ctxt, method)
+	if err != nil {
+		return err
+	}
 
 	return nil
 

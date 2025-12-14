@@ -16,7 +16,7 @@ type luaGenericContext struct {
 	app            xtypes.App
 	installId      int64
 	spaceId        int64
-	genericRequest xtypes.GenericRequest
+	genericRequest xtypes.ActionRequest
 }
 
 // Generic Context
@@ -25,7 +25,7 @@ func registerGenericContextType(L *lua.LState) {
 	L.SetField(mt, "__index", L.NewFunction(genericContextIndex))
 }
 
-func NewGenericContext(L *lua.LState, app xtypes.App, installId, spaceId int64, genericRequest xtypes.GenericRequest) *lua.LUserData {
+func NewGenericContext(L *lua.LState, app xtypes.App, installId, spaceId int64, genericRequest xtypes.ActionRequest) *lua.LUserData {
 	registerGenericContextType(L)
 	mt := L.GetTypeMetatable(luaGenericContextTypeName)
 
@@ -112,6 +112,6 @@ func genCtxExecuteAction(genCtx *luaGenericContext, L *lua.LState) int {
 	return 1
 }
 
-func GenericContextModule(app xtypes.App, installId, spaceId int64, L *lua.LState, genericContext xtypes.GenericRequest) *lua.LUserData {
+func GenericContextModule(app xtypes.App, installId, spaceId int64, L *lua.LState, genericContext xtypes.ActionRequest) *lua.LUserData {
 	return NewGenericContext(L, app, installId, spaceId, genericContext)
 }
