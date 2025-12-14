@@ -293,9 +293,9 @@ type PresenceInfo struct {
 }
 
 type UserInfo struct {
-	UserId   int64
-	Identity string
-	ConnIds  []int64
+	UserId   int64   `json:"user_id"`
+	Identity string  `json:"identity"`
+	ConnIds  []int64 `json:"conn_ids"`
 }
 
 func (r *Room) notifyPresenceAll(topic string) error {

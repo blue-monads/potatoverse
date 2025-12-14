@@ -9,7 +9,7 @@ type Message struct {
 	Id     int64           `json:"id"`
 	Type   string          `json:"type"`
 	Data   json.RawMessage `json:"data"`
-	Topic  string          `json:"topic,omitempty"`
+	Topic  string          `json:"topic,omitempty"` // or command
 	Target int64           `json:"target,omitempty"`
 }
 

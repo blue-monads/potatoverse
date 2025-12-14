@@ -14,6 +14,7 @@ const (
 	ClientMessageTypePublish       = "cpublish"
 	ClientMessageTypeDirectMessage = "cdirect"
 	ClientMessageTypeGetPresence   = "cpresence"
+	ClientMessageTypeCommand       = "ccommand"
 )
 
 type HigherSockd struct {
@@ -76,6 +77,7 @@ func (s *HigherSockd) AddConn(userId int64, conn net.Conn, connId int64, roomNam
 	}
 
 	return room.AddConn(userId, conn, connId)
+
 }
 
 // Broadcast sends a message to all users in the room
