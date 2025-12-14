@@ -168,6 +168,13 @@ func (s *session) handleMessage(data []byte) {
 
 	case ClientMessageTypeGetPresence:
 		s.room.notifyPresenceUser(s.connId, msgTopic, s.userId)
+	case ClientMessageTypeCommand:
+		s.room.cmdChan <- Message{
+			Type:  msgType,
+			Data:  data,
+			Topic: msgTopic,
+		}
+
 	default:
 		qq.Println("@handleMessage/unknown_type", msgType, s.connId)
 	}

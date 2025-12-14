@@ -14,6 +14,7 @@ import (
 type ConnId string
 
 type Room struct {
+	cmdChan    chan<- Message
 	disconnect chan ConnId
 	broadcast  chan []byte
 	publish    chan publishEvent
@@ -30,6 +31,7 @@ type Room struct {
 
 func NewRoom(cmdChan chan<- Message) *Room {
 	return &Room{
+		cmdChan:    cmdChan,
 		disconnect: make(chan ConnId),
 		broadcast:  make(chan []byte),
 		publish:    make(chan publishEvent),

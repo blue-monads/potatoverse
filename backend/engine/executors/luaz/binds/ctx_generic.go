@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	luaGenericContextTypeName = "generic.context"
+	luaGenericContextTypeName = "action.context"
 )
 
 type luaGenericContext struct {
@@ -107,7 +107,7 @@ func genCtxExecuteAction(genCtx *luaGenericContext, L *lua.LState) int {
 	}
 
 	// Convert result map to Lua table
-	resultTable := luaplus.MapToTable(L, result)
+	resultTable := luaplus.GoTypeToLuaType(L, result)
 	L.Push(resultTable)
 	return 1
 }

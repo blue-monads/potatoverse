@@ -89,7 +89,7 @@ type ActionExecution struct {
 
 type ActionRequest interface {
 	ListActions() ([]string, error)
-	ExecuteAction(name string, params LazyData) (map[string]any, error)
+	ExecuteAction(name string, params LazyData) (any, error)
 }
 
 type Executor interface {
