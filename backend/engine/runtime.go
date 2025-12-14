@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"sync"
-	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/libx"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
@@ -22,22 +21,6 @@ type Runtime struct {
 	builders map[string]xtypes.ExecutorBuilder
 
 	parent *Engine
-}
-
-func (r *Runtime) cleanupExecs() {
-	ticker := time.NewTicker(time.Second * 30)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		qq.Println("@cleanup_execs/1")
-
-		r.activeExecsLock.RLock()
-		for _, e := range r.activeExecs {
-			e.Cleanup()
-		}
-
-		r.activeExecsLock.RUnlock()
-	}
 }
 
 func (r *Runtime) GetDebugData() map[int64]any {
@@ -149,6 +132,30 @@ func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId 
 			panic(err)
 		}
 
+	})
+
+	return err
+
+}
+
+func (r *Runtime) ExecEvent(nsKey string, installedId, packageVersionId, spaceId int64, req xtypes.GenericRequest) error {
+
+	e, err := r.GetExec(nsKey, installedId, packageVersionId, spaceId)
+	if err != nil {
+		qq.Println("@exec_event/1", "error getting exec", err)
+		return err
+	}
+
+	if e == nil {
+		qq.Println("@exec_event/1", "exec is nil")
+		return errors.New("exec is nil")
+	}
+
+	err = e.HandleEvent(xtypes.EventExecution{
+		Type:       "ws",
+		ActionName: "",
+		Params:     make(map[string]string),
+		Request:    nil,
 	})
 
 	return err

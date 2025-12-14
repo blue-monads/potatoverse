@@ -15,6 +15,13 @@ import (
 	luaJson "layeh.com/gopher-json"
 )
 
+/*
+
+- implement cleanup loop
+- use closer properly
+
+*/
+
 var luaHttpClient = &http.Client{}
 
 type CloseItem struct {

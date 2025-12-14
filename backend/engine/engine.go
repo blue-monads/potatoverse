@@ -120,7 +120,6 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
-	go e.runtime.cleanupExecs()
 	go e.startEloop()
 
 	e.LoadRoutingIndex()
