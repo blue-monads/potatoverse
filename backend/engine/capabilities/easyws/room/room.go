@@ -171,10 +171,11 @@ func (r *Room) Unsubscribe(topicName string, connId ConnId) error {
 func (r *Room) Close() {
 
 	r.sLock.Lock()
+	defer r.sLock.Unlock()
+
 	for _, sess := range r.sessions {
 		sess.teardown()
 	}
-	r.sLock.Unlock()
 
 }
 
