@@ -162,9 +162,19 @@ func (r *Runtime) ExecHttpWithOptions(opts ExecHttpOptions) error {
 
 }
 
-func (r *Runtime) ExecEvent(installedId, packageVersionId, spaceId int64, req xtypes.GenericRequest) error {
+type ExecEventOptions struct {
+	InstalledId      int64
+	PackageVersionId int64
+	SpaceId          int64
+	Request          xtypes.GenericRequest
+	EventType        string
+	ActionName       string
+	Params           map[string]string
+}
 
-	e, err := r.GetExec(installedId, packageVersionId, spaceId)
+func (r *Runtime) ExecEventWithOptions(opts ExecEventOptions) error {
+
+	e, err := r.GetExec(opts.InstalledId, opts.PackageVersionId, opts.SpaceId)
 	if err != nil {
 		qq.Println("@exec_event/1", "error getting exec", err)
 		return err
@@ -175,13 +185,39 @@ func (r *Runtime) ExecEvent(installedId, packageVersionId, spaceId int64, req xt
 		return errors.New("exec is nil")
 	}
 
-	err = e.HandleEvent(xtypes.EventExecution{
-		Type:       "ws",
-		ActionName: "",
-		Params:     make(map[string]string),
-		Request:    nil,
+	opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
+	opts.Params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
+	opts.Params["package_version_id"] = fmt.Sprintf("%d", opts.PackageVersionId)
+	opts.Params["event_type"] = opts.EventType
+	opts.Params["action_name"] = opts.ActionName
+
+	err = libx.PanicWrapper(func() {
+		err := e.HandleEvent(xtypes.EventExecution{
+			Type:       opts.EventType,
+			ActionName: opts.ActionName,
+			Params:     opts.Params,
+			Request:    opts.Request,
+		})
+		if err != nil {
+			qq.Println("@exec_event/2", "error handling event", err)
+			panic(err)
+		}
 	})
 
 	return err
+
+}
+
+func (r *Runtime) ExecEvent(installedId, packageVersionId, spaceId int64, req xtypes.GenericRequest, etype, actionName string) error {
+
+	return r.ExecEventWithOptions(ExecEventOptions{
+		InstalledId:      installedId,
+		PackageVersionId: packageVersionId,
+		SpaceId:          spaceId,
+		Request:          req,
+		EventType:        etype,
+		ActionName:       actionName,
+		Params:           make(map[string]string),
+	})
 
 }
