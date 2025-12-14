@@ -205,7 +205,7 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 		return
 	}
 
-	e.runtime.ExecHttp(spaceKey,
+	e.runtime.ExecHttp(
 		sIndex.installedId,
 		sIndex.packageVersionId,
 		sIndex.spaceId,

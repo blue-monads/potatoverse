@@ -99,12 +99,12 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		httpx.WriteErrString(ctx, "template handler not specified")
 		return
 	}
-	spaceKey := ctx.Param("space_key")
+
 	for key, value := range pathParams {
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttp(spaceKey, indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx)
+	err := e.runtime.ExecHttpWithOptions(indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx, routeMatch.Handler, pathParams)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
@@ -137,9 +137,7 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 		ctx.Set(key, value)
 	}
 
-	// Execute the handler
-	spaceKey := ctx.Param("space_key")
-	err := e.runtime.ExecHttp(spaceKey, indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx)
+	err := e.runtime.ExecHttpWithOptions(indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx, routeMatch.Handler, pathParams)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

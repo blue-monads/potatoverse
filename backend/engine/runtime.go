@@ -46,7 +46,7 @@ func (r *Runtime) ClearExecs(spaceIds ...int64) {
 	}
 }
 
-func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (xtypes.Executor, error) {
+func (r *Runtime) GetExec(installedId, pVersionId, spaceid int64) (xtypes.Executor, error) {
 	r.activeExecsLock.RLock()
 	e := r.activeExecs[spaceid]
 	r.activeExecsLock.RUnlock()
@@ -54,14 +54,16 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		return e, nil
 	}
 
-	wd := path.Join(r.parent.workingFolder, "work_dir", spaceKey, fmt.Sprintf("%d", pVersionId))
-
-	os.MkdirAll(wd, 0755)
-
 	space, err := r.parent.db.GetSpaceOps().GetSpace(spaceid)
 	if err != nil {
 		return nil, errors.New("space not found")
 	}
+
+	spaceKey := space.NamespaceKey
+
+	wd := path.Join(r.parent.workingFolder, "work_dir", spaceKey, fmt.Sprintf("%d", pVersionId))
+
+	os.MkdirAll(wd, 0755)
 
 	builder, ok := r.builders[space.ExecutorType]
 	if !ok {
@@ -94,9 +96,13 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 
 }
 
-func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId int64, ctx *gin.Context) error {
+func (r *Runtime) ExecHttp(installedId, packageVersionId, spaceId int64, ctx *gin.Context) error {
+	return r.ExecHttpWithOptions(installedId, packageVersionId, spaceId, ctx, "", make(map[string]string))
+}
 
-	e, err := r.GetExec(nsKey, installedId, packageVersionId, spaceId)
+func (r *Runtime) ExecHttpWithOptions(installedId, packageVersionId, spaceId int64, ctx *gin.Context, handlerName string, params map[string]string) error {
+
+	e, err := r.GetExec(installedId, packageVersionId, spaceId)
 	if err != nil {
 		qq.Println("@exec_http/1", "error getting exec", err)
 		httpx.WriteErr(ctx, err)
@@ -114,16 +120,18 @@ func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId 
 	err = libx.PanicWrapper(func() {
 		subpath := ctx.Param("subpath")
 
-		params := make(map[string]string)
-
 		params["space_id"] = fmt.Sprintf("%d", spaceId)
 		params["install_id"] = fmt.Sprintf("%d", installedId)
 		params["package_version_id"] = fmt.Sprintf("%d", packageVersionId)
 		params["subpath"] = subpath
 		params["method"] = ctx.Request.Method
 
+		if handlerName == "" {
+			handlerName = "on_http"
+		}
+
 		err := e.HandleHttp(xtypes.HttpExecution{
-			HandlerName: "on_http",
+			HandlerName: handlerName,
 			Params:      params,
 			Request:     ctx,
 		})
@@ -138,9 +146,9 @@ func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId 
 
 }
 
-func (r *Runtime) ExecEvent(nsKey string, installedId, packageVersionId, spaceId int64, req xtypes.GenericRequest) error {
+func (r *Runtime) ExecEvent(installedId, packageVersionId, spaceId int64, req xtypes.GenericRequest) error {
 
-	e, err := r.GetExec(nsKey, installedId, packageVersionId, spaceId)
+	e, err := r.GetExec(installedId, packageVersionId, spaceId)
 	if err != nil {
 		qq.Println("@exec_event/1", "error getting exec", err)
 		return err
