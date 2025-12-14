@@ -97,43 +97,59 @@ func (r *Runtime) GetExec(installedId, pVersionId, spaceid int64) (xtypes.Execut
 }
 
 func (r *Runtime) ExecHttp(installedId, packageVersionId, spaceId int64, ctx *gin.Context) error {
-	return r.ExecHttpWithOptions(installedId, packageVersionId, spaceId, ctx, "", make(map[string]string))
+	return r.ExecHttpWithOptions(ExecHttpOptions{
+		InstalledId:      installedId,
+		PackageVersionId: packageVersionId,
+		SpaceId:          spaceId,
+		Ctx:              ctx,
+		HandlerName:      "",
+		Params:           make(map[string]string),
+	})
 }
 
-func (r *Runtime) ExecHttpWithOptions(installedId, packageVersionId, spaceId int64, ctx *gin.Context, handlerName string, params map[string]string) error {
+type ExecHttpOptions struct {
+	InstalledId      int64
+	PackageVersionId int64
+	SpaceId          int64
+	Ctx              *gin.Context
+	HandlerName      string
+	Params           map[string]string
+}
 
-	e, err := r.GetExec(installedId, packageVersionId, spaceId)
+func (r *Runtime) ExecHttpWithOptions(opts ExecHttpOptions) error {
+
+	e, err := r.GetExec(opts.InstalledId, opts.PackageVersionId, opts.SpaceId)
 	if err != nil {
 		qq.Println("@exec_http/1", "error getting exec", err)
-		httpx.WriteErr(ctx, err)
+		httpx.WriteErr(opts.Ctx, err)
 		return err
 	}
 
 	if e == nil {
 		qq.Println("@exec_http/1", "exec is nil")
-		httpx.WriteErr(ctx, errors.New("exec is nil"))
+		httpx.WriteErr(opts.Ctx, errors.New("exec is nil"))
 		return errors.New("exec is nil")
 	}
 
 	// print stack trace
 
 	err = libx.PanicWrapper(func() {
-		subpath := ctx.Param("subpath")
+		subpath := opts.Ctx.Param("subpath")
 
-		params["space_id"] = fmt.Sprintf("%d", spaceId)
-		params["install_id"] = fmt.Sprintf("%d", installedId)
-		params["package_version_id"] = fmt.Sprintf("%d", packageVersionId)
-		params["subpath"] = subpath
-		params["method"] = ctx.Request.Method
+		opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
+		opts.Params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
+		opts.Params["package_version_id"] = fmt.Sprintf("%d", opts.PackageVersionId)
+		opts.Params["subpath"] = subpath
+		opts.Params["method"] = opts.Ctx.Request.Method
 
-		if handlerName == "" {
-			handlerName = "on_http"
+		if opts.HandlerName == "" {
+			opts.HandlerName = "on_http"
 		}
 
 		err := e.HandleHttp(xtypes.HttpExecution{
-			HandlerName: handlerName,
-			Params:      params,
-			Request:     ctx,
+			HandlerName: opts.HandlerName,
+			Params:      opts.Params,
+			Request:     opts.Ctx,
 		})
 		if err != nil {
 			qq.Println("@exec_http/2", "error handling http", err)

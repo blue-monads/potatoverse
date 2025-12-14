@@ -104,7 +104,14 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttpWithOptions(indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx, routeMatch.Handler, pathParams)
+	err := e.runtime.ExecHttpWithOptions(ExecHttpOptions{
+		InstalledId:      indexItem.installedId,
+		PackageVersionId: indexItem.packageVersionId,
+		SpaceId:          indexItem.spaceId,
+		Ctx:              ctx,
+		HandlerName:      routeMatch.Handler,
+		Params:           pathParams,
+	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
@@ -137,7 +144,14 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttpWithOptions(indexItem.installedId, indexItem.packageVersionId, indexItem.spaceId, ctx, routeMatch.Handler, pathParams)
+	err := e.runtime.ExecHttpWithOptions(ExecHttpOptions{
+		InstalledId:      indexItem.installedId,
+		PackageVersionId: indexItem.packageVersionId,
+		SpaceId:          indexItem.spaceId,
+		Ctx:              ctx,
+		HandlerName:      routeMatch.Handler,
+		Params:           pathParams,
+	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
