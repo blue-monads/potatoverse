@@ -2,6 +2,7 @@ package easyws
 
 import (
 	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
 
@@ -9,7 +10,7 @@ func (c *EasyWsCapability) handleCommand() {
 	engine := c.builder.app.Engine().(xtypes.Engine)
 
 	for cmd := range c.cmdChan {
-		engine.ExecAction(&xtypes.EngineActionExecution{
+		err := engine.ExecAction(&xtypes.EngineActionExecution{
 			SpaceId:    c.spaceId,
 			ActionType: "ws_command",
 			ActionName: cmd.Target,
@@ -19,6 +20,10 @@ func (c *EasyWsCapability) handleCommand() {
 				cmd: cmd,
 			},
 		})
+
+		if err != nil {
+			qq.Println("@handle_command/1", "error executing action", err)
+		}
 
 	}
 
