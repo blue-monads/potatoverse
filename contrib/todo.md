@@ -14,6 +14,7 @@
 - build sqlite wasm file with bunch of exts enabled
 - automatically create caps when installing package
 - cli package validate
+- claude skill (potato skill repo)
 
 
 ## capabilities
