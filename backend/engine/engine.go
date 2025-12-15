@@ -94,11 +94,11 @@ func (e *Engine) GetDebugData() map[string]any {
 
 }
 
-func (e *Engine) ExecHttp(opts *xtypes.EngineHttpExecution) error {
+func (e *Engine) EmitHttpEvent(opts *xtypes.HttpEventOptions) error {
 	return e.runtime.ExecHttp(opts)
 }
 
-func (e *Engine) ExecAction(opts *xtypes.EngineActionExecution) error {
+func (e *Engine) EmitActionEvent(opts *xtypes.ActionEventOptions) error {
 	return e.runtime.ExecAction(opts)
 }
 

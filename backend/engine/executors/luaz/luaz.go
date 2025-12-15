@@ -22,7 +22,7 @@ func (l *LuazExecutor) Cleanup() {
 	qq.Println("@cleanup/3")
 }
 
-func (l *LuazExecutor) HandleHttp(event *xtypes.HttpExecution) error {
+func (l *LuazExecutor) HandleHttp(event *xtypes.HttpEvent) error {
 	qq.Println("@handle/1")
 
 	lh, err := l.pool.Get()
@@ -53,7 +53,7 @@ func (l *LuazExecutor) HandleHttp(event *xtypes.HttpExecution) error {
 
 }
 
-func (l *LuazExecutor) HandleAction(event *xtypes.ActionExecution) error {
+func (l *LuazExecutor) HandleAction(event *xtypes.ActionEvent) error {
 
 	lh, err := l.pool.Get()
 	if err != nil {

@@ -116,7 +116,7 @@ func (r *Runtime) GetExec(spaceid int64) (*RunningExec, error) {
 }
 
 func (r *Runtime) ExecHttpQ(installedId, packageVersionId, spaceId int64, ctx *gin.Context) error {
-	return r.ExecHttp(&xtypes.EngineHttpExecution{
+	return r.ExecHttp(&xtypes.HttpEventOptions{
 		SpaceId:     spaceId,
 		Request:     ctx,
 		HandlerName: "",
@@ -124,7 +124,7 @@ func (r *Runtime) ExecHttpQ(installedId, packageVersionId, spaceId int64, ctx *g
 	})
 }
 
-func (r *Runtime) ExecHttp(opts *xtypes.EngineHttpExecution) error {
+func (r *Runtime) ExecHttp(opts *xtypes.HttpEventOptions) error {
 
 	e, err := r.GetExec(opts.SpaceId)
 	if err != nil {
@@ -154,7 +154,8 @@ func (r *Runtime) ExecHttp(opts *xtypes.EngineHttpExecution) error {
 			opts.HandlerName = "on_http"
 		}
 
-		err := e.Executor.HandleHttp(&xtypes.HttpExecution{
+		err := e.Executor.HandleHttp(&xtypes.HttpEvent{
+			EventType:   opts.EventType,
 			HandlerName: opts.HandlerName,
 			Params:      opts.Params,
 			Request:     opts.Request,
@@ -170,7 +171,7 @@ func (r *Runtime) ExecHttp(opts *xtypes.EngineHttpExecution) error {
 
 }
 
-func (r *Runtime) ExecAction(opts *xtypes.EngineActionExecution) error {
+func (r *Runtime) ExecAction(opts *xtypes.ActionEventOptions) error {
 
 	e, err := r.GetExec(opts.SpaceId)
 	if err != nil {
@@ -186,12 +187,12 @@ func (r *Runtime) ExecAction(opts *xtypes.EngineActionExecution) error {
 	opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
 	opts.Params["install_id"] = fmt.Sprintf("%d", e.InstalledId)
 	opts.Params["package_version_id"] = fmt.Sprintf("%d", e.PackageVersionId)
-	opts.Params["event_type"] = opts.ActionType
+	opts.Params["event_type"] = opts.EventType
 	opts.Params["action_name"] = opts.ActionName
 
 	err = libx.PanicWrapper(func() {
-		err := e.Executor.HandleAction(&xtypes.ActionExecution{
-			ActionType: opts.ActionType,
+		err := e.Executor.HandleAction(&xtypes.ActionEvent{
+			EventType:  opts.EventType,
 			ActionName: opts.ActionName,
 			Params:     opts.Params,
 			Request:    opts.Request,
@@ -208,10 +209,10 @@ func (r *Runtime) ExecAction(opts *xtypes.EngineActionExecution) error {
 
 func (r *Runtime) ExecActionQ(spaceId int64, req xtypes.ActionRequest, etype, actionName string) error {
 
-	return r.ExecAction(&xtypes.EngineActionExecution{
+	return r.ExecAction(&xtypes.ActionEventOptions{
 		SpaceId:    spaceId,
 		Request:    req,
-		ActionType: etype,
+		EventType:  etype,
 		ActionName: actionName,
 		Params:     make(map[string]string),
 	})

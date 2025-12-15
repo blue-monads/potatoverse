@@ -78,11 +78,11 @@ func (m *mockEngine) PublishEvent(opts *xtypes.EventOptions) error {
 
 func (m *mockEngine) RefreshEventIndex() {}
 
-func (m *mockEngine) ExecAction(opts *xtypes.EngineActionExecution) error {
+func (m *mockEngine) EmitActionEvent(opts *xtypes.ActionEventOptions) error {
 	return nil
 }
 
-func (m *mockEngine) ExecHttp(opts *xtypes.EngineHttpExecution) error {
+func (m *mockEngine) EmitHttpEvent(opts *xtypes.HttpEventOptions) error {
 	return nil
 }
 

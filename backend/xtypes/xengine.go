@@ -18,16 +18,17 @@ type EventOptions struct {
 
 // Engine types
 
-type EngineHttpExecution struct {
+type HttpEventOptions struct {
 	SpaceId     int64
+	EventType   string // http
 	HandlerName string
 	Params      map[string]string
 	Request     *gin.Context
 }
 
-type EngineActionExecution struct {
+type ActionEventOptions struct {
 	SpaceId    int64
-	ActionType string // ws, ws_callback, event_target, mcp_call
+	EventType  string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
 	Request    ActionRequest
@@ -50,8 +51,8 @@ type Engine interface {
 	PublishEvent(opts *EventOptions) error
 	RefreshEventIndex()
 
-	ExecHttp(opts *EngineHttpExecution) error
-	ExecAction(opts *EngineActionExecution) error
+	EmitHttpEvent(opts *HttpEventOptions) error
+	EmitActionEvent(opts *ActionEventOptions) error
 }
 
 // Executor types
@@ -74,14 +75,15 @@ type ExecutorBuilder interface {
 	Build(opt *ExecutorBuilderOption) (Executor, error)
 }
 
-type HttpExecution struct {
+type HttpEvent struct {
+	EventType   string // http, api
 	HandlerName string
 	Params      map[string]string
 	Request     *gin.Context
 }
 
-type ActionExecution struct {
-	ActionType string // ws, ws_callback, event_target, mcp_call
+type ActionEvent struct {
+	EventType  string // ws, ws_callback, event_target, mcp_call
 	ActionName string
 	Params     map[string]string
 	Request    ActionRequest
@@ -96,6 +98,6 @@ type Executor interface {
 	Cleanup()
 	GetDebugData() map[string]any
 
-	HandleHttp(event *HttpExecution) error
-	HandleAction(event *ActionExecution) error
+	HandleHttp(event *HttpEvent) error
+	HandleAction(event *ActionEvent) error
 }

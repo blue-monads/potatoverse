@@ -105,7 +105,7 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttp(&xtypes.EngineHttpExecution{
+	err := e.runtime.ExecHttp(&xtypes.HttpEventOptions{
 		SpaceId:     indexItem.spaceId,
 		Request:     ctx,
 		HandlerName: routeMatch.Handler,
@@ -143,11 +143,12 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttp(&xtypes.EngineHttpExecution{
+	err := e.runtime.ExecHttp(&xtypes.HttpEventOptions{
 		SpaceId:     indexItem.spaceId,
 		Request:     ctx,
 		HandlerName: routeMatch.Handler,
 		Params:      pathParams,
+		EventType:   "api",
 	})
 	if err != nil {
 		httpx.WriteErr(ctx, err)

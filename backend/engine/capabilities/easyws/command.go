@@ -10,15 +10,14 @@ func (c *EasyWsCapability) handleCommand() {
 	engine := c.builder.app.Engine().(xtypes.Engine)
 
 	for cmd := range c.cmdChan {
-		err := engine.ExecAction(&xtypes.EngineActionExecution{
+		err := engine.EmitActionEvent(&xtypes.ActionEventOptions{
 			SpaceId:    c.spaceId,
-			ActionType: "ws_command",
-			ActionName: cmd.Target,
-			Params:     nil,
-			Request: &ActionContext{
-				c:   c,
-				cmd: cmd,
+			EventType:  "ws_callback",
+			ActionName: "client_command",
+			Params: map[string]string{
+				"command": cmd.Target,
 			},
+			Request: &ActionContext{c: c, cmd: cmd},
 		})
 
 		if err != nil {

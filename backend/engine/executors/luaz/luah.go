@@ -115,7 +115,7 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 
 }
 
-func (l *LuaH) HandleAction(event *xtypes.ActionExecution) error {
+func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 
 	ctxt := l.L.NewTable()
 
@@ -131,7 +131,7 @@ func (l *LuaH) HandleAction(event *xtypes.ActionExecution) error {
 			return 1
 		},
 		"type": func(L *lua.LState) int {
-			L.Push(lua.LString("event"))
+			L.Push(lua.LString("action"))
 			return 1
 		},
 		"param": func(L *lua.LState) int {
@@ -141,7 +141,7 @@ func (l *LuaH) HandleAction(event *xtypes.ActionExecution) error {
 		},
 	})
 
-	method := fmt.Sprintf("on_%s", event.ActionType)
+	method := fmt.Sprintf("on_%s", event.EventType)
 
 	err := callHandler(l, ctxt, method)
 	if err != nil {
