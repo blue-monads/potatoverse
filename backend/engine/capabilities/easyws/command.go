@@ -19,7 +19,7 @@ func (c *EasyWsCapability) handleCommand() {
 			Params: map[string]string{
 				"command":       cmd.Target,
 				"capability_id": fmt.Sprintf("%d", c.capabilityId),
-				"capability":    "easy-ws",
+				"capability":    "easyws",
 			},
 			Request: &ActionContext{c: c, cmd: cmd},
 		})
