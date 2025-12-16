@@ -139,16 +139,21 @@ func (r *Runtime) ExecHttp(opts *xtypes.HttpEventOptions) error {
 		return errors.New("exec is nil")
 	}
 
+	subpath := opts.Request.Param("subpath")
+
+	if opts.Params == nil {
+		opts.Params = make(map[string]string)
+	}
+
+	opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
+	opts.Params["install_id"] = fmt.Sprintf("%d", e.InstalledId)
+	opts.Params["package_version_id"] = fmt.Sprintf("%d", e.PackageVersionId)
+	opts.Params["subpath"] = subpath
+	opts.Params["method"] = opts.Request.Request.Method
+
 	// print stack trace
 
 	err = libx.PanicWrapper(func() {
-		subpath := opts.Request.Param("subpath")
-
-		opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
-		opts.Params["install_id"] = fmt.Sprintf("%d", e.InstalledId)
-		opts.Params["package_version_id"] = fmt.Sprintf("%d", e.PackageVersionId)
-		opts.Params["subpath"] = subpath
-		opts.Params["method"] = opts.Request.Request.Method
 
 		if opts.HandlerName == "" {
 			opts.HandlerName = "on_http"
@@ -182,6 +187,10 @@ func (r *Runtime) ExecAction(opts *xtypes.ActionEventOptions) error {
 	if e == nil {
 		qq.Println("@exec_event/1", "exec is nil")
 		return errors.New("exec is nil")
+	}
+
+	if opts.Params == nil {
+		opts.Params = make(map[string]string)
 	}
 
 	opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
