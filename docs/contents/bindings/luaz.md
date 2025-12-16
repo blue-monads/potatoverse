@@ -137,3 +137,10 @@ Model Context Protocol client.
   - `list_resources(params)` - List available resources
   - `call_tool(params)` - Call tool with params
 
+# Entries
+  - on_http
+  - on_cap_call
+  - on_event_call
+
+
+
