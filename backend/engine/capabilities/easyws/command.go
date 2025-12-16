@@ -6,6 +6,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 )
 
 func (c *EasyWsCapability) handleCommand() {
@@ -41,6 +42,6 @@ func (c *ActionContext) ListActions() ([]string, error) {
 	return c.c.ListActions()
 }
 
-func (c *ActionContext) ExecuteAction(name string, params xtypes.LazyData) (any, error) {
+func (c *ActionContext) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
 	return c.c.Execute(name, params)
 }

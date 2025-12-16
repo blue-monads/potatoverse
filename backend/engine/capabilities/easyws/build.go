@@ -9,6 +9,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,16 +22,17 @@ var Ok = struct {
 var (
 	Name         = "easy-ws"
 	Icon         = "socket"
-	OptionFields = []xtypes.CapabilityOptionField{}
+	OptionFields = []xcapability.CapabilityOptionField{}
 )
 
 func init() {
-	registry.RegisterCapability(Name, xtypes.CapabilityBuilderFactory{
-		Builder: func(app xtypes.App) (xtypes.CapabilityBuilder, error) {
+	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
+			appTyped := app.(xtypes.App)
 			return &EasyWsBuilder{
-				app:    app,
+				app:    appTyped,
 				rooms:  make(map[string]*room.Room),
-				signer: app.Signer(),
+				signer: appTyped.Signer(),
 			}, nil
 		},
 		Name:         Name,
@@ -47,7 +49,12 @@ type EasyWsBuilder struct {
 	rLock sync.Mutex
 }
 
-func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+type CapabilityAccessHandle interface {
+	ParseToken(token string) (*signer.CapabilityClaim, error)
+	EmitActionEvent(opts *xtypes.ActionEventOptions) error
+}
+
+func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
 
 	roomName := fmt.Sprintf("cap-%d", model.ID)
 	cmdChan := make(chan room.Message)

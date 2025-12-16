@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 )
 
-func (c *EasyWsCapability) Execute(name string, params xtypes.LazyData) (any, error) {
+func (c *EasyWsCapability) Execute(name string, params lazydata.LazyData) (any, error) {
 	switch name {
 	case "broadcast":
 		return c.executeBroadcast(params)
@@ -25,7 +25,7 @@ func (c *EasyWsCapability) Execute(name string, params xtypes.LazyData) (any, er
 	}
 }
 
-func (c *EasyWsCapability) executeBroadcast(params xtypes.LazyData) (any, error) {
+func (c *EasyWsCapability) executeBroadcast(params lazydata.LazyData) (any, error) {
 	message, err := params.AsBytes()
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ type PublishParams struct {
 	Message json.RawMessage `json:"message"`
 }
 
-func (c *EasyWsCapability) executePublish(params xtypes.LazyData) (any, error) {
+func (c *EasyWsCapability) executePublish(params lazydata.LazyData) (any, error) {
 	var p PublishParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ type DirectMessageParams struct {
 	Message      json.RawMessage `json:"message"`
 }
 
-func (c *EasyWsCapability) executeDirectMessage(params xtypes.LazyData) (any, error) {
+func (c *EasyWsCapability) executeDirectMessage(params lazydata.LazyData) (any, error) {
 	var p DirectMessageParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
@@ -90,7 +90,7 @@ type SubscribeParams struct {
 	ConnId string `json:"conn_id"`
 }
 
-func (c *EasyWsCapability) executeSubscribe(params xtypes.LazyData) (any, error) {
+func (c *EasyWsCapability) executeSubscribe(params lazydata.LazyData) (any, error) {
 	var p SubscribeParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ type UnsubscribeParams struct {
 	ConnId string `json:"conn_id"`
 }
 
-func (c *EasyWsCapability) executeUnsubscribe(params xtypes.LazyData) (any, error) {
+func (c *EasyWsCapability) executeUnsubscribe(params lazydata.LazyData) (any, error) {
 	var p UnsubscribeParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err

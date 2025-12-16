@@ -10,6 +10,8 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/database"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -35,14 +37,14 @@ func BuildDBHandle() (datahub.Database, error) {
 	return db, nil
 }
 
-// mockCapabilityHub is a minimal mock implementation of xtypes.CapabilityHub
+// mockCapabilityHub is a minimal mock implementation of xcapability.CapabilityHub
 type mockCapabilityHub struct{}
 
 func (m *mockCapabilityHub) List(spaceId int64) ([]string, error) {
 	return []string{"test_capability"}, nil
 }
 
-func (m *mockCapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (any, error) {
+func (m *mockCapabilityHub) Execute(installId, spaceId int64, gname, method string, params lazydata.LazyData) (any, error) {
 	return map[string]any{"result": "ok"}, nil
 }
 
@@ -52,7 +54,7 @@ func (m *mockCapabilityHub) Methods(installId, spaceId int64, gname string) ([]s
 
 // mockEngine is a minimal mock implementation of xtypes.Engine
 type mockEngine struct {
-	capHub xtypes.CapabilityHub
+	capHub xcapability.CapabilityHub
 }
 
 func (m *mockEngine) GetCapabilityHub() any {

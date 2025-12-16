@@ -13,6 +13,8 @@ import (
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,9 +29,9 @@ type CcurdCapability struct {
 	methods      map[string]*Methods
 }
 
-func (p *CcurdCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+func (p *CcurdCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
 
-	methods, err := LoadMethods(xtypes.LazyDataBytes(kosher.Byte(model.Options)))
+	methods, err := LoadMethods(lazydata.LazyDataBytes(kosher.Byte(model.Options)))
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +238,7 @@ func (p *CcurdCapability) ListActions() ([]string, error) {
 	return []string{"loaded_methods"}, nil
 }
 
-func (p *CcurdCapability) Execute(name string, params xtypes.LazyData) (any, error) {
+func (p *CcurdCapability) Execute(name string, params lazydata.LazyData) (any, error) {
 
 	switch name {
 	case "loaded_methods":

@@ -9,28 +9,30 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
-var _ xtypes.CapabilityHub = (*CapabilityHub)(nil)
+var _ xcapability.CapabilityHub = (*CapabilityHub)(nil)
 
 type CapabilityHub struct {
 	app xtypes.App
 
-	goodies map[string]xtypes.Capability
+	goodies map[string]xcapability.Capability
 	glock   sync.RWMutex
 
-	builders         map[string]xtypes.CapabilityBuilder
-	builderFactories map[string]xtypes.CapabilityBuilderFactory
+	builders         map[string]xcapability.CapabilityBuilder
+	builderFactories map[string]xcapability.CapabilityBuilderFactory
 }
 
 func NewCapabilityHub() *CapabilityHub {
 	return &CapabilityHub{
 
-		goodies:          make(map[string]xtypes.Capability),
+		goodies:          make(map[string]xcapability.Capability),
 		glock:            sync.RWMutex{},
-		builders:         make(map[string]xtypes.CapabilityBuilder),
-		builderFactories: make(map[string]xtypes.CapabilityBuilderFactory),
+		builders:         make(map[string]xcapability.CapabilityBuilder),
+		builderFactories: make(map[string]xcapability.CapabilityBuilderFactory),
 	}
 }
 
@@ -44,7 +46,7 @@ func (gh *CapabilityHub) Init(app xtypes.App) error {
 
 	gh.builderFactories = builderFactories
 
-	gh.builders = make(map[string]xtypes.CapabilityBuilder)
+	gh.builders = make(map[string]xcapability.CapabilityBuilder)
 	for name, factory := range builderFactories {
 		builder, err := factory.Builder(app)
 		if err != nil {
@@ -122,7 +124,7 @@ func (gh *CapabilityHub) Methods(installId, spaceId int64, gname string) ([]stri
 	return gs.ListActions()
 }
 
-func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (any, error) {
+func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params lazydata.LazyData) (any, error) {
 	gs, err := gh.get(gname, installId, spaceId)
 	if err != nil {
 		return nil, err
@@ -144,14 +146,14 @@ func (gh *CapabilityHub) Definations() []CapabilityDefination {
 }
 
 type CapabilityDefination struct {
-	Name         string                         `json:"name"`
-	Icon         string                         `json:"icon"`
-	OptionFields []xtypes.CapabilityOptionField `json:"option_fields"`
+	Name         string                              `json:"name"`
+	Icon         string                              `json:"icon"`
+	OptionFields []xcapability.CapabilityOptionField `json:"option_fields"`
 }
 
 // private
 
-func (gh *CapabilityHub) set(name string, installId, spaceId int64, i xtypes.Capability) {
+func (gh *CapabilityHub) set(name string, installId, spaceId int64, i xcapability.Capability) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.Lock()
@@ -160,7 +162,7 @@ func (gh *CapabilityHub) set(name string, installId, spaceId int64, i xtypes.Cap
 
 }
 
-func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xtypes.Capability, error) {
+func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xcapability.Capability, error) {
 	key := fmt.Sprintf("%s:%d", name, spaceId)
 
 	gh.glock.RLock()

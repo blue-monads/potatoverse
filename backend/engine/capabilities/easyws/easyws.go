@@ -9,6 +9,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 )
@@ -87,7 +88,7 @@ func (c *EasyWsCapability) parseToken(token string) (*signer.CapabilityClaim, er
 
 }
 
-func (c *EasyWsCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+func (c *EasyWsCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
 	// reload config
 
 	return c, nil

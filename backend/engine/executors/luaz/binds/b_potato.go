@@ -4,6 +4,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -19,7 +20,7 @@ type luaCapModule struct {
 	app          xtypes.App
 	installId    int64
 	spaceId      int64
-	capabilities xtypes.CapabilityHub
+	capabilities xcapability.CapabilityHub
 }
 
 type luaDBModule struct {

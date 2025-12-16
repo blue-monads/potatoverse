@@ -4,13 +4,15 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
 var (
 	Name         = "Ping"
 	Icon         = "ping"
-	OptionFields = []xtypes.CapabilityOptionField{
+	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Add Radom number to the result",
 			Key:         "add_random_number",
@@ -91,9 +93,10 @@ var (
 )
 
 func init() {
-	registry.RegisterCapability("ping", xtypes.CapabilityBuilderFactory{
-		Builder: func(app xtypes.App) (xtypes.CapabilityBuilder, error) {
-			return &PingBuilder{app: app}, nil
+	registry.RegisterCapability("ping", xcapability.CapabilityBuilderFactory{
+		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
+			appTyped := app.(xtypes.App)
+			return &PingBuilder{app: appTyped}, nil
 		},
 		Name:         Name,
 		Icon:         Icon,
@@ -105,7 +108,7 @@ type PingBuilder struct {
 	app xtypes.App
 }
 
-func (b *PingBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+func (b *PingBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
 	return &PingCapability{
 		app:     b.app,
 		spaceId: model.SpaceID,
@@ -128,7 +131,7 @@ type PingCapability struct {
 	spaceId int64
 }
 
-func (p *PingCapability) Reload(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+func (p *PingCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
 	return p, nil
 }
 
@@ -148,7 +151,7 @@ func (p *PingCapability) ListActions() ([]string, error) {
 	return []string{"ping"}, nil
 }
 
-func (p *PingCapability) Execute(name string, params xtypes.LazyData) (any, error) {
+func (p *PingCapability) Execute(name string, params lazydata.LazyData) (any, error) {
 	if name == "ping" {
 		return map[string]any{
 			"result":   "pong",

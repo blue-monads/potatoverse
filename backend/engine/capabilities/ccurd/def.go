@@ -8,13 +8,15 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
 var (
 	Name         = "ccurd"
 	Icon         = ""
-	OptionFields = []xtypes.CapabilityOptionField{
+	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Methods",
 			Key:         "methods",
@@ -27,9 +29,10 @@ var (
 
 func init() {
 
-	registry.RegisterCapability(Name, xtypes.CapabilityBuilderFactory{
-		Builder: func(app xtypes.App) (xtypes.CapabilityBuilder, error) {
-			return &CcurdBuilder{app: app}, nil
+	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
+			appTyped := app.(xtypes.App)
+			return &CcurdBuilder{app: appTyped}, nil
 		},
 		Name:         Name,
 		Icon:         Icon,
@@ -41,9 +44,9 @@ type CcurdBuilder struct {
 	app xtypes.App
 }
 
-func (b *CcurdBuilder) Build(model *dbmodels.SpaceCapability) (xtypes.Capability, error) {
+func (b *CcurdBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
 
-	methods, err := LoadMethods(xtypes.LazyDataBytes(kosher.Byte(model.Options)))
+	methods, err := LoadMethods(lazydata.LazyDataBytes(kosher.Byte(model.Options)))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +66,7 @@ type CcurdOptions struct {
 	Methods map[string]*Methods `json:"methods"`
 }
 
-func LoadMethods(opts xtypes.LazyData) (map[string]*Methods, error) {
+func LoadMethods(opts lazydata.LazyData) (map[string]*Methods, error) {
 
 	optsData := CcurdOptions{}
 	if err := opts.AsJson(&optsData); err != nil {

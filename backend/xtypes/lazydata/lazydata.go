@@ -1,4 +1,4 @@
-package xtypes
+package lazydata
 
 import "encoding/json"
 

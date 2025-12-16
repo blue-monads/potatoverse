@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/gin-gonic/gin"
 )
 
@@ -93,7 +94,7 @@ type ActionEvent struct {
 
 type ActionRequest interface {
 	ListActions() ([]string, error)
-	ExecuteAction(name string, params LazyData) (any, error)
+	ExecuteAction(name string, params lazydata.LazyData) (any, error)
 }
 
 type Executor interface {
