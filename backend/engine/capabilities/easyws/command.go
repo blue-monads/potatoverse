@@ -1,6 +1,8 @@
 package easyws
 
 import (
+	"fmt"
+
 	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -12,10 +14,12 @@ func (c *EasyWsCapability) handleCommand() {
 	for cmd := range c.cmdChan {
 		err := engine.EmitActionEvent(&xtypes.ActionEventOptions{
 			SpaceId:    c.spaceId,
-			EventType:  "ws_callback",
+			EventType:  "capability",
 			ActionName: "client_command",
 			Params: map[string]string{
-				"command": cmd.Target,
+				"command":       cmd.Target,
+				"capability_id": fmt.Sprintf("%d", c.capabilityId),
+				"capability":    "easy-ws",
 			},
 			Request: &ActionContext{c: c, cmd: cmd},
 		})
