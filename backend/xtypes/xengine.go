@@ -75,6 +75,7 @@ type ExecutorBuilder interface {
 	Build(opt *ExecutorBuilderOption) (Executor, error)
 }
 
+// HttpEvent handled by on_http method
 type HttpEvent struct {
 	EventType   string // http, api
 	HandlerName string
@@ -82,8 +83,9 @@ type HttpEvent struct {
 	Request     *gin.Context
 }
 
+// ActionEvent handled by on_action
 type ActionEvent struct {
-	EventType  string // ws, ws_callback, event_target, mcp_call
+	EventType  string // capability, event_target
 	ActionName string
 	Params     map[string]string
 	Request    ActionRequest
