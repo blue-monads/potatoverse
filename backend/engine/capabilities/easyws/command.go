@@ -3,16 +3,21 @@ package easyws
 import (
 	"fmt"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability/easyaction"
 )
 
 func (c *EasyWsCapability) handleCommand() {
 	engine := c.builder.app.Engine().(xtypes.Engine)
 
 	for cmd := range c.cmdChan {
+
+		ctx := easyaction.Context{
+			Capability: c,
+			Payload:    cmd.Data,
+		}
+
 		err := engine.EmitActionEvent(&xtypes.ActionEventOptions{
 			SpaceId:    c.spaceId,
 			EventType:  "capability",
@@ -22,7 +27,7 @@ func (c *EasyWsCapability) handleCommand() {
 				"capability_id": fmt.Sprintf("%d", c.capabilityId),
 				"capability":    "easyws",
 			},
-			Request: &ActionContext{c: c, cmd: cmd},
+			Request: &ctx,
 		})
 
 		if err != nil {
@@ -31,17 +36,4 @@ func (c *EasyWsCapability) handleCommand() {
 
 	}
 
-}
-
-type ActionContext struct {
-	c   *EasyWsCapability
-	cmd room.Message
-}
-
-func (c *ActionContext) ListActions() ([]string, error) {
-	return c.c.ListActions()
-}
-
-func (c *ActionContext) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
-	return c.c.Execute(name, params)
 }
