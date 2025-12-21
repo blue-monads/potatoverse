@@ -38,6 +38,14 @@ func (c *Context) ListActions() ([]string, error) {
 
 func (c *Context) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
 
+	if c.Payload == nil {
+		if c.Handler != nil {
+			return c.Handler(name, params)
+		}
+
+		return c.Capability.Execute(name, params)
+	}
+
 	switch name {
 	case "as_bytes":
 		ld := lazydata.LazyDataBytes(c.Payload)

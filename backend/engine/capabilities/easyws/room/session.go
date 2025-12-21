@@ -185,5 +185,11 @@ func (s *session) teardown() {
 		s.send <- nil
 		s.conn.Close()
 		s.closedAndCleaned = true
+
+		s.room.onDisconnect <- UserConnInfo{
+			ConnId: s.connId,
+			UserId: s.userId,
+		}
+
 	})
 }

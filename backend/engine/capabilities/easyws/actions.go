@@ -39,22 +39,17 @@ func (c *EasyWsCapability) executeBroadcast(params lazydata.LazyData) (any, erro
 	return Ok, nil
 }
 
-type PublishParams struct {
-	Topic   string          `json:"topic"`
-	Message json.RawMessage `json:"message"`
-}
-
 func (c *EasyWsCapability) executePublish(params lazydata.LazyData) (any, error) {
-	var p PublishParams
+	var p MessageParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
 	}
 
-	if p.Topic == "" {
+	if p.Target == "" {
 		return nil, errors.New("topic is required")
 	}
 
-	err := c.room.Publish(p.Topic, p.Message)
+	err := c.room.Publish(p.Target, p.Message)
 	if err != nil {
 		return nil, err
 	}
@@ -62,22 +57,22 @@ func (c *EasyWsCapability) executePublish(params lazydata.LazyData) (any, error)
 	return Ok, nil
 }
 
-type DirectMessageParams struct {
-	TargetConnId string          `json:"target_conn_id"`
-	Message      json.RawMessage `json:"message"`
+type MessageParams struct {
+	Target  string          `json:"target"`
+	Message json.RawMessage `json:"message"`
 }
 
 func (c *EasyWsCapability) executeDirectMessage(params lazydata.LazyData) (any, error) {
-	var p DirectMessageParams
+	var p MessageParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
 	}
 
-	if p.TargetConnId == "" {
+	if p.Target == "" {
 		return nil, errors.New("target_conn_id is required")
 	}
 
-	err := c.room.DirectMessage(room.ConnId(p.TargetConnId), p.Message)
+	err := c.room.DirectMessage(room.ConnId(p.Target), p.Message)
 	if err != nil {
 		return nil, err
 	}
@@ -112,13 +107,8 @@ func (c *EasyWsCapability) executeSubscribe(params lazydata.LazyData) (any, erro
 	return Ok, nil
 }
 
-type UnsubscribeParams struct {
-	Topic  string `json:"topic"`
-	ConnId string `json:"conn_id"`
-}
-
 func (c *EasyWsCapability) executeUnsubscribe(params lazydata.LazyData) (any, error) {
-	var p UnsubscribeParams
+	var p SubscribeParams
 	if err := params.AsJson(&p); err != nil {
 		return nil, err
 	}

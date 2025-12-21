@@ -22,7 +22,8 @@ type EasyWsCapability struct {
 	capabilityId int64
 	room         *room.Room
 
-	cmdChan chan room.Message
+	onCmdChan        chan room.Message
+	onDisconnectChan chan room.UserConnInfo
 }
 
 func (c *EasyWsCapability) ListActions() ([]string, error) {
@@ -59,6 +60,12 @@ func (c *EasyWsCapability) Handle(ctx *gin.Context) {
 	if err != nil {
 		conn.Close()
 		httpx.WriteErrString(ctx, "failed to add connection")
+		return
+	}
+
+	err = c.afterConnect(claim.ResourceId, claim.UserId)
+	if err != nil {
+		httpx.WriteErrString(ctx, "failed to execute after_connect action")
 		return
 	}
 }

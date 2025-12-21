@@ -14,7 +14,9 @@ import (
 type ConnId string
 
 type Room struct {
-	cmdChan    chan<- Message
+	cmdChan      chan<- Message
+	onDisconnect chan<- UserConnInfo
+
 	disconnect chan ConnId
 	broadcast  chan []byte
 	publish    chan publishEvent
@@ -29,9 +31,21 @@ type Room struct {
 	sLock    sync.RWMutex
 }
 
-func NewRoom(cmdChan chan<- Message) *Room {
+type UserConnInfo struct {
+	ConnId ConnId
+	UserId int64
+}
+
+type Options struct {
+	CmdChan      chan<- Message
+	OnDisconnect chan<- UserConnInfo
+}
+
+func NewRoom(opts Options) *Room {
 	return &Room{
-		cmdChan:    cmdChan,
+		cmdChan:      opts.CmdChan,
+		onDisconnect: opts.OnDisconnect,
+
 		disconnect: make(chan ConnId),
 		broadcast:  make(chan []byte),
 		publish:    make(chan publishEvent),

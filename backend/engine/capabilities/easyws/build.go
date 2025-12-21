@@ -33,6 +33,7 @@ func init() {
 				app:    appTyped,
 				rooms:  make(map[string]*room.Room),
 				signer: appTyped.Signer(),
+				engine: appTyped.Engine().(xtypes.Engine),
 			}, nil
 		},
 		Name:         Name,
@@ -44,6 +45,8 @@ func init() {
 type EasyWsBuilder struct {
 	app    xtypes.App
 	signer *signer.Signer
+
+	engine xtypes.Engine
 
 	rooms map[string]*room.Room
 	rLock sync.Mutex
@@ -58,7 +61,12 @@ func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capa
 
 	roomName := fmt.Sprintf("cap-%d", model.ID)
 	cmdChan := make(chan room.Message)
-	newRoom := room.NewRoom(cmdChan)
+	onDisconnect := make(chan room.UserConnInfo)
+
+	newRoom := room.NewRoom(room.Options{
+		CmdChan:      cmdChan,
+		OnDisconnect: onDisconnect,
+	})
 
 	b.rLock.Lock()
 	defer b.rLock.Unlock()
@@ -71,15 +79,16 @@ func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capa
 	}
 
 	ec := &EasyWsCapability{
-		app:          b.app,
-		spaceId:      model.SpaceID,
-		installId:    model.InstallID,
-		capabilityId: model.ID,
-		cmdChan:      cmdChan,
-		room:         newRoom,
+		app:              b.app,
+		spaceId:          model.SpaceID,
+		installId:        model.InstallID,
+		capabilityId:     model.ID,
+		onCmdChan:        cmdChan,
+		onDisconnectChan: onDisconnect,
+		room:             newRoom,
 	}
 
-	go ec.handleCommand()
+	go ec.evLoop()
 
 	return ec, nil
 }
