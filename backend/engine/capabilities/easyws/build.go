@@ -22,7 +22,18 @@ var Ok = struct {
 var (
 	Name         = "easy-ws"
 	Icon         = "socket"
-	OptionFields = []xcapability.CapabilityOptionField{}
+	OptionFields = []xcapability.CapabilityOptionField{
+		{
+			Name: "on_connect_action",
+			Key:  "on_connect_action",
+			Type: "string",
+		},
+		{
+			Name: "on_disconnect_action",
+			Key:  "on_disconnect_action",
+			Type: "string",
+		},
+	}
 )
 
 func init() {
