@@ -50,6 +50,10 @@ func NewRoom(opts Options) *Room {
 		broadcast:  make(chan []byte),
 		publish:    make(chan publishEvent),
 		directMsg:  make(chan directMessageEvent),
+		topics:     make(map[string]map[ConnId]bool),
+		sessions:   make(map[ConnId]*session),
+		tLock:      sync.RWMutex{},
+		sLock:      sync.RWMutex{},
 	}
 }
 
