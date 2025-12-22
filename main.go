@@ -5,6 +5,8 @@ import (
 
 	_ "github.com/blue-monads/turnix/backend/services/datahub/provider/ncruces"
 	//_ "github.com/blue-monads/turnix/backend/services/datahub/provider/mattn"
+
+	_ "github.com/blue-monads/turnix/backend/distro"
 )
 
 func main() {
