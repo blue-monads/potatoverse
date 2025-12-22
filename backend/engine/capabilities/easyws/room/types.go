@@ -27,6 +27,7 @@ type Message struct {
 type publishEvent struct {
 	topic   string
 	message []byte
+	connId  ConnId
 }
 
 // directMessageEvent is used internally for room event loop

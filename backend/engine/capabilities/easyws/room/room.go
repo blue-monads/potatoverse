@@ -63,7 +63,7 @@ func (r *Room) Run() {
 		case msg := <-r.broadcast:
 			r.handleBroadcast(msg, time.Second*1)
 		case pub := <-r.publish:
-			r.handlePublish(pub.topic, pub.message, time.Second*2)
+			r.handlePublish(pub.topic, pub.message, pub.connId, time.Second*2)
 		case dm := <-r.directMsg:
 			r.handleDirectMessage(dm.targetConnId, dm.message, time.Second*2)
 
@@ -137,7 +137,7 @@ func (r *Room) Publish(topicName string, message []byte) error {
 		return err
 	}
 
-	r.handlePublish(topicName, data, time.Second*5)
+	r.handlePublish(topicName, data, "", time.Second*5)
 
 	return nil
 
@@ -226,7 +226,7 @@ func (r *Room) handleBroadcast(message []byte, maxWait time.Duration) {
 	}
 }
 
-func (r *Room) handlePublish(topic string, message []byte, maxWait time.Duration) {
+func (r *Room) handlePublish(topic string, message []byte, connId ConnId, maxWait time.Duration) {
 
 	r.tLock.Lock()
 	topicSubscribers := r.topics[topic]
@@ -236,13 +236,24 @@ func (r *Room) handlePublish(topic string, message []byte, maxWait time.Duration
 	}
 
 	topicCopy := maps.Clone(topicSubscribers)
-
 	r.tLock.Unlock()
+
+	if connId != "" {
+		if _, ok := topicSubscribers[connId]; !ok {
+			qq.Println("@handlePublish/conn_not_subscribed/not_allowed", connId)
+			return
+		}
+	}
 
 	copySess := make([]*session, 0, len(topicCopy))
 
 	r.sLock.RLock()
 	for connId := range topicCopy {
+		if connId == connId {
+			qq.Println("@skipping_self", connId)
+			continue
+		}
+
 		sess, exists := r.sessions[connId]
 		if !exists || sess == nil || sess.closedAndCleaned {
 			continue
@@ -343,7 +354,7 @@ func (r *Room) notifyPresenceAll(topic string) error {
 		return err
 	}
 
-	r.handlePublish(topic, data, time.Second*2)
+	r.handlePublish(topic, data, "", time.Second*2)
 
 	return nil
 }

@@ -144,6 +144,7 @@ func (s *session) handleMessage(data []byte) {
 		case s.room.publish <- publishEvent{
 			topic:   msgTopic,
 			message: data,
+			connId:  s.connId,
 		}:
 		case <-tcan:
 			qq.Println("@drop_message", s.connId)
