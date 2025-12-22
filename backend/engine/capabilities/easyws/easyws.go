@@ -8,7 +8,6 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -16,14 +15,12 @@ import (
 
 type EasyWsCapability struct {
 	builder      *EasyWsBuilder
-	app          xtypes.App
 	spaceId      int64
 	installId    int64
 	capabilityId int64
 	room         *room.Room
 
-	onCmdChan        chan room.Message
-	onDisconnectChan chan room.UserConnInfo
+	onConnectAction bool
 }
 
 func (c *EasyWsCapability) ListActions() ([]string, error) {
@@ -63,11 +60,14 @@ func (c *EasyWsCapability) Handle(ctx *gin.Context) {
 		return
 	}
 
-	err = c.afterConnect(claim.ResourceId, claim.UserId)
-	if err != nil {
-		httpx.WriteErrString(ctx, "failed to execute after_connect action")
-		return
+	if c.onConnectAction {
+		err = c.afterConnect(claim.ResourceId, claim.UserId)
+		if err != nil {
+			httpx.WriteErrString(ctx, "failed to execute after_connect action")
+			return
+		}
 	}
+
 }
 
 var ErrInvalidToken = errors.New("invalid token")

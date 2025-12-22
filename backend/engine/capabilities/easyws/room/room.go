@@ -14,8 +14,8 @@ import (
 type ConnId string
 
 type Room struct {
-	cmdChan      chan<- Message
-	onDisconnect chan<- UserConnInfo
+	onCommand    func(cmd Message) error
+	onDisconnect func(userConnInfo UserConnInfo) error
 
 	disconnect chan ConnId
 	broadcast  chan []byte
@@ -37,13 +37,13 @@ type UserConnInfo struct {
 }
 
 type Options struct {
-	CmdChan      chan<- Message
-	OnDisconnect chan<- UserConnInfo
+	OnCommand    func(cmd Message) error
+	OnDisconnect func(userConnInfo UserConnInfo) error
 }
 
 func NewRoom(opts Options) *Room {
 	return &Room{
-		cmdChan:      opts.CmdChan,
+		onCommand:    opts.OnCommand,
 		onDisconnect: opts.OnDisconnect,
 
 		disconnect: make(chan ConnId),

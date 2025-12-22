@@ -9,20 +9,37 @@ import (
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability/easyaction"
 )
 
-func (c *EasyWsCapability) evLoop() {
+type CMDMessage struct {
+	c   *EasyWsCapability
+	cmd room.Message
+}
+
+type CMDDisconnectMessage struct {
+	c     *EasyWsCapability
+	uinfo room.UserConnInfo
+}
+
+func (c *EasyWsBuilder) evLoop() {
 
 	for {
+
 		select {
 		case cmd := <-c.onCmdChan:
-			err := c.onCommand(cmd)
-			if err != nil {
-				qq.Println("@evLoop/1", "error executing command", err)
-			}
+
+			go func() {
+
+				err := cmd.c.onCommand(cmd.cmd)
+				if err != nil {
+					qq.Println("@evLoop/1", "error executing command", err)
+				}
+			}()
 		case uinfo := <-c.onDisconnectChan:
-			err := c.afterDisconnect(string(uinfo.ConnId), uinfo.UserId)
-			if err != nil {
-				qq.Println("@evLoop/2", "error executing disconnect", err)
-			}
+			go func() {
+				err := uinfo.c.afterDisconnect(string(uinfo.uinfo.ConnId), uinfo.uinfo.UserId)
+				if err != nil {
+					qq.Println("@evLoop/2", "error executing disconnect", err)
+				}
+			}()
 
 		}
 

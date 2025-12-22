@@ -169,11 +169,17 @@ func (s *session) handleMessage(data []byte) {
 	case ClientMessageTypeGetPresence:
 		s.room.notifyPresenceUser(s.connId, msgTopic, s.userId)
 	case ClientMessageTypeCommand:
-		s.room.cmdChan <- Message{
+
+		if s.room.onCommand == nil {
+			qq.Println("@handleMessage/onCommand_nil", s.connId)
+			return
+		}
+
+		s.room.onCommand(Message{
 			Type:  msgType,
 			Data:  data,
 			Topic: msgTopic,
-		}
+		})
 
 	default:
 		qq.Println("@handleMessage/unknown_type", msgType, s.connId)
@@ -186,9 +192,11 @@ func (s *session) teardown() {
 		s.conn.Close()
 		s.closedAndCleaned = true
 
-		s.room.onDisconnect <- UserConnInfo{
-			ConnId: s.connId,
-			UserId: s.userId,
+		if s.room.onDisconnect != nil {
+			s.room.onDisconnect(UserConnInfo{
+				ConnId: s.connId,
+				UserId: s.userId,
+			})
 		}
 
 	})
