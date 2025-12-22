@@ -5,6 +5,8 @@ import (
 
 	"github.com/blue-monads/turnix/backend"
 	"github.com/blue-monads/turnix/backend/xtypes"
+
+	_ "github.com/blue-monads/turnix/backend/distro"
 )
 
 func main() {

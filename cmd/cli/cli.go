@@ -6,6 +6,8 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/joho/godotenv"
+
+	_ "github.com/blue-monads/turnix/backend/distro"
 )
 
 type CLI struct {
