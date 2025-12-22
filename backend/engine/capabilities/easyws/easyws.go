@@ -3,6 +3,7 @@ package easyws
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
@@ -35,6 +36,12 @@ func (c *EasyWsCapability) ListActions() ([]string, error) {
 }
 
 func (c *EasyWsCapability) Handle(ctx *gin.Context) {
+
+	if strings.HasSuffix(ctx.Request.URL.Path, "/test") {
+		c.HandleTest(ctx)
+		return
+	}
+
 	token := ctx.Request.URL.Query().Get("token")
 	if token == "" {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -45,6 +52,38 @@ func (c *EasyWsCapability) Handle(ctx *gin.Context) {
 	if err != nil {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
+	}
+
+	conn, _, _, err := ws.UpgradeHTTP(ctx.Request, ctx.Writer)
+	if err != nil {
+		httpx.WriteErrString(ctx, "failed to upgrade websocket")
+		return
+	}
+
+	_, err = c.room.AddConn(claim.UserId, conn, room.ConnId(claim.ResourceId))
+	if err != nil {
+		conn.Close()
+		httpx.WriteErrString(ctx, "failed to add connection")
+		return
+	}
+
+	if c.onConnectAction {
+		err = c.afterConnect(claim.ResourceId, claim.UserId)
+		if err != nil {
+			httpx.WriteErrString(ctx, "failed to execute after_connect action")
+			return
+		}
+	}
+
+}
+
+func (c *EasyWsCapability) HandleTest(ctx *gin.Context) {
+	claim := &signer.CapabilityClaim{
+		SpaceId:      c.spaceId,
+		InstallId:    c.installId,
+		CapabilityId: c.capabilityId,
+		UserId:       1,
+		ResourceId:   "test",
 	}
 
 	conn, _, _, err := ws.UpgradeHTTP(ctx.Request, ctx.Writer)
