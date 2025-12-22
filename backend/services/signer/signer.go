@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/hako/branca"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -255,6 +256,7 @@ func (ts *Signer) ParseCapability(tstr string) (*CapabilityClaim, error) {
 	}
 
 	if claim.Typeid != TokenTypeCapability {
+		qq.Println("claim: ", claim)
 		return nil, ErrInvalidToken
 	}
 
