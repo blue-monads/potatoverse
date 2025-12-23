@@ -172,8 +172,9 @@ func (s *session) handleMessage(data []byte) {
 		}
 
 	case ClientMessageTypeDirectMessage:
-		if msgFromConnId == "" || msgFromConnId != string(s.connId) {
-			qq.Println("@wrong_from_cid", s.connId, msgFromConnId)
+		msgToConnId := gjson.GetBytes(data, "to_cid").String()
+		if msgToConnId == "" {
+			qq.Println("@handleMessage/missing_to_cid", s.connId)
 			return
 		}
 
@@ -181,7 +182,7 @@ func (s *session) handleMessage(data []byte) {
 
 		select {
 		case s.room.directMsg <- directMessageEvent{
-			targetConnId: ConnId(msgFromConnId),
+			targetConnId: ConnId(msgToConnId),
 			message:      data,
 		}:
 		case <-tcan:
