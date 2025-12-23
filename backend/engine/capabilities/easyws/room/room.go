@@ -75,11 +75,13 @@ func (r *Room) Run() {
 
 func (r *Room) AddConn(userId int64, conn net.Conn, connId ConnId) (ConnId, error) {
 	sess := &session{
-		room:   r,
-		connId: connId,
-		userId: userId,
-		conn:   conn,
-		send:   make(chan []byte, 16),
+		room:             r,
+		connId:           connId,
+		userId:           userId,
+		conn:             conn,
+		send:             make(chan []byte, 16),
+		once:             sync.Once{},
+		closedAndCleaned: false,
 	}
 
 	r.sLock.Lock()
@@ -91,8 +93,12 @@ func (r *Room) AddConn(userId int64, conn net.Conn, connId ConnId) (ConnId, erro
 		existingSess.teardown()
 	}
 
+	qq.Println("@AddConn/1", sess.connId, sess.userId)
+
 	go sess.writePump()
 	go sess.readPump()
+
+	qq.Println("@AddConn/2", sess.connId, sess.userId)
 
 	return sess.connId, nil
 }
@@ -248,13 +254,13 @@ func (r *Room) handlePublish(topic string, message []byte, connId ConnId, maxWai
 	copySess := make([]*session, 0, len(topicCopy))
 
 	r.sLock.RLock()
-	for connId := range topicCopy {
-		if connId == connId {
+	for cconnId := range topicCopy {
+		if connId == cconnId {
 			qq.Println("@skipping_self", connId)
 			continue
 		}
 
-		sess, exists := r.sessions[connId]
+		sess, exists := r.sessions[cconnId]
 		if !exists || sess == nil || sess.closedAndCleaned {
 			continue
 		}

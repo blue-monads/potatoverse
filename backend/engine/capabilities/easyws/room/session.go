@@ -25,6 +25,8 @@ type session struct {
 
 func (s *session) writePump() {
 
+	qq.Println("@writePump/1", s.connId, s.userId)
+
 	defer func() {
 		s.conn.Close()
 
@@ -66,10 +68,14 @@ func (s *session) writePump() {
 }
 
 func (s *session) readPump() {
+
+	qq.Println("@readPump/0", s.connId, s.userId)
+
 	errCount := 0
 
 	for {
 		if s.closedAndCleaned {
+			panic("readPump/1")
 			break
 		}
 
@@ -78,11 +84,15 @@ func (s *session) readPump() {
 			return
 		}
 
+		qq.Println("@readPump/1", s.connId, s.userId)
+
 		data, msg, err := wsutil.ReadClientData(s.conn)
 		if err != nil {
 			errCount++
 			return
 		}
+
+		qq.Println("@readPump/2", s.connId, s.userId, data, msg)
 
 		errCount = 0
 
@@ -193,11 +203,18 @@ func (s *session) teardown() {
 		s.conn.Close()
 		s.closedAndCleaned = true
 
+		qq.Println("@teardown/1", s.connId, s.userId)
+
 		if s.room.onDisconnect != nil {
-			s.room.onDisconnect(UserConnInfo{
+			qq.Println("@teardown/2", s.connId, s.userId)
+			err := s.room.onDisconnect(UserConnInfo{
 				ConnId: s.connId,
 				UserId: s.userId,
 			})
+			if err != nil {
+				qq.Println("@teardown/3.1", s.connId, s.userId, err.Error())
+			}
+
 		}
 
 	})

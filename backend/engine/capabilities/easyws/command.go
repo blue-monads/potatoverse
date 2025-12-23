@@ -35,6 +35,9 @@ func (c *EasyWsBuilder) evLoop() {
 			}()
 		case uinfo := <-c.onDisconnectChan:
 			go func() {
+
+				qq.Println("@evLoop/2", "disconnecting", uinfo.uinfo.ConnId, uinfo.uinfo.UserId)
+
 				err := uinfo.c.afterDisconnect(string(uinfo.uinfo.ConnId), uinfo.uinfo.UserId)
 				if err != nil {
 					qq.Println("@evLoop/2", "error executing disconnect", err)
@@ -69,6 +72,8 @@ func (c *EasyWsCapability) onCommand(cmd room.Message) error {
 }
 
 func (c *EasyWsCapability) afterConnect(connId string, userId int64) error {
+
+	qq.Println("afterConnect/1", connId, userId)
 
 	ctx := easyaction.Context{
 		Capability: c,
