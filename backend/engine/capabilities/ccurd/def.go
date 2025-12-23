@@ -62,6 +62,10 @@ func (b *CcurdBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capab
 	}, nil
 }
 
+func (b *CcurdBuilder) GetDebugData() map[string]any {
+	return map[string]any{}
+}
+
 type CcurdOptions struct {
 	Methods map[string]*Methods `json:"methods"`
 }

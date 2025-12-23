@@ -195,6 +195,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	zg.Any("/api/capabilities/:space_key/:capability_name", a.handleCapabilities)
 	zg.Any("/api/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)
+	zg.GET("/api/capabilities/debug/:capability_name", a.withAccessTokenFn(a.handleCapabilitiesDebug))
 
 }
 

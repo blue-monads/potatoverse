@@ -61,6 +61,15 @@ func (gh *CapabilityHub) Init(app xtypes.App) error {
 	return nil
 }
 
+func (gh *CapabilityHub) GetDebugData(name string) map[string]any {
+	builder, ok := gh.builders[name]
+	if !ok {
+		return nil
+	}
+
+	return builder.GetDebugData()
+}
+
 func (gh *CapabilityHub) Reload(installId int64, spaceId int64, name string) error {
 	db := gh.app.Database().GetSpaceOps()
 

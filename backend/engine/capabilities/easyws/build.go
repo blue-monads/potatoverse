@@ -162,3 +162,17 @@ func (b *EasyWsBuilder) Serve(ctx *gin.Context) {}
 func (b *EasyWsBuilder) Name() string {
 	return Name
 }
+
+func (b *EasyWsBuilder) GetDebugData() map[string]any {
+	b.rLock.Lock()
+	defer b.rLock.Unlock()
+
+	rooms := make(map[string]any)
+	for name, room := range b.rooms {
+		rooms[name] = room.GetDebugData()
+	}
+
+	return map[string]any{
+		"rooms": rooms,
+	}
+}

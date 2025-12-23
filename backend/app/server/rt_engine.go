@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/app/actions"
+	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
@@ -295,4 +296,15 @@ func (a *Server) handleCapabilities(ctx *gin.Context) {
 
 func (a *Server) handleCapabilitiesRoot(ctx *gin.Context) {
 	a.engine.ServeCapabilityRoot(ctx)
+}
+
+func (a *Server) handleCapabilitiesDebug(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	capabilityName := ctx.Param("capability_name")
+	if capabilityName == "" {
+		return nil, errors.New("capability name is required")
+	}
+
+	capHub := a.engine.GetCapabilityHub().(*caphub.CapabilityHub)
+	debugData := capHub.GetDebugData(capabilityName)
+	return debugData, nil
 }

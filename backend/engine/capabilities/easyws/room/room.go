@@ -74,6 +74,30 @@ func (r *Room) Run() {
 	}
 }
 
+func (r *Room) GetDebugData() map[string]any {
+
+	sessions := make(map[string]any)
+	for connId, sess := range r.sessions {
+
+		sessions[string(connId)] = map[string]any{
+			"userId": sess.userId,
+			"connId": string(connId),
+		}
+
+	}
+
+	topics := make(map[string]any)
+	for topic, subscribers := range r.topics {
+		topics[topic] = subscribers
+	}
+
+	return map[string]any{
+		"sessions": sessions,
+		"topics":   topics,
+	}
+
+}
+
 func (r *Room) AddConn(userId int64, conn net.Conn, connId ConnId) (ConnId, error) {
 	sess := &session{
 		room:             r,

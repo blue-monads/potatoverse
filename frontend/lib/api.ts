@@ -858,3 +858,8 @@ export const getDocsIndex = async () => {
 export const getDocsFile = async (filePath: string) => {
     return iaxios.get<any>(`/core/docs/${filePath}`);
 }
+
+// Capabilities API
+export const getCapabilitiesDebug = async (capabilityName: string) => {
+    return iaxios.get<any>(`/capabilities/debug/${capabilityName}`);
+}

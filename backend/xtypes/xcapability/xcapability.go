@@ -37,6 +37,7 @@ type CapabilityBuilder interface {
 	Name() string
 	Build(model *dbmodels.SpaceCapability) (Capability, error)
 	Serve(ctx *gin.Context)
+	GetDebugData() map[string]any
 }
 
 type CapabilityHub interface {

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { Filter, Edit, Trash2, Package, Layers, Settings } from 'lucide-react';
+import { Filter, Edit, Trash2, Package, Layers, Settings, Bug } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -12,7 +12,8 @@ import {
     updateSpaceCapability, 
     deleteSpaceCapability,
     listCapabilityTypes,
-    CapabilityDefinition
+    CapabilityDefinition,
+    getCapabilitiesDebug
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { CapabilityOptionsSection } from '@/contain/compo/CapabilityOptionsSection';
@@ -201,6 +202,7 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
                                         <CapabilityRow
                                             key={cap.id}
                                             capability={cap}
+                                            installId={installId}
                                             onEdit={() => setEditingId(cap.id)}
                                             onDelete={() => handleDelete(cap.id)}
                                             onUpdate={(data) => handleUpdate(cap.id, data)}
@@ -221,6 +223,7 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
 
 const CapabilityRow = ({ 
     capability, 
+    installId,
     onEdit, 
     onDelete,
     onUpdate,
@@ -229,6 +232,7 @@ const CapabilityRow = ({
     capabilityTypes
 }: { 
     capability: SpaceCapability;
+    installId: number;
     onEdit: () => void;
     onDelete: () => void;
     onUpdate: (data: any) => void;
@@ -236,6 +240,43 @@ const CapabilityRow = ({
     isEditing: boolean;
     capabilityTypes: CapabilityDefinition[];
 }) => {
+    const gapp = useGApp();
+    const [loadingDebug, setLoadingDebug] = useState(false);
+
+    const handleDebugClick = async () => {
+        setLoadingDebug(true);
+        try {
+            const response = await getCapabilitiesDebug(capability.capability_type);
+            const debugData = response.data;
+            
+            gapp.modal.openModal({
+                title: `Debug: ${capability.name} (${capability.capability_type})`,
+                content: (
+                    <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-lg p-4 overflow-auto max-h-[70vh]">
+                            <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                                {JSON.stringify(debugData, null, 2)}
+                            </pre>
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => gapp.modal.closeModal()}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                ),
+                size: "lg"
+            });
+        } catch (error) {
+            console.error('Failed to fetch debug data:', error);
+            alert('Failed to fetch debug data: ' + ((error as any)?.response?.data?.error || (error as any)?.message || 'Unknown error'));
+        } finally {
+            setLoadingDebug(false);
+        }
+    };
     const [editData, setEditData] = useState({
         name: capability.name,
         capability_type: capability.capability_type,
@@ -299,6 +340,14 @@ const CapabilityRow = ({
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex justify-end gap-2">
+                    <button
+                        onClick={handleDebugClick}
+                        disabled={loadingDebug}
+                        className="text-purple-600 hover:text-purple-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Show debug data"
+                    >
+                        <Bug className="w-4 h-4" />
+                    </button>
                     <button
                         onClick={onEdit}
                         className="text-blue-600 hover:text-blue-900"

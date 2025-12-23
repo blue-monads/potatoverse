@@ -126,6 +126,10 @@ func (p *PingBuilder) Name() string {
 	return "ping"
 }
 
+func (b *PingBuilder) GetDebugData() map[string]any {
+	return map[string]any{}
+}
+
 type PingCapability struct {
 	app     xtypes.App
 	spaceId int64
