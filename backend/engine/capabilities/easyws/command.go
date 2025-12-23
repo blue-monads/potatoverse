@@ -77,7 +77,7 @@ func (c *EasyWsCapability) onCommand(cmd room.Message) error {
 	return err
 }
 
-func (c *EasyWsCapability) afterConnect(connId string, userId int64) error {
+func (c *EasyWsCapability) afterConnect(connId, ip string, userId int64) error {
 
 	qq.Println("afterConnect/1", connId, userId)
 
@@ -95,6 +95,7 @@ func (c *EasyWsCapability) afterConnect(connId string, userId int64) error {
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
 			"capability":    "easyws",
 			"user_id":       fmt.Sprintf("%d", userId),
+			"ip":            ip,
 		},
 		Request: &ctx,
 	})

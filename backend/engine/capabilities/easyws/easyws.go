@@ -71,7 +71,8 @@ func (c *EasyWsCapability) Handle(ctx *gin.Context) {
 	}
 
 	if c.onConnectAction {
-		err = c.afterConnect(claim.ResourceId, claim.UserId)
+		ip := ctx.ClientIP()
+		err = c.afterConnect(claim.ResourceId, ip, claim.UserId)
 		if err != nil {
 			httpx.WriteErrString(ctx, "failed to execute after_connect action")
 			return
@@ -103,7 +104,10 @@ func (c *EasyWsCapability) HandleTest(ctx *gin.Context) {
 	}
 
 	if c.onConnectAction {
-		err = c.afterConnect(claim.ResourceId, claim.UserId)
+
+		ip := ctx.ClientIP()
+
+		err = c.afterConnect(claim.ResourceId, ip, claim.UserId)
 		if err != nil {
 			httpx.WriteErrString(ctx, "failed to execute after_connect action")
 			return
