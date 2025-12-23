@@ -9,6 +9,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
@@ -48,10 +49,13 @@ func init() {
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			appTyped := app.(xtypes.App)
 			builder := &EasyWsBuilder{
-				app:    appTyped,
-				rooms:  make(map[string]*room.Room),
-				signer: appTyped.Signer(),
-				engine: appTyped.Engine().(xtypes.Engine),
+				app:              appTyped,
+				rooms:            make(map[string]*room.Room),
+				signer:           appTyped.Signer(),
+				engine:           appTyped.Engine().(xtypes.Engine),
+				onCmdChan:        make(chan CMDMessage),
+				onDisconnectChan: make(chan CMDDisconnectMessage),
+				rLock:            sync.Mutex{},
 			}
 			go builder.evLoop()
 
@@ -105,6 +109,9 @@ func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capa
 
 	if onCommandAction {
 		onCommand = func(cmd room.Message) error {
+
+			qq.Println("@Build/onCommand", cmd.Target, cmd.Target)
+
 			b.onCmdChan <- CMDMessage{
 				c:   ec,
 				cmd: cmd,
@@ -115,6 +122,9 @@ func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capa
 
 	if onDisconnectAction {
 		onDisconnect = func(uinfo room.UserConnInfo) error {
+
+			qq.Println("@Build/onDisconnect", uinfo.ConnId, uinfo.UserId)
+
 			b.onDisconnectChan <- CMDDisconnectMessage{
 				c:     ec,
 				uinfo: uinfo,

@@ -21,10 +21,14 @@ type CMDDisconnectMessage struct {
 
 func (c *EasyWsBuilder) evLoop() {
 
+	qq.Println("@evLoop/0")
+
 	for {
 
 		select {
 		case cmd := <-c.onCmdChan:
+
+			qq.Println("@evLoop/1", "command", cmd.cmd.Target)
 
 			go func() {
 
@@ -34,6 +38,8 @@ func (c *EasyWsBuilder) evLoop() {
 				}
 			}()
 		case uinfo := <-c.onDisconnectChan:
+			qq.Println("@evLoop/2", "disconnect", uinfo.uinfo.ConnId, uinfo.uinfo.UserId)
+
 			go func() {
 
 				qq.Println("@evLoop/2", "disconnecting", uinfo.uinfo.ConnId, uinfo.uinfo.UserId)

@@ -68,6 +68,7 @@ func (r *Room) Run() {
 			r.handleDirectMessage(dm.targetConnId, dm.message, time.Second*2)
 
 		case connId := <-r.disconnect:
+			qq.Println("@run/disconnect", connId)
 			r.cleanup(connId)
 		}
 	}
@@ -304,11 +305,13 @@ func (r *Room) handleDirectMessage(targetConnId ConnId, message []byte, maxWait 
 // cleanup performs the heavy lifting of removing the user from all maps
 func (r *Room) cleanup(connId ConnId) {
 	r.sLock.Lock()
-	delete(r.sessions, connId)
+	sess, exists := r.sessions[connId]
+	if exists {
+		delete(r.sessions, connId)
+	}
 	r.sLock.Unlock()
 
-	sess, exists := r.sessions[connId]
-	if !exists {
+	if !exists || sess == nil {
 		return
 	}
 

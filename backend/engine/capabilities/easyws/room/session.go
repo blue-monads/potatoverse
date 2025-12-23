@@ -1,6 +1,7 @@
 package room
 
 import (
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -75,11 +76,10 @@ func (s *session) readPump() {
 
 	for {
 		if s.closedAndCleaned {
-			panic("readPump/1")
 			break
 		}
 
-		if errCount > 10 {
+		if errCount > 3 {
 			s.room.disconnect <- s.connId
 			return
 		}
@@ -88,6 +88,12 @@ func (s *session) readPump() {
 
 		data, msg, err := wsutil.ReadClientData(s.conn)
 		if err != nil {
+			// check if the error is io.EOF
+			if err == io.EOF {
+				s.room.disconnect <- s.connId
+				return
+			}
+
 			errCount++
 			return
 		}
