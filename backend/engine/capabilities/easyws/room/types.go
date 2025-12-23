@@ -17,11 +17,12 @@ const (
 
 // Message represents a websocket message
 type Message struct {
-	Type    string          `json:"type"`
-	Data    json.RawMessage `json:"data"`
-	Topic   string          `json:"topic,omitempty"` // or command
-	Target  string          `json:"target,omitempty"`
-	SubType string          `json:"sub_type,omitempty"`
+	Type       string          `json:"type"`
+	Data       json.RawMessage `json:"data"`
+	Topic      string          `json:"topic,omitempty"` // or command
+	SubType    string          `json:"sub_type,omitempty"`
+	FromConnId string          `json:"from_cid,omitempty"`
+	ToConnId   string          `json:"to_cid,omitempty"`
 }
 
 // publishEvent is used internally for room event loop

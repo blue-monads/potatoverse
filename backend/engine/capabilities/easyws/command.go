@@ -11,12 +11,12 @@ import (
 
 type CMDMessage struct {
 	c   *EasyWsCapability
-	cmd room.Message
+	cmd room.CommandMessage
 }
 
 type CMDDisconnectMessage struct {
-	c     *EasyWsCapability
-	uinfo room.UserConnInfo
+	c   *EasyWsCapability
+	msg room.DisconnectMessage
 }
 
 func (c *EasyWsBuilder) evLoop() {
@@ -28,7 +28,7 @@ func (c *EasyWsBuilder) evLoop() {
 		select {
 		case cmd := <-c.onCmdChan:
 
-			qq.Println("@evLoop/1", "command", cmd.cmd.Target)
+			qq.Println("@evLoop/1", "command", cmd.cmd.SubType)
 
 			go func() {
 
@@ -38,13 +38,13 @@ func (c *EasyWsBuilder) evLoop() {
 				}
 			}()
 		case uinfo := <-c.onDisconnectChan:
-			qq.Println("@evLoop/2", "disconnect", uinfo.uinfo.ConnId, uinfo.uinfo.UserId)
+			qq.Println("@evLoop/2", "disconnect", uinfo.msg.ConnId, uinfo.msg.UserId)
 
 			go func() {
 
-				qq.Println("@evLoop/2", "disconnecting", uinfo.uinfo.ConnId, uinfo.uinfo.UserId)
+				qq.Println("@evLoop/2", "disconnecting", uinfo.msg.ConnId, uinfo.msg.UserId)
 
-				err := uinfo.c.afterDisconnect(string(uinfo.uinfo.ConnId), uinfo.uinfo.UserId)
+				err := uinfo.c.afterDisconnect(string(uinfo.msg.ConnId), uinfo.msg.UserId)
 				if err != nil {
 					qq.Println("@evLoop/2", "error executing disconnect", err)
 				}
@@ -56,10 +56,10 @@ func (c *EasyWsBuilder) evLoop() {
 
 }
 
-func (c *EasyWsCapability) onCommand(cmd room.Message) error {
+func (c *EasyWsCapability) onCommand(msg room.CommandMessage) error {
 	ctx := easyaction.Context{
 		Capability: c,
-		Payload:    cmd.Data,
+		Payload:    msg.RawData,
 	}
 
 	err := c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
@@ -67,7 +67,7 @@ func (c *EasyWsCapability) onCommand(cmd room.Message) error {
 		EventType:  "capability",
 		ActionName: "client_command",
 		Params: map[string]string{
-			"command":       cmd.Target,
+			"command":       msg.SubType,
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
 			"capability":    "easyws",
 		},

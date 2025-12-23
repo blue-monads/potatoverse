@@ -104,30 +104,28 @@ func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capa
 
 	roomName := fmt.Sprintf("cap-%d", model.ID)
 
-	var onCommand func(cmd room.Message) error
-	var onDisconnect func(uinfo room.UserConnInfo) error
+	var onCommand func(msg room.CommandMessage) error
+	var onDisconnect func(msg room.DisconnectMessage) error
 
 	if onCommandAction {
-		onCommand = func(cmd room.Message) error {
-
-			qq.Println("@Build/onCommand", cmd.Target, cmd.Target)
+		onCommand = func(msg room.CommandMessage) error {
 
 			b.onCmdChan <- CMDMessage{
 				c:   ec,
-				cmd: cmd,
+				cmd: msg,
 			}
 			return nil
 		}
 	}
 
 	if onDisconnectAction {
-		onDisconnect = func(uinfo room.UserConnInfo) error {
+		onDisconnect = func(msg room.DisconnectMessage) error {
 
-			qq.Println("@Build/onDisconnect", uinfo.ConnId, uinfo.UserId)
+			qq.Println("@Build/onDisconnect", msg.ConnId, msg.UserId)
 
 			b.onDisconnectChan <- CMDDisconnectMessage{
-				c:     ec,
-				uinfo: uinfo,
+				c:   ec,
+				msg: msg,
 			}
 			return nil
 		}

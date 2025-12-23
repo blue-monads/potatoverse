@@ -14,8 +14,8 @@ import (
 type ConnId string
 
 type Room struct {
-	onCommand    func(cmd Message) error
-	onDisconnect func(userConnInfo UserConnInfo) error
+	onCommand    func(msg CommandMessage) error
+	onDisconnect func(msg DisconnectMessage) error
 
 	disconnect chan ConnId
 	broadcast  chan []byte
@@ -31,14 +31,20 @@ type Room struct {
 	sLock    sync.RWMutex
 }
 
-type UserConnInfo struct {
+type DisconnectMessage struct {
 	ConnId ConnId
 	UserId int64
 }
 
+type CommandMessage struct {
+	SubType    string
+	RawData    []byte
+	FromConnId ConnId
+}
+
 type Options struct {
-	OnCommand    func(cmd Message) error
-	OnDisconnect func(userConnInfo UserConnInfo) error
+	OnCommand    func(msg CommandMessage) error
+	OnDisconnect func(msg DisconnectMessage) error
 }
 
 func NewRoom(opts Options) *Room {

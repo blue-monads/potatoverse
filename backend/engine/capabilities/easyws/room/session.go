@@ -137,8 +137,12 @@ func (s *session) readPump() {
 func (s *session) handleMessage(data []byte) {
 
 	msgType := gjson.GetBytes(data, "type").String()
-	msgTopic := gjson.GetBytes(data, "topic").String()
-	msgTarget := ConnId(gjson.GetBytes(data, "target").String())
+	msgFromConnId := gjson.GetBytes(data, "from_cid").String()
+
+	if msgFromConnId == "" || msgFromConnId != string(s.connId) {
+		qq.Println("@wrong_from_cid", s.connId, msgFromConnId)
+		return
+	}
 
 	switch msgType {
 	case ClientMessageTypeBroadcast:
@@ -150,6 +154,7 @@ func (s *session) handleMessage(data []byte) {
 		}
 
 	case ClientMessageTypePublish:
+		msgTopic := gjson.GetBytes(data, "topic").String()
 		if msgTopic == "" {
 			qq.Println("@handleMessage/missing_topic", s.connId)
 			return
@@ -167,8 +172,8 @@ func (s *session) handleMessage(data []byte) {
 		}
 
 	case ClientMessageTypeDirectMessage:
-		if msgTarget == "" {
-			qq.Println("@handleMessage/missing_target", s.connId)
+		if msgFromConnId == "" || msgFromConnId != string(s.connId) {
+			qq.Println("@wrong_from_cid", s.connId, msgFromConnId)
 			return
 		}
 
@@ -176,7 +181,7 @@ func (s *session) handleMessage(data []byte) {
 
 		select {
 		case s.room.directMsg <- directMessageEvent{
-			targetConnId: msgTarget,
+			targetConnId: ConnId(msgFromConnId),
 			message:      data,
 		}:
 		case <-tcan:
@@ -184,6 +189,7 @@ func (s *session) handleMessage(data []byte) {
 		}
 
 	case ClientMessageTypeGetPresence:
+		msgTopic := gjson.GetBytes(data, "topic").String()
 		s.room.notifyPresenceUser(s.connId, msgTopic, s.userId)
 	case ClientMessageTypeCommand:
 
@@ -192,10 +198,12 @@ func (s *session) handleMessage(data []byte) {
 			return
 		}
 
-		s.room.onCommand(Message{
-			Type:  msgType,
-			Data:  data,
-			Topic: msgTopic,
+		msgSubType := gjson.GetBytes(data, "sub_type").String()
+
+		s.room.onCommand(CommandMessage{
+			SubType:    msgSubType,
+			RawData:    data,
+			FromConnId: s.connId,
 		})
 
 	default:
@@ -213,7 +221,7 @@ func (s *session) teardown() {
 
 		if s.room.onDisconnect != nil {
 			qq.Println("@teardown/2", s.connId, s.userId)
-			err := s.room.onDisconnect(UserConnInfo{
+			err := s.room.onDisconnect(DisconnectMessage{
 				ConnId: s.connId,
 				UserId: s.userId,
 			})
