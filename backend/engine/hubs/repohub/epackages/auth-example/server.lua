@@ -140,6 +140,12 @@ function delete_task(ctx)
     req.json(200, {})
 end
 
+--- @class HttpContext
+--- @field request table
+--- @field param fun(key: string): string
+--- @field type fun(): string -- http
+
+--- @param ctx HttpContext
 function on_http(ctx)
     local req = ctx.request()
 
@@ -165,4 +171,19 @@ function on_http(ctx)
     req.json(200, {
         message = "Hello, world!"
     })
+end
+
+--- @class ActionContext
+--- @field request table
+--- @field param fun(key: string): string
+--- @field type fun(): string -- action
+
+--- @param ctx ActionContext
+function on_capability(ctx)
+    error("not implemented")
+end
+
+--- @param ctx ActionContext
+function on_event_target(ctx)
+    error("not implemented")
 end

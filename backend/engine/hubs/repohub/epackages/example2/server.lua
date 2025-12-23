@@ -200,5 +200,20 @@ function delete_category(ctx)
     })
 end
 
+--- @class ActionContext
+--- @field request table
+--- @field param fun(key: string): string
+--- @field type fun(): string -- action
+
+--- @param ctx ActionContext
+function on_capability(ctx)
+    error("not implemented")
+end
+
+--- @param ctx ActionContext
+function on_event_target(ctx)
+    error("not implemented")
+end
+
 print("Example 2 server script loaded successfully!")
 

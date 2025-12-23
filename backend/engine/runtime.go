@@ -197,7 +197,7 @@ func (r *Runtime) ExecAction(opts *xtypes.ActionEventOptions) error {
 	opts.Params["install_id"] = fmt.Sprintf("%d", e.InstalledId)
 	opts.Params["package_version_id"] = fmt.Sprintf("%d", e.PackageVersionId)
 	opts.Params["event_type"] = opts.EventType
-	opts.Params["action_name"] = opts.ActionName
+	opts.Params["action"] = opts.ActionName
 
 	err = libx.PanicWrapper(func() {
 		err := e.Executor.HandleAction(&xtypes.ActionEvent{
