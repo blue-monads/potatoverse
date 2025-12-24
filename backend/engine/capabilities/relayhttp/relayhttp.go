@@ -26,7 +26,8 @@ type RelayHttpCapability struct {
 }
 
 type RelayHttp struct {
-	data chan []byte
+	data   chan []byte
+	closed bool
 }
 
 func (c *RelayHttpCapability) getOrCreateRelay(relayID string) *RelayHttp {
@@ -93,6 +94,18 @@ func (c *RelayHttpCapability) HandleSender(ctx *gin.Context) {
 	reader := bufio.NewReaderSize(ctx.Request.Body, bufferSize)
 	buf := make([]byte, bufferSize)
 
+	defer func() {
+		close(relay.data)
+
+		if relay.closed {
+			return
+		}
+
+		c.removeRelay(relayID)
+		relay.closed = true
+
+	}()
+
 	for {
 		n, err := reader.Read(buf)
 		if n > 0 {
@@ -114,8 +127,6 @@ func (c *RelayHttpCapability) HandleSender(ctx *gin.Context) {
 		}
 	}
 
-	close(relay.data)
-
 	ctx.JSON(200, gin.H{"status": "data relayed", "relay_id": relayID})
 }
 
@@ -132,7 +143,14 @@ func (c *RelayHttpCapability) HandleReceiver(ctx *gin.Context) {
 
 	relay := c.getOrCreateRelay(relayID)
 
-	defer c.removeRelay(relayID)
+	defer func() {
+		if relay.closed {
+			return
+		}
+
+		c.removeRelay(relayID)
+		relay.closed = true
+	}()
 
 	// Set response headers for streaming
 	ctx.Header("Content-Type", "application/octet-stream")
