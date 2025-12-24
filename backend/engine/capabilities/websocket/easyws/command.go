@@ -3,7 +3,7 @@ package easyws
 import (
 	"fmt"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
+	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability/easyaction"

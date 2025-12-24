@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
+	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"

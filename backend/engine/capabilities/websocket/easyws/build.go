@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
+	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
 	"github.com/blue-monads/turnix/backend/engine/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"

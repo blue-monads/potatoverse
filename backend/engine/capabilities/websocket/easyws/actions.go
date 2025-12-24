@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/easyws/room"
+	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 )
 
