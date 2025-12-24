@@ -114,7 +114,6 @@ func (c *RelayHttpCapability) HandleSender(ctx *gin.Context) {
 		}
 	}
 
-	// Close channel to signal end of stream
 	close(relay.data)
 
 	ctx.JSON(200, gin.H{"status": "data relayed", "relay_id": relayID})
