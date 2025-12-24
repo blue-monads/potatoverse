@@ -104,3 +104,11 @@ type Executor interface {
 	HandleHttp(event *HttpEvent) error
 	HandleAction(event *ActionEvent) error
 }
+
+// RootExecutor types
+
+type RootExecutor interface {
+	ServeRoot(ctx *gin.Context)
+}
+
+type RootExecutorFactory func(app App) (RootExecutor, error)
