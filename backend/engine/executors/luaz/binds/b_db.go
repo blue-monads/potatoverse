@@ -506,3 +506,30 @@ func dbListTableColumns(mod *luaDBModule, L *lua.LState) int {
 	L.Push(resultTable)
 	return 1
 }
+
+/*
+
+const relations = {
+	product: [{
+		subtype = "sales",
+		type = "has_many",
+		from_field = "product_id",
+		to_field = "id",
+	}
+	{
+		subtype = "stockin",
+		type = "has_many",
+		from_field = "product_id",
+		to_field = "id",
+	}]
+}
+
+local l = get_with_sub_type({
+    root_type = "product",
+	relations = relations,
+	subtypes = {
+	   sales: ["id", "amount"],
+	}
+})
+
+*/
