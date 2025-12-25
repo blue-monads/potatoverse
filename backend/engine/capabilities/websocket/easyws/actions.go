@@ -20,9 +20,20 @@ func (c *EasyWsCapability) Execute(name string, params lazydata.LazyData) (any, 
 		return c.executeSubscribe(params)
 	case "unsubscribe":
 		return c.executeUnsubscribe(params)
+	case "message_raw":
+		return c.executeMessageRaw(params)
 	default:
 		return nil, errors.New("unknown action: " + name)
 	}
+}
+
+func (c *EasyWsCapability) executeMessageRaw(params lazydata.LazyData) (any, error) {
+	err := c.room.MessageRaw(params)
+	if err != nil {
+		return nil, err
+	}
+
+	return Ok, nil
 }
 
 func (c *EasyWsCapability) executeBroadcast(params lazydata.LazyData) (any, error) {
@@ -45,11 +56,11 @@ func (c *EasyWsCapability) executePublish(params lazydata.LazyData) (any, error)
 		return nil, err
 	}
 
-	if p.Target == "" {
+	if p.Topic == "" {
 		return nil, errors.New("topic is required")
 	}
 
-	err := c.room.Publish(p.Target, p.Message)
+	err := c.room.Publish(p.Topic, p.Message)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +69,9 @@ func (c *EasyWsCapability) executePublish(params lazydata.LazyData) (any, error)
 }
 
 type MessageParams struct {
-	Target  string          `json:"target"`
-	Message json.RawMessage `json:"message"`
+	ToConnId string          `json:"to_cid"`
+	Topic    string          `json:"topic"`
+	Message  json.RawMessage `json:"message"`
 }
 
 func (c *EasyWsCapability) executeDirectMessage(params lazydata.LazyData) (any, error) {
@@ -68,11 +80,11 @@ func (c *EasyWsCapability) executeDirectMessage(params lazydata.LazyData) (any, 
 		return nil, err
 	}
 
-	if p.Target == "" {
+	if p.ToConnId == "" {
 		return nil, errors.New("target_conn_id is required")
 	}
 
-	err := c.room.DirectMessage(room.ConnId(p.Target), p.Message)
+	err := c.room.DirectMessage(room.ConnId(p.ToConnId), p.Message)
 	if err != nil {
 		return nil, err
 	}

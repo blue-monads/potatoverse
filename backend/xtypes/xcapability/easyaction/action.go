@@ -1,8 +1,11 @@
 package easyaction
 
 import (
+	"fmt"
+
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
+	"github.com/tidwall/gjson"
 )
 
 var Methods = []string{
@@ -48,8 +51,7 @@ func (c *Context) ExecuteAction(name string, params lazydata.LazyData) (any, err
 
 	switch name {
 	case "as_bytes":
-		ld := lazydata.LazyDataBytes(c.Payload)
-		return ld.AsBytes()
+		return c.Payload, nil
 	case "as_map":
 		ld := lazydata.LazyDataBytes(c.Payload)
 		return ld.AsMap()
@@ -58,13 +60,24 @@ func (c *Context) ExecuteAction(name string, params lazydata.LazyData) (any, err
 		return ld.AsBytes()
 
 	case "get_field_as_int":
-		return params.GetFieldAsInt(params.GetFieldAsString("path")), nil
+		path := params.GetFieldAsString("path")
+		finalPath := fmt.Sprintf("data.%s", path)
+		return gjson.GetBytes(c.Payload, finalPath).Int(), nil
 	case "get_field_as_float":
-		return params.GetFieldAsFloat(params.GetFieldAsString("path")), nil
+		path := params.GetFieldAsString("path")
+		finalPath := fmt.Sprintf("data.%s", path)
+		return gjson.GetBytes(c.Payload, finalPath).Float(), nil
+
 	case "get_field_as_string":
-		return params.GetFieldAsString(params.GetFieldAsString("path")), nil
+
+		path := params.GetFieldAsString("path")
+		finalPath := fmt.Sprintf("data.%s", path)
+
+		return gjson.GetBytes(c.Payload, finalPath).String(), nil
 	case "get_field_as_bool":
-		return params.GetFieldAsBool(params.GetFieldAsString("path")), nil
+		path := params.GetFieldAsString("path")
+		finalPath := fmt.Sprintf("data.%s", path)
+		return gjson.GetBytes(c.Payload, finalPath).Bool(), nil
 
 	default:
 

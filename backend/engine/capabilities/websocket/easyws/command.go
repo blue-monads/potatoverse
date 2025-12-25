@@ -62,6 +62,8 @@ func (c *EasyWsCapability) onCommand(msg room.CommandMessage) error {
 		Payload:    msg.RawData,
 	}
 
+	fromConnId := string(msg.FromConnId)
+
 	err := c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
 		SpaceId:    c.spaceId,
 		EventType:  "capability",
@@ -70,6 +72,7 @@ func (c *EasyWsCapability) onCommand(msg room.CommandMessage) error {
 			"command":       msg.SubType,
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
 			"capability":    "easyws",
+			"from_cid":      fromConnId,
 		},
 		Request: &ctx,
 	})

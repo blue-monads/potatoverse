@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 )
 
 type ConnId string
@@ -198,6 +199,35 @@ func (r *Room) DirectMessage(targetConnId ConnId, message []byte) error {
 
 }
 
+func (r *Room) MessageRaw(ldata lazydata.LazyData) error {
+
+	msgType := ldata.GetFieldAsString("type")
+
+	data, err := ldata.AsBytes()
+	if err != nil {
+		return err
+	}
+
+	maxWait := time.Second * 5
+
+	switch msgType {
+	case MessageTypeDirectMessage:
+		msgToConnId := ldata.GetFieldAsString("to_cid")
+		r.handleDirectMessage(ConnId(msgToConnId), data, maxWait)
+	case MessageTypePublish:
+		msgTopic := ldata.GetFieldAsString("topic")
+
+		r.handlePublish(msgTopic, data, "", maxWait)
+	case MessageTypeBroadcast:
+		r.handleBroadcast(data, maxWait)
+	default:
+		return errors.New("unknown message type: " + msgType)
+	}
+
+	return nil
+
+}
+
 // Subscribe adds a connection to a topic subscription
 func (r *Room) Subscribe(topicName string, connId ConnId) error {
 	r.tLock.Lock()
@@ -275,6 +305,7 @@ func (r *Room) handlePublish(topic string, message []byte, connId ConnId, maxWai
 	topicCopy := maps.Clone(topicSubscribers)
 	r.tLock.Unlock()
 
+	// empty connId means its server itself sending the message
 	if connId != "" {
 		if _, ok := topicSubscribers[connId]; !ok {
 			qq.Println("@handlePublish/conn_not_subscribed/not_allowed", connId)
