@@ -196,18 +196,23 @@ func (c *RelayHttpCapability) HandleReceiver(ctx *gin.Context) {
 	ctx.Writer.Header().Set("Transfer-Encoding", "chunked")
 	ctx.Writer.WriteHeader(200)
 
-	for chunk := range relay.data {
-		if chunk == nil {
-			ctx.JSON(500, gin.H{"error": "error during data transfer"})
-			return
-		}
+	rctx := ctx.Request.Context()
 
-		if _, err := ctx.Writer.Write(chunk); err != nil {
+	for {
+		select {
+		case <-rctx.Done():
 			return
+		case chunk := <-relay.data:
+			if chunk == nil {
+				return
+			}
+			if _, err := ctx.Writer.Write(chunk); err != nil {
+				return
+			}
+			ctx.Writer.Flush()
 		}
-
-		ctx.Writer.Flush()
 	}
+
 }
 
 func (c *RelayHttpCapability) ListActions() ([]string, error) {
