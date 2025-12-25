@@ -102,19 +102,19 @@ func (c *RelayHttpCapability) getRelayID(ctx *gin.Context) (string, error) {
 		return "", err
 	}
 
-	relayId := claim.ResourceId
+	// <capability_id>_<resource_id>:<sub_key>
+
+	relayId := fmt.Sprintf("%d_%s", claim.CapabilityId, claim.ResourceId)
 	if relayId == "" {
 		return "", errors.New("relay id is required")
 	}
-
-	capId := claim.CapabilityId
 
 	if c.allowSubKey {
 		subKey := claim.ExtraMeta["sub_key"]
 		if subKey == "" {
 			return "", errors.New("sub key is required")
 		}
-		relayId = fmt.Sprintf("%d_%s:%s", capId, relayId, subKey)
+		relayId = fmt.Sprintf("%s:%s", relayId, subKey)
 	}
 
 	return relayId, nil
