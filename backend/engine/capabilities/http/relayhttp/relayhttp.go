@@ -2,9 +2,12 @@ package relayhttp
 
 import (
 	"bufio"
+	"errors"
 	"io"
-	"sync"
 
+	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,9 +23,16 @@ const (
 	channelBufferSize = 4
 )
 
+var (
+	Name         = "relay-http"
+	Icon         = "relay"
+	OptionFields = []xcapability.CapabilityOptionField{}
+)
+
 type RelayHttpCapability struct {
-	httpRelays map[string]*RelayHttp
-	rLock      sync.RWMutex
+	parent  *RelayHttpBuilder
+	handle  xcapability.XCapabilityHandle
+	spaceId int64
 }
 
 type RelayHttp struct {
@@ -31,9 +41,9 @@ type RelayHttp struct {
 }
 
 func (c *RelayHttpCapability) getOrCreateRelay(relayID string) *RelayHttp {
-	c.rLock.RLock()
-	relay, exists := c.httpRelays[relayID]
-	c.rLock.RUnlock()
+	c.parent.rLock.RLock()
+	relay, exists := c.parent.httpRelays[relayID]
+	c.parent.rLock.RUnlock()
 
 	if exists {
 		return relay
@@ -44,24 +54,24 @@ func (c *RelayHttpCapability) getOrCreateRelay(relayID string) *RelayHttp {
 	}
 
 	// Create new relay
-	c.rLock.Lock()
-	defer c.rLock.Unlock()
+	c.parent.rLock.Lock()
+	defer c.parent.rLock.Unlock()
 
 	// Double-check after acquiring write lock
-	relay, exists = c.httpRelays[relayID]
+	relay, exists = c.parent.httpRelays[relayID]
 	if exists {
 		return relay
 	}
 
-	c.httpRelays[relayID] = newrelay
+	c.parent.httpRelays[relayID] = newrelay
 
 	return newrelay
 }
 
 func (c *RelayHttpCapability) removeRelay(relayID string) {
-	c.rLock.Lock()
-	defer c.rLock.Unlock()
-	delete(c.httpRelays, relayID)
+	c.parent.rLock.Lock()
+	defer c.parent.rLock.Unlock()
+	delete(c.parent.httpRelays, relayID)
 }
 
 func (c *RelayHttpCapability) Handle(ctx *gin.Context) {
@@ -169,5 +179,21 @@ func (c *RelayHttpCapability) HandleReceiver(ctx *gin.Context) {
 
 		ctx.Writer.Flush()
 	}
+}
 
+func (c *RelayHttpCapability) ListActions() ([]string, error) {
+	return []string{}, nil
+}
+
+func (c *RelayHttpCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+	return nil, errors.New("relay-http does not support actions")
+}
+
+func (c *RelayHttpCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
+	return c, nil
+}
+
+func (c *RelayHttpCapability) Close() error {
+
+	return nil
 }
