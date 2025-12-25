@@ -11,10 +11,11 @@
 - integrate sockd as a capability
 - add notifier
 - add funnel
-- build sqlite wasm file with bunch of exts enabled
 - automatically create caps when installing package
 - cli package validate
 - claude skill (potato skill repo)
+- remove unsafe func from glua (maybe softfork it ?)
+- see wal2/bw2 sqlite is worth effort
 
 
 ## capabilities
