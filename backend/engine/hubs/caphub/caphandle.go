@@ -42,9 +42,9 @@ func (h *CapabilityHandle) ValidateCapToken(token string) (*signer.CapabilityCla
 		return nil, err
 	}
 
-	if claim.SpaceId != h.model.SpaceID {
-		return nil, errors.New("invalid space id")
-	}
+	// if claim.SpaceId != h.model.SpaceID {
+	// 	return nil, errors.New("invalid space id")
+	// }
 
 	if claim.InstallId != h.model.InstallID {
 		return nil, errors.New("invalid install id")
