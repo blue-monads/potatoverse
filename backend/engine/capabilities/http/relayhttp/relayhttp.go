@@ -3,6 +3,7 @@ package relayhttp
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
@@ -30,9 +31,9 @@ var (
 )
 
 type RelayHttpCapability struct {
-	parent  *RelayHttpBuilder
-	handle  xcapability.XCapabilityHandle
-	spaceId int64
+	parent      *RelayHttpBuilder
+	handle      xcapability.XCapabilityHandle
+	allowSubKey bool
 }
 
 type RelayHttp struct {
@@ -86,14 +87,45 @@ func (c *RelayHttpCapability) Handle(ctx *gin.Context) {
 	}
 }
 
-func (c *RelayHttpCapability) HandleSender(ctx *gin.Context) {
-	// Extract relay ID from query parameter or path
-	relayID := ctx.Query("relay_id")
-	if relayID == "" {
-		relayID = ctx.Param("relay_id")
+func (c *RelayHttpCapability) getRelayID(ctx *gin.Context) (string, error) {
+
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		token = ctx.Query("token")
+		if token == "" {
+			return "", errors.New("token is required")
+		}
 	}
-	if relayID == "" {
-		ctx.JSON(400, gin.H{"error": "relay_id is required"})
+
+	claim, err := c.handle.ValidateCapToken(token)
+	if err != nil {
+		return "", err
+	}
+
+	relayId := claim.ResourceId
+	if relayId == "" {
+		return "", errors.New("relay id is required")
+	}
+
+	capId := claim.CapabilityId
+
+	if c.allowSubKey {
+		subKey := claim.ExtraMeta["sub_key"]
+		if subKey == "" {
+			return "", errors.New("sub key is required")
+		}
+		relayId = fmt.Sprintf("%d_%s:%s", capId, relayId, subKey)
+	}
+
+	return relayId, nil
+
+}
+
+func (c *RelayHttpCapability) HandleSender(ctx *gin.Context) {
+
+	relayID, err := c.getRelayID(ctx)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -141,13 +173,10 @@ func (c *RelayHttpCapability) HandleSender(ctx *gin.Context) {
 }
 
 func (c *RelayHttpCapability) HandleReceiver(ctx *gin.Context) {
-	// Extract relay ID from query parameter or path
-	relayID := ctx.Query("relay_id")
-	if relayID == "" {
-		relayID = ctx.Param("relay_id")
-	}
-	if relayID == "" {
-		ctx.JSON(400, gin.H{"error": "relay_id is required"})
+
+	relayID, err := c.getRelayID(ctx)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 

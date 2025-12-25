@@ -25,11 +25,13 @@ type RelayHttpBuilder struct {
 }
 
 func (b *RelayHttpBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
-	model := handle.GetModel()
+	opts := handle.GetOptionsAsLazyData()
+	allowSubKey := opts.GetFieldAsBool("allow_sub_key")
+
 	return &RelayHttpCapability{
-		parent:  b,
-		handle:  handle,
-		spaceId: model.SpaceID,
+		parent:      b,
+		handle:      handle,
+		allowSubKey: allowSubKey,
 	}, nil
 }
 
