@@ -98,7 +98,7 @@ func (s *session) readPump() {
 			return
 		}
 
-		qq.Println("@readPump/2", s.connId, s.userId, data, msg)
+		qq.Println("@readPump/2", s.connId, s.userId, len(data), msg)
 
 		errCount = 0
 
