@@ -72,7 +72,7 @@ func NewEngine(opt EngineOption) *Engine {
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
 
-		eventHub: eventhub.NewEventHub(opt.DB),
+		eventHub: nil,
 		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
@@ -106,6 +106,8 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
+
+	e.eventHub = eventhub.NewEventHub(app)
 
 	bfactories := registry.GetExecutorBuilderFactories()
 

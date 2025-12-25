@@ -61,6 +61,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 		Subscription: sub,
 		Target:       target,
 		Event:        event,
+		hub:          e,
 	}
 
 	if sub.DelayStart > 0 && target.Status != "start_delayed" {
@@ -124,6 +125,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 }
 
 type TargetExecution struct {
+	hub          *EventHub
 	Subscription *dbmodels.MQSubscription
 	Target       *dbmodels.MQEventTarget
 	Event        *dbmodels.MQEvent

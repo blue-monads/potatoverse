@@ -11,6 +11,7 @@ import (
 )
 
 type EventHub struct {
+	app  xtypes.App
 	sink datahub.MQSynk
 	db   datahub.Database
 
@@ -27,11 +28,15 @@ type EventHub struct {
 	wg     sync.WaitGroup
 }
 
-func NewEventHub(db datahub.Database) *EventHub {
+func NewEventHub(app xtypes.App) *EventHub {
+	db := app.Database()
+	sink := db.GetMQSynk()
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &EventHub{
-		sink:                   db.GetMQSynk(),
+		app:                    app,
+		sink:                   sink,
 		db:                     db,
 		activeEvents:           make(map[string]bool),
 		activeEventsLock:       sync.RWMutex{},

@@ -1,10 +1,12 @@
 package eventhub
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +15,24 @@ import (
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/xtypes"
 )
+
+func NewEventHubTest(db datahub.Database) *EventHub {
+
+	return &EventHub{
+		db:                     db,
+		sink:                   db.GetMQSynk(),
+		app:                    nil,
+		activeEvents:           make(map[string]bool),
+		activeEventsLock:       sync.RWMutex{},
+		eventProcessChan:       make(chan int64, 13),
+		eventTargetProcessChan: make(chan int64, 27),
+		refreshFullIndex:       make(chan struct{}, 1),
+		ctx:                    context.Background(),
+		cancel:                 func() {},
+		wg:                     sync.WaitGroup{},
+	}
+
+}
 
 func BuildDBHandle() (datahub.Database, error) {
 	tmpDir, err := os.MkdirTemp("", "eventhub_test_*")
@@ -42,7 +62,7 @@ func TestEventHub_PublishWithSubscription(t *testing.T) {
 	}
 
 	// Create EventHub
-	hub := NewEventHub(db)
+	hub := NewEventHubTest(db)
 
 	defer func() {
 		// Stop the event hub gracefully
@@ -136,8 +156,7 @@ func TestEventHub_PublishWithoutSubscription(t *testing.T) {
 	}
 
 	// Create EventHub
-	hub := NewEventHub(db)
-
+	hub := NewEventHubTest(db)
 	defer func() {
 		// Stop the event hub gracefully
 		if hub != nil {
@@ -202,7 +221,7 @@ func TestEventHub_FullFlow(t *testing.T) {
 	}
 
 	// Create EventHub
-	hub := NewEventHub(db)
+	hub := NewEventHubTest(db)
 
 	defer func() {
 		// Stop the event hub gracefully
@@ -325,7 +344,7 @@ func TestEventHub_TargetCreationAndProcessing(t *testing.T) {
 	}
 
 	// Create EventHub
-	hub := NewEventHub(db)
+	hub := NewEventHubTest(db)
 
 	defer func() {
 		// Stop the event hub gracefully
