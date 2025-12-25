@@ -190,7 +190,8 @@ func (gh *CapabilityHub) get(name string, installId, spaceId int64) (xcapability
 			return nil, err
 		}
 
-		instance, err := gbFactory.Build(cap)
+		handle := NewCapabilityHandle(gh.app, cap)
+		instance, err := gbFactory.Build(handle)
 		if err != nil {
 			return nil, err
 		}

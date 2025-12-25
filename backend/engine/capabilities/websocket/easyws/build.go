@@ -6,12 +6,9 @@ import (
 
 	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
 	"github.com/blue-monads/turnix/backend/engine/registry"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
@@ -85,9 +82,10 @@ type CapabilityAccessHandle interface {
 	EmitActionEvent(opts *xtypes.ActionEventOptions) error
 }
 
-func (b *EasyWsBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
+func (b *EasyWsBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
+	model := handle.GetModel()
 
-	opt := lazydata.LazyDataBytes(kosher.Byte(model.Options))
+	opt := handle.GetOptionsAsLazyData()
 
 	onConnectAction := opt.GetFieldAsBool("on_connect_action")
 	onDisconnectAction := opt.GetFieldAsBool("on_disconnect_action")

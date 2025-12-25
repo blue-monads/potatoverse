@@ -5,8 +5,6 @@ import (
 	"regexp"
 
 	"github.com/blue-monads/turnix/backend/engine/registry"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
@@ -44,9 +42,10 @@ type CcurdBuilder struct {
 	app xtypes.App
 }
 
-func (b *CcurdBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
+func (b *CcurdBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
+	model := handle.GetModel()
 
-	methods, err := LoadMethods(lazydata.LazyDataBytes(kosher.Byte(model.Options)))
+	methods, err := LoadMethods(handle.GetOptionsAsLazyData())
 	if err != nil {
 		return nil, err
 	}

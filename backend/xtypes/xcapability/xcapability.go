@@ -35,7 +35,7 @@ type CapabilityOptionField struct {
 
 type CapabilityBuilder interface {
 	Name() string
-	Build(model *dbmodels.SpaceCapability) (Capability, error)
+	Build(handle XCapabilityHandle) (Capability, error)
 	Serve(ctx *gin.Context)
 	GetDebugData() map[string]any
 }

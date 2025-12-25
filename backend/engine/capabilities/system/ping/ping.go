@@ -108,7 +108,8 @@ type PingBuilder struct {
 	app xtypes.App
 }
 
-func (b *PingBuilder) Build(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
+func (b *PingBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
+	model := handle.GetModel()
 	return &PingCapability{
 		app:     b.app,
 		spaceId: model.SpaceID,
