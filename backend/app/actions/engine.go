@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
 	"github.com/blue-monads/turnix/backend/services/datahub"
@@ -171,6 +173,10 @@ type InstallPackageResult struct {
 	InitPage    string `json:"init_page"`
 }
 
+// valid namespace should only contain letters, numbers, underscores and hyphens
+var validNamespaceRegex = regexp.MustCompile(`^[a-zA-Z0-9_:-]+$`)
+var validPkgSlugRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (*InstallPackageResult, error) {
 
 	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, "embed", file)
@@ -189,12 +195,34 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return nil, err
 	}
 
+	if !validPkgSlugRegex.MatchString(pkg.Slug) {
+		return nil, errors.New("package slug is invalid, it can only contain letters, numbers, and hyphens")
+	}
+
+	if strings.HasSuffix(pkg.Slug, "-") {
+		return nil, errors.New("package slug must not end with a hyphen")
+	}
+
+	if strings.HasPrefix(pkg.Slug, "-") {
+		return nil, errors.New("package slug must not start with a hyphen")
+	}
+
+	if strings.HasSuffix(pkg.Slug, "_") {
+		return nil, errors.New("package slug must not end with an underscore")
+	}
+
+	if strings.HasPrefix(pkg.Slug, "_") {
+		return nil, errors.New("package slug must not start with an underscore")
+	}
+
 	rootSpaceId := int64(0)
 	keySpace := pkg.Slug
 
 	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
 
 	spaceMap := make(map[string]int64)
+
+	foundRootSpace := false
 
 	for index, artifact := range artifacts {
 		kind := &pkg.Artifacts[index]
@@ -211,6 +239,32 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 
 		if space.Namespace == "" {
 			return nil, errors.New("space namespace is required")
+		}
+
+		if space.Namespace == pkg.Slug {
+			if foundRootSpace {
+				return nil, errors.New("multiple root spaces found")
+			}
+
+			foundRootSpace = true
+		} else {
+			if !strings.HasPrefix(space.Namespace, pkg.Slug) {
+				return nil, errors.New("space namespace must start with package slug (i.e. 'my-package:my-space')")
+			} else if !strings.HasPrefix(space.Namespace, pkg.Slug+":") {
+				return nil, errors.New("space namespace must start with package slug (i.e. 'my-package:my-space')")
+			}
+		}
+
+		if !validNamespaceRegex.MatchString(space.Namespace) {
+			return nil, errors.New("space namespace is invalid, it can only contain letters, numbers, underscores and hyphens")
+		}
+
+		if strings.HasSuffix(space.Namespace, ":") {
+			return nil, errors.New("space namespace must not end with a colon")
+		}
+
+		if strings.HasPrefix(space.Namespace, ":") {
+			return nil, errors.New("space namespace must not start with a colon")
 		}
 
 		spaceId, err := installArtifactSpace(database, userId, installedId, &space)
