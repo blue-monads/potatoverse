@@ -1,4 +1,4 @@
-package eventhub
+package eslayer
 
 import (
 	"bytes"
@@ -8,13 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub/rengine"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/tidwall/pretty"
 )
 
-func (e *EventHub) targetProcessor(targetId int64) error {
+func (e *ESLayer) targetProcessor(targetId int64) error {
 
 	qq.Println("targetProcessor/1")
 
@@ -46,7 +48,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 
 	qq.Println("targetProcessor/8", sub)
 
-	ok, err := RuleEngine(sub.Rules, event.Payload)
+	ok, err := rengine.RuleEngine(sub.Rules, event.Payload)
 	if err != nil {
 		qq.Println("targetProcessor/9", err)
 		e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
@@ -61,7 +63,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 		Subscription: sub,
 		Target:       target,
 		Event:        event,
-		hub:          e,
+		app:          e.app,
 	}
 
 	if sub.DelayStart > 0 && target.Status != "start_delayed" {
@@ -125,7 +127,7 @@ func (e *EventHub) targetProcessor(targetId int64) error {
 }
 
 type TargetExecution struct {
-	hub          *EventHub
+	app          xtypes.App
 	Subscription *dbmodels.MQSubscription
 	Target       *dbmodels.MQEventTarget
 	Event        *dbmodels.MQEvent

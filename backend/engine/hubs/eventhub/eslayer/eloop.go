@@ -1,4 +1,4 @@
-package eventhub
+package eslayer
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 
 // fixme => add system for processing delayed targets
 
-func (e *EventHub) eventLoop() {
+func (e *ESLayer) eventLoop() {
 	go e.rootEventWatcher()
 	go e.eventProcessLoop()
 
@@ -18,7 +18,7 @@ func (e *EventHub) eventLoop() {
 
 }
 
-func (e *EventHub) rootEventWatcher() {
+func (e *ESLayer) rootEventWatcher() {
 	e.wg.Add(1)
 	defer e.wg.Done()
 
@@ -82,20 +82,15 @@ func (e *EventHub) rootEventWatcher() {
 			checkForTargets()
 			checkForDelayedTargets()
 
-		case <-e.refreshFullIndex:
-			qq.Println("@rootEventWatcher/refreshFullIndex")
-			err := e.buildActiveEventsIndex()
-			if err != nil {
-				qq.Println("@rootEventWatcher/2")
-			}
 		}
+
 	}
 
 }
 
 // new, scheduled, processed
 
-func (e *EventHub) eventProcessLoop() {
+func (e *ESLayer) eventProcessLoop() {
 	e.wg.Add(1)
 	defer e.wg.Done()
 
@@ -148,7 +143,7 @@ func (e *EventHub) eventProcessLoop() {
 	}
 }
 
-func (e *EventHub) targetProcessLoop() {
+func (e *ESLayer) targetProcessLoop() {
 	e.wg.Add(1)
 	defer e.wg.Done()
 

@@ -1,10 +1,10 @@
 package eventhub
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
+	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub/eslayer"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -20,31 +20,19 @@ type EventHub struct {
 
 	refreshFullIndex chan struct{}
 
-	eventProcessChan       chan int64
-	eventTargetProcessChan chan int64
-
-	ctx    context.Context
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	eslayer *eslayer.ESLayer
 }
 
 func NewEventHub(app xtypes.App) *EventHub {
 	db := app.Database()
 	sink := db.GetMQSynk()
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	return &EventHub{
-		app:                    app,
-		sink:                   sink,
-		db:                     db,
-		activeEvents:           make(map[string]bool),
-		activeEventsLock:       sync.RWMutex{},
-		eventProcessChan:       make(chan int64, 13),
-		eventTargetProcessChan: make(chan int64, 27),
-		refreshFullIndex:       make(chan struct{}, 1),
-		ctx:                    ctx,
-		cancel:                 cancel,
+		app:              app,
+		sink:             sink,
+		db:               db,
+		activeEvents:     make(map[string]bool),
+		activeEventsLock: sync.RWMutex{},
 	}
 }
 
@@ -55,7 +43,14 @@ func (e *EventHub) Start() error {
 		return err
 	}
 
-	e.eventLoop()
+	e.eslayer = eslayer.NewESLayer(e.app)
+	err = e.eslayer.Start()
+	if err != nil {
+		qq.Println("@Start/eslayer.Start/error", err)
+		return err
+	}
+
+	go e.watchReload()
 
 	return nil
 }
@@ -82,11 +77,7 @@ func (e *EventHub) Publish(opts *xtypes.EventOptions) error {
 
 	qq.Println("@Publish/4")
 
-	select {
-	case e.eventProcessChan <- eventId:
-	case <-e.ctx.Done():
-		return e.ctx.Err()
-	}
+	e.eslayer.NotifyNewEvent(eventId)
 
 	qq.Println("@Publish/5")
 
@@ -133,9 +124,5 @@ func (e *EventHub) needsProcessing(installId int64, name string) bool {
 }
 
 func (e *EventHub) Stop() {
-	// Cancel context to signal all goroutines to stop
-	e.cancel()
-
-	// Wait for all goroutines to finish
-	e.wg.Wait()
+	e.eslayer.Stop()
 }

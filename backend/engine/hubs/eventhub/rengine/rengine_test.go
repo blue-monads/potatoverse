@@ -1,4 +1,4 @@
-package eventhub
+package rengine
 
 import (
 	"encoding/json"
@@ -937,4 +937,3 @@ func TestRuleEngine_InvalidJSON(t *testing.T) {
 		})
 	}
 }
-
