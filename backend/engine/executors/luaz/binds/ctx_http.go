@@ -260,11 +260,21 @@ func httpRequestContextIndex(L *lua.LState) int {
 	return 0
 }
 
+func GetUserClaim(ctx *gin.Context, signer *signer.Signer) (*signer.SpaceClaim, error) {
+	claim, err := signer.ParseSpace(ctx.GetHeader("Authorization"))
+	if err != nil {
+		return nil, err
+	}
+
+	return claim, nil
+}
+
 func getSpaceClaim(reqCtx *luaHttpRequestContext) (*signer.SpaceClaim, error) {
 	if reqCtx.spaceClaim != nil {
 		return reqCtx.spaceClaim, nil
 	}
-	claim, err := reqCtx.sig.ParseSpace(reqCtx.ctx.GetHeader("Authorization"))
+
+	claim, err := GetUserClaim(reqCtx.ctx, reqCtx.sig)
 	if err != nil {
 		return nil, err
 	}

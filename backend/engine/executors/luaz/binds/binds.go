@@ -18,6 +18,13 @@ type LuaLazyData struct {
 	L     *lua.LState
 }
 
+func NewLuaLazyData(L *lua.LState, table *lua.LTable) *LuaLazyData {
+	return &LuaLazyData{
+		L:     L,
+		table: table,
+	}
+}
+
 func (l *LuaLazyData) AsBytes() ([]byte, error) {
 	data, err := l.AsMap()
 	if err != nil {

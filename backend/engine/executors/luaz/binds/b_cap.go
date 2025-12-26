@@ -57,7 +57,7 @@ func capModuleIndex(L *lua.LState) int {
 			return capExecute(mod, L)
 		}))
 		return 1
-	case "methods":
+	case "list_methods":
 		L.Push(L.NewFunction(func(L *lua.LState) int {
 			return capMethods(mod, L)
 		}))
