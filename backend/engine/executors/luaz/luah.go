@@ -7,9 +7,11 @@ import (
 	"net/http"
 
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/turnix/backend/utils/kosher"
 	"github.com/blue-monads/turnix/backend/utils/luaplus"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/cjoudrey/gluahttp"
 	"github.com/gin-gonic/gin"
 
@@ -161,6 +163,8 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 
 }
 
+var EmptyLazyData = lazydata.LazyDataBytes([]byte("{}"))
+
 func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 
 	ctxt := l.L.NewTable()
@@ -175,6 +179,31 @@ func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 			key := L.CheckString(1)
 			L.Push(lua.LString(event.Params[key]))
 			return 1
+		},
+
+		"get_inner_payload": func(L *lua.LState) int {
+			result, err := event.Request.ExecuteAction("get_payload", EmptyLazyData)
+			if err != nil {
+				return luaplus.PushError(L, err)
+			}
+			resultTable := luaplus.GoTypeToLuaType(L, result)
+			L.Push(resultTable)
+			L.Push(lua.LNil)
+			return 2
+		},
+
+		"get_inner_value": func(L *lua.LState) int {
+			field := L.CheckString(1)
+			paramPayload := fmt.Sprintf(`{"path": "%s"}`, field)
+			paramLazyData := lazydata.LazyDataBytes(kosher.Byte(paramPayload))
+			result, err := event.Request.ExecuteAction("get_value", paramLazyData)
+			if err != nil {
+				return luaplus.PushError(L, err)
+			}
+			resultTable := luaplus.GoTypeToLuaType(L, result)
+			L.Push(resultTable)
+			L.Push(lua.LNil)
+			return 2
 		},
 
 		"execute": func(L *lua.LState) int {
