@@ -51,11 +51,11 @@ func (e *ESLayer) targetProcessor(targetId int64) error {
 		return nil
 	}
 
-	ectx := TargetExecution{
+	ectx := &TargetExecution{
 		Subscription: sub,
 		Target:       target,
 		Event:        event,
-		app:          e.app,
+		App:          e.app,
 	}
 
 	if sub.DelayStart > 0 && target.Status != "start_delayed" {

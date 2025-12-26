@@ -13,13 +13,14 @@ import (
 )
 
 type TargetExecution struct {
-	app          xtypes.App
+	App          xtypes.App
 	Subscription *dbmodels.MQSubscription
 	Target       *dbmodels.MQEventTarget
 	Event        *dbmodels.MQEvent
+	RetryAble    bool
 }
 
-func PerformWebhookTargetExecution(ectx TargetExecution) error {
+func PerformWebhookTargetExecution(ectx *TargetExecution) error {
 	url := ectx.Subscription.TargetEndpoint
 
 	bodyRaw := ectx.Event.Payload

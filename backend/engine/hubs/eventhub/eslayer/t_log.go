@@ -5,7 +5,7 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-func PerformLogTargetExecution(ectx TargetExecution) error {
+func PerformLogTargetExecution(ectx *TargetExecution) error {
 	qq.Println("PerformLogTargetExecution", ectx.Event.Payload)
 	result := pretty.Color(ectx.Event.Payload, nil)
 	qq.Println("PerformLogTargetExecution/1", string(result))
