@@ -1,6 +1,8 @@
 package easyaction
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
@@ -11,7 +13,9 @@ import (
 var Methods = []string{
 	"as_bytes",
 	"as_map",
-	"as_json",
+	"as_json_bytes",
+	"as_json_value",
+	"get_value",
 	"get_field_as_int",
 	"get_field_as_float",
 	"get_field_as_string",
@@ -49,43 +53,64 @@ func (c *Context) ExecuteAction(name string, params lazydata.LazyData) (any, err
 		return c.Capability.Execute(name, params)
 	}
 
+	resp, err := BytelazyDataActions(c.Payload, name, params)
+	if err != nil {
+		if errors.Is(err, ErrUnknownAction) {
+			return c.Capability.Execute(name, params)
+		}
+		return nil, err
+	}
+
+	return resp, nil
+
+}
+
+var ErrUnknownAction = errors.New("unknown action")
+
+func BytelazyDataActions(data []byte, name string, params lazydata.LazyData) (any, error) {
 	switch name {
 	case "as_bytes":
-		return c.Payload, nil
+		return data, nil
 	case "as_map":
-		ld := lazydata.LazyDataBytes(c.Payload)
+		ld := lazydata.LazyDataBytes(data)
 		return ld.AsMap()
-	case "as_json":
-		ld := lazydata.LazyDataBytes(c.Payload)
+	case "as_json_bytes":
+		ld := lazydata.LazyDataBytes(data)
 		return ld.AsBytes()
+	case "as_json_value":
+		var target any
+		err := json.Unmarshal(data, &target)
+		if err != nil {
+			return nil, err
+		}
+		return target, nil
+
+	case "get_value":
+		path := params.GetFieldAsString("path")
+		finalPath := fmt.Sprintf("data.%s", path)
+		return gjson.GetBytes(data, finalPath).Value(), nil
 
 	case "get_field_as_int":
 		path := params.GetFieldAsString("path")
 		finalPath := fmt.Sprintf("data.%s", path)
-		return gjson.GetBytes(c.Payload, finalPath).Int(), nil
+		return gjson.GetBytes(data, finalPath).Int(), nil
 	case "get_field_as_float":
 		path := params.GetFieldAsString("path")
 		finalPath := fmt.Sprintf("data.%s", path)
-		return gjson.GetBytes(c.Payload, finalPath).Float(), nil
+		return gjson.GetBytes(data, finalPath).Float(), nil
 
 	case "get_field_as_string":
 
 		path := params.GetFieldAsString("path")
 		finalPath := fmt.Sprintf("data.%s", path)
 
-		return gjson.GetBytes(c.Payload, finalPath).String(), nil
+		return gjson.GetBytes(data, finalPath).String(), nil
 	case "get_field_as_bool":
 		path := params.GetFieldAsString("path")
 		finalPath := fmt.Sprintf("data.%s", path)
-		return gjson.GetBytes(c.Payload, finalPath).Bool(), nil
-
+		return gjson.GetBytes(data, finalPath).Bool(), nil
 	default:
-
-		if c.Handler != nil {
-			return c.Handler(name, params)
-		}
-
-		return c.Capability.Execute(name, params)
+		return nil, ErrUnknownAction
 	}
 
 }

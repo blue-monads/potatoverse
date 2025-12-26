@@ -182,7 +182,7 @@ func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 		},
 
 		"get_inner_payload": func(L *lua.LState) int {
-			result, err := event.Request.ExecuteAction("get_payload", EmptyLazyData)
+			result, err := event.Request.ExecuteAction("as_json_value", EmptyLazyData)
 			if err != nil {
 				return luaplus.PushError(L, err)
 			}
