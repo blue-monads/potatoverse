@@ -49,7 +49,40 @@ func (c *Controller) DeletePackage(userId int64, packageId int64) error {
 		return errors.New("you are not the owner of this package")
 	}
 
-	return c.database.GetPackageInstallOps().DeletePackage(packageId)
+	err = c.database.GetPackageInstallOps().DeletePackage(packageId)
+	if err != nil {
+		return err
+	}
+
+	pkvVersions, err := c.database.GetPackageInstallOps().ListPackageVersionsByPackageId(packageId)
+	if err != nil {
+		return err
+	}
+
+	spaceDb := c.database.GetSpaceOps()
+	pkgInstallDb := c.database.GetPackageInstallOps()
+
+	for _, pkvVersion := range pkvVersions {
+		err = pkgInstallDb.DeletePackageVersion(pkvVersion.ID)
+		if err != nil {
+			return err
+		}
+
+		spaces, err := spaceDb.ListSpacesByPackageId(pkvVersion.InstallId)
+		if err != nil {
+			return err
+		}
+
+		for _, space := range spaces {
+			err = spaceDb.RemoveSpace(space.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
 
 }
 
