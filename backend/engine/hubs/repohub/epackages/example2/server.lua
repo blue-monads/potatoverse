@@ -201,7 +201,6 @@ function delete_category(ctx)
 end
 
 --- @class ActionContext
---- @field request table
 --- @field param fun(key: string): string
 --- @field type fun(): string -- action
 
