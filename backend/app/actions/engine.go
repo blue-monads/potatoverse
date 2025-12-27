@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
@@ -463,6 +464,27 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 	err = pops.UpdateActiveInstallId(installedId, pvid)
 	if err != nil {
 		return 0, err
+	}
+
+	// delete old versions, keeping 3 latest versions
+
+	allPVersions, err := pops.ListPackageVersionsByPackageId(installedId)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(allPVersions) > 3 {
+		sort.Slice(allPVersions, func(i, j int) bool {
+			return allPVersions[i].ID > allPVersions[j].ID
+		})
+
+		for _, pversion := range allPVersions[3:] {
+			err = pops.DeletePackageVersion(pversion.ID)
+			if err != nil {
+				c.logger.Error("failed to delete old package version", "error", err)
+				continue
+			}
+		}
 	}
 
 	c.engine.LoadRoutingIndexForPackages(installedId)
