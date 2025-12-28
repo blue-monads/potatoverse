@@ -11,7 +11,7 @@ import (
 	"github.com/gobwas/ws"
 )
 
-func (c *CoreHub) UserSendMessage(msg *dbmodels.UserMessage) error {
+func (c *CoreHub) UserSendMessage(msg *dbmodels.UserMessage) (int64, error) {
 	notifier := c.sockd.GetNotifier()
 
 	now := time.Now()
@@ -19,21 +19,21 @@ func (c *CoreHub) UserSendMessage(msg *dbmodels.UserMessage) error {
 
 	id, err := c.db.GetUserOps().AddUserMessage(msg)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	msg.ID = id
 
 	jsonMsg, err := json.Marshal(msg)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	err = notifier.SendUser(msg.ToUser, jsonMsg)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return id, nil
 }
 
 func (c *CoreHub) HandleUserWS(userId int64, ctx *gin.Context) {
