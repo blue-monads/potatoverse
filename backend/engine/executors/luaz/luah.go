@@ -152,8 +152,6 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 		},
 	})
 
-	l.logger().Info("ctxt")
-
 	err := callHandler(l, ctxt, handlerName)
 	if err != nil {
 		return err
