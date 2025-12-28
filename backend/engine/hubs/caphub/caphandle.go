@@ -61,15 +61,6 @@ func (h *CapabilityHandle) GetOptionsAsLazyData() lazydata.LazyData {
 	return lazydata.LazyDataBytes(kosher.Byte(h.model.Options))
 }
 
-func (h *CapabilityHandle) GetOptionsAsMap() (map[string]any, error) {
-	var result map[string]any
-	err := json.Unmarshal(kosher.Byte(h.model.Options), &result)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 func (h *CapabilityHandle) GetOptions(target any) error {
 	return json.Unmarshal(kosher.Byte(h.model.Options), target)
 }
