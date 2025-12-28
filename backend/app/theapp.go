@@ -10,6 +10,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 
+	"github.com/blue-monads/turnix/backend/services/corehub"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/mailer"
 	"github.com/blue-monads/turnix/backend/services/signer"
@@ -38,7 +39,8 @@ type App struct {
 	engine  *engine.Engine
 	sockd   *sockd.Sockd
 
-	server *server.Server
+	server  *server.Server
+	coreHub *corehub.CoreHub
 }
 
 func New(opt Option) *App {
@@ -85,6 +87,7 @@ func New(opt Option) *App {
 		SiteName:    opt.AppOpts.Name,
 	})
 
+	happ.coreHub = corehub.NewCoreHub(happ)
 	happ.server = server
 
 	return happ
@@ -144,6 +147,12 @@ func (h *App) Start() error {
 		h.logger.Warn("Master secret hash has changed, updating fingerprint")
 	}
 
+	err = h.coreHub.Run()
+	if err != nil {
+		h.logger.Error("Failed to run core hub", "err", err)
+		return err
+	}
+
 	return h.server.Start()
 
 }
@@ -176,6 +185,10 @@ func (h *App) Config() any {
 
 func (h *App) Sockd() any {
 	return h.sockd
+}
+
+func (h *App) CoreHub() any {
+	return nil
 }
 
 // private

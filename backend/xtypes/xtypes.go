@@ -17,4 +17,5 @@ type App interface {
 	Engine() any
 	Config() any
 	Sockd() any
+	CoreHub() any
 }
