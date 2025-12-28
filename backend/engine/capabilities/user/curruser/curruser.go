@@ -141,7 +141,6 @@ func (c *CurrUserCapability) sendUserMessage(params lazydata.LazyData) (any, err
 }
 
 func (c *CurrUserCapability) getUserInfo(params lazydata.LazyData) (any, error) {
-	// Try to get user_token from params
 	userToken := params.GetFieldAsString("user_token")
 
 	userId, err := c.parseUserToken(userToken)

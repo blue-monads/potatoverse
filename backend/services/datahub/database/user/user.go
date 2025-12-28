@@ -76,6 +76,26 @@ func (d *UserOperations) ListUser(offset int, limit int) ([]dbmodels.User, error
 	return users, nil
 }
 
+func (d *UserOperations) ListUserByCond(cond map[any]any, offset int, limit int) ([]dbmodels.User, error) {
+
+	users := make([]dbmodels.User, 0)
+
+	query := d.userTable().Find(db.Cond(cond))
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.All(&users)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (d *UserOperations) ListUserByOwner(owner int64) ([]dbmodels.User, error) {
 
 	users := make([]dbmodels.User, 0)
