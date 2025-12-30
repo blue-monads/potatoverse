@@ -1,8 +1,9 @@
 "use client"
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const navItems = [
     {
@@ -61,7 +62,7 @@ interface PropsType {
 
 const WithTabbedToolsLayout = (props: PropsType) => {
     const pathname = usePathname();
-    // Extract the last segment of the path (e.g., 'about' from '/portal/admin/spaces/tools/about')
+    const searchParams = useSearchParams();
     const activeTab = pathname?.split('/').filter(Boolean).pop();
 
     const isActive = (value: string) => {
@@ -75,7 +76,7 @@ const WithTabbedToolsLayout = (props: PropsType) => {
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.value);
-                        const params = new URLSearchParams(window.location.search);
+                        const params = new URLSearchParams(searchParams.toString());
 
                         const url = `${item.url}?${params.toString()}`;
 
