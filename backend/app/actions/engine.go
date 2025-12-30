@@ -328,6 +328,8 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			return nil, err
 		}
 
+		spaceMap[space.Namespace] = spaceId
+
 		if pkg.Slug == space.Namespace {
 			rootSpaceId = spaceId
 		}
