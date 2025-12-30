@@ -88,6 +88,20 @@ func TestTransformQuery(t *testing.T) {
 			wantErr:          false,
 		},
 		{
+			name:             "CREATE VIRTUAL TABLE statement",
+			input:            "CREATE VIRTUAL TABLE EventLocations USING geopoly (event_id)",
+			shouldContain:    []string{expectedPrefix + "EventLocations"},
+			shouldNotContain: []string{"TABLE EventLocations", "TABLE \"EventLocations\""},
+			wantErr:          false,
+		},
+		{
+			name:             "CREATE VIRTUAL TABLE IF NOT EXISTS",
+			input:            "CREATE VIRTUAL TABLE IF NOT EXISTS FeatureLocations USING geopoly (feature_id)",
+			shouldContain:    []string{expectedPrefix + "FeatureLocations"},
+			shouldNotContain: []string{"TABLE FeatureLocations", "TABLE \"FeatureLocations\""},
+			wantErr:          false,
+		},
+		{
 			name:             "CREATE INDEX statement",
 			input:            "CREATE INDEX idx_name ON users (name)",
 			shouldContain:    []string{expectedPrefix + "users"},

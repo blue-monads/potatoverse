@@ -98,6 +98,27 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 				}
 				return node, nil
 
+			case *sql.CreateVirtualTableStatement:
+				// Transform table name in CREATE VIRTUAL TABLE
+				if node.Name != nil {
+					tableName := node.Name.Name
+					// If Schema is set, use Schema.Name as the table name, otherwise use Name.Name
+					if node.Schema != nil && node.Schema.Name != "" {
+						tableName = node.Schema.Name
+					}
+					if !strings.HasPrefix(tableName, prefix) {
+						cloned := node.Clone()
+						// Clear Schema if it was set (we want unqualified table names)
+						cloned.Schema = nil
+						if cloned.Name != nil {
+							cloned.Name = cloned.Name.Clone()
+							cloned.Name.Name = prefix + tableName
+						}
+						return cloned, nil
+					}
+				}
+				return node, nil
+
 			case *sql.CreateIndexStatement:
 				// Transform table name in CREATE INDEX
 				if node.Table != nil {
