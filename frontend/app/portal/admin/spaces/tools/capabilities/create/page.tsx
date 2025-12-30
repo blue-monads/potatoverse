@@ -16,6 +16,7 @@ export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
+    const capabilityType = searchParams.get('capability_type');
 
     if (!installId) {
         return <div>Install ID not provided</div>;
@@ -82,6 +83,7 @@ export default function Page() {
                         defaultSpaceId={spaceId ? parseInt(spaceId) : 0}
                         onSave={handleSave}
                         onCancel={handleBack}
+                        capabilityType={capabilityType || ''}
                     />
                 )}
             </div>

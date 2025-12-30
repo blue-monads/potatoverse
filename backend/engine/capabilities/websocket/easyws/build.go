@@ -20,8 +20,9 @@ var Ok = struct {
 }
 
 var (
-	Name         = "easy-ws"
-	Icon         = "socket"
+	Name = "easy-ws"
+	Icon = `<i class="fa-solid fa-hexagon-nodes"></i>`
+
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name: "on_connect_action",

@@ -6,10 +6,10 @@ import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { useGApp } from '@/hooks';
-import { 
-    listSpaceCapabilities, 
-    SpaceCapability, 
-    updateSpaceCapability, 
+import {
+    listSpaceCapabilities,
+    SpaceCapability,
+    updateSpaceCapability,
     deleteSpaceCapability,
     listCapabilityTypes,
     CapabilityDefinition,
@@ -17,19 +17,20 @@ import {
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import CapEditor from './sub/CapEditor';
+import CapabilityPicker from './sub/CapabilityPicker';
 
 
 export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
-    
+
     if (!installId) {
         return <div>Install ID not provided</div>;
     }
 
-    return <CapabilitiesListingPage 
-        installId={parseInt(installId)} 
+    return <CapabilitiesListingPage
+        installId={parseInt(installId)}
         spaceId={spaceId ? parseInt(spaceId) : undefined}
     />;
 }
@@ -69,10 +70,10 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
 
     // Filter data based on search term
     const filteredData = loader.data?.filter(cap => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             cap.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             cap.capability_type.toLowerCase().includes(searchTerm.toLowerCase());
-        
+
         return matchesSearch;
     }) || [];
 
@@ -80,10 +81,29 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
     const uniqueTypes = Array.from(new Set(loader.data?.map(cap => cap.capability_type) || []));
 
     const handleCreateClick = () => {
-        const params = new URLSearchParams();
-        params.set('install_id', installId.toString());
-        if (spaceId) params.set('space_id', spaceId.toString());
-        router.push(`/portal/admin/spaces/tools/capabilities/create?${params.toString()}`);
+
+        gapp.modal.openModal({
+            title: 'Select Capability Type',
+            content: <CapabilityPicker
+                definations={capabilityTypesLoader.data || []}
+                onSelect={(definition) => {
+                    gapp.modal.closeModal();
+                    const params = new URLSearchParams();
+                    params.set('install_id', installId.toString());
+                    if (spaceId) params.set('space_id', spaceId.toString());
+
+                    params.set('capability_type', definition.name);
+
+                    router.push(`/portal/admin/spaces/tools/capabilities/create?${params.toString()}`);
+
+                }}
+            />,
+            size: "lg",
+
+        });
+
+
+
     };
 
     const handleUpdate = async (id: number, data: {
@@ -221,16 +241,16 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
     );
 };
 
-const CapabilityRow = ({ 
-    capability, 
+const CapabilityRow = ({
+    capability,
     installId,
-    onEdit, 
+    onEdit,
     onDelete,
     onUpdate,
     onCancelEdit,
     isEditing,
     capabilityTypes
-}: { 
+}: {
     capability: SpaceCapability;
     installId: number;
     onEdit: () => void;
@@ -248,7 +268,7 @@ const CapabilityRow = ({
         try {
             const response = await getCapabilitiesDebug(capability.capability_type);
             const debugData = response.data;
-            
+
             gapp.modal.openModal({
                 title: `Debug: ${capability.name} (${capability.capability_type})`,
                 content: (
@@ -300,7 +320,7 @@ const CapabilityRow = ({
     let optionsDisplay = '';
     try {
         const options = JSON.parse(capability.options || '{}');
-        optionsDisplay = Object.keys(options).length > 0 
+        optionsDisplay = Object.keys(options).length > 0
             ? JSON.stringify(options, null, 2).substring(0, 100) + (JSON.stringify(options).length > 100 ? '...' : '')
             : '{}';
     } catch {

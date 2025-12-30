@@ -11,7 +11,7 @@ import (
 
 var (
 	Name         = "Ping"
-	Icon         = "ping"
+	Icon         = `<i class="fa-solid fa-phone-volume"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Add Radom number to the result",

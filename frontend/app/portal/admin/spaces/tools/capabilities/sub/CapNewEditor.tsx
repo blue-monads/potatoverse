@@ -5,17 +5,19 @@ import { useState } from 'react';
 
 
 const CapNewEditor = ({
+    capabilityType,
     capabilityTypes,
     defaultSpaceId,
     onSave,
     onCancel
 }: {
+    capabilityType: string;
     capabilityTypes: CapabilityDefinition[];
     defaultSpaceId: number;
     onSave: (data: any) => void;
     onCancel: () => void;
 }) => {
-    const [selectedType, setSelectedType] = useState('');
+    const [selectedType, setSelectedType] = useState(capabilityType);
     const [name, setName] = useState('');
     const [spaceId, setSpaceId] = useState(defaultSpaceId);
     const [formData, setFormData] = useState<Record<string, any>>({});
