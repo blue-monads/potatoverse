@@ -9,7 +9,7 @@ import {
     CapabilityDefinition
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
-import { CapabilityOptionsSection } from '@/contain/compo/CapabilityOptionsSection';
+import { CapabilityOptionsSection } from '../sub/CapabilityOptionsSection';
 import { buildCapabilityOptions } from '@/contain/compo/capabilityUtils';
 
 export default function Page() {
