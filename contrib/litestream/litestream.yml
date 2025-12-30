@@ -1,0 +1,5 @@
+dbs:
+ - path: .pdata/data.db
+   replicas:
+     - url: webdav://flydav:flydav12345@localhost:8666/
+
