@@ -267,8 +267,9 @@ func dbRunDDL(mod *luaDBModule, L *lua.LState) int {
 	if err != nil {
 		return pushError(L, err)
 	}
-	L.Push(lua.LNil)
-	return 1
+	L.Push(lua.LNil) // result
+	L.Push(lua.LNil) // error (nil on success)
+	return 2
 }
 
 func dbRunQuery(mod *luaDBModule, L *lua.LState) int {
