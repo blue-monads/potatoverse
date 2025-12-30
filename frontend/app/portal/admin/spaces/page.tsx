@@ -150,6 +150,7 @@ const SpacesDirectory = () => {
                                     const spaceId = space.id;
                                     const namespaceKey = space.namespace_key;
                                     const packageVersionId = pkg.id;
+                                    
 
                                     const params = new URLSearchParams();
                                     params.set("install_id", installId.toString());
@@ -157,6 +158,8 @@ const SpacesDirectory = () => {
                                     params.set("namespace_key", namespaceKey);
                                     params.set("nskey", namespaceKey);
                                     params.set("package_version_id", packageVersionId.toString());                   
+
+                                    console.log("params", params.toString());
 
 
                                     if (action === "delete") {
@@ -201,7 +204,7 @@ const SpacesDirectory = () => {
                                                         <button
                                                             onClick={async () => {
                                                                 try {
-                                                                    await deletePackage(space.id);
+                                                                    await deletePackage(installId);
                                                                     loader.reload();
                                                                     gapp.modal.closeModal();
                                                                 } catch (error) {

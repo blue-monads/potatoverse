@@ -17,6 +17,7 @@ import (
 	"github.com/blue-monads/turnix/backend/services/signer"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/kosher"
+	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes/models"
 	"github.com/bwmarrin/snowflake"
 	"github.com/tidwall/gjson"
@@ -40,38 +41,59 @@ func (c *Controller) GetEngineDebugData() map[string]any {
 }
 
 func (c *Controller) DeletePackage(userId int64, packageId int64) error {
+
+	qq.Println("@DeletePackage/1", userId, packageId)
+
 	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
 	if err != nil {
 		return err
 	}
 
+	qq.Println("@DeletePackage/2", pkg)
+
 	if pkg.InstalledBy != userId {
+
 		return errors.New("you are not the owner of this package")
 	}
+
+	qq.Println("@DeletePackage/3", "you are the owner of this package")
 
 	err = c.database.GetPackageInstallOps().DeletePackage(packageId)
 	if err != nil {
 		return err
 	}
 
+	qq.Println("@DeletePackage/4", "deleting package")
+
 	pkvVersions, err := c.database.GetPackageInstallOps().ListPackageVersionsByPackageId(packageId)
 	if err != nil {
 		return err
 	}
 
+	qq.Println("@DeletePackage/5", pkvVersions)
+
 	spaceDb := c.database.GetSpaceOps()
 	pkgInstallDb := c.database.GetPackageInstallOps()
 
+	qq.Println("@DeletePackage/6")
+
 	for _, pkvVersion := range pkvVersions {
+
+		qq.Println("@DeletePackage/7", pkvVersion)
+
 		err = pkgInstallDb.DeletePackageVersion(pkvVersion.ID)
 		if err != nil {
 			return err
 		}
 
+		qq.Println("@DeletePackage/8", "deleting package version")
+
 		spaces, err := spaceDb.ListSpacesByPackageId(pkvVersion.InstallId)
 		if err != nil {
 			return err
 		}
+
+		qq.Println("@DeletePackage/9")
 
 		for _, space := range spaces {
 			err = spaceDb.RemoveSpace(space.ID)
