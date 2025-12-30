@@ -188,6 +188,22 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 					}
 				}
 				return node, nil
+
+			case *sql.ForeignKeyConstraint:
+				// Transform foreign table name in FOREIGN KEY constraints
+				if node.ForeignTable != nil {
+					tableName := node.ForeignTable.Name
+					// Skip if already scoped
+					if !strings.HasPrefix(tableName, prefix) {
+						cloned := node.Clone()
+						if cloned.ForeignTable != nil {
+							cloned.ForeignTable = cloned.ForeignTable.Clone()
+							cloned.ForeignTable.Name = prefix + cloned.ForeignTable.Name
+						}
+						return cloned, nil
+					}
+				}
+				return node, nil
 			}
 
 			qq.Println("node/end", i)

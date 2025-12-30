@@ -166,6 +166,20 @@ func TestTransformQuery(t *testing.T) {
 			wantErr:          false,
 		},
 		{
+			name:             "CREATE TABLE with FOREIGN KEY",
+			input:            "CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id))",
+			shouldContain:    []string{expectedPrefix + "orders", expectedPrefix + "users"},
+			shouldNotContain: []string{"TABLE orders", "REFERENCES users"},
+			wantErr:          false,
+		},
+		{
+			name:             "CREATE TABLE with FOREIGN KEY and multiple columns",
+			input:            "CREATE TABLE order_items (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, FOREIGN KEY (order_id) REFERENCES orders(id), FOREIGN KEY (product_id) REFERENCES products(id))",
+			shouldContain:    []string{expectedPrefix + "order_items", expectedPrefix + "orders", expectedPrefix + "products"},
+			shouldNotContain: []string{"TABLE order_items", "REFERENCES orders", "REFERENCES products"},
+			wantErr:          false,
+		},
+		{
 			name:    "Invalid SQL",
 			input:   "SELECT * FROM",
 			wantErr: true,
