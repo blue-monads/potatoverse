@@ -308,3 +308,16 @@ func (a *Server) handleCapabilitiesDebug(claim *signer.AccessClaim, ctx *gin.Con
 	debugData := capHub.GetDebugData(capabilityName)
 	return debugData, nil
 }
+
+func (a *Server) GetSpaceSpec(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spec, err := a.ctrl.GetSpaceSpec(installId)
+	if err != nil {
+		return nil, err
+	}
+	return spec, nil
+}

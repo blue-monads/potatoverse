@@ -172,6 +172,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/space/:install_id/events", a.withAccessTokenFn(a.CreateEventSubscription))
 	coreApi.PUT("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.UpdateEventSubscription))
 	coreApi.DELETE("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.DeleteEventSubscription))
+	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))
 
 	// Capability Types API
 	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))

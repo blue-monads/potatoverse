@@ -863,3 +863,9 @@ export const getDocsFile = async (filePath: string) => {
 export const getCapabilitiesDebug = async (capabilityName: string) => {
     return iaxios.get<any>(`/capabilities/debug/${capabilityName}`);
 }
+
+// /zz/api/core/space/:install_id/spec.json
+
+export const getSpaceSpec = async (installId: number) => {
+    return iaxios.get<any>(`/core/space/${installId}/spec.json`);
+}

@@ -553,3 +553,19 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 	return pvid, nil
 
 }
+
+func (c *Controller) GetSpaceSpec(installedId int64) ([]byte, error) {
+	spec, err := c.database.GetPackageInstallOps().GetPackage(installedId)
+	if err != nil {
+		return nil, err
+	}
+
+	activeInstallVersionId := spec.ActiveInstallID
+
+	content, err := c.database.GetPackageFileOps().GetFileContentByPath(activeInstallVersionId, "", "spec.json")
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
