@@ -22,6 +22,12 @@ func WriteJSON(c *gin.Context, resp any, err error) {
 		WriteOk(c)
 		return
 	}
+
+	if idata, ok := resp.([]byte); ok {
+		c.Data(http.StatusOK, "", idata)
+		return
+	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
