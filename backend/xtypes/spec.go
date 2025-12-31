@@ -9,7 +9,10 @@ type SpaceSpec struct {
 	Scopes        []ScopeSpec   `json:"scopes"`
 	EventsOutputs []EventSpec   `json:"events_outputs"`
 	EventSlots    []HandlerSpec `json:"event_slots"`
-	APIs          []HandlerSpec `json:"apis"`
+
+	// not implemented yet
+	APIs   []HandlerSpec `json:"apis"`
+	Blocks []BlockSpec   `json:"blocks"`
 }
 
 type ModelSpec struct {
@@ -31,6 +34,13 @@ type EventSpec struct {
 }
 
 type HandlerSpec struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Schema      map[string]any `json:"schema"`
+	SchemaFile  string         `json:"schema_file"`
+}
+
+type BlockSpec struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Schema      map[string]any `json:"schema"`
