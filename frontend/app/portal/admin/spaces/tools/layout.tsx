@@ -49,7 +49,7 @@ const navItems = [
         icon: Calendar,
     },
     {
-        label: 'Docs',
+        label: 'Spec',
         value: 'docs',
         url: '/portal/admin/spaces/tools/docs',
         icon: BookOpen,
@@ -71,8 +71,8 @@ const WithTabbedToolsLayout = (props: PropsType) => {
 
     return (
         <div className="flex w-full h-full">
-            <aside className="w-48 p-2 fixed left-14 top-0 h-full bg-white">
-                <nav className="space-y-2 overflow-y-auto mt-24">
+            <aside className="w-48 p-2 fixed left-14 top-0 h-full bg-white border-r border-gray-200">
+                <nav className="space-y-2 overflow-y-auto">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.value);
