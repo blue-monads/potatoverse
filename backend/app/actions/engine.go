@@ -338,6 +338,8 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 
 	}
 
+	qq.Println("@InstallPackageByFile/1", spaceMap)
+
 	for index, artifact := range artifacts {
 		kind := &pkg.Artifacts[index]
 
@@ -349,6 +351,8 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			if err != nil {
 				return nil, err
 			}
+
+			qq.Println("@InstallPackageByFile/2", capability.Spaces)
 
 			if len(capability.Spaces) != 0 {
 				for _, space := range capability.Spaces {

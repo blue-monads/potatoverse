@@ -63,6 +63,7 @@ func (r *Runtime) GetExec(spaceid int64) (*RunningExec, error) {
 
 	space, err := r.parent.db.GetSpaceOps().GetSpace(spaceid)
 	if err != nil {
+		qq.Println("@get_exec/1", "error getting space", err)
 		return nil, errors.New("space not found")
 	}
 
