@@ -1,15 +1,15 @@
 package xtypes
 
 type PotatoSpec struct {
-	Specs  map[string]*SpaceSpec `json:"specs"`
-	Models []ModelSpec           `json:"models"`
+	SpaceSpecs map[string]*SpaceSpec `json:"space_specs"`
+	Models     []ModelSpec           `json:"models"`
 }
 
 type SpaceSpec struct {
-	Scopes []ScopeSpec   `json:"permissions"`
-	Events []EventSpec   `json:"events"`
-	Slots  []HandlerSpec `json:"slots"`
-	APIs   []HandlerSpec `json:"apis"`
+	Scopes        []ScopeSpec   `json:"scopes"`
+	EventsOutputs []EventSpec   `json:"events_outputs"`
+	EventSlots    []HandlerSpec `json:"event_slots"`
+	APIs          []HandlerSpec `json:"apis"`
 }
 
 type ModelSpec struct {
