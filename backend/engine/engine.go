@@ -11,7 +11,7 @@ import (
 	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
-	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/registry"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"

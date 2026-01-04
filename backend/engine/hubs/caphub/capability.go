@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/registry"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"

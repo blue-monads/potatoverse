@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/registry"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
 	"github.com/blue-monads/turnix/backend/xtypes/xcapability"

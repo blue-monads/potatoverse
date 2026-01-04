@@ -2,7 +2,7 @@ package executors
 
 import (
 	"github.com/blue-monads/turnix/backend/engine/executors/luaz"
-	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/registry"
 )
 
 func init() {

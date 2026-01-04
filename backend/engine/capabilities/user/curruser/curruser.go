@@ -3,7 +3,7 @@ package curruser
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/registry"
 	"github.com/blue-monads/turnix/backend/services/corehub"
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/turnix/backend/xtypes"

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
-	"github.com/blue-monads/turnix/backend/engine/registry"
+	"github.com/blue-monads/turnix/backend/registry"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
