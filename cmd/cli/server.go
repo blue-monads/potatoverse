@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
@@ -31,11 +32,6 @@ type ServerInitCmd struct {
 	MasterSecretEnv string `name:"master-secret-env" help:"Master secret environment variable of node."`
 	Debug           bool   `name:"debug" help:"Debug mode of node." default:"false"`
 	WorkingDir      string `name:"working-dir" help:"Working dir of node."`
-}
-
-type ServerStartCmd struct {
-	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
-	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
 func (c *ServerInitCmd) Run(ctx *kong.Context) error {
@@ -99,7 +95,35 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 
 }
 
+type ServerStartCmd struct {
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
+}
+
 func (c *ServerStartCmd) Run(ctx *kong.Context) error {
+
+	binary, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(binary, "server", "actual-start", "--config", c.Config, "--auto-seed", fmt.Sprintf("%t", c.AutoSeed))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type ServerActualStartCmd struct {
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
+}
+
+func (c *ServerActualStartCmd) Run(ctx *kong.Context) error {
 
 	cfgData, err := os.ReadFile(c.Config)
 	if err != nil {
