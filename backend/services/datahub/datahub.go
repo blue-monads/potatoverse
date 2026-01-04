@@ -2,6 +2,7 @@ package datahub
 
 import (
 	"io"
+	"io/fs"
 
 	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
 	"github.com/gin-gonic/gin"
@@ -199,6 +200,8 @@ type FileOps interface {
 	GetSharedFile(ownerID int64, id string, ctx *gin.Context) error
 	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
 	RemoveFileShare(ownerID int64, userId int64, id string) error
+
+	NewAsFS(ownerID int64, rootPath string) fs.FS
 }
 
 type FindQuery struct {
