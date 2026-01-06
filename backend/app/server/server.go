@@ -72,14 +72,21 @@ func (s *Server) Start() error {
 
 	s.buddyhub = s.engine.GetBuddyHub().(*buddyhub.BuddyHub)
 
+	existed := false
+
+	defer func() {
+		existed = true
+	}()
+
 	go func() {
 
 		time.Sleep(2 * time.Second)
 
-		fmt.Println("Server started:")
-		fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
-		fmt.Println("Node Pubkey:\t\t", s.buddyhub.GetPubkey())
-
+		if !existed {
+			fmt.Println("Server started:")
+			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
+			fmt.Println("Node Pubkey:\t\t", s.buddyhub.GetPubkey())
+		}
 	}()
 
 	return s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
