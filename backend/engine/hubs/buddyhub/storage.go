@@ -1,13 +1,13 @@
-package corehub
+package buddyhub
 
 import (
 	"os"
 	"path"
 )
 
-func (c *CoreHub) GetBuddyRoot(nodeId string) (*os.Root, error) {
+func (h *BuddyHub) GetBuddyRoot(buddyPubkey string) (*os.Root, error) {
 
-	buddyDir := path.Join(c.buddyDir, nodeId)
+	buddyDir := path.Join(h.baseBuddyDir, buddyPubkey)
 
 	os.MkdirAll(buddyDir, 0755)
 

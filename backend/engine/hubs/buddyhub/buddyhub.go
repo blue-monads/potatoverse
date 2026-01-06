@@ -14,7 +14,7 @@ import (
 type BuddyHub struct {
 	logger         *slog.Logger
 	app            xtypes.App
-	buddyDir       string
+	baseBuddyDir   string
 	rendezvousUrls []string
 
 	pendingRequests     map[string]chan *buddy.Response
@@ -48,7 +48,7 @@ func NewBuddyHub(opt Options) *BuddyHub {
 	b := &BuddyHub{
 		logger:                  opt.Logger,
 		app:                     opt.App,
-		buddyDir:                buddyDir,
+		baseBuddyDir:            buddyDir,
 		pendingRequests:         make(map[string]chan *buddy.Response),
 		pendingRequestsLock:     sync.RWMutex{},
 		allowAllBuddies:         false,
@@ -85,6 +85,6 @@ func (h *BuddyHub) Ping(providerURL string) (bool, error) {
 	return true, nil
 }
 
-func (h *BuddyHub) PingBuddy(providerURL string, buddyPubkey string) (bool, error) {
+func (h *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
 	return true, nil
 }
