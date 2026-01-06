@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
@@ -71,9 +72,18 @@ func (s *Server) Start() error {
 
 	s.buddyhub = s.engine.GetBuddyHub().(*buddyhub.BuddyHub)
 
-	s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
+	go func() {
 
-	return nil
+		time.Sleep(2 * time.Second)
+
+		fmt.Println("Server started:")
+		fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d", s.opt.Port))
+		fmt.Println("Node Pubkey:\t\t", s.buddyhub.GetPubkey())
+
+	}()
+
+	return s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
+
 }
 
 func (s *Server) listenUnixSocket() error {

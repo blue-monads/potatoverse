@@ -7,6 +7,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/blue-monads/turnix/backend/engine/hubs/buddyhub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
@@ -142,6 +143,8 @@ func (e *Engine) Start(app xtypes.App) error {
 		Logger: e.logger.With("service", "buddy_hub"),
 		App:    app,
 	})
+
+	time.Sleep(2 * time.Second)
 
 	return nil
 }
