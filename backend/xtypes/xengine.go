@@ -37,6 +37,7 @@ type ActionEventOptions struct {
 
 type Engine interface {
 	GetCapabilityHub() any
+	GetBuddyHub() any
 	GetDebugData() map[string]any
 	LoadRoutingIndex()
 

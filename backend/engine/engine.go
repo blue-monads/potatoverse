@@ -285,6 +285,10 @@ func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
 	return e.capHub.Definations()
 }
 
+func (e *Engine) GetBuddyHub() any {
+	return e.buddyHub
+}
+
 // private
 
 func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {

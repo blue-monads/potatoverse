@@ -57,6 +57,10 @@ type mockEngine struct {
 	capHub xcapability.CapabilityHub
 }
 
+func (m *mockEngine) GetBuddyHub() any {
+	return nil
+}
+
 func (m *mockEngine) GetCapabilityHub() any {
 	return m.capHub
 }
