@@ -77,7 +77,7 @@ func (s *Server) Start() error {
 		time.Sleep(2 * time.Second)
 
 		fmt.Println("Server started:")
-		fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d", s.opt.Port))
+		fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
 		fmt.Println("Node Pubkey:\t\t", s.buddyhub.GetPubkey())
 
 	}()
