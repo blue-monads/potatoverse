@@ -9,15 +9,17 @@ import (
 
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
+	"github.com/blue-monads/turnix/backend/engine/hubs/buddyhub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	ctrl   *actions.Controller
-	router *gin.Engine
-	signer *signer.Signer
+	ctrl     *actions.Controller
+	router   *gin.Engine
+	signer   *signer.Signer
+	buddyhub *buddyhub.BuddyHub
 
 	engine *engine.Engine
 
@@ -66,6 +68,8 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
+
+	s.buddyhub = s.engine.GetBuddyHub().(*buddyhub.BuddyHub)
 
 	s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
 

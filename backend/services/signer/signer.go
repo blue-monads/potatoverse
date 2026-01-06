@@ -19,6 +19,7 @@ const (
 	TokenTypeSpaceFilePresigned uint16 = 6
 	ToekenPackageDev            uint16 = 7
 	TokenTypeCapability         uint16 = 8
+	TokenTypeBuddyAuth          uint16 = 9
 )
 
 type AccessClaim struct {

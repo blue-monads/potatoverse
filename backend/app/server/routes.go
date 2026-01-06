@@ -31,6 +31,7 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
+	a.buddyRoutes(root)
 
 	coreApi.GET("/global.js", a.getGlobalJS)
 
@@ -200,5 +201,14 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 }
 
 func (a *Server) buddyRoutes(g *gin.RouterGroup) {
+	g.POST("/buddy/ping", a.handleBuddyPing)
+	g.Any("/buddy/route", a.handleBuddyRoute)
+
+	/*
+
+		/buddy/webdav
+
+
+	*/
 
 }
