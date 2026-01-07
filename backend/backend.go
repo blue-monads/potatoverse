@@ -20,10 +20,11 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	logger := slog.Default()
 
 	maindbDir := path.Join(options.WorkingDir, "maindb")
+	dbFile := path.Join(maindbDir, "data.sqlite")
 
 	os.MkdirAll(maindbDir, 0755)
 
-	db, err := database.NewDB(path.Join(maindbDir, "data.sqlite"), logger)
+	db, err := database.NewDB(dbFile, logger)
 	if err != nil {
 		logger.Error("Failed to initialize database", "err", err)
 		return nil, err
@@ -39,7 +40,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	randNumer2 := rand.Intn(10000000)
 
 	if randNumber == 11 && randNumer2 == 11 {
-		database.StartLitestream(path.Join(maindbDir, "data.sqlite"))
+		database.StartLitestream(dbFile)
 	}
 
 	happ := app.New(app.Option{
