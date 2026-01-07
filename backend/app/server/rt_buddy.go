@@ -151,6 +151,11 @@ func (a *Server) BuddyAutoRouteMW(ctx *gin.Context) {
 		return
 	}
 
+	if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, a.opt.ServerKey) {
+		ctx.Next()
+		return
+	}
+
 	// current node end
 
 	// buddy start

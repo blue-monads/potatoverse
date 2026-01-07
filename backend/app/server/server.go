@@ -82,11 +82,15 @@ func (s *Server) Start() error {
 
 		time.Sleep(2 * time.Second)
 
+		pubkey := s.buddyhub.GetPubkey()
+		s.opt.ServerKey = pubkey
+
 		if !existed {
 			fmt.Println("Server started:")
 			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
-			fmt.Println("Node Pubkey:\t\t", s.buddyhub.GetPubkey())
+			fmt.Println("Node Pubkey:\t\t", pubkey)
 		}
+
 	}()
 
 	return s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
