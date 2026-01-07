@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/nbd-wtf/go-nostr"
+	"golang.org/x/net/publicsuffix"
 )
 
 const (
@@ -110,4 +112,98 @@ func (a *Server) handleBuddyRoute(ctx *gin.Context) {
 	proxy := httputil.NewSingleHostReverseProxy(&newUrl)
 	proxy.ServeHTTP(ctx.Writer, ctx.Request)
 
+}
+
+func (a *Server) BuddyAutoRouteMW(ctx *gin.Context) {
+
+	if a.skipBuddyAutoRoute {
+		ctx.Next()
+		return
+	}
+
+	pubkey := a.buddyhub.GetPubkey()
+
+	domainName := ctx.Request.Host
+	if strings.Contains(domainName, ":") {
+		hh, _, err := net.SplitHostPort(ctx.Request.Host)
+		if err != nil {
+			domainName = ctx.Request.Host
+		} else {
+			domainName = hh
+		}
+	}
+
+	qq.Println("@BuddyAutoRouteMW/1", domainName)
+
+	subdomain, err := getSubdomain(domainName)
+	if err != nil {
+		return
+	}
+
+	// current node start
+	if subdomain == "" || subdomain == "main" || subdomain == pubkey {
+		ctx.Next()
+		return
+	}
+
+	if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, "-main") {
+		ctx.Next()
+		return
+	}
+
+	// current node end
+
+	// buddy start
+
+	if strings.HasPrefix(subdomain, "npub") {
+		a.routeToBuddy(subdomain, ctx)
+		return
+	}
+
+	if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "npub") {
+		a.routeToBuddy(subdomain, ctx)
+		return
+	}
+
+	// buddy end
+
+}
+
+func (a *Server) routeToBuddy(pubkey string, ctx *gin.Context) {
+
+	ctx.JSON(http.StatusBadRequest, gin.H{
+		"error":  "Not implemented yet",
+		"pubkey": pubkey,
+	})
+
+	ctx.Abort()
+}
+
+func getSubdomain(host string) (string, error) {
+
+	if before, ok := strings.CutSuffix(host, ".localhost"); ok {
+		qq.Println("@getSubdomain/0", before)
+		return before, nil
+	}
+
+	// 2. Get the Registered Domain (e.g., "example.co.uk")
+	mainDomain, err := publicsuffix.EffectiveTLDPlusOne(host)
+	if err != nil {
+		return "", err
+	}
+
+	// 3. Remove the main domain from the host to get the subdomain
+	subdomain := strings.TrimSuffix(host, mainDomain)
+	subdomain = strings.TrimSuffix(subdomain, ".") // Remove trailing dot
+
+	qq.Println("@getSubdomain/1", host, mainDomain, subdomain)
+
+	if strings.Contains(subdomain, ".") {
+		parts := strings.Split(subdomain, ".")
+		subdomain = parts[0]
+	}
+
+	qq.Println("@getSubdomain/2", subdomain)
+
+	return subdomain, nil
 }

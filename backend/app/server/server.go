@@ -17,14 +17,13 @@ import (
 )
 
 type Server struct {
-	ctrl     *actions.Controller
-	router   *gin.Engine
-	signer   *signer.Signer
-	buddyhub *buddyhub.BuddyHub
-
-	engine *engine.Engine
-
-	opt Option
+	ctrl               *actions.Controller
+	router             *gin.Engine
+	signer             *signer.Signer
+	buddyhub           *buddyhub.BuddyHub
+	engine             *engine.Engine
+	skipBuddyAutoRoute bool
+	opt                Option
 }
 
 type Option struct {
@@ -63,6 +62,7 @@ func (s *Server) Start() error {
 	}
 
 	s.router = gin.Default()
+	s.router.Use(s.BuddyAutoRouteMW)
 
 	s.bindRoutes()
 	err = s.listenUnixSocket()
