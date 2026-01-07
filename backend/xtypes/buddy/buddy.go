@@ -8,12 +8,20 @@ import (
 )
 
 type BuddyInfo struct {
-	Pubkey          string   `json:"pubkey"`
-	URLs            []string `json:"urls"`
-	AllowStorage    bool     `json:"allow_storage"`
-	MaxStorage      int64    `json:"max_storage"`
-	AllowWebFunnel  bool     `json:"allow_web_funnel"`
-	MaxTrafficLimit int64    `json:"max_traffic_limit"`
+	Pubkey          string     `json:"pubkey"`
+	URLs            []BuddyUrl `json:"urls"`
+	AllowStorage    bool       `json:"allow_storage"`
+	MaxStorage      int64      `json:"max_storage"`
+	AllowWebFunnel  bool       `json:"allow_web_funnel"`
+	MaxTrafficLimit int64      `json:"max_traffic_limit"`
+}
+
+type BuddyUrl struct {
+	Endpoint   string `json:"endpoint"`
+	IsDefault  bool   `json:"is_default"`
+	Priority   int    `json:"priority"`
+	Provider   string `json:"provider"` // direct, nostr, udp, libp2p, tor etc
+	PreConnect bool   `json:"pre_connect"`
 }
 
 type BuddyHub interface {
