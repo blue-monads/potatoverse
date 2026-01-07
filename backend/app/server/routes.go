@@ -203,6 +203,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 func (a *Server) buddyRoutes(g *gin.RouterGroup) {
 	g.POST("/buddy/ping", a.handleBuddyPing)
 	g.Any("/buddy/route", a.handleBuddyRoute)
+	g.Any("/buddy/webdav/*path", a.handleBuddyWebdav())
 
 	/*
 

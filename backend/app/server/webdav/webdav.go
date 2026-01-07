@@ -11,14 +11,9 @@ import (
 type WebdavServer struct {
 	RootPath string
 	Prefix   string
-
-	FuncVerifyAuth func(ctx *gin.Context) (bool, error)
-
-	handler    *webdav.Handler
-	lockSystem webdav.LockSystem
+	Handler  *webdav.Handler
 }
 
-// New creates a new WebdavServer with the given root path and URL prefix.
 func New(rootPath, prefix string) *WebdavServer {
 	return &WebdavServer{
 		RootPath: rootPath,
@@ -26,15 +21,13 @@ func New(rootPath, prefix string) *WebdavServer {
 	}
 }
 
-// AttachRoutes attaches the WebDAV handler to the given Gin router group.
-// The router group's base path should match the Prefix configured in WebdavServer.
-func (s *WebdavServer) AttachRoutes(router *gin.RouterGroup) {
-	s.lockSystem = webdav.NewMemLS()
+func (s *WebdavServer) Build() {
+	lockSystem := webdav.NewMemLS()
 
-	s.handler = &webdav.Handler{
+	handler := &webdav.Handler{
 		Prefix:     s.Prefix,
 		FileSystem: webdav.Dir(s.RootPath),
-		LockSystem: s.lockSystem,
+		LockSystem: lockSystem,
 		Logger: func(r *http.Request, err error) {
 			if err != nil {
 				qq.Println("webdav error:", r.Method, r.URL.Path, err)
@@ -42,12 +35,10 @@ func (s *WebdavServer) AttachRoutes(router *gin.RouterGroup) {
 		},
 	}
 
-	router.Any("/webdav/*path", s.handleWebDAV)
+	s.Handler = handler
+
 }
 
-func (s *WebdavServer) handleWebDAV(ctx *gin.Context) {
-
-	// check authentication
-
-	s.handler.ServeHTTP(ctx.Writer, ctx.Request)
+func (s *WebdavServer) Handle(ctx *gin.Context) {
+	s.Handler.ServeHTTP(ctx.Writer, ctx.Request)
 }
