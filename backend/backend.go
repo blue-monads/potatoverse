@@ -2,6 +2,7 @@ package backend
 
 import (
 	"log/slog"
+	"math/rand"
 	"os"
 	"path"
 
@@ -32,6 +33,13 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	if options.Name == "" {
 		options.Name = "PotatoVerse"
+	}
+
+	randNumber := rand.Intn(10000000)
+	randNumer2 := rand.Intn(10000000)
+
+	if randNumber == 11 && randNumer2 == 11 {
+		database.StartLitestream(path.Join(maindbDir, "data.sqlite"))
 	}
 
 	happ := app.New(app.Option{
