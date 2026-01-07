@@ -24,6 +24,13 @@ type BuddyUrl struct {
 	PreConnect bool   `json:"pre_connect"`
 }
 
+type RendezvousUrl struct {
+	URL        string `json:"url"`
+	Provider   string `json:"provider"` // direct, nostr, udp, libp2p, tor etc
+	Priority   int    `json:"priority"`
+	SimpleMode bool   `json:"simple_mode"`
+}
+
 type BuddyHub interface {
 	GetPubkey() string
 	GetPrivkey() string
@@ -32,6 +39,7 @@ type BuddyHub interface {
 	SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error)
 	RouteToBuddy(buddyPubkey string, ctx *gin.Context)
 	GetBuddyRoot(buddyPubkey string) (*os.Root, error)
+	GetRendezvousUrls() []RendezvousUrl
 
 	// 	OpenBuddyWs(buddyPubkey string, endpoint string, inchan []byte, outchan chan []byte) error
 }
