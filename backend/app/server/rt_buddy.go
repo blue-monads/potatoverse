@@ -21,11 +21,27 @@ const (
 	BuddyAuthExpiry = 5 * time.Minute
 )
 
-func verifyNostrAuth(ctx *gin.Context, expiry time.Duration) (*nostr.Event, error) {
+func verifyNostrAuthCtx(ctx *gin.Context, expiry time.Duration) (*nostr.Event, error) {
 	authHeader := ctx.GetHeader("X-Buddy-Auth")
 	if authHeader == "" {
 		return nil, fmt.Errorf("Unauthorized")
 	}
+
+	event, err := verifyNostrAuth(authHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	// check expiry
+	if event.CreatedAt < nostr.Timestamp(time.Now().Add(-expiry).Unix()) {
+		return nil, fmt.Errorf("Expired")
+	}
+
+	return event, nil
+
+}
+
+func verifyNostrAuth(authHeader string) (*nostr.Event, error) {
 
 	eventJson, err := base64.StdEncoding.DecodeString(authHeader)
 	if err != nil {
@@ -47,16 +63,12 @@ func verifyNostrAuth(ctx *gin.Context, expiry time.Duration) (*nostr.Event, erro
 		return nil, fmt.Errorf("wrong event kind")
 	}
 
-	if time.Since(event.CreatedAt.Time()) > expiry {
-		return nil, fmt.Errorf("event expired")
-	}
-
 	return &event, nil
 }
 
 func (a *Server) handleBuddyPing(ctx *gin.Context) {
 
-	pubkey, err := verifyNostrAuth(ctx, BuddyAuthExpiry)
+	pubkey, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -74,7 +86,7 @@ func (a *Server) handleBuddyPing(ctx *gin.Context) {
 }
 
 func (a *Server) handleBuddyRoute(ctx *gin.Context) {
-	ev, err := verifyNostrAuth(ctx, BuddyAuthExpiry)
+	ev, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

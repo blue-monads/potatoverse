@@ -1,15 +1,26 @@
 package server
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/blue-monads/turnix/backend/app/server/webdav"
+	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 
 const (
 	BuddyWebdavPrefix = "/zz/buddy/webdav"
 )
+
+func (s *Server) webdavAuth(ctx *gin.Context) (string, string, error) {
+	user, pass, ok := ctx.Request.BasicAuth()
+	if !ok {
+		return "", "", errors.New("Unauthorized")
+	}
+
+	return user, pass, nil
+}
 
 func (s *Server) handleBuddyWebdav() func(ctx *gin.Context) {
 
@@ -37,7 +48,25 @@ func (s *Server) handleBuddyWebdav() func(ctx *gin.Context) {
 	}
 
 	return func(ctx *gin.Context) {
-		server := getWebdavServer(ctx.Request.Host)
+
+		buddyPubkey, authKey, err := s.webdavAuth(ctx)
+		if err != nil {
+			httpx.WriteAuthErr(ctx, err)
+			return
+		}
+
+		ev, err := verifyNostrAuth(authKey)
+		if err != nil {
+			httpx.WriteAuthErr(ctx, err)
+			return
+		}
+
+		if ev.PubKey == buddyPubkey {
+			httpx.WriteAuthErr(ctx, errors.New("Wrong buddy pubkey"))
+			return
+		}
+
+		server := getWebdavServer(buddyPubkey)
 
 		server.Handle(ctx)
 	}
