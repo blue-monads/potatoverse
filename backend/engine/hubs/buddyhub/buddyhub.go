@@ -3,7 +3,6 @@ package buddyhub
 import (
 	"log/slog"
 	"path"
-	"sync"
 
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/qq"
@@ -16,9 +15,6 @@ type BuddyHub struct {
 	app            xtypes.App
 	baseBuddyDir   string
 	rendezvousUrls []string
-
-	pendingRequests     map[string]chan *buddy.Response
-	pendingRequestsLock sync.RWMutex
 
 	allowAllBuddies bool
 
@@ -46,11 +42,10 @@ func NewBuddyHub(opt Options) *BuddyHub {
 
 	buddyDir := path.Join(config.WorkingDir, "buddy")
 	b := &BuddyHub{
-		logger:                  opt.Logger,
-		app:                     opt.App,
-		baseBuddyDir:            buddyDir,
-		pendingRequests:         make(map[string]chan *buddy.Response),
-		pendingRequestsLock:     sync.RWMutex{},
+		logger:       opt.Logger,
+		app:          opt.App,
+		baseBuddyDir: buddyDir,
+
 		allowAllBuddies:         false,
 		allbuddyAllowStorage:    false,
 		allbuddyMaxStorage:      0,

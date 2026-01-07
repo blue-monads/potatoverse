@@ -1,31 +1,29 @@
 package buddy
 
-import "encoding/json"
+import (
+	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
 
 type BuddyInfo struct {
-	URL             string   `json:"url"`
-	AltURLs         []string `json:"alt_urls"`
 	Pubkey          string   `json:"pubkey"`
+	URLs            []string `json:"urls"`
 	AllowStorage    bool     `json:"allow_storage"`
 	MaxStorage      int64    `json:"max_storage"`
 	AllowWebFunnel  bool     `json:"allow_web_funnel"`
 	MaxTrafficLimit int64    `json:"max_traffic_limit"`
 }
 
-type Message struct {
-	MType     string          `json:"mtype"`
-	Payload   json.RawMessage `json:"payload"`
-	RequestId string          `json:"request_id"`
-}
+type BuddyHub interface {
+	GetPubkey() string
+	GetPrivkey() string
+	ListBuddies() ([]*BuddyInfo, error)
+	PingBuddy(buddyPubkey string) (bool, error)
+	SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error)
+	RouteToBuddy(buddyPubkey string, ctx *gin.Context)
+	GetBuddyRoot(buddyPubkey string) (*os.Root, error)
 
-type Response struct {
-	RequestId string          `json:"request_id"`
-	Status    string          `json:"status"`
-	Data      json.RawMessage `json:"data"`
-}
-
-type BuddySyncProvider interface {
-	Ping(providerURL string) (bool, error)
-	PingBuddy(providerURL string, buddyPubkey string) (bool, error)
-	SendBuddy(providerURL string, buddyPubkey string, message *Message) (*Response, error)
+	// 	OpenBuddyWs(buddyPubkey string, endpoint string, inchan []byte, outchan chan []byte) error
 }
