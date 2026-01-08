@@ -168,7 +168,7 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 	// Start client in background
 	clientDone := make(chan error, 1)
 	go func() {
-		clientDone <- client.Start()
+		clientDone <- client.Start("")
 	}()
 
 	t.Log("@TestFunnel_HTTP_GetRequest/5")
@@ -230,7 +230,7 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 	// Start client in background
 	clientDone := make(chan error, 1)
 	go func() {
-		clientDone <- client.Start()
+		clientDone <- client.Start("")
 	}()
 
 	t.Log("@TestFunnel_HTTP_PostRequest/5")
@@ -296,7 +296,7 @@ func TestFunnel_WebSocket(t *testing.T) {
 	// Start client in background
 	clientDone := make(chan error, 1)
 	go func() {
-		clientDone <- client.Start()
+		clientDone <- client.Start("")
 	}()
 
 	t.Log("@TestFunnel_WebSocket/5")
@@ -370,7 +370,7 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 	// Start client in background
 	clientDone := make(chan error, 1)
 	go func() {
-		clientDone <- client.Start()
+		clientDone <- client.Start("")
 	}()
 
 	t.Log("@TestFunnel_MultipleWebSocket/5")
@@ -464,7 +464,7 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 	// Start client in background
 	clientDone := make(chan error, 1)
 	go func() {
-		clientDone <- client.Start()
+		clientDone <- client.Start("")
 	}()
 
 	t.Log("@TestFunnel_MultipleRequests/5")

@@ -22,7 +22,7 @@ func main() {
 
 	qq.Println("@main/2")
 
-	err := client.Start()
+	err := client.Start("")
 	if err != nil {
 		qq.Println("Error starting client: %v", err)
 		os.Exit(1)
