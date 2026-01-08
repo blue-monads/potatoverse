@@ -24,7 +24,7 @@ type Configuration struct {
 	allbuddyAllowStorage bool
 	allbuddyMaxStorage   int64
 
-	buddyAllowWebFunnelMode string // funnel_mode (all, local, none)
+	buddyWebFunnelMode      string // funnel_mode (all, local, none)
 	allbuddyMaxTrafficLimit int64
 }
 
@@ -64,7 +64,7 @@ func NewBuddyHub(opt Options) *BuddyHub {
 			allowAllBuddies:         false,
 			allbuddyAllowStorage:    false,
 			allbuddyMaxStorage:      0,
-			buddyAllowWebFunnelMode: "none",
+			buddyWebFunnelMode:      "none",
 			allbuddyMaxTrafficLimit: 0,
 		},
 
@@ -79,6 +79,8 @@ func NewBuddyHub(opt Options) *BuddyHub {
 
 	b.pubkey = pubkey
 	b.privkey = pk
+
+	b.funnel = funnel.New()
 
 	qq.Println("@pubkey", pubkey)
 
@@ -103,6 +105,10 @@ func (h *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
 
 func (h *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
 	return nil, nil
+}
+
+func (h *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
+	h.funnel.HandleServerWebSocket(buddyPubkey, ctx)
 }
 
 func (h *BuddyHub) RouteToBuddy(buddyPubkey string, ctx *gin.Context) {

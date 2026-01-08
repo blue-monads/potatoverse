@@ -186,14 +186,9 @@ func (a *Server) BuddyAutoRouteMW(ctx *gin.Context) {
 
 }
 
-func (a *Server) routeToBuddy(pubkey string, ctx *gin.Context) {
-
-	ctx.JSON(http.StatusBadRequest, gin.H{
-		"error":  "Not implemented yet",
-		"pubkey": pubkey,
-	})
-
-	ctx.Abort()
+func (a *Server) routeToBuddy(subdomain string, ctx *gin.Context) {
+	extractedPubkey := strings.Split(subdomain, "npub")[1]
+	a.buddyhub.HandleFunnelRoute(fmt.Sprintf("npub%s", extractedPubkey), ctx)
 }
 
 func getSubdomain(host string) (string, error) {
