@@ -71,7 +71,7 @@ func (c *FunnelClient) writePackets(conn net.Conn) {
 
 }
 
-func (c *FunnelClient) Start() error {
+func (c *FunnelClient) Start(token string) error {
 	// Parse remote funnel URL
 
 	qq.Println("@FunnelClient/Start/1{REMOTE_FUNNEL_URL}", c.opts.RemoteFunnelUrl)
@@ -80,6 +80,10 @@ func (c *FunnelClient) Start() error {
 	if err != nil {
 		return fmt.Errorf("invalid remote funnel URL: %w", err)
 	}
+
+	query := u.Query()
+	query.Set("token", token)
+	u.RawQuery = query.Encode()
 
 	// Determine websocket URL
 	wsScheme := "ws"

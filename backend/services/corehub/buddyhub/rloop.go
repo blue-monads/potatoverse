@@ -1,5 +1,43 @@
 package buddyhub
 
-func (h *BuddyHub) rLoopHandle(rendezvousUrl string) {
+import (
+	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub/funnel"
+	xutils "github.com/blue-monads/turnix/backend/utils"
+	"github.com/blue-monads/turnix/backend/xtypes/buddy"
+)
+
+func (h *BuddyHub) startRloop() {
+	for _, rendezvousUrl := range h.configuration.rendezvousUrls {
+		go h.rLoopHandle(&rendezvousUrl)
+	}
+}
+
+func (h *BuddyHub) rLoopHandle(rendezvousUrl *buddy.RendezvousUrl) {
+
+	if rendezvousUrl.Provider != "funnel" {
+		return
+	}
+
+	client := funnel.NewFunnelClient(funnel.FunnelClientOptions{
+		LocalHttpPort:   h.port,
+		RemoteFunnelUrl: rendezvousUrl.URL,
+		ServerId:        h.pubkey,
+	})
+
+	token, err := xutils.GenerateNostrAuthToken(h.privkey, rendezvousUrl.URL, "GET")
+	if err != nil {
+		h.logger.Error("Failed to generate nostr auth token", "err", err)
+		return
+	}
+
+	defer client.Stop()
+
+	for {
+		err = client.Start(token)
+		if err != nil {
+			h.logger.Error("Failed to start funnel client", "err", err)
+			return
+		}
+	}
 
 }

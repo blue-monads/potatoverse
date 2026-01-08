@@ -43,6 +43,7 @@ type BuddyHub struct {
 
 	pubkey  string
 	privkey string
+	port    int
 }
 
 type Options struct {
@@ -54,6 +55,8 @@ type Options struct {
 func NewBuddyHub(opt Options) *BuddyHub {
 
 	config := opt.App.Config().(*xtypes.AppOptions)
+
+	port := config.Port
 
 	buddyDir := path.Join(config.WorkingDir, "buddy")
 	b := &BuddyHub{
@@ -80,6 +83,7 @@ func NewBuddyHub(opt Options) *BuddyHub {
 
 	b.pubkey = pubkey
 	b.privkey = pk
+	b.port = port
 
 	b.funnel = funnel.New()
 
@@ -88,6 +92,8 @@ func NewBuddyHub(opt Options) *BuddyHub {
 		b.logger.Error("Failed to configure buddy hub", "err", err)
 		panic(err)
 	}
+
+	b.startRloop()
 
 	qq.Println("@pubkey", pubkey)
 
