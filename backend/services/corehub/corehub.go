@@ -1,8 +1,6 @@
 package corehub
 
 import (
-	"path"
-
 	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub"
 	"github.com/blue-monads/turnix/backend/services/datahub"
 	"github.com/blue-monads/turnix/backend/services/sockd"
@@ -15,22 +13,17 @@ type CoreHub struct {
 	sockd *sockd.Sockd
 
 	buddyhub *buddyhub.BuddyHub
-
-	buddyDir string
 }
 
 func NewCoreHub(app xtypes.App) *CoreHub {
 	db := app.Database()
 
 	sockd := app.Sockd().(*sockd.Sockd)
-	appConfig := app.Config().(*xtypes.AppOptions)
-
-	buddyDir := path.Join(appConfig.WorkingDir, "buddy")
 
 	return &CoreHub{
-		db:       db,
-		sockd:    sockd,
-		buddyDir: buddyDir,
+		app:   app,
+		db:    db,
+		sockd: sockd,
 	}
 }
 

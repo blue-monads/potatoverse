@@ -2,12 +2,19 @@ package buddyhub
 
 import (
 	"log/slog"
+	"net/http"
+	"os"
 	"path"
 
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
 	"github.com/blue-monads/turnix/backend/xtypes/buddy"
+	"github.com/gin-gonic/gin"
+)
+
+var (
+	_ buddy.BuddyHub = (*BuddyHub)(nil)
 )
 
 type Configuration struct {
@@ -83,10 +90,26 @@ func (h *BuddyHub) GetPrivkey() string {
 	return h.privkey
 }
 
-func (h *BuddyHub) Ping(providerURL string) (bool, error) {
-	return true, nil
+func (h *BuddyHub) ListBuddies() ([]*buddy.BuddyInfo, error) {
+	return nil, nil
 }
 
 func (h *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
 	return true, nil
+}
+
+func (h *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
+	return nil, nil
+}
+
+func (h *BuddyHub) RouteToBuddy(buddyPubkey string, ctx *gin.Context) {
+
+}
+
+func (h *BuddyHub) GetBuddyRoot(buddyPubkey string) (*os.Root, error) {
+	return nil, nil
+}
+
+func (h *BuddyHub) GetRendezvousUrls() []buddy.RendezvousUrl {
+	return nil
 }
