@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/blue-monads/turnix/backend/app/server/rt_buddy/webdav"
+	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
@@ -29,7 +30,7 @@ func (s *BuddyRouteServer) handleBuddyWebdav(ctx *gin.Context) {
 		return
 	}
 
-	ev, err := verifyNostrAuth(authKey)
+	ev, err := xutils.VerifyNostrAuth(authKey)
 	if err != nil {
 		httpx.WriteAuthErr(ctx, err)
 		return
