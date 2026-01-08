@@ -10,7 +10,8 @@ import (
 
 	"github.com/blue-monads/turnix/backend/app/actions"
 	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/engine/hubs/buddyhub"
+	"github.com/blue-monads/turnix/backend/services/corehub"
+	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
@@ -35,6 +36,8 @@ type Option struct {
 	GlobalJS    string
 	SiteName    string
 	LocalSocket string
+
+	CoreHub *corehub.CoreHub
 
 	// ServerKey just some identifier for the server, (lowercase a-z and numbers)
 	// it could be hash for public key if node is tunneling traffic for other nodes
@@ -70,7 +73,7 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	s.buddyhub = s.engine.GetBuddyHub().(*buddyhub.BuddyHub)
+	s.buddyhub = s.opt.CoreHub.GetBuddyHub()
 
 	existed := false
 

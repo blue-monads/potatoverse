@@ -77,6 +77,8 @@ func New(opt Option) *App {
 		hosts[i] = host.Name
 	}
 
+	happ.coreHub = corehub.NewCoreHub(happ)
+
 	server := server.NewServer(server.Option{
 		Port:        opt.AppOpts.Port,
 		Ctrl:        happ.ctrl,
@@ -87,7 +89,6 @@ func New(opt Option) *App {
 		SiteName:    opt.AppOpts.Name,
 	})
 
-	happ.coreHub = corehub.NewCoreHub(happ)
 	happ.server = server
 
 	return happ
