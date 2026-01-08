@@ -192,10 +192,11 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 
 func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *http.Request) {
 	// Modify request URL to point to local server
-	req.URL.Host = fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
+	host := fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
+	req.URL.Host = host
 	req.URL.Scheme = "http"
 	req.RequestURI = ""
-	req.Host = fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
+	req.Host = host
 
 	// Set up request body reader if needed
 	if req.ContentLength > 0 {
