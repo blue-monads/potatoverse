@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/hubs/buddyhub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
 	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
@@ -42,8 +41,6 @@ type Engine struct {
 	eventHub *eventhub.EventHub
 
 	capHub *caphub.CapabilityHub
-
-	buddyHub *buddyhub.BuddyHub
 
 	reloadPackageIds chan int64
 	fullReload       chan struct{}
@@ -78,7 +75,6 @@ func NewEngine(opt EngineOption) *Engine {
 
 		eventHub: nil,
 		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
-		buddyHub: nil,
 	}
 
 	e.runtime.parent = e
@@ -138,11 +134,6 @@ func (e *Engine) Start(app xtypes.App) error {
 	go e.startEloop()
 
 	e.LoadRoutingIndex()
-
-	e.buddyHub = buddyhub.NewBuddyHub(buddyhub.Options{
-		Logger: e.logger.With("service", "buddy_hub"),
-		App:    app,
-	})
 
 	time.Sleep(2 * time.Second)
 
@@ -286,10 +277,6 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 
 func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
 	return e.capHub.Definations()
-}
-
-func (e *Engine) GetBuddyHub() any {
-	return e.buddyHub
 }
 
 // private

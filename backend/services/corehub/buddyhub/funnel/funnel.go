@@ -1,3 +1,4 @@
+
 package funnel
 
 import (

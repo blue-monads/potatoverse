@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/blue-monads/turnix/backend/extra/funnel"
+	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub/funnel"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 )
 
