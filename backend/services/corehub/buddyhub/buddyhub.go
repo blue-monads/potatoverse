@@ -103,7 +103,14 @@ func (h *BuddyHub) GetPrivkey() string {
 }
 
 func (h *BuddyHub) ListBuddies() ([]*buddy.BuddyInfo, error) {
-	return nil, nil
+
+	result := make([]*buddy.BuddyInfo, 0, len(h.staticBuddies))
+
+	for _, buddyInfo := range h.staticBuddies {
+		result = append(result, buddyInfo)
+	}
+
+	return result, nil
 }
 
 func (h *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {

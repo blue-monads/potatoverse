@@ -38,11 +38,11 @@ type RepoOptions struct {
 }
 
 type BuddyHubOptions struct {
-	AllowAllBuddies         bool                        `json:"allow_all_buddies,omitempty" toml:"allow_all_buddies,omitempty"`
-	AllBuddyAllowStorage    bool                        `json:"all_buddy_allow_storage,omitempty" toml:"all_buddy_allow_storage,omitempty"`
-	AllBuddyMaxStorage      int64                       `json:"all_buddy_max_storage,omitempty" toml:"all_buddy_max_storage,omitempty"`
-	AllBuddyMaxTrafficLimit int64                       `json:"all_buddy_max_traffic_limit,omitempty" toml:"all_buddy_max_traffic_limit,omitempty"`
-	BuddyWebFunnelMode      string                      `json:"buddy_web_funnel_mode,omitempty" toml:"buddy_web_funnel_mode,omitempty"`
-	StaticBuddies           map[string]*buddy.BuddyInfo `json:"static_buddies,omitempty" toml:"static_buddies,omitempty"`
-	RendezvousUrls          []buddy.RendezvousUrl       `json:"rendezvous_urls,omitempty" toml:"rendezvous_urls,omitempty"`
+	AllowAllBuddies         bool                  `json:"allow_all_buddies,omitempty" toml:"allow_all_buddies,omitempty"`
+	AllBuddyAllowStorage    bool                  `json:"all_buddy_allow_storage,omitempty" toml:"all_buddy_allow_storage,omitempty"`
+	AllBuddyMaxStorage      int64                 `json:"all_buddy_max_storage,omitempty" toml:"all_buddy_max_storage,omitempty"`
+	AllBuddyMaxTrafficLimit int64                 `json:"all_buddy_max_traffic_limit,omitempty" toml:"all_buddy_max_traffic_limit,omitempty"`
+	BuddyWebFunnelMode      string                `json:"buddy_web_funnel_mode,omitempty" toml:"buddy_web_funnel_mode,omitempty"`
+	StaticBuddies           []*buddy.BuddyInfo    `json:"static_buddies,omitempty" toml:"static_buddies,omitempty"`
+	RendezvousUrls          []buddy.RendezvousUrl `json:"rendezvous_urls,omitempty" toml:"rendezvous_urls,omitempty"`
 }

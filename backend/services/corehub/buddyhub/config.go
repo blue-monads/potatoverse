@@ -10,7 +10,9 @@ func (h *BuddyHub) configure(config *xtypes.AppOptions) error {
 	}
 
 	if len(h.staticBuddies) > 0 {
-		h.staticBuddies = buddyOptions.StaticBuddies
+		for _, buddyInfo := range buddyOptions.StaticBuddies {
+			h.staticBuddies[buddyInfo.Pubkey] = buddyInfo
+		}
 	}
 
 	h.configuration = Configuration{
