@@ -20,13 +20,13 @@ type BuddyUrl struct {
 	Endpoint   string `json:"endpoint"`
 	IsDefault  bool   `json:"is_default"`
 	Priority   int    `json:"priority"`
-	Provider   string `json:"provider"` // direct, nostr, udp, libp2p, tor etc
+	Provider   string `json:"provider"` // funnel, direct, nostr, udp, libp2p(lpweb), tor etc
 	PreConnect bool   `json:"pre_connect"`
 }
 
 type RendezvousUrl struct {
 	URL        string `json:"url"`
-	Provider   string `json:"provider"` // direct, nostr, udp, libp2p, tor etc
+	Provider   string `json:"provider"` // nostr, udp, libp2p, tor etc
 	Priority   int    `json:"priority"`
 	SimpleMode bool   `json:"simple_mode"`
 }
