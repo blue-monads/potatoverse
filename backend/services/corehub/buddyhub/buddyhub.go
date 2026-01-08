@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub/funnel"
 	xutils "github.com/blue-monads/turnix/backend/utils"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/blue-monads/turnix/backend/xtypes"
@@ -23,7 +24,7 @@ type Configuration struct {
 	allbuddyAllowStorage bool
 	allbuddyMaxStorage   int64
 
-	allbuddyAllowWebFunnel  bool
+	buddyAllowWebFunnelMode string // funnel_mode (all, local, none)
 	allbuddyMaxTrafficLimit int64
 }
 
@@ -36,6 +37,8 @@ type BuddyHub struct {
 	configuration Configuration
 
 	staticBuddies map[string]*buddy.BuddyInfo
+
+	funnel *funnel.Funnel
 
 	pubkey  string
 	privkey string
@@ -61,7 +64,7 @@ func NewBuddyHub(opt Options) *BuddyHub {
 			allowAllBuddies:         false,
 			allbuddyAllowStorage:    false,
 			allbuddyMaxStorage:      0,
-			allbuddyAllowWebFunnel:  false,
+			buddyAllowWebFunnelMode: "none",
 			allbuddyMaxTrafficLimit: 0,
 		},
 
@@ -103,7 +106,7 @@ func (h *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Respo
 }
 
 func (h *BuddyHub) RouteToBuddy(buddyPubkey string, ctx *gin.Context) {
-
+	h.funnel.HandleRoute(buddyPubkey, ctx)
 }
 
 func (h *BuddyHub) GetBuddyRoot(buddyPubkey string) (*os.Root, error) {
