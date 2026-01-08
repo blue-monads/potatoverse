@@ -1,15 +1,20 @@
 package xtypes
 
+import (
+	"github.com/blue-monads/turnix/backend/xtypes/buddy"
+)
+
 type AppOptions struct {
-	Name         string        `json:"name,omitempty" toml:"name,omitempty"`
-	Port         int           `json:"port,omitempty" toml:"port,omitempty"`
-	Hosts        []Host        `json:"hosts,omitempty" toml:"hosts,omitempty"`
-	MasterSecret string        `json:"master_secret,omitempty" toml:"master_secret,omitempty"`
-	Debug        bool          `json:"debug_mode,omitempty" toml:"debug_mode,omitempty"`
-	WorkingDir   string        `json:"working_dir,omitempty" toml:"working_dir,omitempty"`
-	SocketFile   string        `json:"socket_file,omitempty" toml:"socket_file,omitempty"`
-	Mailer       MailerOptions `json:"mailer" toml:"mailer"`
-	Repos        []RepoOptions `json:"repos" toml:"repos"`
+	Name         string           `json:"name,omitempty" toml:"name,omitempty"`
+	Port         int              `json:"port,omitempty" toml:"port,omitempty"`
+	Hosts        []Host           `json:"hosts,omitempty" toml:"hosts,omitempty"`
+	MasterSecret string           `json:"master_secret,omitempty" toml:"master_secret,omitempty"`
+	Debug        bool             `json:"debug_mode,omitempty" toml:"debug_mode,omitempty"`
+	WorkingDir   string           `json:"working_dir,omitempty" toml:"working_dir,omitempty"`
+	SocketFile   string           `json:"socket_file,omitempty" toml:"socket_file,omitempty"`
+	Mailer       MailerOptions    `json:"mailer" toml:"mailer"`
+	Repos        []RepoOptions    `json:"repos" toml:"repos"`
+	BuddyOptions *BuddyHubOptions `json:"buddy_options,omitempty" toml:"buddy_options,omitempty"`
 }
 
 type Host struct {
@@ -30,4 +35,14 @@ type RepoOptions struct {
 	Type string `json:"type,omitempty" toml:"type,omitempty"` // http, embeded
 	Slug string `json:"slug,omitempty" toml:"slug,omitempty"`
 	Name string `json:"name,omitempty" toml:"name,omitempty"`
+}
+
+type BuddyHubOptions struct {
+	AllowAllBuddies         bool                        `json:"allow_all_buddies,omitempty" toml:"allow_all_buddies,omitempty"`
+	AllBuddyAllowStorage    bool                        `json:"all_buddy_allow_storage,omitempty" toml:"all_buddy_allow_storage,omitempty"`
+	AllBuddyMaxStorage      int64                       `json:"all_buddy_max_storage,omitempty" toml:"all_buddy_max_storage,omitempty"`
+	AllBuddyMaxTrafficLimit int64                       `json:"all_buddy_max_traffic_limit,omitempty" toml:"all_buddy_max_traffic_limit,omitempty"`
+	BuddyWebFunnelMode      string                      `json:"buddy_web_funnel_mode,omitempty" toml:"buddy_web_funnel_mode,omitempty"`
+	StaticBuddies           map[string]*buddy.BuddyInfo `json:"static_buddies,omitempty" toml:"static_buddies,omitempty"`
+	RendezvousUrls          []buddy.RendezvousUrl       `json:"rendezvous_urls,omitempty" toml:"rendezvous_urls,omitempty"`
 }

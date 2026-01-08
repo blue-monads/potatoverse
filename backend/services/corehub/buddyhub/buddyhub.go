@@ -26,13 +26,14 @@ type Configuration struct {
 
 	buddyWebFunnelMode      string // funnel_mode (all, local, none)
 	allbuddyMaxTrafficLimit int64
+
+	rendezvousUrls []buddy.RendezvousUrl
 }
 
 type BuddyHub struct {
-	logger         *slog.Logger
-	app            xtypes.App
-	baseBuddyDir   string
-	rendezvousUrls []string
+	logger       *slog.Logger
+	app          xtypes.App
+	baseBuddyDir string
 
 	configuration Configuration
 
@@ -82,6 +83,12 @@ func NewBuddyHub(opt Options) *BuddyHub {
 
 	b.funnel = funnel.New()
 
+	err = b.configure(config)
+	if err != nil {
+		b.logger.Error("Failed to configure buddy hub", "err", err)
+		panic(err)
+	}
+
 	qq.Println("@pubkey", pubkey)
 
 	return b
@@ -108,6 +115,16 @@ func (h *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Respo
 }
 
 func (h *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
+
+	buddyInfo, exists := h.staticBuddies[buddyPubkey]
+	if !exists {
+		return
+	}
+
+	if !buddyInfo.AllowWebFunnel {
+		return
+	}
+
 	h.funnel.HandleServerWebSocket(buddyPubkey, ctx)
 }
 
