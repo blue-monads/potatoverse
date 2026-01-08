@@ -10,12 +10,7 @@ import (
 	"github.com/blue-monads/turnix/backend/xtypes/buddy"
 )
 
-type BuddyHub struct {
-	logger         *slog.Logger
-	app            xtypes.App
-	baseBuddyDir   string
-	rendezvousUrls []string
-
+type Configuration struct {
 	allowAllBuddies bool
 
 	allbuddyAllowStorage bool
@@ -23,6 +18,15 @@ type BuddyHub struct {
 
 	allbuddyAllowWebFunnel  bool
 	allbuddyMaxTrafficLimit int64
+}
+
+type BuddyHub struct {
+	logger         *slog.Logger
+	app            xtypes.App
+	baseBuddyDir   string
+	rendezvousUrls []string
+
+	configuration Configuration
 
 	staticBuddies map[string]*buddy.BuddyInfo
 
@@ -46,12 +50,15 @@ func NewBuddyHub(opt Options) *BuddyHub {
 		app:          opt.App,
 		baseBuddyDir: buddyDir,
 
-		allowAllBuddies:         false,
-		allbuddyAllowStorage:    false,
-		allbuddyMaxStorage:      0,
-		allbuddyAllowWebFunnel:  false,
-		allbuddyMaxTrafficLimit: 0,
-		staticBuddies:           make(map[string]*buddy.BuddyInfo),
+		configuration: Configuration{
+			allowAllBuddies:         false,
+			allbuddyAllowStorage:    false,
+			allbuddyMaxStorage:      0,
+			allbuddyAllowWebFunnel:  false,
+			allbuddyMaxTrafficLimit: 0,
+		},
+
+		staticBuddies: make(map[string]*buddy.BuddyInfo),
 	}
 
 	pubkey, pk, err := xutils.GenerateKeyPair(config.MasterSecret)
