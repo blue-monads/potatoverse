@@ -87,6 +87,7 @@ func New(opt Option) *App {
 		Hosts:       hosts,
 		LocalSocket: opt.AppOpts.SocketFile,
 		SiteName:    opt.AppOpts.Name,
+		CoreHub:     happ.coreHub,
 	})
 
 	happ.server = server

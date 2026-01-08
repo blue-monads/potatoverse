@@ -1,72 +1,50 @@
-package server
+package rtbuddy
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/blue-monads/turnix/backend/app/server/rt_buddy/webdav"
+	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
-	"github.com/nbd-wtf/go-nostr"
-	"golang.org/x/net/publicsuffix"
 )
 
 const (
 	BuddyAuthExpiry = 5 * time.Minute
 )
 
-func verifyNostrAuthCtx(ctx *gin.Context, expiry time.Duration) (*nostr.Event, error) {
-	authHeader := ctx.GetHeader("X-Buddy-Auth")
-	if authHeader == "" {
-		return nil, fmt.Errorf("Unauthorized")
-	}
-
-	event, err := verifyNostrAuth(authHeader)
-	if err != nil {
-		return nil, err
-	}
-
-	// check expiry
-	if event.CreatedAt < nostr.Timestamp(time.Now().Add(-expiry).Unix()) {
-		return nil, fmt.Errorf("Expired")
-	}
-
-	return event, nil
-
+type BuddyRouteServer struct {
+	buddyhub      *buddyhub.BuddyHub
+	port          int
+	serverPubKey  string
+	webdavServers map[string]*webdav.WebdavServer
+	webdavLock    sync.RWMutex
 }
 
-func verifyNostrAuth(authHeader string) (*nostr.Event, error) {
-
-	eventJson, err := base64.StdEncoding.DecodeString(authHeader)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid authorization header")
+func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRouteServer {
+	return &BuddyRouteServer{
+		buddyhub:      buddyhub,
+		port:          port,
+		serverPubKey:  serverPubKey,
+		webdavServers: make(map[string]*webdav.WebdavServer),
+		webdavLock:    sync.RWMutex{},
 	}
-
-	var event nostr.Event
-	err = json.Unmarshal(eventJson, &event)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid authorization header")
-	}
-
-	ok, err := event.CheckSignature()
-	if !ok || err != nil {
-		return nil, fmt.Errorf("invalid signature")
-	}
-
-	if event.Kind != nostr.KindHTTPAuth {
-		return nil, fmt.Errorf("wrong event kind")
-	}
-
-	return &event, nil
 }
 
-func (a *Server) handleBuddyPing(ctx *gin.Context) {
+func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
+	g.POST("/buddy/ping", a.handleBuddyPing)
+	g.Any("/buddy/route", a.handleBuddyRoute)
+	g.Any("/buddy/webdav/*path", a.handleBuddyWebdav)
+}
+
+func (a *BuddyRouteServer) handleBuddyPing(ctx *gin.Context) {
 
 	pubkey, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
@@ -85,7 +63,7 @@ func (a *Server) handleBuddyPing(ctx *gin.Context) {
 
 }
 
-func (a *Server) handleBuddyRoute(ctx *gin.Context) {
+func (a *BuddyRouteServer) handleBuddyRoute(ctx *gin.Context) {
 	ev, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -105,12 +83,12 @@ func (a *Server) handleBuddyRoute(ctx *gin.Context) {
 
 	host := purl.Host
 
-	newHost := fmt.Sprintf("localhost:%d", a.opt.Port)
+	newHost := fmt.Sprintf("localhost:%d", a.port)
 
 	if strings.HasPrefix(host, "zz-") {
 		parts := strings.Split(host, ".")
 		suborigin := parts[len(parts)-1]
-		newHost = fmt.Sprintf("%s.localhost:%d", suborigin, a.opt.Port)
+		newHost = fmt.Sprintf("%s.localhost:%d", suborigin, a.port)
 	}
 
 	newUrl := url.URL{
@@ -126,12 +104,7 @@ func (a *Server) handleBuddyRoute(ctx *gin.Context) {
 
 }
 
-func (a *Server) BuddyAutoRouteMW(ctx *gin.Context) {
-
-	if a.skipBuddyAutoRoute {
-		ctx.Next()
-		return
-	}
+func (a *BuddyRouteServer) BuddyAutoRouteMW(ctx *gin.Context) {
 
 	pubkey := a.buddyhub.GetPubkey()
 
@@ -163,7 +136,7 @@ func (a *Server) BuddyAutoRouteMW(ctx *gin.Context) {
 		return
 	}
 
-	if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, a.opt.ServerKey) {
+	if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, a.serverPubKey) {
 		ctx.Next()
 		return
 	}
@@ -186,36 +159,7 @@ func (a *Server) BuddyAutoRouteMW(ctx *gin.Context) {
 
 }
 
-func (a *Server) routeToBuddy(subdomain string, ctx *gin.Context) {
+func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
 	extractedPubkey := strings.Split(subdomain, "npub")[1]
 	a.buddyhub.HandleFunnelRoute(fmt.Sprintf("npub%s", extractedPubkey), ctx)
-}
-
-func getSubdomain(host string) (string, error) {
-
-	if before, ok := strings.CutSuffix(host, ".localhost"); ok {
-		qq.Println("@getSubdomain/0", before)
-		return before, nil
-	}
-
-	// 2. Get the Registered Domain (e.g., "example.co.uk")
-	mainDomain, err := publicsuffix.EffectiveTLDPlusOne(host)
-	if err != nil {
-		return "", err
-	}
-
-	// 3. Remove the main domain from the host to get the subdomain
-	subdomain := strings.TrimSuffix(host, mainDomain)
-	subdomain = strings.TrimSuffix(subdomain, ".") // Remove trailing dot
-
-	qq.Println("@getSubdomain/1", host, mainDomain, subdomain)
-
-	if strings.Contains(subdomain, ".") {
-		parts := strings.Split(subdomain, ".")
-		subdomain = parts[0]
-	}
-
-	qq.Println("@getSubdomain/2", subdomain)
-
-	return subdomain, nil
 }

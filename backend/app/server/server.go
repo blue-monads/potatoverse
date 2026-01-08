@@ -9,22 +9,22 @@ import (
 	"time"
 
 	"github.com/blue-monads/turnix/backend/app/actions"
+	rtbuddy "github.com/blue-monads/turnix/backend/app/server/rt_buddy"
 	"github.com/blue-monads/turnix/backend/engine"
 	"github.com/blue-monads/turnix/backend/services/corehub"
-	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub"
 	"github.com/blue-monads/turnix/backend/services/signer"
 	"github.com/blue-monads/turnix/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	ctrl               *actions.Controller
-	router             *gin.Engine
-	signer             *signer.Signer
-	buddyhub           *buddyhub.BuddyHub
-	engine             *engine.Engine
-	skipBuddyAutoRoute bool
-	opt                Option
+	ctrl   *actions.Controller
+	router *gin.Engine
+	signer *signer.Signer
+	engine *engine.Engine
+	opt    Option
+
+	buddyRoutes *rtbuddy.BuddyRouteServer
 }
 
 type Option struct {
@@ -59,21 +59,23 @@ func NewServer(opt Option) *Server {
 }
 
 func (s *Server) Start() error {
+	buddyhub := s.opt.CoreHub.GetBuddyHub()
+
+	s.buddyRoutes = rtbuddy.New(buddyhub, s.opt.Port, s.opt.ServerKey)
+
 	err := s.buildGlobalJS()
 	if err != nil {
 		return err
 	}
 
 	s.router = gin.Default()
-	s.router.Use(s.BuddyAutoRouteMW)
+	s.router.Use(s.buddyRoutes.BuddyAutoRouteMW)
 
 	s.bindRoutes()
 	err = s.listenUnixSocket()
 	if err != nil {
 		return err
 	}
-
-	s.buddyhub = s.opt.CoreHub.GetBuddyHub()
 
 	existed := false
 
@@ -85,7 +87,7 @@ func (s *Server) Start() error {
 
 		time.Sleep(2 * time.Second)
 
-		pubkey := s.buddyhub.GetPubkey()
+		pubkey := s.opt.CoreHub.GetBuddyHub().GetPubkey()
 		s.opt.ServerKey = pubkey
 
 		if !existed {

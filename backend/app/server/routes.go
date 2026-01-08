@@ -31,7 +31,8 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
-	a.buddyRoutes(root)
+
+	a.buddyRoutes.AttachRoutes(root)
 
 	coreApi.GET("/global.js", a.getGlobalJS)
 
@@ -197,19 +198,5 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	zg.Any("/api/capabilities/:space_key/:capability_name", a.handleCapabilities)
 	zg.Any("/api/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)
 	zg.GET("/api/capabilities/debug/:capability_name", a.withAccessTokenFn(a.handleCapabilitiesDebug))
-
-}
-
-func (a *Server) buddyRoutes(g *gin.RouterGroup) {
-	g.POST("/buddy/ping", a.handleBuddyPing)
-	g.Any("/buddy/route", a.handleBuddyRoute)
-	g.Any("/buddy/webdav/*path", a.handleBuddyWebdav())
-
-	/*
-
-		/buddy/webdav
-
-
-	*/
 
 }
