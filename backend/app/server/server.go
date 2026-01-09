@@ -42,13 +42,10 @@ type Option struct {
 	// ServerKey just some identifier for the server, (lowercase a-z and numbers)
 	// it could be hash for public key if node is tunneling traffic for other nodes
 
-	ServerKey string
+	ServerPubKey string
 }
 
 func NewServer(opt Option) *Server {
-	if opt.ServerKey == "" {
-		opt.ServerKey = "main"
-	}
 
 	return &Server{
 		ctrl:   opt.Ctrl,
@@ -59,9 +56,12 @@ func NewServer(opt Option) *Server {
 }
 
 func (s *Server) Start() error {
+	pubkey := s.opt.CoreHub.GetBuddyHub().GetPubkey()
+	s.opt.ServerPubKey = pubkey
+
 	buddyhub := s.opt.CoreHub.GetBuddyHub()
 
-	s.buddyRoutes = rtbuddy.New(buddyhub, s.opt.Port, s.opt.ServerKey)
+	s.buddyRoutes = rtbuddy.New(buddyhub, s.opt.Port, s.opt.ServerPubKey)
 
 	err := s.buildGlobalJS()
 	if err != nil {
@@ -86,9 +86,6 @@ func (s *Server) Start() error {
 	go func() {
 
 		time.Sleep(2 * time.Second)
-
-		pubkey := s.opt.CoreHub.GetBuddyHub().GetPubkey()
-		s.opt.ServerKey = pubkey
 
 		if !existed {
 			fmt.Println("Server started:")

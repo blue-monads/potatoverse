@@ -223,7 +223,12 @@ func (a *Server) handleDeriveHost(ctx *gin.Context) {
 		spaceId = spaceInfo.ID
 	}
 
-	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, a.opt.ServerKey)
+	serverKey := "main"
+	if strings.Contains(hostName, "npub") {
+		serverKey = a.opt.ServerPubKey
+	}
+
+	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, serverKey)
 	httpx.WriteJSON(ctx, gin.H{
 		"host":     execHost,
 		"space_id": spaceId,
