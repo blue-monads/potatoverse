@@ -214,7 +214,7 @@ func (s *Server) deleteUserMessage(claim *signer.AccessClaim, ctx *gin.Context) 
 }
 
 func (s *Server) selfHandleUserWs(ctx *gin.Context) {
-	tok := ctx.GetHeader("Authorization")
+	tok := ctx.Query("token")
 	if tok == "" {
 		httpx.WriteAuthErr(ctx, EmptyAuthTokenErr)
 		return

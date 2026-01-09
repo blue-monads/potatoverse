@@ -37,6 +37,7 @@ func New() Notifier {
 		userConnections: make(map[int64]*UserRoom),
 		maxMsgId:        0,
 		connIdCounter:   atomic.Int64{},
+		cleanConnChan:   make(chan int64, 100),
 	}
 }
 
@@ -60,6 +61,7 @@ func (n *Notifier) getUserRoomOrCreate(userId int64, group string) *UserRoom {
 		room, exists = n.userConnections[userId]
 		if !exists {
 			room = &UserRoom{
+				notifier:    n,
 				userId:      userId,
 				group:       group,
 				maxMsgId:    0,

@@ -26,6 +26,7 @@ func (u *UserRoom) AddUserConnection(connId int64, conn net.Conn) (int64, error)
 		conn:             conn,
 		send:             make(chan []byte, 16),
 		closedAndCleaned: false,
+		userRoom:         u,
 	}
 
 	u.mu.Lock()
