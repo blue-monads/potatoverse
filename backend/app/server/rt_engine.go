@@ -262,6 +262,12 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 		return
 	}
 
+	_, err = a.ctrl.GetPackage(claim.InstallPackageId)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
 	recreateArtifacts := ctx.Query("recreate_artifacts") == "true"
 
 	// Create temp file for the uploaded zip
