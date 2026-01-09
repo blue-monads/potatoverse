@@ -250,31 +250,37 @@ export const useUserNotificationWebSocket = (
     useEffect(() => {
         const prevState = prevAuthStateRef.current;
         const currentState = { initialized: isInitialized, authenticated: isAuthenticated };
-        
-        // Only connect/disconnect if auth state actually changed
-        if (!prevState || 
-            prevState.initialized !== isInitialized || 
-            prevState.authenticated !== isAuthenticated) {
-            
-            console.log("Auth state changed:", {
-                prev: prevState,
-                current: currentState,
-                isConnected: wsManager.isConnected()
-            });
-            
-            if (isInitialized && isAuthenticated) {
-                // Only connect if not already connected
-                if (!wsManager.isConnected()) {
-                    connect();
+
+        setTimeout(() => {
+
+
+            if (!prevState || 
+                prevState.initialized !== isInitialized || 
+                prevState.authenticated !== isAuthenticated) {
+                
+                console.log("Auth state changed:", {
+                    prev: prevState,
+                    current: currentState,
+                    isConnected: wsManager.isConnected()
+                });
+                
+                if (isInitialized && isAuthenticated) {
+                    // Only connect if not already connected
+                    if (!wsManager.isConnected()) {
+                        connect();
+                    } else {
+                        console.log("WebSocket already connected, skipping connect()");
+                    }
                 } else {
-                    console.log("WebSocket already connected, skipping connect()");
+                    disconnect();
                 }
-            } else {
-                disconnect();
+                
+                prevAuthStateRef.current = currentState;
             }
-            
-            prevAuthStateRef.current = currentState;
-        }
+
+        }, 2000);
+        
+        
         
         // Don't disconnect in cleanup - let the connection persist across route changes
         // It will only disconnect when auth state explicitly changes to false
