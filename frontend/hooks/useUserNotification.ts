@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { GAppStateHandle } from "./useGAppState";
 import * as api from "@/lib/api";
+import { useUserNotificationWebSocket } from "./useUserNotificationWebSocket";
 
 const useUserNotification = (gapp: GAppStateHandle) => {
     const [notifications, setNotifications] = useState<api.UserMessage[]>([]);
@@ -65,12 +66,55 @@ const useUserNotification = (gapp: GAppStateHandle) => {
         }
     }, []);
 
+    // Handle incoming WebSocket messages
+    const handleWebSocketMessage = useCallback((message: api.UserMessage) => {
+        // Add or update the message in notifications
+        setNotifications(prev => {
+            // Check if message already exists
+            const existingIndex = prev.findIndex(msg => msg.id === message.id);
+            if (existingIndex >= 0) {
+                // Update existing message
+                const existing = prev[existingIndex];
+                const updated = [...prev];
+                updated[existingIndex] = message;
+                
+                // Update unread count based on read status change
+                setUnreadCount(current => {
+                    let newCount = current;
+                    if (!existing.is_read && message.is_read) {
+                        // Message was marked as read
+                        newCount = Math.max(0, newCount - 1);
+                    } else if (existing.is_read && !message.is_read) {
+                        // Message was marked as unread (unlikely but handle it)
+                        newCount = newCount + 1;
+                    }
+                    return newCount;
+                });
+                
+                return updated;
+            } else {
+                // Add new message at the beginning
+                // Update unread count if message is unread
+                if (!message.is_read) {
+                    setUnreadCount(prev => prev + 1);
+                }
+                return [message, ...prev];
+            }
+        });
+    }, []);
+
+    // Use WebSocket hook
+    useUserNotificationWebSocket({
+        isInitialized: gapp.isInitialized,
+        isAuthenticated: gapp.isAuthenticated,
+        onMessage: handleWebSocketMessage,
+        onFallback: loadNewMessages,
+    });
+
+    // Load initial messages when authenticated
     useEffect(() => {
         if (gapp.isInitialized && gapp.isAuthenticated) {
             loadNewMessages();
-            // Optionally reload periodically
-            const interval = setInterval(loadNewMessages, 30000); // every 30 seconds
-            return () => clearInterval(interval);
         }
     }, [gapp.isInitialized, gapp.isAuthenticated, loadNewMessages]);
 
