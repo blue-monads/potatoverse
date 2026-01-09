@@ -3,7 +3,7 @@ package server
 import (
 	"strconv"
 
-	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,7 +20,7 @@ func (a *Server) ListSpaceCapabilities(claim *signer.AccessClaim, ctx *gin.Conte
 	// Get query parameters for filtering
 	capabilityType := ctx.Query("capability_type")
 	spaceIdStr := ctx.Query("space_id")
-	
+
 	// If space_id not provided, show all (both package-level and space-level)
 	// If space_id=0 is explicitly provided, show only package-level
 	// If space_id>0 is provided, show only that space's capabilities

@@ -3,9 +3,9 @@ package eslayer
 import (
 	"fmt"
 
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
-	"github.com/blue-monads/turnix/backend/xtypes/xcapability/easyaction"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/easyaction"
 )
 
 func PerformSpaceMethodTargetExecution(execution *TargetExecution) error {

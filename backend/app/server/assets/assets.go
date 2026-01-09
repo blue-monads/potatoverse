@@ -7,9 +7,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	output "github.com/blue-monads/turnix/frontend"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	output "github.com/blue-monads/potatoverse/frontend"
 	"github.com/gin-gonic/gin"
 )
 

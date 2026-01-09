@@ -4,12 +4,12 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws/room"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 )

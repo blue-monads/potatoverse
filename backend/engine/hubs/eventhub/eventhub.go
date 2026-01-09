@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub/eslayer"
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/eslayer"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type EventHub struct {

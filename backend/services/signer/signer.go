@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/hako/branca"
 	"golang.org/x/crypto/pbkdf2"
 )

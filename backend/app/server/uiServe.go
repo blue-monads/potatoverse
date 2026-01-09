@@ -5,9 +5,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/app/server/assets"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/frontend"
+	"github.com/blue-monads/potatoverse/backend/app/server/assets"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/frontend"
 
 	"github.com/gin-gonic/gin"
 )

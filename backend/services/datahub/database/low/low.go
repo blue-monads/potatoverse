@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/enforcer"
-	"github.com/blue-monads/turnix/backend/utils/libx/dbutils"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/enforcer"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/dbutils"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )

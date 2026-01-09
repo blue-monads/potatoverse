@@ -1,4 +1,4 @@
-module github.com/blue-monads/turnix
+module github.com/blue-monads/potatoverse
 
 go 1.24.1
 

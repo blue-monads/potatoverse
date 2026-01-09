@@ -3,9 +3,9 @@ package rtbuddy
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/app/server/rt_buddy/webdav"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/app/server/rt_buddy/webdav"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 

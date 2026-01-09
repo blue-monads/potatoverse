@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/gin-gonic/gin"
 )
 

@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
-	"github.com/blue-monads/turnix/backend/utils/kosher"
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/utils/kosher"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/cjoudrey/gluahttp"
 	"github.com/gin-gonic/gin"
 

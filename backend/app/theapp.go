@@ -5,17 +5,17 @@ import (
 	"log/slog"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/app/server"
-	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/app/server"
+	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 
-	"github.com/blue-monads/turnix/backend/services/corehub"
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/mailer"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/services/sockd"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/mailer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/sockd"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type Option struct {

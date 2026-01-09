@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	buddyfs "github.com/blue-monads/turnix/backend/labs/buddyFs"
+	buddyfs "github.com/blue-monads/potatoverse/backend/labs/buddyFs"
 	"github.com/gin-gonic/gin"
 )
 

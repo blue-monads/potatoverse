@@ -1,9 +1,9 @@
 package buddyhub
 
 import (
-	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub/funnel"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/xtypes/buddy"
+	"github.com/blue-monads/potatoverse/backend/services/corehub/buddyhub/funnel"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/xtypes/buddy"
 )
 
 func (h *BuddyHub) startRloop() {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub/rengine"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/rengine"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (e *ESLayer) targetProcessor(targetId int64) error {

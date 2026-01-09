@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 

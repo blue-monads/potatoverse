@@ -1,9 +1,9 @@
 package sockd
 
 import (
-	"github.com/blue-monads/turnix/backend/services/sockd/broadcast"
-	"github.com/blue-monads/turnix/backend/services/sockd/notifier"
-	"github.com/blue-monads/turnix/backend/services/sockd/pubsub"
+	"github.com/blue-monads/potatoverse/backend/services/sockd/broadcast"
+	"github.com/blue-monads/potatoverse/backend/services/sockd/notifier"
+	"github.com/blue-monads/potatoverse/backend/services/sockd/pubsub"
 )
 
 type Sockd struct {

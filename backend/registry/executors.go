@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 func RegisterExecutorBuilderFactory(name string, factory xtypes.ExecutorBuilderFactory) {

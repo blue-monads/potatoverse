@@ -3,11 +3,11 @@ package actions
 import (
 	"log/slog"
 
-	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/mailer"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/mailer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type Option struct {

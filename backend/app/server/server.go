@@ -8,12 +8,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/app/actions"
-	rtbuddy "github.com/blue-monads/turnix/backend/app/server/rt_buddy"
-	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/services/corehub"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	rtbuddy "github.com/blue-monads/potatoverse/backend/app/server/rt_buddy"
+	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 

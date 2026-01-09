@@ -7,10 +7,10 @@ import (
 	"path"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/utils/libx"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/utils/libx"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
 

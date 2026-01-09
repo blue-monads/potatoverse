@@ -4,7 +4,7 @@ import (
 	"hash"
 	"os"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 

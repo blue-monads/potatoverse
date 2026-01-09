@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	xutils "github.com/blue-monads/turnix/backend/utils"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/nbd-wtf/go-nostr"
 )

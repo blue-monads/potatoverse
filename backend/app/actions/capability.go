@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 )
 
 func (c *Controller) CreateSpaceCapability(installId int64, data map[string]any) (*dbmodels.SpaceCapability, error) {

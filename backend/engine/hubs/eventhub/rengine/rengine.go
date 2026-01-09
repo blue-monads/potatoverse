@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/kosher"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/kosher"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/tidwall/gjson"
 )
 

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 // LuaStatePool implements a pool of lua.LState objects.

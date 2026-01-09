@@ -1,10 +1,10 @@
 package corehub
 
 import (
-	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub"
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/sockd"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/corehub/buddyhub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/sockd"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type CoreHub struct {

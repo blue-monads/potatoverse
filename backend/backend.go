@@ -6,14 +6,14 @@ import (
 	"os"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/app"
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/services/corehub"
-	"github.com/blue-monads/turnix/backend/services/datahub/database"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/mailer/stdio"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/app"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/mailer/stdio"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {

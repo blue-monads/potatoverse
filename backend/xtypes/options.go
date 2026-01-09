@@ -1,7 +1,7 @@
 package xtypes
 
 import (
-	"github.com/blue-monads/turnix/backend/xtypes/buddy"
+	"github.com/blue-monads/potatoverse/backend/xtypes/buddy"
 )
 
 type AppOptions struct {

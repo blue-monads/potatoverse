@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/docs"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/docs"
 	"github.com/gin-gonic/gin"
 )
 

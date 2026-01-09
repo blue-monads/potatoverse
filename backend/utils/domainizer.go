@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func GetFullUrl(domain string, path string, port int, isSecure bool) string {

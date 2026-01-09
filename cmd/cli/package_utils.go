@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/pelletier/go-toml/v2"
 )
 

@@ -1,9 +1,9 @@
 package xcapability
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 )
 
 type XCapabilityHandle interface {

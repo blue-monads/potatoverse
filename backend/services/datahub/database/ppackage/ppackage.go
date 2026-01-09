@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/database/file"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	xutils "github.com/blue-monads/turnix/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/upper/db/v4"
 )
 

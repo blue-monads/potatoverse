@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 )
 
 type ConnId string

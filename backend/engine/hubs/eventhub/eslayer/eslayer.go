@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type ESLayer struct {

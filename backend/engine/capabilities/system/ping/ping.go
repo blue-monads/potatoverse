@@ -1,11 +1,11 @@
 package ping
 
 import (
-	"github.com/blue-monads/turnix/backend/registry"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
-	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
+	"github.com/blue-monads/potatoverse/backend/registry"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 

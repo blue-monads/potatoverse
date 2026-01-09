@@ -3,8 +3,8 @@ package relayhttp
 import (
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/registry"
-	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
+	"github.com/blue-monads/potatoverse/backend/registry"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 

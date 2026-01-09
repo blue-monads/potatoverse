@@ -3,7 +3,7 @@ package server
 import (
 	"strconv"
 
-	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
 

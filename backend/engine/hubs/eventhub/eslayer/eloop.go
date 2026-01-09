@@ -3,7 +3,7 @@ package eslayer
 import (
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 // fixme => add system for processing delayed targets

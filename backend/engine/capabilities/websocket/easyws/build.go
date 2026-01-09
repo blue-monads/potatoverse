@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
-	"github.com/blue-monads/turnix/backend/registry"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/xcapability"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws/room"
+	"github.com/blue-monads/potatoverse/backend/registry"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 

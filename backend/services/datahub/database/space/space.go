@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 

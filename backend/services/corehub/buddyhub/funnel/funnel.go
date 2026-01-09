@@ -1,11 +1,10 @@
-
 package funnel
 
 import (
 	"net"
 	"sync"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 

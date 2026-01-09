@@ -6,11 +6,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/services/corehub/buddyhub/funnel"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/buddy"
+	"github.com/blue-monads/potatoverse/backend/services/corehub/buddyhub/funnel"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/buddy"
 	"github.com/gin-gonic/gin"
 )
 

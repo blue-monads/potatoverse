@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 )
 
 func (c *Controller) CreateEventSubscription(installId int64, data *dbmodels.MQSubscription) (*dbmodels.MQSubscription, error) {

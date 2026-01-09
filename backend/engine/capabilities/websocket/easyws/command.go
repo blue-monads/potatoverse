@@ -3,10 +3,10 @@ package easyws
 import (
 	"fmt"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/xcapability/easyaction"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws/room"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/easyaction"
 )
 
 type CMDMessage struct {

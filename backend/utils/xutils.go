@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
 func GetPackageManifest(zipFile string) ([]byte, error) {

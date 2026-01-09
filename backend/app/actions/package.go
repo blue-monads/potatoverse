@@ -1,10 +1,10 @@
 package actions
 
 import (
-	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
 func (c *Controller) ListEPackages(repoSlug string) ([]models.PotatoPackage, error) {

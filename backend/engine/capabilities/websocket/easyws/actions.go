@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/engine/capabilities/websocket/easyws/room"
-	"github.com/blue-monads/turnix/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws/room"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 )
 
 func (c *EasyWsCapability) Execute(name string, params lazydata.LazyData) (any, error) {

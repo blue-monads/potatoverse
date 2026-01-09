@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
 //go:embed all:epackages/*

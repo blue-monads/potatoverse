@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 

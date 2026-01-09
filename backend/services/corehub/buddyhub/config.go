@@ -1,6 +1,6 @@
 package buddyhub
 
-import "github.com/blue-monads/turnix/backend/xtypes"
+import "github.com/blue-monads/potatoverse/backend/xtypes"
 
 func (h *BuddyHub) configure(config *xtypes.AppOptions) error {
 	buddyOptions := config.BuddyOptions

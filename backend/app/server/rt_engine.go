@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 

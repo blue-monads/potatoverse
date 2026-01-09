@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/blue-monads/turnix/backend"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/pelletier/go-toml/v2"
 )
 

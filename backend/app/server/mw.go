@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 

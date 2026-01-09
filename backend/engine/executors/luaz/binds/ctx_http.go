@@ -3,9 +3,9 @@ package binds
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func main() {

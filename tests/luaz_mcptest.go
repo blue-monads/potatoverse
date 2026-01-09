@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
 	lua "github.com/yuin/gopher-lua"
 )
 

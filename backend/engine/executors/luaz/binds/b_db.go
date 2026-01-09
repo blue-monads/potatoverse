@@ -3,9 +3,9 @@ package binds
 import (
 	"strconv"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 

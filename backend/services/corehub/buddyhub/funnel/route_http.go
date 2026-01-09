@@ -11,7 +11,7 @@ import (
 	"net/http/httputil"
 	"strconv"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/k0kubun/pp"
 )

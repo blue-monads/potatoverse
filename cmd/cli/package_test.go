@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
 func TestPackageFilesV2(t *testing.T) {

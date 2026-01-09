@@ -3,12 +3,12 @@ package actions
 import (
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/mailer"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/easyerr"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/mailer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/easyerr"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]dbmodels.User, error) {

@@ -3,7 +3,7 @@ package rtbuddy
 import (
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"golang.org/x/net/publicsuffix"
 )
 
