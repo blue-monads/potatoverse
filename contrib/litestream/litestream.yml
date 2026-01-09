@@ -1,5 +1,5 @@
 dbs:
- - path: .pdata/data.db
+ - path: tmp/maindb/data.sqlite
    replicas:
-     - url: webdav://flydav:flydav12345@localhost:8666/
+     - file: tmp/replica
 
