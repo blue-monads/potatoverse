@@ -98,6 +98,7 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 	g.PUT("/messages/:id", a.withAccessTokenFn(a.updateUserMessage))
 	g.DELETE("/messages/:id", a.withAccessTokenFn(a.deleteUserMessage))
 	g.POST("/messages/:id/read", a.withAccessTokenFn(a.setMessageAsRead))
+	g.GET("/messages/ws", a.selfHandleUserWs)
 
 }
 
