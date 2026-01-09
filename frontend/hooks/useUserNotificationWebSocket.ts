@@ -278,7 +278,7 @@ export const useUserNotificationWebSocket = (
                 prevAuthStateRef.current = currentState;
             }
 
-        }, 2000);
+        }, 5000);
         
         
         
