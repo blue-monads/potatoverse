@@ -251,20 +251,22 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	// Get the dev token from Authorization header
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
-		httpx.WriteErr(ctx, errors.New("missing authorization token"))
+		httpx.WriteErrString(ctx, "missing authorization token")
 		return
 	}
 
 	// Parse the package dev token
 	claim, err := a.signer.ParsePackageDev(token)
 	if err != nil {
-		httpx.WriteErr(ctx, err)
+		errMsg := fmt.Sprintf("failed to parse package dev token: %s", err.Error())
+		httpx.WriteErrString(ctx, errMsg)
 		return
 	}
 
 	_, err = a.ctrl.GetPackage(claim.InstallPackageId)
 	if err != nil {
-		httpx.WriteErr(ctx, err)
+		errMsg := fmt.Sprintf("failed to get package: %s", err.Error())
+		httpx.WriteErrString(ctx, errMsg)
 		return
 	}
 
@@ -273,7 +275,8 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	// Create temp file for the uploaded zip
 	tempFile, err := os.CreateTemp("", "turnix-package-push-*.zip")
 	if err != nil {
-		httpx.WriteErr(ctx, err)
+		errMsg := fmt.Sprintf("failed to create temp file: %s", err.Error())
+		httpx.WriteErrString(ctx, errMsg)
 		return
 	}
 	defer os.Remove(tempFile.Name())
