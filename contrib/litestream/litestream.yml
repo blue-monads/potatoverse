@@ -1,5 +1,0 @@
-dbs:
- - path: tmp/maindb/data.sqlite
-   replicas:
-     - file: tmp/replica
-
