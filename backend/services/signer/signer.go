@@ -81,14 +81,19 @@ var ErrInvalidToken = errors.New("INVALID TOKEN")
 
 type Signer struct {
 	signer *branca.Branca
+	altKey []byte
 }
 
 func New(key []byte) *Signer {
 	masterKey := pbkdf2.Key(key, []byte("SALTY_SALMON"), 2048, 32, sha256.New)
+	altKey := pbkdf2.Key(masterKey, []byte("UMAMI_POTATO"), 4, 32, sha256.New)
 
-	return &Signer{
+	s := &Signer{
 		signer: branca.NewBranca(string(masterKey)),
+		altKey: altKey,
 	}
+
+	return s
 }
 
 func (t *Signer) parse(token string, dest any) error {
