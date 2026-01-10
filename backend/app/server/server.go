@@ -39,9 +39,6 @@ type Option struct {
 
 	CoreHub *corehub.CoreHub
 
-	// ServerKey just some identifier for the server, (lowercase a-z and numbers)
-	// it could be hash for public key if node is tunneling traffic for other nodes
-
 	ServerPubKey string
 }
 
