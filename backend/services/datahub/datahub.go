@@ -175,6 +175,7 @@ type SpaceKVOps interface {
 }
 
 type CreateFileRequest struct {
+	RefID     string `json:"ref_id"`
 	Name      string `json:"name"`
 	Path      string `json:"path"`
 	CreatedBy int64  `json:"created_by"`
@@ -196,10 +197,9 @@ type FileOps interface {
 	UpdateFile(ownerID int64, id int64, stream io.Reader) error
 	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
 
-	AddFileShare(ownerID int64, fileId int64, userId int64) (string, error)
-	GetSharedFile(ownerID int64, id string, ctx *gin.Context) error
-	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
-	RemoveFileShare(ownerID int64, userId int64, id string) error
+	// File Ref
+
+	GetFileByRefId(refId string) (*dbmodels.FileMeta, error)
 
 	NewAsFS(ownerID int64, rootPath string) fs.FS
 }
