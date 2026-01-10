@@ -183,7 +183,6 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 
 	fileMeta := &dbmodels.FileMeta{
 		OwnerID:   ownerID,
-		RefID:     req.RefID,
 		Name:      req.Name,
 		Path:      req.Path,
 		StoreType: f.storeType,
@@ -235,14 +234,8 @@ func (f *FileOperations) CreateFolder(ownerID int64, path string, name string, c
 
 	now := time.Now()
 
-	refId := ""
-	if f.refIdGen != nil {
-		refId = f.refIdGen()
-	}
-
 	fileMeta := &dbmodels.FileMeta{
 		OwnerID:   ownerID,
-		RefID:     refId,
 		Name:      name,
 		Path:      path,
 		IsFolder:  true,

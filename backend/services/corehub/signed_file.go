@@ -2,6 +2,7 @@ package corehub
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,7 @@ func (c *CoreHub) ListSpaceFilesSigned(installId int64, path string) ([]FileMeta
 	refIds := make([]string, len(files))
 
 	for i, file := range files {
-		refIds[i] = file.RefID
+		refIds[i] = strconv.FormatInt(file.ID, 10)
 	}
 
 	altSignedRefIds, err := c.signer.SignAltBatch(Salt, refIds)
@@ -61,13 +62,19 @@ func (c *CoreHub) ServeSpaceFileSigned(refId string, ctx *gin.Context) {
 		return
 	}
 
-	fid, err := c.db.GetFileOps().GetFileByRefId(originalRefId)
+	fid, err := strconv.ParseInt(originalRefId, 10, 64)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	err = c.db.GetFileOps().StreamFileToHTTP(fid.OwnerID, fid.Path, fid.Name, ctx)
+	fileMeta, err := c.db.GetFileOps().GetFileMeta(fid)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	err = c.db.GetFileOps().StreamFileToHTTP(fileMeta.OwnerID, fileMeta.Path, fileMeta.Name, ctx)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
@@ -81,13 +88,19 @@ func (c *CoreHub) ServePreviewFileSigned(refId string, ctx *gin.Context) {
 		return
 	}
 
-	fid, err := c.db.GetFileOps().GetFileByRefId(originalRefId)
+	fid, err := strconv.ParseInt(originalRefId, 10, 64)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	preview, err := c.db.GetFileOps().GetFilePreview(fid.OwnerID, fid.ID)
+	fileMeta, err := c.db.GetFileOps().GetFileMeta(fid)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	preview, err := c.db.GetFileOps().GetFilePreview(fileMeta.OwnerID, fileMeta.ID)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return

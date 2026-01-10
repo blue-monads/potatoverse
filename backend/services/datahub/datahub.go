@@ -200,7 +200,10 @@ type FileOps interface {
 
 	// File Ref
 
-	GetFileByRefId(refId string) (*dbmodels.FileMeta, error)
+	AddFileShare(ownerID int64, fileId int64, userId int64) (string, error)
+	GetSharedFile(ownerID int64, id string, ctx *gin.Context) error
+	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
+	RemoveFileShare(ownerID int64, userId int64, id string) error
 
 	NewAsFS(ownerID int64, rootPath string) fs.FS
 }

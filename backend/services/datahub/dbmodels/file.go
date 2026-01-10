@@ -4,7 +4,6 @@ import "time"
 
 type FileMeta struct {
 	ID        int64      `db:"id,omitempty" json:"id"`
-	RefID     string     `db:"ref_id" json:"ref_id"`
 	OwnerID   int64      `db:"owner_id" json:"owner_id"`
 	Name      string     `db:"name" json:"name"`
 	IsFolder  bool       `db:"is_folder" json:"is_folder"`
@@ -25,4 +24,11 @@ type FileBlob struct {
 	Size   int64  `db:"size" json:"size"`
 	PartID int64  `db:"part_id" json:"part_id"`
 	Blob   []byte `db:"blob" json:"blob"`
+}
+
+type FileShare struct {
+	ID        string     `db:"id,omitempty" json:"id"`
+	FileID    int64      `db:"file_id" json:"file_id"`
+	UserID    int64      `db:"user_id" json:"user_id"`
+	CreatedAt *time.Time `db:"created_at,omitempty" json:"created_at"`
 }
