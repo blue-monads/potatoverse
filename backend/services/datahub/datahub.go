@@ -196,6 +196,7 @@ type FileOps interface {
 	StreamFileToHTTP(ownerID int64, path, name string, ctx *gin.Context) error
 	UpdateFile(ownerID int64, id int64, stream io.Reader) error
 	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
+	GetFilePreview(ownerID int64, id int64) ([]byte, error)
 
 	// File Ref
 
