@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (a *Server) ListSpaceFiles(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+func (a *Server) adminListSpaceFiles(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (a *Server) ListSpaceFiles(claim *signer.AccessClaim, ctx *gin.Context) (an
 	return files, nil
 }
 
-func (a *Server) GetSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+func (a *Server) adminGetSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (a *Server) GetSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any,
 	return file, nil
 }
 
-func (a *Server) DownloadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+func (a *Server) adminDownloadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	qq.Println("@DownloadSpaceFile/1", claim.UserId)
 
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
@@ -74,7 +74,7 @@ func (a *Server) DownloadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) 
 	return nil, nil
 }
 
-func (a *Server) DeleteSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+func (a *Server) adminDeleteSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (a *Server) DeleteSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (a
 	return gin.H{"message": "File deleted successfully"}, nil
 }
 
-func (a *Server) UploadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+func (a *Server) adminUploadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (a *Server) UploadSpaceFile(claim *signer.AccessClaim, ctx *gin.Context) (a
 	return gin.H{"file_id": fileId, "message": "File uploaded successfully"}, nil
 }
 
-func (a *Server) CreateSpaceFolder(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+func (a *Server) adminCreateSpaceFolder(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -152,7 +152,9 @@ func (a *Server) CreateSpaceFolder(claim *signer.AccessClaim, ctx *gin.Context) 
 	return gin.H{"folder_id": folderId, "message": "Folder created successfully"}, nil
 }
 
-func (a *Server) CreatePresignedUploadURL(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+// presigned
+
+func (a *Server) adminCreatePresignedUploadURL(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -195,7 +197,7 @@ func (a *Server) CreatePresignedUploadURL(claim *signer.AccessClaim, ctx *gin.Co
 	}, nil
 }
 
-func (a *Server) UploadFileWithPresigned(ctx *gin.Context) {
+func (a *Server) adminUploadFileWithPresigned(ctx *gin.Context) {
 	presignedKey := ctx.Query("presigned-key")
 	if presignedKey == "" {
 		ctx.JSON(400, gin.H{"error": "presigned-key parameter is required"})

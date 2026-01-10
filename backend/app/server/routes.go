@@ -146,13 +146,13 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.DELETE("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
 
 	// Space Files API
-	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.ListSpaceFiles))
-	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.GetSpaceFile))
-	coreApi.GET("/space/:install_id/files/:fileId/download", a.withAccessTokenFn(a.DownloadSpaceFile))
-	coreApi.DELETE("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.DeleteSpaceFile))
-	coreApi.POST("/space/:install_id/files/upload", a.withAccessTokenFn(a.UploadSpaceFile))
-	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
-	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
+	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.adminListSpaceFiles))
+	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.adminGetSpaceFile))
+	coreApi.GET("/space/:install_id/files/:fileId/download", a.withAccessTokenFn(a.adminDownloadSpaceFile))
+	coreApi.DELETE("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.adminDeleteSpaceFile))
+	coreApi.POST("/space/:install_id/files/upload", a.withAccessTokenFn(a.adminUploadSpaceFile))
+	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.adminCreateSpaceFolder))
+	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.adminCreatePresignedUploadURL))
 
 	// Space Capabilities API
 	coreApi.GET("/space/:install_id/capabilities", a.withAccessTokenFn(a.ListSpaceCapabilities))
@@ -179,7 +179,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	// Capability Types API
 	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))
 
-	zg.POST("/file/upload-presigned", a.UploadFileWithPresigned)
+	zg.POST("/file/upload-presigned", a.adminUploadFileWithPresigned)
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
