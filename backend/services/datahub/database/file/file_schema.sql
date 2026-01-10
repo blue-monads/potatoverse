@@ -16,9 +16,10 @@ CREATE TABLE IF NOT EXISTS FileMeta (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_by INTEGER NOT NULL DEFAULT 0,
-  UNIQUE (owner_id, path, name),
-  INDEX (ref_id)
+  UNIQUE (owner_id, path, name)
 );
+
+CREATE INDEX IF NOT EXISTS idx_file_meta_ref_id ON FileMeta (ref_id);
 
 CREATE TABLE IF NOT EXISTS FileBlob (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
