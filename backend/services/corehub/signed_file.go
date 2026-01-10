@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
@@ -21,6 +22,10 @@ type FileMeta struct {
 const (
 	Salt = "signed-file"
 )
+
+func SignFileId(signer *signer.Signer, fid int64) (string, error) {
+	return signer.SignAlt(Salt, strconv.FormatInt(fid, 10))
+}
 
 func (c *CoreHub) ListSpaceFilesSigned(installId int64, path string) ([]FileMeta, error) {
 	files, err := c.db.GetFileOps().ListFiles(installId, path)

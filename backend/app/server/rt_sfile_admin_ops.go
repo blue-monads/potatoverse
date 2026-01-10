@@ -128,6 +128,11 @@ func (a *Server) adminUploadSpaceFile(claim *signer.AccessClaim, ctx *gin.Contex
 	return gin.H{"file_id": fileId, "message": "File uploaded successfully"}, nil
 }
 
+type CreateSpaceFolderRequest struct {
+	Name string `json:"name" binding:"required"`
+	Path string `json:"path"`
+}
+
 func (a *Server) adminCreateSpaceFolder(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
@@ -135,10 +140,7 @@ func (a *Server) adminCreateSpaceFolder(claim *signer.AccessClaim, ctx *gin.Cont
 	}
 
 	// Parse request body
-	var req struct {
-		Name string `json:"name" binding:"required"`
-		Path string `json:"path"`
-	}
+	var req CreateSpaceFolderRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return nil, err

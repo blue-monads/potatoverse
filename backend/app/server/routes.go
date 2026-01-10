@@ -31,7 +31,7 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
-	a.signedFileRoutes(coreApi.Group("/signed_file"))
+	a.spaceFileRoutes(coreApi.Group("/space_file"))
 
 	a.buddyRoutes.AttachRoutes(root)
 
@@ -203,12 +203,12 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 }
 
-func (a *Server) signedFileRoutes(g *gin.RouterGroup) {
+func (a *Server) spaceFileRoutes(g *gin.RouterGroup) {
 
-	g.GET("/list", a.signedFileList)
-	g.GET("/download/:ref_id", a.signedFileDownload)
-	g.GET("/preview/:ref_id", a.signedFilePreview)
-	g.POST("/upload", a.signedFileUpload)
-	g.POST("/create-folder", a.signedFileCreateFolder)
+	g.GET("/list", a.spaceFileList)
+	g.GET("/download/:ref_id", a.spaceFileDownload)
+	g.GET("/preview/:ref_id", a.spaceFilePreview)
+	g.POST("/upload", a.spaceFileUpload)
+	g.POST("/create-folder", a.spaceFileCreateFolder)
 
 }
