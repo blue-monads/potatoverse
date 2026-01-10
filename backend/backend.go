@@ -8,7 +8,6 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/app"
 	"github.com/blue-monads/potatoverse/backend/app/actions"
-	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/mailer/stdio"
@@ -92,8 +91,9 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 				return nil, err
 			}
 
-			coreHub := happ.CoreHub().(*corehub.CoreHub)
-			_, err = coreHub.UserSendMessage(&dbmodels.UserMessage{
+			uops := db.GetUserOps()
+
+			_, err = uops.AddUserMessage(&dbmodels.UserMessage{
 				Title:         "Welcome to PotatoVerse",
 				Contents:      "Welcome to PotatoVerse",
 				ToUser:        1,
