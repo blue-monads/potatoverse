@@ -31,6 +31,7 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
+	a.signedFileRoutes(coreApi.Group("/signed_file"))
 
 	a.buddyRoutes.AttachRoutes(root)
 
@@ -199,5 +200,15 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	zg.Any("/api/capabilities/:space_key/:capability_name", a.handleCapabilities)
 	zg.Any("/api/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)
 	zg.GET("/api/capabilities/debug/:capability_name", a.withAccessTokenFn(a.handleCapabilitiesDebug))
+
+}
+
+func (a *Server) signedFileRoutes(g *gin.RouterGroup) {
+
+	g.GET("/list", a.signedFileList)
+	g.GET("/download/:ref_id", a.signedFileDownload)
+	g.GET("/preview/:ref_id", a.signedFilePreview)
+	g.POST("/upload", a.signedFileUpload)
+	g.POST("/create-folder", a.signedFileCreateFolder)
 
 }
