@@ -131,6 +131,7 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 		SpaceId:   req.SpaceId,
 		UserId:    userId,
 		Typeid:    signer.TokenTypeSpace,
+		InstallId: space.InstalledId,
 		SessionId: snode.Generate().Int64(),
 	})
 
