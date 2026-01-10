@@ -169,8 +169,10 @@ const spaceFilePicker = (spaceToken) => {
             font-weight: 500;
         `;
         selectBtn.onclick = () => {
-            if (selectedFile && onSelectCallback) {
-                onSelectCallback(selectedFile);
+            if (selectedFile) {
+                if (onSelectCallback) {
+                    onSelectCallback(selectedFile);
+                }
                 closeModal();
             }
         };
