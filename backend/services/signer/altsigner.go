@@ -52,22 +52,6 @@ func (b *Signer) SignAltBatch(salt string, data []string) ([]string, error) {
 
 }
 
-func (b *Signer) VerifyAltBatch(salt string, tokens []string) ([]string, error) {
-	data := make([]string, len(tokens))
-	key := b.deriveAltKey(salt)
-
-	for i := range tokens {
-		d, _, err := b.VerifyAltCore(key, tokens[i])
-		if err != nil {
-			return nil, err
-		}
-		data[i] = d
-	}
-
-	return data, nil
-
-}
-
 func (b *Signer) SignAltCore(key []byte, data string) (string, error) {
 
 	nonce := make([]byte, NonceSize+4)
