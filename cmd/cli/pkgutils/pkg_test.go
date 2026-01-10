@@ -1,4 +1,4 @@
-package cli
+package pkgutils
 
 import (
 	"archive/zip"
@@ -228,7 +228,7 @@ func TestPackageFilesV2(t *testing.T) {
 			defer zipWriter.Close()
 
 			// Run the function
-			err = packageFilesV2(absTestdataPath, tt.opts, zipWriter)
+			err = PackageFilesV2(absTestdataPath, tt.opts, zipWriter)
 			if err != nil {
 				zipWriter.Close()
 				zipFile.Close()
@@ -346,7 +346,7 @@ func TestGlobToRegex(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			regex, err := globToRegex(tt.pattern)
+			regex, err := GlobToRegex(tt.pattern)
 			if err != nil {
 				if !tt.expectError {
 					t.Errorf("globToRegex() error = %v", err)

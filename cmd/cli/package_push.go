@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/blue-monads/potatoverse/cmd/cli/pkgutils"
 )
 
 func (c *PackagePushCmd) Run(_ *kong.Context) error {
@@ -21,7 +22,7 @@ func (c *PackagePushCmd) Run(_ *kong.Context) error {
 }
 
 func PushPackage(potatoTomlFile string, outputZipFile string) error {
-	potatoToml, err := readPotatoToml(potatoTomlFile)
+	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
 	if err != nil {
 		return err
 	}

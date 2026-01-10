@@ -1,4 +1,4 @@
-package cli
+package pkgutils
 
 import (
 	"archive/zip"
@@ -13,10 +13,10 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func readPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
+func ReadPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
 
 	potatoToml := &models.PotatoPackage{}
-	err := readPotato(potatoTomlFile, potatoToml)
+	err := ReadPotato(potatoTomlFile, potatoToml)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoTomlFile, err)
 	}
@@ -24,16 +24,16 @@ func readPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
 	return potatoToml, nil
 }
 
-func readPotatoMap(potatoJsonFile string) (map[string]any, error) {
+func ReadPotatoMap(potatoJsonFile string) (map[string]any, error) {
 	potatoMap := make(map[string]any)
-	err := readPotato(potatoJsonFile, &potatoMap)
+	err := ReadPotato(potatoJsonFile, &potatoMap)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoJsonFile, err)
 	}
 	return potatoMap, nil
 }
 
-func readPotato(potatoJsonFile string, target any) error {
+func ReadPotato(potatoJsonFile string, target any) error {
 	pdata, err := os.ReadFile(potatoJsonFile)
 	if strings.HasSuffix(potatoJsonFile, ".json") {
 		err = json.Unmarshal(pdata, target)
@@ -51,7 +51,7 @@ type includePatternInfo struct {
 	regex         *regexp.Regexp
 }
 
-func packageFilesV2(basePath string, opts *models.DeveloperOptions, zipWriter *zip.Writer) error {
+func PackageFilesV2(basePath string, opts *models.DeveloperOptions, zipWriter *zip.Writer) error {
 
 	// Normalize basePath to absolute path
 	absBasePath, err := filepath.Abs(basePath)
@@ -73,7 +73,7 @@ func packageFilesV2(basePath string, opts *models.DeveloperOptions, zipWriter *z
 			destPath = "" // No destination, use original path
 		}
 
-		regex, err := globToRegex(sourcePattern)
+		regex, err := GlobToRegex(sourcePattern)
 		if err != nil {
 			return fmt.Errorf("invalid include pattern %q: %w", sourcePattern, err)
 		}
@@ -87,7 +87,7 @@ func packageFilesV2(basePath string, opts *models.DeveloperOptions, zipWriter *z
 
 	excludePatterns := make([]*regexp.Regexp, 0, len(opts.ExcludeFiles))
 	for _, pattern := range opts.ExcludeFiles {
-		regex, err := globToRegex(pattern)
+		regex, err := GlobToRegex(pattern)
 		if err != nil {
 			return fmt.Errorf("invalid exclude pattern %q: %w", pattern, err)
 		}
@@ -255,7 +255,7 @@ func extractLiteralPrefix(pattern string) string {
 }
 
 // globToRegex converts a glob pattern (supporting *, ?, and **) to a regex pattern
-func globToRegex(pattern string) (*regexp.Regexp, error) {
+func GlobToRegex(pattern string) (*regexp.Regexp, error) {
 	// Normalize path separators
 	pattern = filepath.ToSlash(pattern)
 

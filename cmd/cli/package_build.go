@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/alecthomas/kong"
+	"github.com/blue-monads/potatoverse/cmd/cli/pkgutils"
 )
 
 func (c *PackageBuildCmd) Run(_ *kong.Context) error {
@@ -25,7 +26,7 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 	fmt.Printf("PackageFiles start\n")
 
-	potatoToml, err := readPotatoToml(potatoTomlFile)
+	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
 	if err != nil {
 		return "", err
 	}
@@ -48,14 +49,14 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 
 	potatoFileDir := path.Dir(potatoTomlFile)
 
-	err = packageFilesV2(potatoFileDir, potatoToml.Developer, zipWriter)
+	err = pkgutils.PackageFilesV2(potatoFileDir, potatoToml.Developer, zipWriter)
 	if err != nil {
 		return "", err
 	}
 
 	potatoToml.Developer = nil
 
-	potatoMap, err := readPotatoMap(potatoTomlFile)
+	potatoMap, err := pkgutils.ReadPotatoMap(potatoTomlFile)
 	if err != nil {
 		return "", err
 	}
