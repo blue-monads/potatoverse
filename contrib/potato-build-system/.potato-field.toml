@@ -5,3 +5,4 @@ harvest_folder = "/harvest" # artifacts will be stored in this folder
 potatoes_folder = "." # potatoes will be stored in this folder
 skip_built_version = true # if true, checks toml file version and harvest folder, to see if it needs to be built
 potato_build_command = "just build" # command to build the potato
+generate_tag_index = false
