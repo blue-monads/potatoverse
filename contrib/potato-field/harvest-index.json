@@ -12,6 +12,7 @@
         "author_email": "bornjre@gmail.com",
         "author_site": "https://github.com/bornjre",
         "license": "MIT",
+        "base_harvest_url": "https://github.com/blue-monads/potato-apps/releases/download/",
         "current_version": "0.0.1",
         "versions": ["0.0.1","0.0.2","0.0.3"]
     }]
