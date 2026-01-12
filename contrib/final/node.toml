@@ -20,12 +20,20 @@ provider = "http"
 pre_connect = true
 
 
-
-
 [backup-config]
+
+[litestream]
 full-snapshot-interval = "1h"
 delta-snapshot-interval = "10m"
 delete-interval = "1h"
+replicas = [
+    { type = "buddy", id ="pub123" },
+]
+
+[cdc]
+replicates = [
+    { type = "buddy", id ="pub123" },
+]
 
 # repo array
 [[repo]]
