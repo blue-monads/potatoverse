@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/blue-monads/potatoverse/backend/services/corehub/buddyhub/funnel"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/app/server/rt_buddy/webdav"
-	"github.com/blue-monads/potatoverse/backend/services/corehub/buddyhub"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
