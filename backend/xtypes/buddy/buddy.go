@@ -41,5 +41,7 @@ type BuddyHub interface {
 	GetBuddyRoot(buddyPubkey string) (*os.Root, error)
 	GetRendezvousUrls() []RendezvousUrl
 
+	RegisterHandler(msgType string, h func(buddyPubkey string, data []byte) error) error
+
 	// 	OpenBuddyWs(buddyPubkey string, endpoint string, inchan []byte, outchan chan []byte) error
 }

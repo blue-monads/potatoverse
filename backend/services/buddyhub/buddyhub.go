@@ -152,3 +152,7 @@ func (h *BuddyHub) GetBuddyRoot(buddyPubkey string) (*os.Root, error) {
 func (h *BuddyHub) GetRendezvousUrls() []buddy.RendezvousUrl {
 	return nil
 }
+
+func (h *BuddyHub) RegisterHandler(msgType string, handler func(buddyPubkey string, data []byte) error) error {
+	return nil
+}
