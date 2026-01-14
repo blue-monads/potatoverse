@@ -1,4 +1,4 @@
-package outcontrol
+package nostrout
 
 import (
 	"context"
