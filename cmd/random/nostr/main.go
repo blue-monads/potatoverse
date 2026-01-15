@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/nostrout"
@@ -49,7 +50,7 @@ func main() {
 
 	time.Sleep(2 * time.Second)
 
-	err = bob.WriteEventRaw(nostr.Event{
+	rev, err := bob.WriteEventWithResponse(nostr.Event{
 		Kind:    nostr.KindHTTPAuth + 2,
 		Content: "Hello, world from bob to alice",
 		Tags: []nostr.Tag{
@@ -64,6 +65,10 @@ func main() {
 	if err != nil {
 		qq.Println("@main_error/4", err.Error())
 		panic(err)
+	}
+
+	if rev != nil {
+		fmt.Println("@bob received event", rev.ID, rev.Content)
 	}
 
 	qq.Println("@bob wrote event")
@@ -82,12 +87,74 @@ func createNode(key string) (*nostrout.NostrRout, error) {
 		return nil, err
 	}
 
-	nostrRout := nostrout.New(nostrout.Options{
+	var nostrRout *nostrout.NostrRout
+
+	processedEvents := make(map[string]bool)
+	processedEventsMutex := sync.Mutex{}
+
+	nostrRout = nostrout.New(nostrout.Options{
 		SelfPubkey:  pubkey,
 		SelfPrivkey: privkey,
 		Handler: func(ev *nostr.Event) {
+
+			processedEventsMutex.Lock()
+			if processedEvents[ev.ID] {
+				processedEventsMutex.Unlock()
+				return
+			}
+
+			processedEvents[ev.ID] = true
+			processedEventsMutex.Unlock()
+
 			qq.Println("----------@WOWOW@-------------")
-			fmt.Println("@event"+key, ev)
+			fmt.Println("@event"+key, ev.Content)
+
+			fmt.Println("@tags", ev.Tags, len(ev.Tags))
+
+			currEtags := ev.Tags.Find("e")
+
+			qq.Println("@currEtags", len(currEtags))
+
+			if len(currEtags) > 0 {
+				for _, etag := range currEtags {
+					qq.Println("@e", etag)
+				}
+
+				qq.Println("@don't reply to reply", ev.ID)
+				return
+			}
+
+			evid := ev.ID
+
+			pIds := ev.Tags.FindLast("p")
+			if len(pIds) == 0 {
+				qq.Println("@sender not found")
+				return
+			}
+
+			pId := pIds[1]
+
+			qq.Println("@writing reply to event", evid, pId)
+
+			nostrRout.WriteEventRaw(nostr.Event{
+				Kind:    nostr.KindHTTPAuth + 2,
+				Content: "reply to event by " + key,
+				Tags: []nostr.Tag{
+					{
+						"p", pId,
+					},
+					{
+						"e", evid,
+					},
+				},
+				CreatedAt: nostr.Now(),
+			})
+
+			if err != nil {
+				qq.Println("@main_error/5", err.Error())
+				panic(err)
+			}
+
 		},
 		DefaultServers: nostrout.DefaultServers,
 	})

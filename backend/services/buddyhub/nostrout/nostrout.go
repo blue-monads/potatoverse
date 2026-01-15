@@ -2,6 +2,7 @@ package nostrout
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"slices"
 	"sync"
@@ -42,7 +43,6 @@ var (
 		"wss://nostr.bitcoiner.social",
 		"wss://no.str.cr",
 		"wss://nostr-dev.wellorder.net",
-		"wss://nostr.einundzwanzig.space",
 		"wss://nostr.middling.mydns.jp",
 		"wss://nostr.mom",
 		"wss://nostr.noones.com",
@@ -189,10 +189,16 @@ func (o *NostrRout) connect(ctx context.Context, relayServer string, filters nos
 }
 
 func (o *NostrRout) handleEvent(sub *nostr.Subscription) {
-	defer sub.Close()
+	defer func() {
+		sub.Unsub()
+		sub.Close()
+		qq.Println("@closed/subscription")
+	}()
+
 	for ev := range sub.Events {
 		o.opt.Handler(ev)
 	}
+
 }
 
 func (o *NostrRout) WriteEventRaw(ev nostr.Event) error {
@@ -215,6 +221,78 @@ func (o *NostrRout) WriteEventRaw(ev nostr.Event) error {
 	}
 
 	return nil
+}
+
+var (
+	ErrNoResponse = errors.New("no response")
+)
+
+func (o *NostrRout) WriteEventWithResponse(ev nostr.Event) (*nostr.Event, error) {
+
+	err := ev.Sign(o.hexPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	filters := nostr.Filters{{
+		Kinds: []int{KindPotato},
+		Tags: map[string][]string{
+			"#e": {ev.ID},
+		},
+	}}
+
+	responseChan := make(chan *nostr.Event, 1)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		cancel()
+		close(responseChan)
+	}()
+
+	isDone := false
+
+	for _, relay := range o.relays {
+		go func() {
+
+			if isDone {
+				return
+			}
+
+			sub, err := relay.Subscribe(ctx, filters)
+			if err != nil {
+				qq.Println("@error/relay", relay.URL, err.Error())
+				return
+			}
+
+			defer sub.Unsub()
+
+			if isDone {
+				return
+			}
+
+			err = relay.Publish(ctx, ev)
+			if err != nil {
+				qq.Println("@error/relay", relay.URL, err.Error())
+				return
+			}
+
+			if isDone {
+				return
+			}
+
+			for ev := range sub.Events {
+				responseChan <- ev
+				isDone = true
+				break
+			}
+
+		}()
+	}
+
+	rev := <-responseChan
+
+	return rev, nil
+
 }
 
 func (o *NostrRout) Close() {
