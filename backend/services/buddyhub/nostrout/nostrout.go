@@ -49,7 +49,6 @@ var (
 		"wss://nostr.oxtr.dev",
 		"wss://nostr.slothy.win",
 		"wss://nostr-verified.wellorder.net",
-		"wss://nostr-verif.slothy.win",
 		"wss://nostr.vulpem.com",
 		"wss://relay.damus.io",
 		"wss://relay.minds.com/nostr/v1/ws",
@@ -74,6 +73,9 @@ type NostrRout struct {
 
 	writeChan chan *nostr.Event
 	relays    []*nostr.Relay
+
+	processedEvents      map[string]bool
+	processedEventsMutex sync.RWMutex
 }
 
 type Options struct {
@@ -105,6 +107,9 @@ func New(opt Options) *NostrRout {
 		relays:        make([]*nostr.Relay, 0, len(opt.DefaultServers)),
 		hexPrivateKey: privkey,
 		hexPublicKey:  pubkey,
+
+		processedEvents:      make(map[string]bool),
+		processedEventsMutex: sync.RWMutex{},
 	}
 }
 
@@ -196,6 +201,33 @@ func (o *NostrRout) handleEvent(sub *nostr.Subscription) {
 	}()
 
 	for ev := range sub.Events {
+
+		eTags := ev.Tags.Find("e")
+		if len(eTags) > 0 {
+			qq.Println("@skipping_event_subscribed/event_reply", ev.ID)
+			continue
+		}
+
+		o.processedEventsMutex.RLock()
+		if o.processedEvents[ev.ID] {
+			o.processedEventsMutex.RUnlock()
+			qq.Println("@skipping_event_subscribed/event_already_processed", ev.ID)
+			continue
+		}
+		o.processedEventsMutex.RUnlock()
+
+		// double check
+		o.processedEventsMutex.Lock()
+		recheck := o.processedEvents[ev.ID]
+		if recheck {
+			o.processedEventsMutex.Unlock()
+			qq.Println("@skipping_event_subscribed/event_already_processed", ev.ID)
+			continue
+		}
+
+		o.processedEvents[ev.ID] = true
+		o.processedEventsMutex.Unlock()
+
 		o.opt.Handler(ev)
 	}
 

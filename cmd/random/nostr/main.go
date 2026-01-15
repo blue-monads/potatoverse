@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/nostrout"
@@ -89,25 +88,13 @@ func createNode(key string) (*nostrout.NostrRout, error) {
 
 	var nostrRout *nostrout.NostrRout
 
-	processedEvents := make(map[string]bool)
-	processedEventsMutex := sync.Mutex{}
-
 	nostrRout = nostrout.New(nostrout.Options{
 		SelfPubkey:  pubkey,
 		SelfPrivkey: privkey,
 		Handler: func(ev *nostr.Event) {
 
-			processedEventsMutex.Lock()
-			if processedEvents[ev.ID] {
-				processedEventsMutex.Unlock()
-				return
-			}
-
-			processedEvents[ev.ID] = true
-			processedEventsMutex.Unlock()
-
 			qq.Println("----------@WOWOW@-------------")
-			fmt.Println("@event"+key, ev.Content)
+			fmt.Println("@event"+key, ev.ID, ev.Content)
 
 			fmt.Println("@tags", ev.Tags, len(ev.Tags))
 
