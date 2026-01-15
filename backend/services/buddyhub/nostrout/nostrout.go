@@ -3,8 +3,20 @@ package nostrout
 import (
 	"context"
 
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/nbd-wtf/go-nostr"
+	"github.com/nbd-wtf/go-nostr/nip19"
 )
+
+/*
+
+Nostr Resources:
+	https://nostr-nips.com
+	https://github.com/nostr-protocol/nips
+	https://github.com/nbd-wtf/go-nostr
+	https://nostrbook.dev/
+
+*/
 
 var (
 	NoStrServerList = []string{
@@ -12,12 +24,10 @@ var (
 		"wss://relay.nostr.band",
 		"wss://cache1.primal.net",
 		"wss://relay.bitcoiner.social",
-		"wss://nostr.mutinywallet.com",
 		"wss://relay.current.fyi",
 		"wss://relay.nos.social",
 		"wss://relay.nostr.inosta.cc",
 		"wss://relay.nostr.pub",
-		"wss://nostr.rocks",
 		"wss://relay.nostr.info",
 		"wss://relay.nostrich.de",
 		"wss://relay.snort.social",
@@ -36,33 +46,66 @@ const (
 	KindPotato = nostr.KindHTTPAuth + 2
 )
 
-type OutControl struct {
-	selfPubkey string
-	writeChan  chan *nostr.Event
-	relays     []*nostr.Relay
-	handler    func(ev *nostr.Event)
+type NostrRout struct {
+	opt Options
+
+	hexPrivateKey string
+	hexPublicKey  string
+
+	writeChan chan *nostr.Event
+	relays    []*nostr.Relay
 }
 
-func NewOutControl(selfPubkey string, handler func(ev *nostr.Event)) *OutControl {
-	return &OutControl{
-		selfPubkey: selfPubkey,
-		writeChan:  make(chan *nostr.Event),
-		relays:     make([]*nostr.Relay, 0, len(DefaultServers)),
-		handler:    handler,
+type Options struct {
+	SelfPubkey     string
+	SelfPrivkey    string
+	Handler        func(ev *nostr.Event)
+	DefaultServers []string
+}
+
+func New(opt Options) *NostrRout {
+
+	_, privval, err := nip19.Decode(opt.SelfPrivkey)
+	if err != nil {
+		panic(err)
+	}
+
+	privkey := privval.(string)
+
+	_, pubval, err := nip19.Decode(opt.SelfPubkey)
+	if err != nil {
+		panic(err)
+	}
+
+	pubkey := pubval.(string)
+
+	return &NostrRout{
+		opt:           opt,
+		writeChan:     make(chan *nostr.Event),
+		relays:        make([]*nostr.Relay, 0, len(opt.DefaultServers)),
+		hexPrivateKey: privkey,
+		hexPublicKey:  pubkey,
 	}
 }
 
-func (o *OutControl) Run() error {
+func (o *NostrRout) Run() error {
 	return o.runLoop()
 }
 
-func (o *OutControl) runLoop() error {
+func (o *NostrRout) runLoop() error {
 
 	ctx := context.Background()
 
+	_, pubval, err := nip19.Decode(o.opt.SelfPubkey)
+	if err != nil {
+		return err
+	}
+
+	selfPubkey := pubval.(string)
+
 	filters := nostr.Filters{{
 		Kinds:   []int{nostr.KindTextNote},
-		Authors: []string{o.selfPubkey},
+		Authors: []string{selfPubkey},
 	}}
 
 	relays := make([]*nostr.Relay, 0, len(DefaultServers))
@@ -70,7 +113,10 @@ func (o *OutControl) runLoop() error {
 	for _, server := range DefaultServers {
 		relay, err := nostr.RelayConnect(ctx, server)
 		if err != nil {
-			return err
+
+			qq.Println("@error", err)
+			continue
+
 		}
 		sub, err := relay.Subscribe(ctx, filters)
 		if err != nil {
@@ -86,16 +132,16 @@ func (o *OutControl) runLoop() error {
 
 }
 
-func (o *OutControl) handleEvent(sub *nostr.Subscription) {
+func (o *NostrRout) handleEvent(sub *nostr.Subscription) {
 	defer sub.Close()
 	for ev := range sub.Events {
-		o.handler(ev)
+		o.opt.Handler(ev)
 	}
 }
 
-func (o *OutControl) WriteEventRaw(ev nostr.Event) error {
+func (o *NostrRout) WriteEventRaw(ev nostr.Event) error {
 
-	err := ev.Sign(o.selfPubkey)
+	err := ev.Sign(o.hexPrivateKey)
 	if err != nil {
 		return err
 	}
@@ -112,8 +158,20 @@ func (o *OutControl) WriteEventRaw(ev nostr.Event) error {
 	return nil
 }
 
-func (o *OutControl) Close() {
+func (o *NostrRout) Close() {
 	for _, relay := range o.relays {
 		relay.Close()
 	}
+}
+
+func (o *NostrRout) GetPubkey() string {
+	return o.hexPublicKey
+}
+
+func (o *NostrRout) GetPrivkey() string {
+	return o.hexPrivateKey
+}
+
+func (o *NostrRout) GetOptions() *Options {
+	return &o.opt
 }
