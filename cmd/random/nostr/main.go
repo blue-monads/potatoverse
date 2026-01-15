@@ -29,7 +29,7 @@ func main() {
 	alicePubKey := alice.GetPubkey()
 	bobPubKey := bob.GetPubkey()
 
-	err = alice.WriteEventRaw(nostr.Event{
+	rev1, err := alice.WriteEventWithResponse(nostr.Event{
 		Kind:    nostr.KindHTTPAuth + 2,
 		Content: "Hello, world from alice to bob",
 		Tags: []nostr.Tag{
@@ -43,6 +43,10 @@ func main() {
 	if err != nil {
 		qq.Println("@main_error/3", err.Error())
 		panic(err)
+	}
+
+	if rev1 != nil {
+		fmt.Println("@REPLY_FROM_ALICE", rev1.ID, rev1.Content)
 	}
 
 	qq.Println("@alice wrote event")
@@ -67,7 +71,7 @@ func main() {
 	}
 
 	if rev != nil {
-		fmt.Println("@bob received event", rev.ID, rev.Content)
+		fmt.Println("@REPLY_FROM_BOB", rev.ID, rev.Content)
 	}
 
 	qq.Println("@bob wrote event")

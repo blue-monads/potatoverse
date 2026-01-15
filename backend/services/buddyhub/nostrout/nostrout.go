@@ -269,7 +269,7 @@ func (o *NostrRout) WriteEventWithResponse(ev nostr.Event) (*nostr.Event, error)
 	filters := nostr.Filters{{
 		Kinds: []int{KindPotato},
 		Tags: map[string][]string{
-			"#e": {ev.ID},
+			"e": {ev.ID},
 		},
 	}}
 
