@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/nbd-wtf/go-nostr"
@@ -273,58 +274,76 @@ func (o *NostrRout) WriteEventWithResponse(ev nostr.Event) (*nostr.Event, error)
 		},
 	}}
 
-	responseChan := make(chan *nostr.Event, 1)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		cancel()
-		close(responseChan)
-	}()
-
-	isDone := false
-
-	for _, relay := range o.relays {
-		go func() {
-
-			if isDone {
-				return
-			}
-
-			sub, err := relay.Subscribe(ctx, filters)
-			if err != nil {
-				qq.Println("@error/relay", relay.URL, err.Error())
-				return
-			}
-
-			defer sub.Unsub()
-
-			if isDone {
-				return
-			}
-
-			err = relay.Publish(ctx, ev)
-			if err != nil {
-				qq.Println("@error/relay", relay.URL, err.Error())
-				return
-			}
-
-			if isDone {
-				return
-			}
-
-			for ev := range sub.Events {
-				responseChan <- ev
-				isDone = true
-				break
-			}
-
-		}()
+	if len(o.relays) == 0 {
+		return nil, ErrNoResponse
 	}
 
-	rev := <-responseChan
+	batchSize := 2
+	timeoutSecs := 5
 
-	return rev, nil
+	// Try relays in batches of 2, looping until all are exhausted
+	for i := 0; i < len(o.relays); i += batchSize {
+		end := min(i+batchSize, len(o.relays))
 
+		batch := o.relays[i:end]
+		qq.Println("@trying_batch", i, end, "relays:", len(batch))
+
+		resp, err := o.tryRelaysForResponse(ev, filters, batch, timeoutSecs)
+		if err == nil && resp != nil {
+			return resp, nil
+		}
+
+		qq.Println("@no_response_from_batch", i, end)
+	}
+
+	return nil, ErrNoResponse
+}
+
+func (o *NostrRout) tryRelaysForResponse(ev nostr.Event, filters nostr.Filters, relays []*nostr.Relay, timeoutSecs int) (*nostr.Event, error) {
+	responseChan := make(chan *nostr.Event, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecs)*time.Second)
+	defer cancel()
+
+	for _, relay := range relays {
+		go func(r *nostr.Relay) {
+
+			sub, err := r.Subscribe(ctx, filters)
+			if err != nil {
+				qq.Println("@error/relay/subscribe", r.URL, err.Error())
+				return
+			}
+			defer sub.Unsub()
+
+			err = r.Publish(ctx, ev)
+			if err != nil {
+				qq.Println("@error/relay/publish", r.URL, err.Error())
+				return
+			}
+
+			qq.Println("@published/relay", r.URL)
+
+			for {
+				select {
+				case respEv := <-sub.Events:
+					select {
+					case responseChan <- respEv:
+					default:
+					}
+					return
+				case <-ctx.Done():
+					return
+				}
+			}
+		}(relay)
+	}
+
+	select {
+	case resp := <-responseChan:
+		return resp, nil
+	case <-ctx.Done():
+		return nil, ErrNoResponse
+	}
 }
 
 func (o *NostrRout) Close() {
