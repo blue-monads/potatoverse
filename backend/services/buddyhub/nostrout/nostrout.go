@@ -117,8 +117,10 @@ func (o *NostrRout) runLoop() error {
 	ctx := context.Background()
 
 	filters := nostr.Filters{{
-		Kinds:   []int{nostr.KindTextNote},
-		Authors: []string{o.hexPublicKey},
+		Kinds: []int{KindPotato},
+		Tags: map[string][]string{
+			"p": {o.hexPublicKey},
+		},
 	}}
 
 	selectedServers := make([]string, 0, 7)
