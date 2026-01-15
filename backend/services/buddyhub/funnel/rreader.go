@@ -3,6 +3,8 @@ package funnel
 import (
 	"io"
 	"net"
+
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 )
 
 // responseReader reads response body from packets
@@ -25,11 +27,11 @@ func (r *responseReader) Read(p []byte) (int, error) {
 	// If total is 0 and we haven't received anything, we need to read the EndBody packet
 	// and return EOF immediately
 	if r.total == 0 && r.received == 0 {
-		packet, err := ReadPacket(r.conn)
+		packet, err := packetwire.ReadPacket(r.conn)
 		if err != nil {
 			return 0, err
 		}
-		if packet.PType != PtypeEndBody {
+		if packet.PType != packetwire.PtypeEndBody {
 			return 0, io.ErrUnexpectedEOF
 		}
 		// Consumed the EndBody packet, return EOF
@@ -37,12 +39,12 @@ func (r *responseReader) Read(p []byte) (int, error) {
 	}
 
 	// Read next packet
-	packet, err := ReadPacket(r.conn)
+	packet, err := packetwire.ReadPacket(r.conn)
 	if err != nil {
 		return 0, err
 	}
 
-	if packet.PType != PtypeSendBody && packet.PType != PtypeEndBody {
+	if packet.PType != packetwire.PtypeSendBody && packet.PType != packetwire.PtypeEndBody {
 		return 0, io.ErrUnexpectedEOF
 	}
 
@@ -56,7 +58,7 @@ func (r *responseReader) Read(p []byte) (int, error) {
 	}
 
 	// Check if we're done
-	if packet.PType == PtypeEndBody || (r.total > 0 && r.received >= r.total) {
+	if packet.PType == packetwire.PtypeEndBody || (r.total > 0 && r.received >= r.total) {
 		if len(r.buffer) == 0 {
 			return n, io.EOF
 		}

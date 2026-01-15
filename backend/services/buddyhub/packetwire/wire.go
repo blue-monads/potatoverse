@@ -1,4 +1,4 @@
-package funnel
+package packetwire
 
 import (
 	"encoding/binary"

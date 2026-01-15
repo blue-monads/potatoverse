@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ type ServerHandle struct {
 }
 
 type ServerWrite struct {
-	packet *Packet
+	packet *packetwire.Packet
 	reqId  string
 }
 
@@ -25,7 +26,7 @@ type Funnel struct {
 	serverConnections map[string]*ServerHandle
 	scLock            sync.RWMutex
 
-	pendingReq     map[string]chan *Packet
+	pendingReq     map[string]chan *packetwire.Packet
 	pendingReqLock sync.Mutex
 }
 
@@ -34,7 +35,7 @@ func New() *Funnel {
 	return &Funnel{
 		serverConnections: make(map[string]*ServerHandle),
 		scLock:            sync.RWMutex{},
-		pendingReq:        make(map[string]chan *Packet),
+		pendingReq:        make(map[string]chan *packetwire.Packet),
 		pendingReqLock:    sync.Mutex{},
 	}
 }

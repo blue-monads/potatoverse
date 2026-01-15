@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -67,7 +68,7 @@ func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrit
 				break
 			}
 
-			err := WritePacketFull(conn, sw.packet, sw.reqId)
+			err := packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
 			if err != nil {
 				qq.Println("@handleServerConnection/5{ERROR}", err)
 				break
@@ -89,7 +90,7 @@ func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrit
 
 		qq.Println("@handleServerConnection/4{REQ_ID}", reqId)
 
-		packet, err := ReadPacket(conn)
+		packet, err := packetwire.ReadPacket(conn)
 		if err != nil {
 			qq.Println("@handleServerConnection/3", serverId, err)
 			break

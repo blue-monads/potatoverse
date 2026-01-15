@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http/httputil"
 
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
@@ -28,7 +29,7 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 	qq.Println("@routeWS/2")
 
 	// Generate request ID
-	reqId := GetRequestId()
+	reqId := packetwire.GetRequestId()
 
 	qq.Println("@routeWS/3")
 
@@ -43,7 +44,7 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 
 	qq.Println("@routeWS/4")
 
-	pendingReqChan := make(chan *Packet)
+	pendingReqChan := make(chan *packetwire.Packet)
 	f.pendingReqLock.Lock()
 	f.pendingReq[reqId] = pendingReqChan
 	f.pendingReqLock.Unlock()
@@ -61,8 +62,8 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 
 	// Write request header packet
 	serverConn.writeChan <- &ServerWrite{
-		packet: &Packet{
-			PType:  PTypeSendHeader,
+		packet: &packetwire.Packet{
+			PType:  packetwire.PTypeSendHeader,
 			Offset: 0,
 			Total:  0, // WebSocket doesn't have a body in the initial request
 			Data:   out,
@@ -127,8 +128,8 @@ func (f *Funnel) routeWS(serverId string, c *gin.Context) {
 
 		// Write WebSocket data as packet
 		serverConn.writeChan <- &ServerWrite{
-			packet: &Packet{
-				PType:  PtypeWebSocketData,
+			packet: &packetwire.Packet{
+				PType:  packetwire.PtypeWebSocketData,
 				Offset: 0,
 				Total:  int32(len(msg)),
 				Data:   msg,

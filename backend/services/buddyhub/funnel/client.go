@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -27,7 +28,7 @@ type FunnelClientOptions struct {
 type FunnelClient struct {
 	opts FunnelClientOptions
 
-	pendingRequests map[string]chan *Packet
+	pendingRequests map[string]chan *packetwire.Packet
 	prLock          sync.Mutex
 
 	writeChan chan *ServerWrite
@@ -36,7 +37,7 @@ type FunnelClient struct {
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
 	return &FunnelClient{
 		opts:            opts,
-		pendingRequests: make(map[string]chan *Packet),
+		pendingRequests: make(map[string]chan *packetwire.Packet),
 		prLock:          sync.Mutex{},
 		writeChan:       make(chan *ServerWrite),
 	}
@@ -54,7 +55,7 @@ func (c *FunnelClient) writePackets(conn net.Conn) {
 			break
 		}
 
-		err := WritePacketFull(conn, sw.packet, sw.reqId)
+		err := packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
 		if err != nil {
 			qq.Println("@FunnelClient/writePackets/1{ERROR}", err)
 			errCount++
@@ -135,13 +136,13 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		qq.Println("@FunnelClient/handleFunnelConnection/3{REQ_ID}", reqId)
 
 		// Read header packet
-		headerPacket, err := ReadPacket(conn)
+		headerPacket, err := packetwire.ReadPacket(conn)
 		if err != nil {
 			qq.Println("@FunnelClient/handleFunnelConnection/3{ERROR}", err)
 			continue
 		}
 
-		if headerPacket.PType != PTypeSendHeader {
+		if headerPacket.PType != packetwire.PTypeSendHeader {
 
 			c.prLock.Lock()
 			pendingRequest := c.pendingRequests[reqId]
@@ -154,7 +155,7 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 
 			pendingRequest <- headerPacket
 
-			if headerPacket.PType == PtypeEndBody || headerPacket.PType == PtypeEndSocket {
+			if headerPacket.PType == packetwire.PtypeEndBody || headerPacket.PType == packetwire.PtypeEndSocket {
 				c.prLock.Lock()
 				delete(c.pendingRequests, reqId)
 				c.prLock.Unlock()
@@ -171,7 +172,7 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 			continue
 		}
 
-		pendingReqChan := make(chan *Packet)
+		pendingReqChan := make(chan *packetwire.Packet)
 
 		c.prLock.Lock()
 		c.pendingRequests[reqId] = pendingReqChan
@@ -190,7 +191,7 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 	}
 }
 
-func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *http.Request) {
+func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId string, req *http.Request) {
 	// Modify request URL to point to local server
 	host := fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
 	req.URL.Host = host
@@ -209,7 +210,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 
 		req.Body = &requestReader{
 			pendingRequest: pch,
-			buffer:         make([]byte, 0, FragmentSize),
+			buffer:         make([]byte, 0, packetwire.FragmentSize),
 		}
 	}
 
@@ -228,8 +229,8 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 	}
 
 	c.writeChan <- &ServerWrite{
-		packet: &Packet{
-			PType:  PTypeSendHeader,
+		packet: &packetwire.Packet{
+			PType:  packetwire.PTypeSendHeader,
 			Offset: 0,
 			Total:  int32(resp.ContentLength),
 			Data:   out,
@@ -242,8 +243,8 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 		qq.Println("@handleHttpRequest/case_zero_length")
 
 		c.writeChan <- &ServerWrite{
-			packet: &Packet{
-				PType:  PtypeEndBody,
+			packet: &packetwire.Packet{
+				PType:  packetwire.PtypeEndBody,
 				Offset: 0,
 				Total:  0,
 				Data:   []byte{},
@@ -263,7 +264,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 
 		for {
 
-			fbuf := make([]byte, FragmentSize)
+			fbuf := make([]byte, packetwire.FragmentSize)
 
 			qq.Println("@loop/1")
 
@@ -279,8 +280,8 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 				// Send EndBody
 				qq.Println("@loop/4{SEND_END_BODY}")
 				c.writeChan <- &ServerWrite{
-					packet: &Packet{
-						PType:  PtypeEndBody,
+					packet: &packetwire.Packet{
+						PType:  packetwire.PtypeEndBody,
 						Offset: offset,
 						Total:  int32(resp.ContentLength),
 						Data:   []byte{},
@@ -295,16 +296,16 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 
 			qq.Println("@loop/7{SEND_BODY}")
 
-			ptype := PtypeSendBody
+			ptype := packetwire.PtypeSendBody
 			if err == io.EOF {
 				qq.Println("@loop/8{SEND_END_BODY}")
-				ptype = PtypeEndBody
+				ptype = packetwire.PtypeEndBody
 			}
 
 			qq.Println("@loop/9{SEND_BODY}")
 
 			c.writeChan <- &ServerWrite{
-				packet: &Packet{
+				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: offset,
 					Total:  int32(resp.ContentLength),
@@ -328,7 +329,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 		qq.Println("@handleHttpRequest/case_negative_length/chunked")
 
 		offset := int32(0)
-		fbuf := make([]byte, FragmentSize)
+		fbuf := make([]byte, packetwire.FragmentSize)
 
 		for {
 			n, err := resp.Body.Read(fbuf)
@@ -339,8 +340,8 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 			if n == 0 {
 				// Send EndBody
 				c.writeChan <- &ServerWrite{
-					packet: &Packet{
-						PType:  PtypeEndBody,
+					packet: &packetwire.Packet{
+						PType:  packetwire.PtypeEndBody,
 						Offset: offset,
 						Total:  -1,
 						Data:   []byte{},
@@ -350,13 +351,13 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 				break
 			}
 
-			ptype := PtypeSendBody
+			ptype := packetwire.PtypeSendBody
 			if err == io.EOF {
-				ptype = PtypeEndBody
+				ptype = packetwire.PtypeEndBody
 			}
 
 			c.writeChan <- &ServerWrite{
-				packet: &Packet{
+				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: offset,
 					Total:  -1,
@@ -374,7 +375,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *Packet, reqId string, req *ht
 	}
 }
 
-func (c *FunnelClient) handleWebSocketRequest(pch chan *Packet, reqId string, req *http.Request) {
+func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId string, req *http.Request) {
 
 	defer func() {
 		c.prLock.Lock()
@@ -405,8 +406,8 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *Packet, reqId string, re
 
 			// Write WebSocket data as packet
 			c.writeChan <- &ServerWrite{
-				packet: &Packet{
-					PType:  PtypeWebSocketData,
+				packet: &packetwire.Packet{
+					PType:  packetwire.PtypeWebSocketData,
 					Offset: 0,
 					Total:  int32(len(msg)),
 					Data:   msg,
@@ -433,7 +434,7 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *Packet, reqId string, re
 
 // requestReader reads request body from packets
 type requestReader struct {
-	pendingRequest chan *Packet
+	pendingRequest chan *packetwire.Packet
 	closed         bool
 	buffer         []byte
 }
@@ -465,7 +466,7 @@ func (r *requestReader) Read(p []byte) (int, error) {
 		r.buffer = packet.Data[n:]
 	}
 
-	if packet.PType == PtypeEndBody {
+	if packet.PType == packetwire.PtypeEndBody {
 		r.closed = true
 	}
 

@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"strconv"
 
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/k0kubun/pp"
@@ -36,11 +37,11 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	qq.Println("@routeHttp/2.1")
 
 	// Generate request ID
-	reqId := GetRequestId()
+	reqId := packetwire.GetRequestId()
 
 	qq.Println("@routeHttp/2.2")
 
-	pendingReqChan := make(chan *Packet)
+	pendingReqChan := make(chan *packetwire.Packet)
 	f.pendingReqLock.Lock()
 	f.pendingReq[reqId] = pendingReqChan
 	f.pendingReqLock.Unlock()
@@ -67,8 +68,8 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	// Write request header packet
 
 	serverConn.writeChan <- &ServerWrite{
-		packet: &Packet{
-			PType:  PTypeSendHeader,
+		packet: &packetwire.Packet{
+			PType:  packetwire.PTypeSendHeader,
 			Offset: 0,
 			Total:  int32(req.ContentLength),
 			Data:   out,
@@ -82,7 +83,7 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 
 		qq.Println("@routeHttp/7")
 
-		fbuf := make([]byte, FragmentSize)
+		fbuf := make([]byte, packetwire.FragmentSize)
 		offset := int32(0)
 
 		for {
@@ -104,8 +105,8 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 			if n == 0 && last {
 				// Send EndBody packet for EOF with no data
 				serverConn.writeChan <- &ServerWrite{
-					packet: &Packet{
-						PType:  PtypeEndBody,
+					packet: &packetwire.Packet{
+						PType:  packetwire.PtypeEndBody,
 						Offset: int32(offset),
 						Total:  int32(req.ContentLength),
 						Data:   []byte{},
@@ -120,15 +121,15 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 				continue
 			}
 
-			ptype := PtypeSendBody
+			ptype := packetwire.PtypeSendBody
 			if last {
-				ptype = PtypeEndBody
+				ptype = packetwire.PtypeEndBody
 			}
 
 			toSend := fbuf[:n]
 
 			serverConn.writeChan <- &ServerWrite{
-				packet: &Packet{
+				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: int32(offset),
 					Total:  int32(req.ContentLength),
@@ -152,7 +153,7 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 	}
 
 	wpack := <-pendingReqChan
-	if wpack.PType != PTypeSendHeader {
+	if wpack.PType != packetwire.PTypeSendHeader {
 		c.Error(errors.New("invalid packet type"))
 		return
 	}
@@ -200,7 +201,7 @@ func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
 			}
 		}
 
-		if wpack.PType == PtypeEndBody {
+		if wpack.PType == packetwire.PtypeEndBody {
 			qq.Println("@routeHttp/writeBody/3{END_BODY}")
 			break
 		}
