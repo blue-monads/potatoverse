@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/alecthomas/kong"
@@ -12,7 +13,13 @@ import (
 )
 
 func (c *PackageBuildCmd) Run(_ *kong.Context) error {
-	_, err := PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
+
+	err := RunBuildCommand(c.PotatoTomlFile)
+	if err != nil {
+		return err
+	}
+
+	_, err = PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
 	if err != nil {
 		return err
 	}
@@ -23,8 +30,41 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 // simple.chip.zip
 // simple.czip
 
+func RunBuildCommand(potatoTomlFile string) error {
+	fmt.Printf("Running build command\n")
+
+	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
+	if err != nil {
+		return err
+	}
+
+	buildCommand := ""
+
+	if potatoToml.Developer != nil &&
+		potatoToml.Developer.BuildCommand != "" {
+		buildCommand = potatoToml.Developer.BuildCommand
+	}
+
+	if buildCommand == "" {
+		fmt.Println("No build command found, skipping build")
+		return nil
+	}
+
+	cmd := exec.Command("bash", "-c", buildCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Build command failed: %s\n", err)
+		return err
+	}
+
+	fmt.Printf("Build command completed successfully\n")
+	return nil
+}
+
 func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
-	fmt.Printf("PackageFiles start\n")
+	fmt.Printf("Package files start\n")
 
 	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
 	if err != nil {

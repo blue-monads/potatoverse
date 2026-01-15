@@ -28,6 +28,7 @@ type DeveloperOptions struct {
 	OutputZipFile string   `json:"output_zip_file,omitempty" toml:"output_zip_file,omitempty"`
 	IncludeFiles  []string `json:"include_files,omitempty" toml:"include_files,omitempty"`
 	ExcludeFiles  []string `json:"exclude_files,omitempty" toml:"exclude_files,omitempty"`
+	BuildCommand  string   `json:"build_command" toml:"build_command"`
 }
 
 type PotatoArtifact struct {
