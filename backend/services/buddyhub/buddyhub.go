@@ -6,11 +6,11 @@ import (
 	"os"
 	"path"
 
+	buddy "github.com/blue-monads/potatoverse/backend/services/buddyhub/buddytypes"
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/buddy"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +27,7 @@ type Configuration struct {
 	buddyWebFunnelMode      string // funnel_mode (all, local, none)
 	allbuddyMaxTrafficLimit int64
 
-	rendezvousUrls []buddy.RendezvousUrl
+	rendezvousUrls []xtypes.RendezvousUrl
 }
 
 type BuddyHub struct {
@@ -37,7 +37,7 @@ type BuddyHub struct {
 
 	configuration Configuration
 
-	staticBuddies map[string]*buddy.BuddyInfo
+	staticBuddies map[string]*xtypes.BuddyInfo
 
 	funnel *funnel.Funnel
 
@@ -72,7 +72,7 @@ func NewBuddyHub(opt Options) *BuddyHub {
 			allbuddyMaxTrafficLimit: 0,
 		},
 
-		staticBuddies: make(map[string]*buddy.BuddyInfo),
+		staticBuddies: make(map[string]*xtypes.BuddyInfo),
 	}
 
 	pubkey, pk, err := xutils.GenerateKeyPair(config.MasterSecret)
@@ -108,9 +108,9 @@ func (h *BuddyHub) GetPrivkey() string {
 	return h.privkey
 }
 
-func (h *BuddyHub) ListBuddies() ([]*buddy.BuddyInfo, error) {
+func (h *BuddyHub) ListBuddies() ([]*xtypes.BuddyInfo, error) {
 
-	result := make([]*buddy.BuddyInfo, 0, len(h.staticBuddies))
+	result := make([]*xtypes.BuddyInfo, 0, len(h.staticBuddies))
 
 	for _, buddyInfo := range h.staticBuddies {
 		result = append(result, buddyInfo)
@@ -149,7 +149,7 @@ func (h *BuddyHub) GetBuddyRoot(buddyPubkey string) (*os.Root, error) {
 	return nil, nil
 }
 
-func (h *BuddyHub) GetRendezvousUrls() []buddy.RendezvousUrl {
+func (h *BuddyHub) GetRendezvousUrls() []xtypes.RendezvousUrl {
 	return nil
 }
 

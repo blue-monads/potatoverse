@@ -3,7 +3,7 @@ package buddyhub
 import (
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
-	"github.com/blue-monads/potatoverse/backend/xtypes/buddy"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 func (h *BuddyHub) startRloop() {
@@ -12,7 +12,7 @@ func (h *BuddyHub) startRloop() {
 	}
 }
 
-func (h *BuddyHub) rLoopHandle(rendezvousUrl *buddy.RendezvousUrl) {
+func (h *BuddyHub) rLoopHandle(rendezvousUrl *xtypes.RendezvousUrl) {
 
 	if rendezvousUrl.Provider != "funnel" {
 		return
