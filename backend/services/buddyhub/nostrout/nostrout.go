@@ -126,7 +126,7 @@ func (o *NostrRout) runLoop() error {
 	selectedServers := make([]string, 0, 7)
 	selectedServers = append(selectedServers, DefaultServers...)
 
-	for len(selectedServers) < 7 {
+	for len(selectedServers) < 5 {
 		server := NoStrServerList[rand.Intn(len(NoStrServerList))]
 		if !slices.Contains(selectedServers, server) {
 			selectedServers = append(selectedServers, server)

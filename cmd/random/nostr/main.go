@@ -55,6 +55,7 @@ func main() {
 		Tags: []nostr.Tag{
 			{
 				"p", alicePubKey,
+				"t", "custom_subtype",
 			},
 		},
 		CreatedAt: nostr.Now(),
