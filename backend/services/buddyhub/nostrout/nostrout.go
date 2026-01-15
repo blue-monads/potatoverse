@@ -2,6 +2,9 @@ package nostrout
 
 import (
 	"context"
+	"math/rand"
+	"slices"
+	"sync"
 
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/nbd-wtf/go-nostr"
@@ -16,6 +19,9 @@ Nostr Resources:
 	https://github.com/nbd-wtf/go-nostr
 	https://nostrbook.dev/
 
+
+
+
 */
 
 var (
@@ -24,7 +30,7 @@ var (
 		"wss://relay.nostr.band",
 		"wss://cache1.primal.net",
 		"wss://relay.bitcoiner.social",
-		"wss://relay.current.fyi",
+		"wss://nos.lol",
 		"wss://relay.nos.social",
 		"wss://relay.nostr.inosta.cc",
 		"wss://relay.nostr.pub",
@@ -33,6 +39,31 @@ var (
 		"wss://relay.snort.social",
 		"wss://relay.wellorder.net",
 		"wss://wot.nostr.party",
+		"wss://at.nostrworks.com",
+		"wss://at.nostrworks.com",
+		"wss://btc.klendazu.com",
+		"wss://knostr.neutrine.com",
+		"wss://nos.lol",
+		"wss://nostr.bitcoiner.social",
+		"wss://nostr.corebreach.com",
+		"wss://no.str.cr",
+		"wss://nostr-dev.wellorder.net",
+		"wss://nostr.easydns.ca",
+		"wss://nostr.einundzwanzig.space",
+		"wss://nostr.middling.mydns.jp",
+		"wss://nostr.mom",
+		"wss://nostr.noones.com",
+		"wss://nostr.oxtr.dev",
+		"wss://nostr-pub.semisol.dev",
+		"wss://nostr-relay.bitcoin.ninja",
+		"wss://nostr.sectiontwo.org",
+		"wss://nostr.slothy.win",
+		"wss://nostr-verified.wellorder.net",
+		"wss://nostr-verif.slothy.win",
+		"wss://nostr.vulpem.com",
+		"wss://paid.no.str.cr",
+		"wss://relay.damus.io",
+		"wss://relay.minds.com/nostr/v1/ws",
 	}
 
 	DefaultServers = []string{
@@ -96,40 +127,74 @@ func (o *NostrRout) runLoop() error {
 
 	ctx := context.Background()
 
-	_, pubval, err := nip19.Decode(o.opt.SelfPubkey)
-	if err != nil {
-		return err
-	}
-
-	selfPubkey := pubval.(string)
-
 	filters := nostr.Filters{{
 		Kinds:   []int{nostr.KindTextNote},
-		Authors: []string{selfPubkey},
+		Authors: []string{o.hexPublicKey},
 	}}
 
-	relays := make([]*nostr.Relay, 0, len(DefaultServers))
+	selectedServers := make([]string, 0, 7)
+	selectedServers = append(selectedServers, DefaultServers...)
 
-	for _, server := range DefaultServers {
-		relay, err := nostr.RelayConnect(ctx, server)
-		if err != nil {
-
-			qq.Println("@error", err)
-			continue
-
+	for len(selectedServers) < 7 {
+		server := NoStrServerList[rand.Intn(len(NoStrServerList))]
+		if !slices.Contains(selectedServers, server) {
+			selectedServers = append(selectedServers, server)
 		}
-		sub, err := relay.Subscribe(ctx, filters)
-		if err != nil {
-			return err
-		}
-		go o.handleEvent(sub)
+	}
+
+	relays := make([]*nostr.Relay, 0, len(selectedServers))
+
+	relayChan := make(chan *nostr.Relay, len(selectedServers))
+	wg := sync.WaitGroup{}
+
+	for _, server := range selectedServers {
+
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			relay, err := o.connect(ctx, server, filters)
+			if err != nil {
+				qq.Println("@error", err.Error())
+				return
+			}
+
+			relayChan <- relay
+
+		}()
+
+	}
+
+	wg.Wait()
+	close(relayChan)
+
+	for relay := range relayChan {
 		relays = append(relays, relay)
 	}
 
 	o.relays = relays
 
+	qq.Println("@connected to relays", len(relays))
+
 	return nil
 
+}
+
+func (o *NostrRout) connect(ctx context.Context, relayServer string, filters nostr.Filters) (*nostr.Relay, error) {
+	relay, err := nostr.RelayConnect(ctx, relayServer)
+	if err != nil {
+		return nil, err
+	}
+
+	sub, err := relay.Subscribe(ctx, filters)
+	if err != nil {
+		return nil, err
+	}
+
+	go o.handleEvent(sub)
+
+	return relay, nil
 }
 
 func (o *NostrRout) handleEvent(sub *nostr.Subscription) {
@@ -151,8 +216,11 @@ func (o *NostrRout) WriteEventRaw(ev nostr.Event) error {
 	for _, relay := range o.relays {
 		err := relay.Publish(ctx, ev)
 		if err != nil {
-			return err
+			qq.Println("@error/relay", relay.URL, err.Error())
+			continue
 		}
+
+		qq.Println("@success/relay", relay.URL)
 	}
 
 	return nil

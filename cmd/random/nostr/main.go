@@ -14,11 +14,13 @@ func main() {
 
 	alice, err := createNode("alice")
 	if err != nil {
+		qq.Println("@main_error/1", err.Error())
 		panic(err)
 	}
 
 	bob, err := createNode("bob")
 	if err != nil {
+		qq.Println("@main_error/2", err.Error())
 		panic(err)
 	}
 
@@ -35,9 +37,11 @@ func main() {
 				"p", bobPubKey,
 			},
 		},
+		CreatedAt: nostr.Now(),
 	})
 
 	if err != nil {
+		qq.Println("@main_error/3", err.Error())
 		panic(err)
 	}
 
@@ -56,6 +60,7 @@ func main() {
 	})
 
 	if err != nil {
+		qq.Println("@main_error/4", err.Error())
 		panic(err)
 	}
 
