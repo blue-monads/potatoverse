@@ -56,6 +56,7 @@ var (
 	}
 
 	DefaultServers = []string{
+		//		"wss://proxy.nostr-relay.app/ac0805e2c2d5ad533d76967da021440d3f9da5308692c8ab78b5f90995740305",
 		NoStrServerList[9],
 		NoStrServerList[10],
 		NoStrServerList[4],
