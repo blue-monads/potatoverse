@@ -99,3 +99,17 @@ func createNode(key string) (*nostrout.NostrRout, error) {
 	return nostrRout, nil
 
 }
+
+/*
+
+{
+	"kind":27237,
+	"id":"f3ab53f80d338f068a3a22347309f8f67b76d782df02fc2281e98374613c473f",
+	"pubkey":"20ae37404605417a0cf8d16a52bfff648e898764c1810115ddab846d04e5d21e",
+	"created_at":1768463844,
+	"tags":[["p","c29eee08ece09b02bccfb5a5b96225361443fc7bb5e8a1ec0c45946ee460e187"]],
+	"content":"Hello, world from bob to alice",
+	"sig":"1807268ca52134128174c68899f157cef952f813783fdda45afa149c152d12ba4fce00e78edf3a08304b3dd8bfba1e75a5b79d729b93d06d327113ddb64ee5c1"
+}
+
+*/
