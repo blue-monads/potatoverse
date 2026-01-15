@@ -57,6 +57,7 @@ func main() {
 				"p", alicePubKey,
 			},
 		},
+		CreatedAt: nostr.Now(),
 	})
 
 	if err != nil {
@@ -84,6 +85,7 @@ func createNode(key string) (*nostrout.NostrRout, error) {
 		SelfPubkey:  pubkey,
 		SelfPrivkey: privkey,
 		Handler: func(ev *nostr.Event) {
+			qq.Println("----------@WOWOW@-------------")
 			fmt.Println("@event"+key, ev)
 		},
 		DefaultServers: nostrout.DefaultServers,
