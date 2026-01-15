@@ -74,7 +74,7 @@ type NostrRout struct {
 	hexPublicKey  string
 
 	writeChan chan *nostr.Event
-	relays    []*nostr.Relay
+	relays    []*RelayInfo
 
 	processedEvents      map[string]bool
 	processedEventsMutex sync.RWMutex
@@ -85,6 +85,11 @@ type Options struct {
 	SelfPrivkey    string
 	Handler        func(ev *nostr.Event)
 	DefaultServers []string
+}
+
+type RelayInfo struct {
+	Relay *nostr.Relay
+	// SupportsKindFilter bool
 }
 
 func New(opt Options) *NostrRout {
@@ -106,7 +111,7 @@ func New(opt Options) *NostrRout {
 	return &NostrRout{
 		opt:           opt,
 		writeChan:     make(chan *nostr.Event),
-		relays:        make([]*nostr.Relay, 0, len(opt.DefaultServers)),
+		relays:        make([]*RelayInfo, 0, len(opt.DefaultServers)),
 		hexPrivateKey: privkey,
 		hexPublicKey:  pubkey,
 
@@ -140,9 +145,9 @@ func (o *NostrRout) runLoop() error {
 		}
 	}
 
-	relays := make([]*nostr.Relay, 0, len(selectedServers))
+	relays := make([]*RelayInfo, 0, len(selectedServers))
 
-	relayChan := make(chan *nostr.Relay, len(selectedServers))
+	relayChan := make(chan *RelayInfo, len(selectedServers))
 	wg := sync.WaitGroup{}
 
 	for _, server := range selectedServers {
@@ -158,7 +163,9 @@ func (o *NostrRout) runLoop() error {
 				return
 			}
 
-			relayChan <- relay
+			relayChan <- &RelayInfo{
+				Relay: relay,
+			}
 
 		}()
 
@@ -245,13 +252,13 @@ func (o *NostrRout) WriteEventRaw(ev nostr.Event) error {
 	ctx := context.Background()
 
 	for _, relay := range o.relays {
-		err := relay.Publish(ctx, ev)
+		err := relay.Relay.Publish(ctx, ev)
 		if err != nil {
-			qq.Println("@error/relay", relay.URL, err.Error())
+			qq.Println("@error/relay", relay.Relay.URL, err.Error())
 			continue
 		}
 
-		qq.Println("@success/relay", relay.URL)
+		qq.Println("@success/relay", relay.Relay.URL)
 	}
 
 	return nil
@@ -300,7 +307,7 @@ func (o *NostrRout) WriteEventWithResponse(ev nostr.Event) (*nostr.Event, error)
 	return nil, ErrNoResponse
 }
 
-func (o *NostrRout) tryRelaysForResponse(ev nostr.Event, filters nostr.Filters, relays []*nostr.Relay, timeoutSecs int) (*nostr.Event, error) {
+func (o *NostrRout) tryRelaysForResponse(ev nostr.Event, filters nostr.Filters, relays []*RelayInfo, timeoutSecs int) (*nostr.Event, error) {
 	responseChan := make(chan *nostr.Event, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecs)*time.Second)
@@ -336,7 +343,7 @@ func (o *NostrRout) tryRelaysForResponse(ev nostr.Event, filters nostr.Filters, 
 					return
 				}
 			}
-		}(relay)
+		}(relay.Relay)
 	}
 
 	select {
@@ -349,7 +356,7 @@ func (o *NostrRout) tryRelaysForResponse(ev nostr.Event, filters nostr.Filters, 
 
 func (o *NostrRout) Close() {
 	for _, relay := range o.relays {
-		relay.Close()
+		relay.Relay.Close()
 	}
 }
 
