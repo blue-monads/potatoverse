@@ -13,12 +13,21 @@ import (
 
 func (c *PackagePushCmd) Run(_ *kong.Context) error {
 
-	zip, err := PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
+	potatoToml, err := pkgutils.ReadPotatoToml(c.PotatoTomlFile)
 	if err != nil {
 		return err
 	}
 
-	return PushPackage(c.PotatoTomlFile, zip)
+	outputZipFile := c.OutputZipFile
+
+	if outputZipFile == "" {
+		outputZipFile = potatoToml.Developer.OutputZipFile
+		if outputZipFile == "" {
+			outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
+		}
+	}
+
+	return PushPackage(c.PotatoTomlFile, outputZipFile)
 }
 
 func PushPackage(potatoTomlFile string, outputZipFile string) error {
