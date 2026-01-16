@@ -17,9 +17,10 @@ import (
 // server
 
 type ServerCmd struct {
-	Init  ServerInitCmd  `cmd:"" help:"Initialize the server with default options."`
-	Start ServerStartCmd `cmd:"" help:"Start the server."`
-	Stop  ServerStopCmd  `cmd:"" help:"Stop the server."`
+	Init        ServerInitCmd        `cmd:"" help:"Initialize the server with default options."`
+	Start       ServerStartCmd       `cmd:"" help:"Start the server."`
+	Stop        ServerStopCmd        `cmd:"" help:"Stop the server."`
+	ActualStart ServerActualStartCmd `cmd:"" help:"Actual start the server, called internally by the server start command."`
 }
 
 type ServerInitCmd struct {
@@ -107,7 +108,15 @@ func (c *ServerStartCmd) Run(ctx *kong.Context) error {
 		return err
 	}
 
-	cmd := exec.Command(binary, "server", "actual-start", "--config", c.Config, "--auto-seed", fmt.Sprintf("%t", c.AutoSeed))
+	// later we might start log collector in parallel process
+	// actual server runs in child process
+
+	args := []string{"server", "actual-start", "--config", c.Config}
+	if c.AutoSeed {
+		args = append(args, "--auto-seed")
+	}
+
+	cmd := exec.Command(binary, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
