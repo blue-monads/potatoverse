@@ -4,7 +4,7 @@ import { CapabilityOptionFieldInput } from './CapabilityOptionFieldInput';
 
 interface CapabilityOptionsSectionProps {
     definition: CapabilityDefinition;
-    formData: Record<string, any>;
+    formData: Record<string, any> | null | undefined;
     onFieldChange: (key: string, value: any) => void;
     className?: string;
 }
@@ -19,6 +19,9 @@ export const CapabilityOptionsSection = ({
         return null;
     }
 
+    // Guard against null/undefined formData
+    const safeFormData = formData || {};
+
     return (
         <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -29,7 +32,7 @@ export const CapabilityOptionsSection = ({
                     <CapabilityOptionFieldInput
                         key={field.key}
                         field={field}
-                        value={formData[field.key] !== undefined ? formData[field.key] : field.default}
+                        value={safeFormData[field.key] !== undefined ? safeFormData[field.key] : field.default}
                         onChange={(value) => onFieldChange(field.key, value)}
                     />
                 ))}
