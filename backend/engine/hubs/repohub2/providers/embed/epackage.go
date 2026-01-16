@@ -1,4 +1,4 @@
-package repohub
+package embed
 
 import (
 	"archive/zip"
