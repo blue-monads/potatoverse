@@ -21,14 +21,14 @@ export default function PortalLayout({
             <Image
               className="p-1 border "
               src="/zz/pages/logo.png"
-              alt="Turnix Logo"
+              alt="Potatoverse Logo"
               width={42}
               height={42}
               priority
             />
 
             <span className="self-center text-xl font-semibold whitespace-nowrap">
-              Turnix Portal
+              Potatoverse Portal
             </span>
           </a>
 

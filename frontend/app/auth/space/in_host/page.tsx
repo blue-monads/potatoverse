@@ -238,7 +238,7 @@ const InSpaceAuthorizerWrapper = () => {
             <div className="flex items-center justify-center min-h-[500px] bg-gray-100 p-4">
                 <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                     <div className="flex mb-6 space-x-4 items-center justify-center">
-                        <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                        <img src="/zz/pages/logo.png" alt="Potatoverse Logo" className="w-10 h-10" />
                     </div>
                     
                     <h6 className="h4 text-base">
@@ -305,7 +305,7 @@ const AuthorizePromptCard = (props: PromptCardProps) => {
         <div className="flex items-center justify-center h-[500px] bg-gray-100 p-4">
             <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
-                    <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                    <img src="/zz/pages/logo.png" alt="Potatoverse Logo" className="w-10 h-10" />
                 </div>
 
                 <h6 className="h4 text-base">
@@ -355,7 +355,7 @@ const NotAuthorizedPromptCard = (props: NotAuthorizedPromptCardProps) => {
         <div className="flex items-center justify-center h-[500px] bg-gray-100 p-4">
             <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md flex flex-col gap-4">
                 <div className="flex mb-6 space-x-4 items-center justify-center">
-                    <img src="/zz/pages/logo.png" alt="Turnix Logo" className="w-10 h-10" />
+                    <img src="/zz/pages/logo.png" alt="Potatoverse Logo" className="w-10 h-10" />
                 </div>
                 <h6 className="h4 text-base">
                     You are not logged in, Please login first to authorize this space.

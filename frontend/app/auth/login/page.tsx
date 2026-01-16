@@ -58,7 +58,7 @@ export default function Page() {
                     <Image
                         className="lg:hidden"
                         src="/zz/pages/logo.png"
-                        alt="Turnix Logo"
+                        alt="Potatoverse Logo"
                         width={200}
                         height={200}
                     />

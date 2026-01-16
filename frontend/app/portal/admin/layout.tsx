@@ -82,7 +82,7 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
             <a href="/zz/pages/portal/admin" className="flex-none">
               <Image
                 src="/zz/pages/logo.png"
-                alt="Turnix Logo"
+                alt="Potatoverse Logo"
                 width={36}
                 height={36}
               />
