@@ -1,0 +1,19 @@
+package devrepo
+
+import (
+	"embed"
+
+	repohub "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/providers/erepo"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+)
+
+//go:embed all:epackages/*
+var embedPackages embed.FS
+
+func init() {
+	repohub.RegisterRepoProvider("dev", func(app xtypes.App, repoOptions *xtypes.RepoOptions) (repotypes.IRepo, error) {
+		return erepo.NewEmbedRepo(embedPackages), nil
+	})
+}
