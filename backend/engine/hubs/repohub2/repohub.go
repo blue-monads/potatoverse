@@ -8,6 +8,10 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
+var (
+	_ repotypes.IRepoHub = (*RepoHub)(nil)
+)
+
 type RepoHub struct {
 	repos   map[string]repotypes.IRepo
 	options []xtypes.RepoOptions
