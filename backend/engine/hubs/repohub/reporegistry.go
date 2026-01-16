@@ -3,7 +3,7 @@ package repohub
 import (
 	"sync"
 
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
 )
 
 var (

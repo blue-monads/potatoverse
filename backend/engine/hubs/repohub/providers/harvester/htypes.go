@@ -1,6 +1,6 @@
 package harvester
 
-import "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+import "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
 
 type PotatoField struct {
 	Name               string                    `json:"name"`

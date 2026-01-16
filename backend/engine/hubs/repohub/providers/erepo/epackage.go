@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
 )
 
 func listEmbeddedPackagesFromFS(fs embed.FS) ([]repotypes.PotatoPackage, error) {

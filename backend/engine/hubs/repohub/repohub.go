@@ -2,9 +2,10 @@ package repohub
 
 import (
 	"fmt"
+	"log/slog"
 	"maps"
 
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
@@ -17,7 +18,7 @@ type RepoHub struct {
 	options []xtypes.RepoOptions
 }
 
-func NewRepoHub(repos []xtypes.RepoOptions) *RepoHub {
+func NewRepoHub(repos []xtypes.RepoOptions, logger *slog.Logger, httpPort int) *RepoHub {
 	return &RepoHub{
 		repos:   make(map[string]repotypes.IRepo),
 		options: repos,

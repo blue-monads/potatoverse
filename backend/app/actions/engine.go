@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
@@ -194,13 +193,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 	var err error
 
 	repoHub := c.engine.GetRepoHub()
-	if repoHub != nil && repoSlug != "" {
-		// Use RepoHub to get package from specific repo
-		file, err = repohub.ZipEPackageFromRepo(repoHub, repoSlug, name, "")
-	} else {
-		// Fallback to default behavior for backward compatibility
-		file, err = repohub.ZipEPackage(name)
-	}
+	file, err = repoHub.ZipPackage(repoSlug, name, "")
 
 	if err != nil {
 		return nil, err
