@@ -6,6 +6,10 @@ import (
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
 )
 
+var (
+	_ repotypes.IRepo = (*EmbedRepo)(nil)
+)
+
 type EmbedRepo struct {
 	fs embed.FS
 }
