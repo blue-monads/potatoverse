@@ -3,9 +3,9 @@ package devrepo
 import (
 	"embed"
 
-	repohub "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2"
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/providers/erepo"
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+	repohub "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/erepo"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 

@@ -67,6 +67,8 @@ func (h *RepoHub) ListPackages(repoSlug string) ([]repotypes.PotatoPackage, erro
 		return nil, fmt.Errorf("repo not found: %s", repoSlug)
 	}
 
+	fmt.Println("@repo", h.repos)
+
 	return repo.ListPackages()
 }
 

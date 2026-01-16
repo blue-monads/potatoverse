@@ -13,6 +13,9 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/mailer/stdio"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
+
+	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
+	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/harvester"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
@@ -41,6 +44,10 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	if randNumber == 11 && randNumer2 == 11 {
 		database.StartLitestream(dbFile)
+	}
+
+	if len(options.Repos) == 0 {
+		options.Repos = DefaultDevRepos
 	}
 
 	happ := app.New(app.Option{
@@ -114,6 +121,20 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	return happ, nil
 }
 
+var DefaultDevRepos = []xtypes.RepoOptions{
+	{
+		Name: "Development Packages",
+		Type: "dev",
+		Slug: "Dev",
+	},
+	{
+		Name: "Official Potato Field",
+		Type: "harvester-v1",
+		Slug: "Official",
+		URL:  "https://github.com/blue-monads/store/raw/refs/heads/master",
+	},
+}
+
 func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	if config.WorkingDir == "" {
 		cwd, err := os.Getwd()
@@ -132,18 +153,8 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	}
 
 	if len(config.Repos) == 0 {
-		config.Repos = []xtypes.RepoOptions{
+		config.Repos = DefaultDevRepos
 
-			{
-				Type: "embeded",
-				Slug: "Dev",
-			},
-			{
-				Slug: "Test",
-				URL:  "/zz/static/repo/repo.json",
-				Type: "http",
-			},
-		}
 	}
 
 	app, err := BuildApp(config, seedDB)

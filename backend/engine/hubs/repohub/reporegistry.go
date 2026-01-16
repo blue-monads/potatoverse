@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	repoProviders      map[string]repotypes.RepoProvider
+	repoProviders      map[string]repotypes.RepoProvider = make(map[string]repotypes.RepoProvider)
 	repoProvidersMutex sync.RWMutex
 )
 

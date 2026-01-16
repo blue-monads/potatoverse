@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"slices"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	repohub "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
@@ -48,7 +50,12 @@ func (r *HarvesterRepo) getCache() (*PotatoField, error) {
 		return r.cache, nil
 	}
 
-	resp, err := http.Get(fmt.Sprintf("%sharvest-index.json", r.baseURL))
+	fullurl, err := url.JoinPath(r.baseURL, "harvest-index.json")
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.Get(fullurl)
 	if err != nil {
 		return nil, err
 	}
@@ -105,10 +112,17 @@ func (r *HarvesterRepo) ZipPackage(packageName string, version string) (string, 
 		version = potato.Versions[len(potato.Versions)-1]
 	}
 
-	url := strings.ReplaceAll(field.ZipTemplate, "{slug}", packageName)
-	url = strings.ReplaceAll(url, "{version}", version)
+	tmplUrl := strings.ReplaceAll(field.ZipTemplate, "{slug}", packageName)
+	tmplUrl = strings.ReplaceAll(tmplUrl, "{version}", version)
 
-	resp, err := http.Get(url)
+	fullurl, err := url.JoinPath(r.baseURL, tmplUrl)
+	if err != nil {
+		return "", err
+	}
+
+	qq.Println("@fullurl", fullurl)
+
+	resp, err := http.Get(fullurl)
 	if err != nil {
 		return "", err
 	}

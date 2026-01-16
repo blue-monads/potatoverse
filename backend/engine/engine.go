@@ -131,6 +131,11 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
+	err = e.repoHub.Run(app)
+	if err != nil {
+		return err
+	}
+
 	go e.startEloop()
 
 	e.LoadRoutingIndex()
