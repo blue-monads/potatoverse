@@ -11,12 +11,20 @@ import (
 	"sync"
 	"time"
 
+	repohub "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub2/repotypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 var (
 	_ repotypes.IRepo = (*HarvesterRepo)(nil)
 )
+
+func init() {
+	repohub.RegisterRepoProvider("harvester-v1", func(app xtypes.App, repoOptions *xtypes.RepoOptions) (repotypes.IRepo, error) {
+		return NewHarvesterRepo(repoOptions.URL), nil
+	})
+}
 
 type HarvesterRepo struct {
 	baseURL    string
