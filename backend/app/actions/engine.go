@@ -139,7 +139,7 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 
 func (c *Controller) InstallPackageByUrl(userId int64, url string) (*InstallPackageResult, error) {
 
-	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	tmpFile, err := os.CreateTemp("", "potato-package-*.zip")
 	if err != nil {
 		return nil, err
 	}

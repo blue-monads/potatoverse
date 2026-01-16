@@ -40,7 +40,7 @@ func (a *Server) InstallPackage(claim *signer.AccessClaim, ctx *gin.Context) (an
 
 func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 
-	tempFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	tempFile, err := os.CreateTemp("", "potato-package-*.zip")
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	recreateArtifacts := ctx.Query("recreate_artifacts") == "true"
 
 	// Create temp file for the uploaded zip
-	tempFile, err := os.CreateTemp("", "turnix-package-push-*.zip")
+	tempFile, err := os.CreateTemp("", "potato-package-push-*.zip")
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to create temp file: %s", err.Error())
 		httpx.WriteErrString(ctx, errMsg)

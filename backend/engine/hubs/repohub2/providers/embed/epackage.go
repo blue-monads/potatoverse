@@ -59,7 +59,7 @@ func listEmbeddedPackagesFromFS() ([]repotypes.PotatoPackage, error) {
 }
 
 func zipEmbeddedPackageFromFS(name string) (string, error) {
-	zipFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	zipFile, err := os.CreateTemp("", "potato-package-*.zip")
 	if err != nil {
 		return "", err
 	}

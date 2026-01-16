@@ -195,7 +195,7 @@ func (h *RepoHub) zipHttpPackage(baseURL string, packageName string) (string, er
 	}
 	defer resp.Body.Close()
 
-	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	tmpFile, err := os.CreateTemp("", "potato-package-*.zip")
 	if err != nil {
 		return "", err
 	}
