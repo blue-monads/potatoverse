@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
 type RepoHub struct {
@@ -77,7 +76,7 @@ func (h *RepoHub) GetRepo(slug string) (*xtypes.RepoOptions, error) {
 }
 
 // ListPackages lists packages from a specific repo
-func (h *RepoHub) ListPackages(repoSlug string) ([]models.PotatoPackage, error) {
+func (h *RepoHub) ListPackages(repoSlug string) ([]PotatoPackage, error) {
 	repo, err := h.GetRepo(repoSlug)
 	if err != nil {
 		return nil, err
@@ -94,7 +93,7 @@ func (h *RepoHub) ListPackages(repoSlug string) ([]models.PotatoPackage, error) 
 }
 
 // ZipPackage creates a zip file for a package from a specific repo
-func (h *RepoHub) ZipPackage(repoSlug string, packageName string) (string, error) {
+func (h *RepoHub) ZipPackage(repoSlug string, packageName string, version string) (string, error) {
 	repo, err := h.GetRepo(repoSlug)
 	if err != nil {
 		return "", err
@@ -105,24 +104,26 @@ func (h *RepoHub) ZipPackage(repoSlug string, packageName string) (string, error
 		return h.zipEmbeddedPackage(packageName)
 	case "http":
 		return h.zipHttpPackage(repo.URL, packageName)
+	case "harvest":
+		return getHarvestRepo(repo.URL).DownloadPackge(packageName, version)
 	default:
 		return "", fmt.Errorf("unsupported repo type: %s", repo.Type)
 	}
 }
 
 // listEmbeddedPackages lists packages from embedded filesystem
-func (h *RepoHub) listEmbeddedPackages() ([]models.PotatoPackage, error) {
+func (h *RepoHub) listEmbeddedPackages() ([]PotatoPackage, error) {
 	return listEmbeddedPackagesFromFS()
 }
 
 // listHttpPackages fetches package list from HTTP endpoint
-func (h *RepoHub) listHttpPackages(url string) ([]models.PotatoPackage, error) {
+func (h *RepoHub) listHttpPackages(url string) ([]PotatoPackage, error) {
 	body, err := h.getPackageIndexFromHttp(url)
 	if err != nil {
 		return nil, err
 	}
 
-	var packages []models.PotatoPackage
+	var packages []PotatoPackage
 	err = json.Unmarshal(body, &packages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse package list: %w", err)

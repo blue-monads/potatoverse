@@ -8,19 +8,17 @@ import (
 	"os"
 	"path"
 	"strings"
-
-	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
 //go:embed all:epackages/*
 var embedPackages embed.FS
 
-func ListEPackages() ([]models.PotatoPackage, error) {
+func ListEPackages() ([]PotatoPackage, error) {
 	return listEmbeddedPackagesFromFS()
 }
 
 // ListEPackagesFromRepo lists packages from a specific repo
-func ListEPackagesFromRepo(repoHub *RepoHub, repoSlug string) ([]models.PotatoPackage, error) {
+func ListEPackagesFromRepo(repoHub *RepoHub, repoSlug string) ([]PotatoPackage, error) {
 	if repoHub == nil {
 		return listEmbeddedPackagesFromFS()
 	}
@@ -33,20 +31,20 @@ func ZipEPackage(name string) (string, error) {
 }
 
 // ZipEPackageFromRepo creates a zip from a package in a specific repo
-func ZipEPackageFromRepo(repoHub *RepoHub, repoSlug string, packageName string) (string, error) {
+func ZipEPackageFromRepo(repoHub *RepoHub, repoSlug string, packageName string, version string) (string, error) {
 	if repoHub == nil {
 		return zipEmbeddedPackageFromFS(packageName)
 	}
-	return repoHub.ZipPackage(repoSlug, packageName)
+	return repoHub.ZipPackage(repoSlug, packageName, version)
 }
 
-func listEmbeddedPackagesFromFS() ([]models.PotatoPackage, error) {
+func listEmbeddedPackagesFromFS() ([]PotatoPackage, error) {
 	files, err := embedPackages.ReadDir("epackages")
 	if err != nil {
 		return nil, err
 	}
 
-	epackages := []models.PotatoPackage{}
+	epackages := []PotatoPackage{}
 
 	for _, file := range files {
 		if !file.IsDir() {
@@ -61,7 +59,7 @@ func listEmbeddedPackagesFromFS() ([]models.PotatoPackage, error) {
 			continue
 		}
 
-		epackage := models.PotatoPackage{}
+		epackage := PotatoPackage{}
 		err = json.Unmarshal(jsonFile, &epackage)
 		if err != nil {
 			// Skip invalid packages

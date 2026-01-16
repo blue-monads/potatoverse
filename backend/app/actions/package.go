@@ -4,10 +4,9 @@ import (
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
-func (c *Controller) ListEPackages(repoSlug string) ([]models.PotatoPackage, error) {
+func (c *Controller) ListEPackages(repoSlug string) ([]repohub.PotatoPackage, error) {
 	repoHub := c.engine.GetRepoHub()
 	if repoHub == nil || repoSlug == "" {
 		// Fallback to default behavior for backward compatibility

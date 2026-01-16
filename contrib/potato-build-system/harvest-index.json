@@ -5,7 +5,6 @@
     "zip_template": "/harvest/{slug}-{version}.zip",
     "indexed_tags": ["official"],
     "indexed_tag_template": "/tags/{tag}.json",
-    "auto_index_max_count": 10,
     "potatoes": [{
         "name": "Simple GIS",
         "info": "Simple GIS app",

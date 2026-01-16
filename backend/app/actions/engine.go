@@ -196,7 +196,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 	repoHub := c.engine.GetRepoHub()
 	if repoHub != nil && repoSlug != "" {
 		// Use RepoHub to get package from specific repo
-		file, err = repohub.ZipEPackageFromRepo(repoHub, repoSlug, name)
+		file, err = repohub.ZipEPackageFromRepo(repoHub, repoSlug, name, "")
 	} else {
 		// Fallback to default behavior for backward compatibility
 		file, err = repohub.ZipEPackage(name)
