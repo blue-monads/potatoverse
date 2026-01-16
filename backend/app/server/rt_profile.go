@@ -89,6 +89,8 @@ func (a *Server) userSvgProfileIcon(ctx *gin.Context) {
 
 func (a *Server) userSvgProfileIconWithName(ctx *gin.Context, name string) {
 
+	ctx.Header("Cache-Control", "public, max-age=86400")
+
 	splits := strings.Fields(name)
 	initials := ""
 	if len(splits) > 0 {
