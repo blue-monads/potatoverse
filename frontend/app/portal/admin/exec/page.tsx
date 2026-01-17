@@ -24,12 +24,33 @@ const buildIframeSrc = (nskey: string, host: string) => {
         // Remove trailing slashes
         cleanHost = cleanHost.replace(/\/+$/, '');
         
-        // Determine protocol from current origin
+        // Determine protocol and port from current origin
         const origin = window.location.origin;
         const isSecure = origin.startsWith("https://");
         
-        // Build the URL - the backend returns just the hostname, so we construct the full URL
-        src = `${isSecure ? "https://" : "http://"}${cleanHost}/zz/space/${nskey}`;
+        // Extract port from current origin (needed for localhost development)
+        let port = '';
+        try {
+            const url = new URL(origin);
+            const originPort = url.port;
+            // Only include port if it's non-standard (not 80 for http, not 443 for https)
+            if (originPort && originPort !== '' && 
+                ((!isSecure && originPort !== '80') || (isSecure && originPort !== '443'))) {
+                port = `:${originPort}`;
+            }
+        } catch (e) {
+            // Fallback: try to extract port manually if URL parsing fails
+            const portMatch = origin.match(/:(\d+)$/);
+            if (portMatch) {
+                const originPort = portMatch[1];
+                if ((!isSecure && originPort !== '80') || (isSecure && originPort !== '443')) {
+                    port = `:${originPort}`;
+                }
+            }
+        }
+        
+        // Build the URL - preserve port from current origin for localhost development
+        src = `${isSecure ? "https://" : "http://"}${cleanHost}${port}/zz/space/${nskey}`;
     } 
 
     return src;
