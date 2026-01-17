@@ -11,12 +11,25 @@ const buildIframeSrc = (nskey: string, host: string) => {
     let src = `/zz/space/${nskey}`;
 
     if (host) {
+        // Clean the host - remove any protocol, paths, or leading/trailing slashes
+        let cleanHost = host.trim();
+        
+        // Remove protocol if present
+        cleanHost = cleanHost.replace(/^https?:\/\//, '');
+        
+        // Remove any path that might be included (take only the hostname part)
+        // This prevents issues like "hostname/path" becoming part of the URL
+        cleanHost = cleanHost.split('/')[0];
+        
+        // Remove trailing slashes
+        cleanHost = cleanHost.replace(/\/+$/, '');
+        
+        // Determine protocol from current origin
         const origin = window.location.origin;
-        const isSecure = origin.startsWith("https//");
-        const hasPort = origin.includes(":");
-        const port = hasPort ? origin.split(":").at(-1) : "";
-
-        src = `${isSecure ? "https://" : "http://"}${host}${hasPort ? ":" + port : ""}/zz/space/${nskey}`;
+        const isSecure = origin.startsWith("https://");
+        
+        // Build the URL - the backend returns just the hostname, so we construct the full URL
+        src = `${isSecure ? "https://" : "http://"}${cleanHost}/zz/space/${nskey}`;
     } 
 
     return src;
