@@ -135,7 +135,12 @@ const SpacesDirectory = () => {
                         </div>
                     </div>
 
+                    {loader.data?.spaces.length === 0 && <EmptySpacesState /> }
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+
+                        
                         {loader.data?.spaces.map((space) => {
 
                             const pkg = packageIndex[space.install_id] || { name: "Unknown", description: "Unknown" };
@@ -434,6 +439,66 @@ const ActionDropdown = (props: ActionDropdownProps) => {
                 document.body
             )}
         </>
+    );
+};
+
+const EmptySpacesState = () => {
+    const router = useRouter();
+    
+    return (
+        <div className="flex flex-col items-center justify-center py-16 px-6">
+            <div className="mb-8">
+                <svg
+                    width="200"
+                    height="160"
+                    viewBox="0 0 200 160"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="drop-shadow-sm"
+                >
+                    {/* Decorative circles */}
+                    <circle cx="50" cy="40" r="3" fill="#e5e7eb" opacity="0.5" />
+                    <circle cx="150" cy="30" r="2" fill="#e5e7eb" opacity="0.3" />
+                    <circle cx="170" cy="60" r="2.5" fill="#e5e7eb" opacity="0.4" />
+                    
+                    {/* Box/package icon */}
+                    <rect x="70" y="50" width="60" height="60" rx="4" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="2" />
+                    <rect x="80" y="60" width="40" height="30" rx="2" fill="#e5e7eb" opacity="0.5" />
+                    <line x1="100" y1="50" x2="100" y2="110" stroke="#e5e7eb" strokeWidth="2" />
+                    <line x1="70" y1="80" x2="130" y2="80" stroke="#e5e7eb" strokeWidth="2" />
+                    
+                    {/* Decorative stars */}
+                    <g className="animate-bounce" style={{ animationDelay: '0.5s' }}>
+                        <path d="M65 25l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z" fill="#fbbf24" />
+                    </g>
+                    <g className="animate-bounce" style={{ animationDelay: '1s' }}>
+                        <path d="M140 20l1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5 4.5-1.5 1.5-4.5z" fill="#f59e0b" />
+                    </g>
+                    <g className="animate-bounce" style={{ animationDelay: '1.5s' }}>
+                        <path d="M30 80l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" fill="#fbbf24" />
+                    </g>
+                </svg>
+            </div>
+
+            {/* Content */}
+            <div className="text-center max-w-md">
+                <h3 className="text-xl font-semibold text-gray-700 mb-3">
+                    No spaces installed yet!
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                    Get started by installing your first space from the store.
+                </p>
+
+                <div className="flex justify-center">
+                    <button 
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
+                        onClick={() => router.push("/portal/admin/store")}
+                    >
+                        Go to Store
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 
