@@ -11,7 +11,7 @@ import { AdminPortalData, getAdminPortalData, InstalledSpace, listInstalledSpace
 import { useGApp } from '@/hooks';
 import { useRouter } from 'next/navigation';
 import useFavorites from '@/hooks/useFavorites/useFavorites';
-import { formatSpace, FormattedSpace } from '@/app/portal/admin/spaces/page';
+import { formatSpace, FormattedSpace } from '@/lib';
 
 
 export default function HomePage() {

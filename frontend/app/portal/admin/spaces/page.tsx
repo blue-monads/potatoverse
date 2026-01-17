@@ -7,7 +7,7 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { deletePackage, InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
+import { deletePackage, formatSpace, FormattedSpace, InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
@@ -22,48 +22,6 @@ export default function Page() {
 }
 
 
-export type FormattedSpace = {
-    space_id: number;
-    install_id: number;
-    namespace_key: string;
-    package_name: string;
-    package_info: string;
-    package_version_id: number;    
-    package_version: string;
-    gradient: string;
-
-    package_author: string;
-    package_author_email: string;
-    package_author_site: string;
-}
-
-export  const formatSpace = (data: InstalledSpace) => {
-    const spaces = data.spaces;
-    const packages = data.packages;
-
-    const formattedSpaces: FormattedSpace[] = [];
-
-    for (const space of spaces) {
-        const pkg = packages.find((pkg) => pkg.install_id === space.install_id);
-        if (!pkg) continue;
-
-        formattedSpaces.push({
-            space_id: space.id,
-            install_id: space.install_id,
-            namespace_key: space.namespace_key,
-            package_name: pkg.name,
-            package_info: pkg.info,
-            package_version_id: pkg.id,
-            package_version: pkg.version,
-            package_author: pkg.author_name,
-            package_author_email: pkg.author_email,
-            package_author_site: pkg.author_site,
-            gradient: staticGradients[space.id % staticGradients.length],
-        });
-    }
-
-    return formattedSpaces;
-}
 
 
 
