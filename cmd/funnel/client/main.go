@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/blue-monads/turnix/backend/extra/funnel"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 
 	qq.Println("@main/2")
 
-	err := client.Start()
+	err := client.Start("")
 	if err != nil {
 		qq.Println("Error starting client: %v", err)
 		os.Exit(1)

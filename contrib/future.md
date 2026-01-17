@@ -1,7 +1,7 @@
 
 > This is not documentation of built system, it defines eventual goal of project, most of the system has been built already in one of its previous version but they are all lost in refactor and persuit of perfection. This final refactor to rule all refactor will bring everything together.
 
-# What is turnix
+# What is turnix (Potatoverse)
 
 Turnix is a small app platform. It mainly host webapps with its server side code. Idea behind trunix is give a batteries includeded plaform for building hosting apps since most common parts needed is provided by platfrom apps will be much smaller. Think it as a you cloud provider in a single binary or even better analogy would be hybrid between CMS and heroku like PAAS, It accepts certain tradeoff to achive that goal which will be apparent later i doument. System is made of components like
 1. Users (admin, normal, bot)
@@ -85,8 +85,13 @@ Resources:
 - bindings docs
 - tutorial
 
+## Ideas
+KitchenSinkTest
+
 ## Terminology
 
 
-## Ideas
-KitchenSinkTest
+- Permissions
+- Events
+- Handler Slots
+- Handler API

@@ -3,8 +3,9 @@ package server
 import (
 	"strconv"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +36,9 @@ func (s *Server) sendUserMessage(claim *signer.AccessClaim, ctx *gin.Context) (a
 		IsRead:        false,
 	}
 
-	id, err := s.ctrl.SendUserMessage(msg)
+	coreHub := s.opt.CoreHub
+
+	id, err := coreHub.UserSendMessage(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -208,4 +211,18 @@ func (s *Server) deleteUserMessage(claim *signer.AccessClaim, ctx *gin.Context) 
 	}
 
 	return gin.H{"message": "User message deleted successfully"}, nil
+}
+
+func (s *Server) selfHandleUserWs(ctx *gin.Context) {
+	tok := ctx.Query("token")
+	if tok == "" {
+		httpx.WriteAuthErr(ctx, EmptyAuthTokenErr)
+		return
+	}
+	claim, err := s.withAccessToken(tok)
+	if err != nil {
+		return
+	}
+
+	s.opt.CoreHub.HandleUserWS(claim.UserId, ctx)
 }

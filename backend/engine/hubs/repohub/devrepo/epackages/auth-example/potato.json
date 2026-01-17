@@ -1,0 +1,52 @@
+{
+    "name": "Auth Example",
+    "info": "Example e-package for testing authentication",
+    "slug": "auth-example",
+    "tags": [
+        "auth",
+        "example"
+    ],
+    "format_version": "0.0.1",
+    "author_name": "Bornjre",
+    "author_email": "bornjre@gmail.com",
+    "author_site": "https://github.com/bornjre",
+    "license": "MIT",
+    "version": "0.0.1",
+    "init_page": "init.html",
+    "update_page": "update_1.html",
+    "artifacts": [
+        {
+            "kind": "space",
+            "namespace": "auth-example",
+            "executor_type": "luaz",
+            "server_file": "server.lua",
+            "route_options": {
+                "serve_folder": "public",
+                "force_html_extension": false,
+                "force_index_html_file": true
+            }
+        },
+
+        {
+            "kind": "capability",
+            "name": "ping",
+            "type": "ping",
+            "options": {
+                "message": "Hello, world!",
+                "add_random_number": true
+            }
+        }
+
+
+    ],
+
+    "developer": {
+        "server_url": "http://localhost:7777",
+        "token": "2shrIqRPxHZkb9w1ZluuCIFWrw8bCpNn4Fd6cuFJttnK6KZOpYwJ4hWp2DQu3ZBinkiRo3qCeSe57RCSagnopmvl",
+        "output_zip_file": "auth-example.zip",
+        "include_files": [
+            "public/**/*",
+            "server.lua"
+        ]
+    }
+}

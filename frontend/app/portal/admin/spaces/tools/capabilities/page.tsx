@@ -1,34 +1,36 @@
 "use client";
 import React, { useState } from 'react';
-import { Filter, Edit, Trash2, Package, Layers, Settings } from 'lucide-react';
+import { Filter, Edit, Trash2, Package, Layers, Settings, Bug } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { useGApp } from '@/hooks';
-import { 
-    listSpaceCapabilities, 
-    SpaceCapability, 
-    updateSpaceCapability, 
+import {
+    listSpaceCapabilities,
+    SpaceCapability,
+    updateSpaceCapability,
     deleteSpaceCapability,
     listCapabilityTypes,
-    CapabilityDefinition
+    CapabilityDefinition,
+    getCapabilitiesDebug
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
-import { CapabilityOptionsSection } from '@/contain/compo/CapabilityOptionsSection';
-import { buildCapabilityOptions } from '@/contain/compo/capabilityUtils';
+import CapEditor from './sub/CapEditor';
+import CapabilityPicker from './sub/CapabilityPicker';
+
 
 export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
-    
+
     if (!installId) {
         return <div>Install ID not provided</div>;
     }
 
-    return <CapabilitiesListingPage 
-        installId={parseInt(installId)} 
+    return <CapabilitiesListingPage
+        installId={parseInt(installId)}
         spaceId={spaceId ? parseInt(spaceId) : undefined}
     />;
 }
@@ -68,10 +70,10 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
 
     // Filter data based on search term
     const filteredData = loader.data?.filter(cap => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             cap.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             cap.capability_type.toLowerCase().includes(searchTerm.toLowerCase());
-        
+
         return matchesSearch;
     }) || [];
 
@@ -79,10 +81,29 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
     const uniqueTypes = Array.from(new Set(loader.data?.map(cap => cap.capability_type) || []));
 
     const handleCreateClick = () => {
-        const params = new URLSearchParams();
-        params.set('install_id', installId.toString());
-        if (spaceId) params.set('space_id', spaceId.toString());
-        router.push(`/portal/admin/spaces/tools/capabilities/create?${params.toString()}`);
+
+        gapp.modal.openModal({
+            title: 'Select Capability Type',
+            content: <CapabilityPicker
+                definations={capabilityTypesLoader.data || []}
+                onSelect={(definition) => {
+                    gapp.modal.closeModal();
+                    const params = new URLSearchParams();
+                    params.set('install_id', installId.toString());
+                    if (spaceId) params.set('space_id', spaceId.toString());
+
+                    params.set('capability_type', definition.name);
+
+                    router.push(`/portal/admin/spaces/tools/capabilities/create?${params.toString()}`);
+
+                }}
+            />,
+            size: "lg",
+
+        });
+
+
+
     };
 
     const handleUpdate = async (id: number, data: {
@@ -201,6 +222,7 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
                                         <CapabilityRow
                                             key={cap.id}
                                             capability={cap}
+                                            installId={installId}
                                             onEdit={() => setEditingId(cap.id)}
                                             onDelete={() => handleDelete(cap.id)}
                                             onUpdate={(data) => handleUpdate(cap.id, data)}
@@ -219,16 +241,18 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
     );
 };
 
-const CapabilityRow = ({ 
-    capability, 
-    onEdit, 
+const CapabilityRow = ({
+    capability,
+    installId,
+    onEdit,
     onDelete,
     onUpdate,
     onCancelEdit,
     isEditing,
     capabilityTypes
-}: { 
+}: {
     capability: SpaceCapability;
+    installId: number;
     onEdit: () => void;
     onDelete: () => void;
     onUpdate: (data: any) => void;
@@ -236,18 +260,50 @@ const CapabilityRow = ({
     isEditing: boolean;
     capabilityTypes: CapabilityDefinition[];
 }) => {
-    const [editData, setEditData] = useState({
-        name: capability.name,
-        capability_type: capability.capability_type,
-        space_id: capability.space_id,
-    });
+    const gapp = useGApp();
+    const [loadingDebug, setLoadingDebug] = useState(false);
+
+    const handleDebugClick = async () => {
+        setLoadingDebug(true);
+        try {
+            const response = await getCapabilitiesDebug(capability.capability_type);
+            const debugData = response.data;
+
+            gapp.modal.openModal({
+                title: `Debug: ${capability.name} (${capability.capability_type})`,
+                content: (
+                    <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-lg p-4 overflow-auto max-h-[70vh]">
+                            <pre className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                                {JSON.stringify(debugData, null, 2)}
+                            </pre>
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => gapp.modal.closeModal()}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                ),
+                size: "lg"
+            });
+        } catch (error) {
+            console.error('Failed to fetch debug data:', error);
+            alert('Failed to fetch debug data: ' + ((error as any)?.response?.data?.error || (error as any)?.message || 'Unknown error'));
+        } finally {
+            setLoadingDebug(false);
+        }
+    };
 
     if (isEditing) {
         const definition = capabilityTypes.find(t => t.name === capability.capability_type);
         return (
             <tr>
                 <td colSpan={5} className="px-6 py-4">
-                    <CapabilityEditForm
+                    <CapEditor
                         capability={capability}
                         definition={definition}
                         capabilityTypes={capabilityTypes}
@@ -264,7 +320,7 @@ const CapabilityRow = ({
     let optionsDisplay = '';
     try {
         const options = JSON.parse(capability.options || '{}');
-        optionsDisplay = Object.keys(options).length > 0 
+        optionsDisplay = Object.keys(options).length > 0
             ? JSON.stringify(options, null, 2).substring(0, 100) + (JSON.stringify(options).length > 100 ? '...' : '')
             : '{}';
     } catch {
@@ -300,6 +356,14 @@ const CapabilityRow = ({
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex justify-end gap-2">
                     <button
+                        onClick={handleDebugClick}
+                        disabled={loadingDebug}
+                        className="text-purple-600 hover:text-purple-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Show debug data"
+                    >
+                        <Bug className="w-4 h-4" />
+                    </button>
+                    <button
                         onClick={onEdit}
                         className="text-blue-600 hover:text-blue-900"
                     >
@@ -314,123 +378,6 @@ const CapabilityRow = ({
                 </div>
             </td>
         </tr>
-    );
-};
-
-const CapabilityEditForm = ({
-    capability,
-    definition,
-    capabilityTypes,
-    onSave,
-    onCancel
-}: {
-    capability: SpaceCapability;
-    definition?: CapabilityDefinition;
-    capabilityTypes: CapabilityDefinition[];
-    onSave: (data: any) => void;
-    onCancel: () => void;
-}) => {
-    const [name, setName] = useState(capability.name);
-    const [capabilityType, setCapabilityType] = useState(capability.capability_type);
-    const [spaceId, setSpaceId] = useState(capability.space_id);
-    const [formData, setFormData] = useState<Record<string, any>>(() => {
-        try {
-            return JSON.parse(capability.options || '{}');
-        } catch {
-            return {};
-        }
-    });
-
-    const currentDefinition = capabilityTypes.find(t => t.name === capabilityType);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        const options = buildCapabilityOptions(currentDefinition, formData, false);
-
-        onSave({
-            name,
-            capability_type: capabilityType,
-            space_id: spaceId,
-            options,
-        });
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4 bg-gray-50 p-4 rounded-lg">
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Name *
-                    </label>
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        required
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Type *
-                    </label>
-                    <select
-                        value={capabilityType}
-                        onChange={(e) => {
-                            setCapabilityType(e.target.value);
-                            setFormData({});
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        required
-                    >
-                        {capabilityTypes.map(type => (
-                            <option key={type.name} value={type.name}>
-                                {type.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Scope
-                </label>
-                <select
-                    value={spaceId}
-                    onChange={(e) => setSpaceId(parseInt(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                    <option value={0}>Package Level (root)</option>
-                    {spaceId > 0 && <option value={spaceId}>Space #{spaceId}</option>}
-                </select>
-            </div>
-
-            {currentDefinition && (
-                <CapabilityOptionsSection
-                    definition={currentDefinition}
-                    formData={formData}
-                    onFieldChange={(key, value) => setFormData({ ...formData, [key]: value })}
-                    className="bg-white"
-                />
-            )}
-
-            <div className="flex justify-end gap-2">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                    Save
-                </button>
-            </div>
-        </form>
     );
 };
 

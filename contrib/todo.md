@@ -1,5 +1,3 @@
-- dev/cli
-- repo system
 - sugify things (check validate entitity names if key has "<a>|<b>" then it has to disallow |) 
 - go through all services and fix logging
 - devices and sessions, hash password
@@ -8,11 +6,10 @@
 - event hub testing
 - add subprocess bashed exec binary (cli server start-actual)
 - integrate litestream
-- integrate sockd as a capability
-- add notifier
-- add funnel
-- build sqlite wasm file with bunch of exts enabled
-- automatically create caps when installing package
+- cli package validate
+- claude skill (potato skill repo)
+- remove unsafe func from glua (maybe softfork it ?)
+- see wal2/bw2 sqlite is worth effort
 
 
 ## capabilities

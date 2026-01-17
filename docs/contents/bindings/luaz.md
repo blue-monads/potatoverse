@@ -59,7 +59,8 @@ Core system operations.
 
 - `publish_event(opts)` - Publish event. `opts`: `{name, payload, resource_id}`
 - `file_token(opts)` - Generate file presigned token. `opts`: `{path, file_name, user_id}`
-- `advisery_token(opts)` - Generate advisery token. `opts`: `{token_sub_type, user_id, data}`
+- `sign_advisery_token(opts)` - Generate advisery token. `opts`: `{token_sub_type, user_id, data}`
+- `parse_advisery_token(toekn)` - Parse advisery token
 - `read_package_file(fpath)` - read package file contents
 
 ## http.request
@@ -135,4 +136,11 @@ Model Context Protocol client.
   - `list_tools(params)` - List available tools
   - `list_resources(params)` - List available resources
   - `call_tool(params)` - Call tool with params
+
+# Entries
+  - on_http
+  - on_cap_call
+  - on_event_call
+
+
 

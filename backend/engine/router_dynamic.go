@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -91,18 +92,7 @@ func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 		filePath = ctx.Request.URL.Path
 	}
 
-	// Build the package file path
-	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
-
-	qq.Println("@static name", name)
-	qq.Println("@static path", path)
-
-	pFileOps := e.db.GetPackageFileOps()
-	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx)
-	if err != nil {
-		httpx.WriteErr(ctx, err)
-		return
-	}
+	e.processSimpleRoute(ctx, filePath, indexItem)
 }
 
 func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
@@ -110,20 +100,21 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		httpx.WriteErrString(ctx, "template handler not specified")
 		return
 	}
-	spaceKey := ctx.Param("space_key")
+
 	for key, value := range pathParams {
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		NSKey:            spaceKey,
-		PackageVersionId: indexItem.packageVersionId,
-		InstalledId:      indexItem.installedId,
-		SpaceId:          indexItem.spaceId,
-		HandlerName:      routeMatch.Handler,
-		HttpContext:      ctx,
-		Params:           pathParams,
+	err := e.runtime.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     indexItem.spaceId,
+		Request:     ctx,
+		HandlerName: routeMatch.Handler,
+		Params:      pathParams,
 	})
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
 
 	tmpl, ok := indexItem.compiledTemplates[routeMatch.File]
 	if !ok {
@@ -152,22 +143,18 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 		ctx.Set(key, value)
 	}
 
-	// Execute the handler
-	spaceKey := ctx.Param("space_key")
-	err := e.runtime.ExecuteHttp(ExecuteOptions{
-		NSKey:            spaceKey,
-		PackageVersionId: indexItem.packageVersionId,
-		InstalledId:      indexItem.installedId,
-		SpaceId:          indexItem.spaceId,
-		HandlerName:      routeMatch.Handler,
-		HttpContext:      ctx,
-		Params:           pathParams,
+	err := e.runtime.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     indexItem.spaceId,
+		Request:     ctx,
+		HandlerName: routeMatch.Handler,
+		Params:      pathParams,
+		EventType:   "api",
 	})
-
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
+
 }
 
 func (e *Engine) findMatchingRoute(indexItem *SpaceRouteIndexItem, requestPath, requestMethod string) (*models.PotatoRoute, map[string]string) {

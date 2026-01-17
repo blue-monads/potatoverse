@@ -3,8 +3,8 @@ package xtypes
 import (
 	"log/slog"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
 )
 
 type App interface {
@@ -17,4 +17,5 @@ type App interface {
 	Engine() any
 	Config() any
 	Sockd() any
+	CoreHub() any
 }

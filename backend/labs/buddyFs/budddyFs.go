@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/afero"
 )

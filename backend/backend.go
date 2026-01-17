@@ -5,15 +5,16 @@ import (
 	"os"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/app"
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/services/datahub/database"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/mailer/stdio"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/app"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/mailer/stdio"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 
-	_ "github.com/blue-monads/turnix/backend/engine/executors"
+	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
+	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/harvester"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
@@ -21,10 +22,11 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	logger := slog.Default()
 
 	maindbDir := path.Join(options.WorkingDir, "maindb")
+	dbFile := path.Join(maindbDir, "data.sqlite")
 
 	os.MkdirAll(maindbDir, 0755)
 
-	db, err := database.NewDB(path.Join(maindbDir, "data.sqlite"), logger)
+	db, err := database.NewDB(dbFile, logger)
 	if err != nil {
 		logger.Error("Failed to initialize database", "err", err)
 		return nil, err
@@ -34,6 +36,17 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	if options.Name == "" {
 		options.Name = "PotatoVerse"
+	}
+
+	// randNumber := rand.Intn(10000000)
+	// randNumer2 := rand.Intn(10000000)
+
+	// if randNumber == 11 && randNumer2 == 11 {
+	// 	database.StartLitestream(dbFile)
+	// }
+
+	if len(options.Repos) == 0 {
+		options.Repos = DefaultDevRepos
 	}
 
 	happ := app.New(app.Option{
@@ -84,7 +97,9 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 				return nil, err
 			}
 
-			_, err = ctrl.SendUserMessage(&dbmodels.UserMessage{
+			uops := db.GetUserOps()
+
+			_, err = uops.AddUserMessage(&dbmodels.UserMessage{
 				Title:         "Welcome to PotatoVerse",
 				Contents:      "Welcome to PotatoVerse",
 				ToUser:        1,
@@ -105,6 +120,20 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	return happ, nil
 }
 
+var DefaultDevRepos = []xtypes.RepoOptions{
+	{
+		Name: "Official Potato Field",
+		Type: "harvester-v1",
+		Slug: "Official",
+		URL:  "https://github.com/blue-monads/store/raw/refs/heads/master",
+	},
+	{
+		Name: "Development Packages",
+		Type: "dev",
+		Slug: "Dev",
+	},
+}
+
 func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	if config.WorkingDir == "" {
 		cwd, err := os.Getwd()
@@ -123,18 +152,8 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	}
 
 	if len(config.Repos) == 0 {
-		config.Repos = []xtypes.RepoOptions{
+		config.Repos = DefaultDevRepos
 
-			{
-				Type: "embeded",
-				Slug: "Dev",
-			},
-			{
-				Slug: "Test",
-				URL:  "/zz/static/repo/repo.json",
-				Type: "http",
-			},
-		}
 	}
 
 	app, err := BuildApp(config, seedDB)

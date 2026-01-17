@@ -1,6 +1,6 @@
 package space
 
-import "github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+import "github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 
 func (d *SpaceOperations) ListSpaceTables(spaceId int64) ([]string, error) {
 	return nil, nil

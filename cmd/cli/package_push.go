@@ -3,24 +3,35 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/blue-monads/potatoverse/cmd/cli/pkgutils"
 )
 
 func (c *PackagePushCmd) Run(_ *kong.Context) error {
 
-	zip, err := PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
+	potatoToml, err := pkgutils.ReadPotatoToml(c.PotatoTomlFile)
 	if err != nil {
 		return err
 	}
 
-	return PushPackage(c.PotatoTomlFile, zip)
+	outputZipFile := c.OutputZipFile
+
+	if outputZipFile == "" {
+		outputZipFile = potatoToml.Developer.OutputZipFile
+		if outputZipFile == "" {
+			outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
+		}
+	}
+
+	return PushPackage(c.PotatoTomlFile, outputZipFile)
 }
 
 func PushPackage(potatoTomlFile string, outputZipFile string) error {
-	potatoToml, err := readPotatoToml(potatoTomlFile)
+	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
 	if err != nil {
 		return err
 	}
@@ -39,12 +50,12 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	token := potatoToml.Developer.Token
 	if token == "" {
 		if potatoToml.Developer.TokenEnv == "" {
-			return errors.New("token is required")
+			return errors.New("token is required/1")
 		}
 
 		token = os.Getenv(potatoToml.Developer.TokenEnv)
 		if token == "" {
-			return errors.New("token is required")
+			return errors.New("token is required/2")
 		}
 	}
 
@@ -53,7 +64,7 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", potatoToml.Developer.Token)
+	req.Header.Set("Authorization", token)
 	req.Header.Set("Content-Type", "application/zip")
 
 	client := &http.Client{}
@@ -64,7 +75,12 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to push package: %s", resp.Status)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("failed to push package: %s %s", resp.Status, string(body))
+
 	}
 
 	return nil

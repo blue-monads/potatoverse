@@ -5,16 +5,17 @@ import (
 	"log/slog"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/app/server"
-	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/app/server"
+	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/mailer"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/services/sockd"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/mailer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/sockd"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type Option struct {
@@ -38,7 +39,8 @@ type App struct {
 	engine  *engine.Engine
 	sockd   *sockd.Sockd
 
-	server *server.Server
+	server  *server.Server
+	coreHub *corehub.CoreHub
 }
 
 func New(opt Option) *App {
@@ -75,6 +77,8 @@ func New(opt Option) *App {
 		hosts[i] = host.Name
 	}
 
+	happ.coreHub = corehub.NewCoreHub(happ)
+
 	server := server.NewServer(server.Option{
 		Port:        opt.AppOpts.Port,
 		Ctrl:        happ.ctrl,
@@ -83,6 +87,7 @@ func New(opt Option) *App {
 		Hosts:       hosts,
 		LocalSocket: opt.AppOpts.SocketFile,
 		SiteName:    opt.AppOpts.Name,
+		CoreHub:     happ.coreHub,
 	})
 
 	happ.server = server
@@ -144,6 +149,12 @@ func (h *App) Start() error {
 		h.logger.Warn("Master secret hash has changed, updating fingerprint")
 	}
 
+	err = h.coreHub.Run()
+	if err != nil {
+		h.logger.Error("Failed to run core hub", "err", err)
+		return err
+	}
+
 	return h.server.Start()
 
 }
@@ -176,6 +187,10 @@ func (h *App) Config() any {
 
 func (h *App) Sockd() any {
 	return h.sockd
+}
+
+func (h *App) CoreHub() any {
+	return nil
 }
 
 // private

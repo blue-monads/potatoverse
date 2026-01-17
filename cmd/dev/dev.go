@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 
-	"github.com/blue-monads/turnix/backend"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+
+	_ "github.com/blue-monads/potatoverse/backend/distro"
 )
 
 func main() {

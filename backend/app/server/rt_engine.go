@@ -10,10 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,7 +40,7 @@ func (a *Server) InstallPackage(claim *signer.AccessClaim, ctx *gin.Context) (an
 
 func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 
-	tempFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	tempFile, err := os.CreateTemp("", "potato-package-*.zip")
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +223,12 @@ func (a *Server) handleDeriveHost(ctx *gin.Context) {
 		spaceId = spaceInfo.ID
 	}
 
-	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, a.opt.ServerKey)
+	serverKey := "main"
+	if strings.Contains(hostName, "npub") {
+		serverKey = a.opt.ServerPubKey
+	}
+
+	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, serverKey)
 	httpx.WriteJSON(ctx, gin.H{
 		"host":     execHost,
 		"space_id": spaceId,
@@ -245,23 +251,32 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	// Get the dev token from Authorization header
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
-		httpx.WriteErr(ctx, errors.New("missing authorization token"))
+		httpx.WriteErrString(ctx, "missing authorization token")
 		return
 	}
 
 	// Parse the package dev token
 	claim, err := a.signer.ParsePackageDev(token)
 	if err != nil {
-		httpx.WriteErr(ctx, err)
+		errMsg := fmt.Sprintf("failed to parse package dev token: %s", err.Error())
+		httpx.WriteErrString(ctx, errMsg)
+		return
+	}
+
+	_, err = a.ctrl.GetPackage(claim.InstallPackageId)
+	if err != nil {
+		errMsg := fmt.Sprintf("failed to get package: %s", err.Error())
+		httpx.WriteErrString(ctx, errMsg)
 		return
 	}
 
 	recreateArtifacts := ctx.Query("recreate_artifacts") == "true"
 
 	// Create temp file for the uploaded zip
-	tempFile, err := os.CreateTemp("", "turnix-package-push-*.zip")
+	tempFile, err := os.CreateTemp("", "potato-package-push-*.zip")
 	if err != nil {
-		httpx.WriteErr(ctx, err)
+		errMsg := fmt.Sprintf("failed to create temp file: %s", err.Error())
+		httpx.WriteErrString(ctx, errMsg)
 		return
 	}
 	defer os.Remove(tempFile.Name())
@@ -295,4 +310,28 @@ func (a *Server) handleCapabilities(ctx *gin.Context) {
 
 func (a *Server) handleCapabilitiesRoot(ctx *gin.Context) {
 	a.engine.ServeCapabilityRoot(ctx)
+}
+
+func (a *Server) handleCapabilitiesDebug(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	capabilityName := ctx.Param("capability_name")
+	if capabilityName == "" {
+		return nil, errors.New("capability name is required")
+	}
+
+	capHub := a.engine.GetCapabilityHub().(*caphub.CapabilityHub)
+	debugData := capHub.GetDebugData(capabilityName)
+	return debugData, nil
+}
+
+func (a *Server) GetSpaceSpec(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spec, err := a.ctrl.GetSpaceSpec(installId)
+	if err != nil {
+		return nil, err
+	}
+	return spec, nil
 }

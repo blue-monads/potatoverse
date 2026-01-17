@@ -2,11 +2,12 @@ package binds
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -33,15 +34,16 @@ func registerCoreModuleType(L *lua.LState) {
 	L.SetField(mt, "__index", L.NewFunction(coreModuleIndex))
 }
 
-func newCoreModule(L *lua.LState, app xtypes.App, installId int64, spaceId int64) *lua.LUserData {
+func newCoreModule(L *lua.LState, app xtypes.App, installId int64, packageVersionId int64, spaceId int64) *lua.LUserData {
 	engine := app.Engine().(xtypes.Engine)
 	ud := L.NewUserData()
 	ud.Value = &luaCoreModule{
-		app:       app,
-		installId: installId,
-		spaceId:   spaceId,
-		engine:    engine,
-		sig:       app.Signer(),
+		app:              app,
+		installId:        installId,
+		packageVersionId: packageVersionId,
+		spaceId:          spaceId,
+		engine:           engine,
+		sig:              app.Signer(),
 	}
 	L.SetMetatable(ud, L.GetTypeMetatable(luaCoreModuleTypeName))
 	return ud
@@ -71,9 +73,14 @@ func coreModuleIndex(L *lua.LState) int {
 			return coreSignFsPresignedToken(mod, L)
 		}))
 		return 1
-	case "advisery_token":
+	case "sign_advisery_token":
 		L.Push(L.NewFunction(func(L *lua.LState) int {
 			return coreSignAdviseryToken(mod, L)
+		}))
+		return 1
+	case "parse_advisery_token":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return coreParseAdviseryToken(mod, L)
 		}))
 		return 1
 	case "read_package_file":
@@ -189,6 +196,32 @@ func coreSignAdviseryToken(mod *luaCoreModule, L *lua.LState) int {
 	return 2
 }
 
+func coreParseAdviseryToken(mod *luaCoreModule, L *lua.LState) int {
+	token := L.CheckString(1)
+	claim, err := mod.sig.ParseSpaceAdvisiery(token)
+	if err != nil {
+		return pushError(L, err)
+	}
+
+	if claim.InstallId != mod.installId {
+		return pushError(L, errors.New("wrong install id"))
+	}
+
+	if claim.SpaceId != mod.spaceId {
+		return pushError(L, errors.New("wrong space id"))
+	}
+
+	resultTable := L.NewTable()
+
+	resultTable.RawSetString("token_sub_type", lua.LString(claim.TokenSubType))
+	resultTable.RawSetString("user_id", lua.LNumber(claim.UserId))
+	resultTable.RawSetString("data", luaplus.MapToTable(L, claim.Data))
+
+	L.Push(resultTable)
+	L.Push(lua.LNil)
+	return 2
+}
+
 func readPackageFile(mod *luaCoreModule, L *lua.LState) int {
 	fpath := L.CheckString(1)
 
@@ -202,7 +235,7 @@ func readPackageFile(mod *luaCoreModule, L *lua.LState) int {
 	}
 
 	pops := mod.app.Database().GetPackageFileOps()
-	fileData, err := pops.GetFileContentByPath(mod.installId, dirPath, fileName)
+	fileData, err := pops.GetFileContentByPath(mod.packageVersionId, dirPath, fileName)
 	if err != nil {
 		return pushError(L, err)
 	}

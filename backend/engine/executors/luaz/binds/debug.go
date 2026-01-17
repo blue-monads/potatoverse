@@ -3,7 +3,7 @@ package binds
 import (
 	"fmt"
 
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	lua "github.com/yuin/gopher-lua"
 )
 

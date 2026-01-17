@@ -10,16 +10,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
+	"github.com/jaevor/go-nanoid"
 
 	"github.com/upper/db/v4"
 )
 
 //go:embed file_schema.sql
 var FileSchemaSQL string
+
+var refIdGen, _ = nanoid.ASCII(16)
 
 const BlobSizeLimit = 1024 * 1024 * 1
 
@@ -42,6 +45,7 @@ type FileOperations struct {
 	externalFilesPath string
 	prefix            string
 	storeType         int64
+	refIdGen          func() string
 }
 
 type Options struct {
@@ -50,16 +54,23 @@ type Options struct {
 	ExternalFilesPath string
 	Prefix            string
 	StoreType         int64
+	GenerateRefID     bool
 }
 
 func NewFileOperations(opts Options) *FileOperations {
-	return &FileOperations{
+	f := &FileOperations{
 		db:                opts.DbSess,
 		minMultiPartSize:  opts.MinMultiPartSize,
 		externalFilesPath: opts.ExternalFilesPath,
 		prefix:            opts.Prefix,
 		storeType:         opts.StoreType,
 	}
+
+	if opts.GenerateRefID {
+		f.refIdGen = refIdGen
+	}
+
+	return f
 }
 
 // "@fPath" "" "@fName" "potato.json"
@@ -146,6 +157,11 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 }
 
 func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
+
+	if req.RefID == "" && f.refIdGen != nil {
+		req.RefID = f.refIdGen()
+	}
+
 	exists, err := f.fileExists(ownerID, req.Path, req.Name)
 	if err != nil {
 		return 0, err

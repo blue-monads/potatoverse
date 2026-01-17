@@ -1,9 +1,10 @@
 package binds
 
 import (
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -26,7 +27,7 @@ func newCapModule(L *lua.LState, app xtypes.App, installId int64, spaceId int64)
 		app:          app,
 		installId:    installId,
 		spaceId:      spaceId,
-		capabilities: engine.GetCapabilityHub().(xtypes.CapabilityHub),
+		capabilities: engine.GetCapabilityHub().(xcapability.CapabilityHub),
 	}
 	L.SetMetatable(ud, L.GetTypeMetatable(luaCapModuleTypeName))
 	return ud
@@ -56,7 +57,7 @@ func capModuleIndex(L *lua.LState) int {
 			return capExecute(mod, L)
 		}))
 		return 1
-	case "methods":
+	case "list_methods":
 		L.Push(L.NewFunction(func(L *lua.LState) int {
 			return capMethods(mod, L)
 		}))

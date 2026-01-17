@@ -10,6 +10,7 @@ source_code = "https://github.com/john-doe/simple-todo"
 license = "MIT"
 version = "0.0.1"
 update_url = "https://github.com/john-doe/simple-todo/refs/heads/main/releases.json"
+spec_file = "spec.json"
 
 [[artifacts]]
 namespace = "simple-todo"
@@ -17,7 +18,7 @@ kind = "space"
 executor_type = "luaz"
 server_file = "server.lua"
 route_options = { serve_folder = "public", force_html_extension = false, force_index_html_file = false }
-mcp_options = { enabled = true, definition_file = "mcp.json" }
+
 dev_serve_port = 7778
 
 [dev_options]
@@ -31,7 +32,7 @@ output_zip_file="simple-todo.zip"
 include_files = [
     "public/**/*",
     "server.lua",
-    "mcp.json"
+    "spec.json"
 ]
 exclude_files = [
     "public/node_modules/**/*",

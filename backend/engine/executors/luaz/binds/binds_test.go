@@ -6,10 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/database"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -35,14 +37,14 @@ func BuildDBHandle() (datahub.Database, error) {
 	return db, nil
 }
 
-// mockCapabilityHub is a minimal mock implementation of xtypes.CapabilityHub
+// mockCapabilityHub is a minimal mock implementation of xcapability.CapabilityHub
 type mockCapabilityHub struct{}
 
 func (m *mockCapabilityHub) List(spaceId int64) ([]string, error) {
 	return []string{"test_capability"}, nil
 }
 
-func (m *mockCapabilityHub) Execute(installId, spaceId int64, gname, method string, params xtypes.LazyData) (any, error) {
+func (m *mockCapabilityHub) Execute(installId, spaceId int64, gname, method string, params lazydata.LazyData) (any, error) {
 	return map[string]any{"result": "ok"}, nil
 }
 
@@ -52,7 +54,11 @@ func (m *mockCapabilityHub) Methods(installId, spaceId int64, gname string) ([]s
 
 // mockEngine is a minimal mock implementation of xtypes.Engine
 type mockEngine struct {
-	capHub xtypes.CapabilityHub
+	capHub xcapability.CapabilityHub
+}
+
+func (m *mockEngine) GetBuddyHub() any {
+	return nil
 }
 
 func (m *mockEngine) GetCapabilityHub() any {
@@ -78,6 +84,14 @@ func (m *mockEngine) PublishEvent(opts *xtypes.EventOptions) error {
 
 func (m *mockEngine) RefreshEventIndex() {}
 
+func (m *mockEngine) EmitActionEvent(opts *xtypes.ActionEventOptions) error {
+	return nil
+}
+
+func (m *mockEngine) EmitHttpEvent(opts *xtypes.HttpEventOptions) error {
+	return nil
+}
+
 // mockApp is a minimal mock implementation of xtypes.App for testing
 type mockApp struct {
 	db     datahub.Database
@@ -96,6 +110,7 @@ func (m *mockApp) Controller() any            { return nil }
 func (m *mockApp) Engine() any                { return m.engine }
 func (m *mockApp) Config() any                { return m.config }
 func (m *mockApp) Sockd() any                 { return nil }
+func (m *mockApp) CoreHub() any               { return nil }
 
 // buildTestApp creates a test App instance for testing bindings
 func buildTestApp(t *testing.T) (xtypes.App, func()) {
@@ -157,7 +172,7 @@ func TestKVModule(t *testing.T) {
 	defer L.Close()
 
 	installId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, 1))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, 1))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -233,7 +248,7 @@ func TestDBModule(t *testing.T) {
 	defer L.Close()
 
 	installId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, 1))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, 1))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -354,7 +369,7 @@ func TestTxnModule(t *testing.T) {
 	defer L.Close()
 
 	installId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, 1))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, 1))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -433,7 +448,7 @@ func TestCapModule(t *testing.T) {
 
 	installId := int64(1)
 	spaceId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, spaceId))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, spaceId))
 
 	err := L.DoString(`
 		local potato = require("potato")
@@ -473,7 +488,7 @@ func TestCoreModule(t *testing.T) {
 
 	installId := int64(1)
 	spaceId := int64(1)
-	L.PreloadModule("potato", PotatoModule(testApp, installId, spaceId))
+	L.PreloadModule("potato", PotatoModule(testApp, installId, 1, spaceId))
 
 	err := L.DoString(`
 		local potato = require("potato")

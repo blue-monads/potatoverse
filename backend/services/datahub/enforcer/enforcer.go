@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/rqlite/sql"
 )
 
@@ -28,8 +28,13 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 	// Split input into individual statements by semicolon
 	statements := splitStatements(input)
 
+	qq.Println("statements", statements)
+
 	var transformedStatements []string
-	for _, stmtStr := range statements {
+	for i, stmtStr := range statements {
+
+		qq.Println("stmtStr", i, stmtStr)
+
 		stmtStr = strings.TrimSpace(stmtStr)
 		if stmtStr == "" {
 			continue
@@ -38,11 +43,15 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 		parser := sql.NewParser(strings.NewReader(stmtStr))
 		stmt, err := parser.ParseStatement()
 		if err != nil {
+			qq.Println("failed to parse SQL", i, err, "stmtStr:", stmtStr)
 			return "", fmt.Errorf("failed to parse SQL: %w", err)
 		}
 
 		// Transform the AST by walking and modifying table names
 		transformedStmt, err := sql.Walk(sql.VisitEndFunc(func(n sql.Node) (sql.Node, error) {
+			// Log node type for debugging
+			qq.Println("node type", i, fmt.Sprintf("%T", n))
+
 			switch node := n.(type) {
 			case *sql.QualifiedTableName:
 				// Transform table name in FROM, JOIN, etc.
@@ -83,6 +92,27 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 						if cloned.Name != nil {
 							cloned.Name = cloned.Name.Clone()
 							cloned.Name.Name = prefix + cloned.Name.Name
+						}
+						return cloned, nil
+					}
+				}
+				return node, nil
+
+			case *sql.CreateVirtualTableStatement:
+				// Transform table name in CREATE VIRTUAL TABLE
+				if node.Name != nil {
+					tableName := node.Name.Name
+					// If Schema is set, use Schema.Name as the table name, otherwise use Name.Name
+					if node.Schema != nil && node.Schema.Name != "" {
+						tableName = node.Schema.Name
+					}
+					if !strings.HasPrefix(tableName, prefix) {
+						cloned := node.Clone()
+						// Clear Schema if it was set (we want unqualified table names)
+						cloned.Schema = nil
+						if cloned.Name != nil {
+							cloned.Name = cloned.Name.Clone()
+							cloned.Name.Name = prefix + tableName
 						}
 						return cloned, nil
 					}
@@ -158,17 +188,38 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 					}
 				}
 				return node, nil
+
+			case *sql.ForeignKeyConstraint:
+				// Transform foreign table name in FOREIGN KEY constraints
+				if node.ForeignTable != nil {
+					tableName := node.ForeignTable.Name
+					// Skip if already scoped
+					if !strings.HasPrefix(tableName, prefix) {
+						cloned := node.Clone()
+						if cloned.ForeignTable != nil {
+							cloned.ForeignTable = cloned.ForeignTable.Clone()
+							cloned.ForeignTable.Name = prefix + cloned.ForeignTable.Name
+						}
+						return cloned, nil
+					}
+				}
+				return node, nil
 			}
+
+			qq.Println("node/end", i)
 
 			return n, nil
 		}), stmt)
 
 		if err != nil {
+			qq.Println("failed to transform SQL", i, err, "stmtStr:", stmtStr)
 			return "", fmt.Errorf("failed to transform SQL: %w", err)
 		}
 
 		transformedSQL := transformedStmt.String()
 		transformedStatements = append(transformedStatements, transformedSQL)
+
+		qq.Println("transformedSQL", i, transformedSQL)
 	}
 
 	result := strings.Join(transformedStatements, ";\n\n")

@@ -5,9 +5,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (c *Controller) ListSpaceFiles(installedId int64, path string) ([]dbmodels.FileMeta, error) {

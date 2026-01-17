@@ -1,0 +1,21 @@
+{
+    "name": "Official Potato Field",
+    "info": "Official Potato Field for PotatoVerse",
+    "type": "harvester-v1",
+    "zip_template": "/harvest/{slug}-{version}.zip",
+    "indexed_tags": ["official"],
+    "indexed_tag_template": "/tags/{tag}.json",
+    "potatoes": [{
+        "name": "Simple GIS",
+        "info": "Simple GIS app",
+        "slug": "cimple-gis",
+        "tags": ["gis"],
+        "author_name": "Bornjre",
+        "author_email": "bornjre@gmail.com",
+        "author_site": "https://github.com/bornjre",
+        "license": "MIT",
+        "base_harvest_url": "https://github.com/blue-monads/potato-apps/releases/download/",
+        "current_version": "0.0.1",
+        "versions": ["0.0.1","0.0.2","0.0.3"]
+    }]
+}

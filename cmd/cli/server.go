@@ -3,22 +3,26 @@ package cli
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/blue-monads/turnix/backend"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/pelletier/go-toml/v2"
 )
 
 // server
 
 type ServerCmd struct {
-	Init  ServerInitCmd  `cmd:"" help:"Initialize the server with default options."`
-	Start ServerStartCmd `cmd:"" help:"Start the server."`
-	Stop  ServerStopCmd  `cmd:"" help:"Stop the server."`
+	InitAndStart ServerInitCmd        `cmd:"" help:"Initialize the server with default options and start the server."`
+	Init         ServerInitCmd        `cmd:"" help:"Initialize the server with default options."`
+	Start        ServerStartCmd       `cmd:"" help:"Start the server."`
+	Stop         ServerStopCmd        `cmd:"" help:"Stop the server."`
+	ActualStart  ServerActualStartCmd `cmd:"" help:"Actual start the server, called internally by the server start command."`
 }
 
 type ServerInitCmd struct {
@@ -31,11 +35,6 @@ type ServerInitCmd struct {
 	MasterSecretEnv string `name:"master-secret-env" help:"Master secret environment variable of node."`
 	Debug           bool   `name:"debug" help:"Debug mode of node." default:"false"`
 	WorkingDir      string `name:"working-dir" help:"Working dir of node."`
-}
-
-type ServerStartCmd struct {
-	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
-	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
 func (c *ServerInitCmd) Run(ctx *kong.Context) error {
@@ -95,11 +94,56 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 		return err
 	}
 
+	qq.Println("@args", ctx.Args)
+
+	if len(ctx.Args) > 0 && ctx.Args[1] == "init-and-start" {
+		return RunServerStartCommand("./config.toml", true)
+	}
+
 	return nil
 
 }
 
+type ServerStartCmd struct {
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
+}
+
 func (c *ServerStartCmd) Run(ctx *kong.Context) error {
+	return RunServerStartCommand(c.Config, c.AutoSeed)
+}
+
+func RunServerStartCommand(config string, autoSeed bool) error {
+	binary, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	// later we might start log collector in parallel process
+	// actual server runs in child process
+
+	args := []string{"server", "actual-start", "--config", config}
+	if autoSeed {
+		args = append(args, "--auto-seed")
+	}
+
+	cmd := exec.Command(binary, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type ServerActualStartCmd struct {
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
+}
+
+func (c *ServerActualStartCmd) Run(ctx *kong.Context) error {
 
 	cfgData, err := os.ReadFile(c.Config)
 	if err != nil {

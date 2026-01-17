@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
 )
 
 type LoginOpts struct {

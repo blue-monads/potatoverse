@@ -1,9 +1,10 @@
 package binds
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -19,7 +20,7 @@ type luaCapModule struct {
 	app          xtypes.App
 	installId    int64
 	spaceId      int64
-	capabilities xtypes.CapabilityHub
+	capabilities xcapability.CapabilityHub
 }
 
 type luaDBModule struct {
@@ -33,14 +34,15 @@ type luaTxnModule struct {
 }
 
 type luaCoreModule struct {
-	app       xtypes.App
-	installId int64
-	spaceId   int64
-	engine    xtypes.Engine
-	sig       *signer.Signer
+	app              xtypes.App
+	installId        int64
+	packageVersionId int64
+	spaceId          int64
+	engine           xtypes.Engine
+	sig              *signer.Signer
 }
 
-func PotatoModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LState) int {
+func PotatoModule(app xtypes.App, installId int64, packageVersionId int64, spaceId int64) func(L *lua.LState) int {
 	return func(L *lua.LState) int {
 		// Register type metatables
 		registerKVModuleType(L)
@@ -56,7 +58,7 @@ func PotatoModule(app xtypes.App, installId int64, spaceId int64) func(L *lua.LS
 		kvModule := newKVModule(L, app, installId)
 		capModule := newCapModule(L, app, installId, spaceId)
 		dbModule := newDBModule(L, app, installId)
-		coreModule := newCoreModule(L, app, installId, spaceId)
+		coreModule := newCoreModule(L, app, installId, packageVersionId, spaceId)
 
 		// Set sub-modules on main table
 		potatoTable.RawSetString("kv", kvModule)

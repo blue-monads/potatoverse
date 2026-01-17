@@ -7,17 +7,18 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/blue-monads/turnix/backend/engine/hubs/caphub"
-	"github.com/blue-monads/turnix/backend/engine/hubs/eventhub"
-	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
-	"github.com/blue-monads/turnix/backend/engine/registry"
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
+	"github.com/blue-monads/potatoverse/backend/registry"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -62,7 +63,7 @@ func NewEngine(opt EngineOption) *Engine {
 		workingFolder: opt.WorkingFolder,
 		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
-			activeExecs:     make(map[int64]xtypes.Executor),
+			activeExecs:     make(map[int64]*RunningExec),
 			activeExecsLock: sync.RWMutex{},
 			builders:        make(map[string]xtypes.ExecutorBuilder),
 		},
@@ -72,7 +73,7 @@ func NewEngine(opt EngineOption) *Engine {
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
 
-		eventHub: eventhub.NewEventHub(opt.DB),
+		eventHub: nil,
 		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
@@ -94,10 +95,20 @@ func (e *Engine) GetDebugData() map[string]any {
 
 }
 
+func (e *Engine) EmitHttpEvent(opts *xtypes.HttpEventOptions) error {
+	return e.runtime.ExecHttp(opts)
+}
+
+func (e *Engine) EmitActionEvent(opts *xtypes.ActionEventOptions) error {
+	return e.runtime.ExecAction(opts)
+}
+
 func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
+
+	e.eventHub = eventhub.NewEventHub(app)
 
 	bfactories := registry.GetExecutorBuilderFactories()
 
@@ -120,10 +131,16 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
-	go e.runtime.cleanupExecs()
+	err = e.repoHub.Run(app)
+	if err != nil {
+		return err
+	}
+
 	go e.startEloop()
 
 	e.LoadRoutingIndex()
+
+	time.Sleep(2 * time.Second)
 
 	return nil
 }
@@ -206,7 +223,7 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 		return
 	}
 
-	e.runtime.ExecHttp(spaceKey,
+	e.runtime.ExecHttpQ(
 		sIndex.installedId,
 		sIndex.packageVersionId,
 		sIndex.spaceId,
@@ -224,7 +241,6 @@ type SpaceInfo struct {
 	NamespaceKey  string `json:"namespace_key"`
 	OwnsNamespace bool   `json:"owns_namespace"`
 	PackageName   string `json:"package_name"`
-	PackageInfo   string `json:"package_info"`
 }
 
 func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
@@ -251,7 +267,7 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 		return nil, err
 	}
 
-	pkg, err := e.db.GetPackageInstallOps().GetPackageVersion(space.InstalledId)
+	pkg, err := e.db.GetPackageInstallOps().GetPackage(space.InstalledId)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +276,6 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 		ID:           space.ID,
 		NamespaceKey: space.NamespaceKey,
 		PackageName:  pkg.Name,
-		PackageInfo:  pkg.Info,
 	}, nil
 
 }

@@ -1,21 +1,10 @@
 package actions
 
 import (
-	"time"
-
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 )
 
 // UserMessage actions
-
-func (c *Controller) SendUserMessage(data *dbmodels.UserMessage) (int64, error) {
-	if data.CreatedAt == nil {
-		now := time.Now()
-		data.CreatedAt = &now
-	}
-
-	return c.database.GetUserOps().AddUserMessage(data)
-}
 
 func (c *Controller) GetUserMessage(id int64) (*dbmodels.UserMessage, error) {
 	return c.database.GetUserOps().GetUserMessage(id)

@@ -6,38 +6,28 @@ import (
 	"os"
 	"path"
 	"sync"
-	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/libx"
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/utils/libx"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
 
+type RunningExec struct {
+	Executor         xtypes.Executor
+	SpaceId          int64
+	PackageVersionId int64
+	InstalledId      int64
+}
+
 type Runtime struct {
-	activeExecs     map[int64]xtypes.Executor
+	activeExecs     map[int64]*RunningExec
 	activeExecsLock sync.RWMutex
 
 	builders map[string]xtypes.ExecutorBuilder
 
 	parent *Engine
-}
-
-func (r *Runtime) cleanupExecs() {
-	ticker := time.NewTicker(time.Second * 30)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		qq.Println("@cleanup_execs/1")
-
-		r.activeExecsLock.RLock()
-		for _, e := range r.activeExecs {
-			e.Cleanup()
-		}
-
-		r.activeExecsLock.RUnlock()
-	}
 }
 
 func (r *Runtime) GetDebugData() map[int64]any {
@@ -48,7 +38,7 @@ func (r *Runtime) GetDebugData() map[int64]any {
 	defer r.activeExecsLock.RUnlock()
 
 	for id, e := range r.activeExecs {
-		resp[id] = e.GetDebugData()
+		resp[id] = e.Executor.GetDebugData()
 	}
 
 	return resp
@@ -63,7 +53,7 @@ func (r *Runtime) ClearExecs(spaceIds ...int64) {
 	}
 }
 
-func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int64) (xtypes.Executor, error) {
+func (r *Runtime) GetExec(spaceid int64) (*RunningExec, error) {
 	r.activeExecsLock.RLock()
 	e := r.activeExecs[spaceid]
 	r.activeExecsLock.RUnlock()
@@ -71,14 +61,22 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		return e, nil
 	}
 
-	wd := path.Join(r.parent.workingFolder, "work_dir", spaceKey, fmt.Sprintf("%d", pVersionId))
-
-	os.MkdirAll(wd, 0755)
-
 	space, err := r.parent.db.GetSpaceOps().GetSpace(spaceid)
 	if err != nil {
+		qq.Println("@get_exec/1", "error getting space", err)
 		return nil, errors.New("space not found")
 	}
+
+	pkg, err := r.parent.db.GetPackageInstallOps().GetPackage(space.InstalledId)
+	if err != nil {
+		return nil, errors.New("package not found")
+	}
+
+	spaceKey := space.NamespaceKey
+
+	wd := path.Join(r.parent.workingFolder, "work_dir", spaceKey, fmt.Sprintf("%d", pkg.ActiveInstallID))
+
+	os.MkdirAll(wd, 0755)
 
 	builder, ok := r.builders[space.ExecutorType]
 	if !ok {
@@ -90,14 +88,21 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 		return nil, err
 	}
 
-	e, err = builder.Build(&xtypes.ExecutorBuilderOption{
-		Logger:           r.parent.app.Logger().With("package_id", pVersionId),
+	innerExec, err := builder.Build(&xtypes.ExecutorBuilderOption{
+		Logger:           r.parent.app.Logger().With("package_id", pkg.ActiveInstallID),
 		WorkingFolder:    wd,
 		SpaceId:          spaceid,
-		InstalledId:      installedId,
-		PackageVersionId: pVersionId,
+		InstalledId:      pkg.ID,
+		PackageVersionId: pkg.ActiveInstallID,
 		FsRoot:           rfs,
 	})
+
+	e = &RunningExec{
+		Executor:         innerExec,
+		SpaceId:          spaceid,
+		PackageVersionId: pkg.ActiveInstallID,
+		InstalledId:      pkg.ID,
+	}
 
 	if err != nil {
 		return nil, err
@@ -111,51 +116,57 @@ func (r *Runtime) GetExec(spaceKey string, installedId, pVersionId, spaceid int6
 
 }
 
-type ExecuteOptions struct {
-	NSKey            string
-	PackageVersionId int64
-	InstalledId      int64
-	SpaceId          int64
-	HandlerName      string
-	HttpContext      *gin.Context
-	Params           map[string]string
+func (r *Runtime) ExecHttpQ(installedId, packageVersionId, spaceId int64, ctx *gin.Context) error {
+	return r.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     spaceId,
+		Request:     ctx,
+		HandlerName: "",
+		Params:      make(map[string]string),
+	})
 }
 
-func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
+func (r *Runtime) ExecHttp(opts *xtypes.HttpEventOptions) error {
 
-	e, err := r.GetExec(opts.NSKey, opts.InstalledId, opts.PackageVersionId, opts.SpaceId)
+	e, err := r.GetExec(opts.SpaceId)
 	if err != nil {
 		qq.Println("@exec_http/1", "error getting exec", err)
-		httpx.WriteErr(opts.HttpContext, err)
+		httpx.WriteErr(opts.Request, err)
 		return err
 	}
 
 	if e == nil {
 		qq.Println("@exec_http/1", "exec is nil")
-		httpx.WriteErr(opts.HttpContext, errors.New("exec is nil"))
+		httpx.WriteErr(opts.Request, errors.New("exec is nil"))
 		return errors.New("exec is nil")
 	}
+
+	subpath := opts.Request.Param("subpath")
+
+	if opts.Params == nil {
+		opts.Params = make(map[string]string)
+	}
+
+	opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
+	opts.Params["install_id"] = fmt.Sprintf("%d", e.InstalledId)
+	opts.Params["package_version_id"] = fmt.Sprintf("%d", e.PackageVersionId)
+	opts.Params["subpath"] = subpath
+	opts.Params["method"] = opts.Request.Request.Method
 
 	// print stack trace
 
 	err = libx.PanicWrapper(func() {
-		subpath := opts.HttpContext.Param("subpath")
 
-		params := opts.Params
-		if params == nil {
-			params = make(map[string]string)
+		if opts.HandlerName == "" {
+			opts.HandlerName = "on_http"
 		}
 
-		params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
-		params["install_id"] = fmt.Sprintf("%d", opts.InstalledId)
-		params["package_version_id"] = fmt.Sprintf("%d", opts.PackageVersionId)
-		params["subpath"] = subpath
-		params["method"] = opts.HttpContext.Request.Method
+		qq.Println("@exec_http/3", opts.Params)
 
-		err := e.HandleHttp(xtypes.HttpExecution{
+		err := e.Executor.HandleHttp(&xtypes.HttpEvent{
+			EventType:   opts.EventType,
 			HandlerName: opts.HandlerName,
-			Params:      params,
-			Request:     opts.HttpContext,
+			Params:      opts.Params,
+			Request:     opts.Request,
 		})
 		if err != nil {
 			qq.Println("@exec_http/2", "error handling http", err)
@@ -164,27 +175,61 @@ func (r *Runtime) ExecuteHttp(opts ExecuteOptions) error {
 
 	})
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 
 }
 
-func (r *Runtime) ExecHttp(nsKey string, installedId, packageVersionId, spaceId int64, ctx *gin.Context) {
-	err := r.ExecuteHttp(ExecuteOptions{
-		NSKey:            nsKey,
-		InstalledId:      installedId,
-		PackageVersionId: packageVersionId,
-		SpaceId:          spaceId,
-		HandlerName:      "on_http",
-		HttpContext:      ctx,
-		Params:           make(map[string]string),
-	})
+func (r *Runtime) ExecAction(opts *xtypes.ActionEventOptions) error {
+
+	e, err := r.GetExec(opts.SpaceId)
 	if err != nil {
-		httpx.WriteErr(ctx, err)
-		return
+		qq.Println("@exec_action/1", "error getting exec", err)
+		return err
 	}
+
+	if e == nil {
+		qq.Println("@exec_event/1", "exec is nil")
+		return errors.New("exec is nil")
+	}
+
+	if opts.Params == nil {
+		opts.Params = make(map[string]string)
+	}
+
+	opts.Params["space_id"] = fmt.Sprintf("%d", opts.SpaceId)
+	opts.Params["install_id"] = fmt.Sprintf("%d", e.InstalledId)
+	opts.Params["package_version_id"] = fmt.Sprintf("%d", e.PackageVersionId)
+	opts.Params["event_type"] = opts.EventType
+	opts.Params["action"] = opts.ActionName
+
+	err = libx.PanicWrapper(func() {
+
+		qq.Println("@params", opts.Params)
+
+		err := e.Executor.HandleAction(&xtypes.ActionEvent{
+			EventType:  opts.EventType,
+			ActionName: opts.ActionName,
+			Params:     opts.Params,
+			Request:    opts.Request,
+		})
+		if err != nil {
+			qq.Println("@exec_event/2", "error handling event", err)
+			panic(err)
+		}
+	})
+
+	return err
+
+}
+
+func (r *Runtime) ExecActionQ(spaceId int64, req xtypes.ActionRequest, etype, actionName string) error {
+
+	return r.ExecAction(&xtypes.ActionEventOptions{
+		SpaceId:    spaceId,
+		Request:    req,
+		EventType:  etype,
+		ActionName: actionName,
+		Params:     make(map[string]string),
+	})
 
 }

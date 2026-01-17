@@ -2,8 +2,9 @@ package datahub
 
 import (
 	"io"
+	"io/fs"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/gin-gonic/gin"
 	"github.com/upper/db/v4"
 )
@@ -59,6 +60,7 @@ type UserOps interface {
 	GetUserByEmail(email string) (*dbmodels.User, error)
 	GetUserByUsername(username string) (*dbmodels.User, error)
 	ListUser(offset int, limit int) ([]dbmodels.User, error)
+	ListUserByCond(cond map[any]any, offset int, limit int) ([]dbmodels.User, error)
 	ListUserByOwner(owner int64) ([]dbmodels.User, error)
 	UpdateUser(id int64, data map[string]any) error
 	DeleteUser(id int64) error
@@ -95,6 +97,7 @@ type PackageInstallOps interface {
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, file string) (int64, error)
 	UpdateActiveInstallId(id int64, installId int64) error
+	UpdatePackageDevToken(id int64, devToken string) error
 
 	ListPackages() ([]dbmodels.InstalledPackage, error)
 	ListPackagesByIds(ids []int64) ([]dbmodels.InstalledPackage, error)
@@ -173,6 +176,7 @@ type SpaceKVOps interface {
 }
 
 type CreateFileRequest struct {
+	RefID     string `json:"ref_id"`
 	Name      string `json:"name"`
 	Path      string `json:"path"`
 	CreatedBy int64  `json:"created_by"`
@@ -193,11 +197,16 @@ type FileOps interface {
 	StreamFileToHTTP(ownerID int64, path, name string, ctx *gin.Context) error
 	UpdateFile(ownerID int64, id int64, stream io.Reader) error
 	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
+	GetFilePreview(ownerID int64, id int64) ([]byte, error)
+
+	// File Ref
 
 	AddFileShare(ownerID int64, fileId int64, userId int64) (string, error)
 	GetSharedFile(ownerID int64, id string, ctx *gin.Context) error
 	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
 	RemoveFileShare(ownerID int64, userId int64, id string) error
+
+	NewAsFS(ownerID int64, rootPath string) fs.FS
 }
 
 type FindQuery struct {

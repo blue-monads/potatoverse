@@ -3,18 +3,15 @@ package dbmodels
 import "time"
 
 type Space struct {
-	ID                int64  `json:"id" db:"id,omitempty"`
-	InstalledId       int64  `json:"install_id" db:"install_id,omitempty"`
-	NamespaceKey      string `json:"namespace_key" db:"namespace_key,omitempty"`
-	ExecutorType      string `json:"executor_type" db:"executor_type,omitempty"`
-	ExecutorSubType   string `json:"executor_sub_type" db:"executor_sub_type,omitempty"`
-	SpaceType         string `json:"space_type" db:"space_type,omitempty"`
-	RouteOptions      string `json:"route_options" db:"route_options,omitempty"`
-	McpEnabled        bool   `json:"mcp_enabled" db:"mcp_enabled,omitempty"`
-	McpDefinitionFile string `json:"mcp_definition_file" db:"mcp_definition_file,omitempty"`
-	McpOptions        string `json:"mcp_options" db:"mcp_options,omitempty"`
-	DevServePort      int64  `json:"dev_serve_port" db:"dev_serve_port,omitempty"`
-	ServerFile        string `json:"server_file" db:"server_file,omitempty"`
+	ID              int64  `json:"id" db:"id,omitempty"`
+	InstalledId     int64  `json:"install_id" db:"install_id,omitempty"`
+	NamespaceKey    string `json:"namespace_key" db:"namespace_key,omitempty"`
+	ExecutorType    string `json:"executor_type" db:"executor_type,omitempty"`
+	ExecutorSubType string `json:"executor_sub_type" db:"executor_sub_type,omitempty"`
+	SpaceType       string `json:"space_type" db:"space_type,omitempty"`
+	RouteOptions    string `json:"route_options" db:"route_options,omitempty"`
+	DevServePort    int64  `json:"dev_serve_port" db:"dev_serve_port,omitempty"`
+	ServerFile      string `json:"server_file" db:"server_file,omitempty"`
 
 	DevMode bool `json:"dev_mode" db:"dev_mode,omitempty"`
 

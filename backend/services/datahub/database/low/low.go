@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/enforcer"
-	"github.com/blue-monads/turnix/backend/utils/libx/dbutils"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/enforcer"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/dbutils"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -97,11 +97,15 @@ func (d *LowDB) Rollback() error {
 }
 
 func (d *LowDB) RunDDL(ddl string) error {
+	fmt.Println("RunDDL/0", ddl)
 	driver := d.sess.Driver().(*sql.DB)
 	transformedDDL, err := enforcer.TransformQuery(d.ownerType, d.ownerID, ddl)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("RunDDL/1", transformedDDL)
+
 	_, err = driver.Exec(transformedDDL)
 	if err != nil {
 		return err

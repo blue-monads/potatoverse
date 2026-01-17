@@ -3,7 +3,7 @@ package binds
 import (
 	"context"
 
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	lua "github.com/yuin/gopher-lua"
 )

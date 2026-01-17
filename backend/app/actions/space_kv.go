@@ -3,7 +3,7 @@ package actions
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 )
 
 func (c *Controller) CreateSpaceKV(installId int64, data map[string]any) (*dbmodels.SpaceKV, error) {

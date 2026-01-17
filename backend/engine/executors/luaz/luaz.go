@@ -3,9 +3,9 @@ package luaz
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/utils/libx/httpx"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 var _ xtypes.Executor = (*LuazExecutor)(nil)
@@ -22,7 +22,7 @@ func (l *LuazExecutor) Cleanup() {
 	qq.Println("@cleanup/3")
 }
 
-func (l *LuazExecutor) HandleHttp(event xtypes.HttpExecution) error {
+func (l *LuazExecutor) HandleHttp(event *xtypes.HttpEvent) error {
 	qq.Println("@handle/1")
 
 	lh, err := l.pool.Get()
@@ -53,8 +53,26 @@ func (l *LuazExecutor) HandleHttp(event xtypes.HttpExecution) error {
 
 }
 
-func (l *LuazExecutor) HandleEvent(event xtypes.EventExecution) error {
+func (l *LuazExecutor) HandleAction(event *xtypes.ActionEvent) error {
+
+	lh, err := l.pool.Get()
+	if err != nil {
+		return err
+	}
+
+	if lh == nil {
+		return errors.New("Could not get lua state")
+	}
+
+	err = lh.HandleAction(event)
+	if err != nil {
+		return err
+	}
+
+	l.pool.Put(lh)
+
 	return nil
+
 }
 
 func (l *LuazExecutor) GetDebugData() map[string]any {

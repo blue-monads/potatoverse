@@ -2,10 +2,11 @@ package luaz
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -44,7 +45,7 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 		packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, "", s.ServerFile)
 
 		if err != nil {
-			qq.Println("@lua_exec_error", err)
+			qq.Println("@script file load error", err)
 			qq.Println("@package file not found", opt.PackageVersionId, opt.SpaceId, s.ServerFile)
 			qq.Println("@space", s)
 			return nil, errors.New("package file not found")
@@ -83,6 +84,11 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 			err = L.DoString(source)
 			if err != nil {
 				qq.Println("@lua_exec_error", err)
+				qq.Println("@lua_exec_error_error", err.Error())
+				fmt.Println("--------------------------------")
+				fmt.Println(source)
+				fmt.Println("--------------------------------")
+
 				return nil, err
 			}
 			qq.Println("@lua_exec_success", "code length", len(source))

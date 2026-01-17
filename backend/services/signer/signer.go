@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/hako/branca"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -18,6 +19,7 @@ const (
 	TokenTypeSpaceFilePresigned uint16 = 6
 	ToekenPackageDev            uint16 = 7
 	TokenTypeCapability         uint16 = 8
+	TokenTypeBuddyAuth          uint16 = 9
 )
 
 type AccessClaim struct {
@@ -33,6 +35,7 @@ type InviteClaim struct {
 
 type SpaceClaim struct {
 	Typeid    uint16 `json:"t,omitempty"`
+	InstallId int64  `json:"z,omitempty"`
 	SpaceId   int64  `json:"s,omitempty"`
 	UserId    int64  `json:"u,omitempty"`
 	SessionId int64  `json:"i,omitempty"`
@@ -79,14 +82,19 @@ var ErrInvalidToken = errors.New("INVALID TOKEN")
 
 type Signer struct {
 	signer *branca.Branca
+	altKey []byte
 }
 
 func New(key []byte) *Signer {
 	masterKey := pbkdf2.Key(key, []byte("SALTY_SALMON"), 2048, 32, sha256.New)
+	altKey := pbkdf2.Key(masterKey, []byte("UMAMI_POTATO"), 4, 32, sha256.New)
 
-	return &Signer{
+	s := &Signer{
 		signer: branca.NewBranca(string(masterKey)),
+		altKey: altKey,
 	}
+
+	return s
 }
 
 func (t *Signer) parse(token string, dest any) error {
@@ -255,6 +263,7 @@ func (ts *Signer) ParseCapability(tstr string) (*CapabilityClaim, error) {
 	}
 
 	if claim.Typeid != TokenTypeCapability {
+		qq.Println("claim: ", claim)
 		return nil, ErrInvalidToken
 	}
 

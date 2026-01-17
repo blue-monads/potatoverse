@@ -6,11 +6,14 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
-	"github.com/blue-monads/turnix/backend/app/actions"
-	"github.com/blue-monads/turnix/backend/engine"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/app/actions"
+	rtbuddy "github.com/blue-monads/potatoverse/backend/app/server/rt_buddy"
+	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,10 +21,10 @@ type Server struct {
 	ctrl   *actions.Controller
 	router *gin.Engine
 	signer *signer.Signer
-
 	engine *engine.Engine
+	opt    Option
 
-	opt Option
+	buddyRoutes *rtbuddy.BuddyRouteServer
 }
 
 type Option struct {
@@ -34,16 +37,12 @@ type Option struct {
 	SiteName    string
 	LocalSocket string
 
-	// ServerKey just some identifier for the server, (lowercase a-z and numbers)
-	// it could be hash for public key if node is tunneling traffic for other nodes
+	CoreHub *corehub.CoreHub
 
-	ServerKey string
+	ServerPubKey string
 }
 
 func NewServer(opt Option) *Server {
-	if opt.ServerKey == "" {
-		opt.ServerKey = "main"
-	}
 
 	return &Server{
 		ctrl:   opt.Ctrl,
@@ -54,12 +53,20 @@ func NewServer(opt Option) *Server {
 }
 
 func (s *Server) Start() error {
+	pubkey := s.opt.CoreHub.GetBuddyHub().GetPubkey()
+	s.opt.ServerPubKey = pubkey
+
+	buddyhub := s.opt.CoreHub.GetBuddyHub()
+
+	s.buddyRoutes = rtbuddy.New(buddyhub, s.opt.Port, s.opt.ServerPubKey)
+
 	err := s.buildGlobalJS()
 	if err != nil {
 		return err
 	}
 
 	s.router = gin.Default()
+	s.router.Use(s.buddyRoutes.BuddyAutoRouteMW)
 
 	s.bindRoutes()
 	err = s.listenUnixSocket()
@@ -67,9 +74,26 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
+	existed := false
 
-	return nil
+	defer func() {
+		existed = true
+	}()
+
+	go func() {
+
+		time.Sleep(2 * time.Second)
+
+		if !existed {
+			fmt.Println("Server started:")
+			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
+			fmt.Println("Node Pubkey:\t\t", pubkey)
+		}
+
+	}()
+
+	return s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
+
 }
 
 func (s *Server) listenUnixSocket() error {

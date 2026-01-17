@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { getLoginData } from "./utils";
+import { staticGradients } from "@/app/utils";
 
 
 let iaxios: AxiosInstance = axios.create({
@@ -276,6 +277,9 @@ export interface Package {
     type: string;
     tags: string;
     version: string;
+    author_name: string;
+    author_email: string;
+    author_site: string;
 }
 
 export interface Space {
@@ -334,6 +338,53 @@ export interface PackageVersion {
 
 export const getInstalledPackageInfo = async (packageId: number) => {
     return iaxios.get<InstalledPackageInfo>(`/core/package/${packageId}/info`);
+}
+
+
+export type FormattedSpace = {
+    space_id: number;
+    install_id: number;
+    namespace_key: string;
+    package_name: string;
+    package_info: string;
+    package_version_id: number;    
+    package_version: string;
+    gradient: string;
+
+    package_author: string;
+    package_author_email: string;
+    package_author_site: string;
+}
+
+
+
+
+export const formatSpace = (data: InstalledSpace) => {
+    const spaces = data.spaces;
+    const packages = data.packages;
+
+    const formattedSpaces: FormattedSpace[] = [];
+
+    for (const space of spaces) {
+        const pkg = packages.find((pkg) => pkg.install_id === space.install_id);
+        if (!pkg) continue;
+
+        formattedSpaces.push({
+            space_id: space.id,
+            install_id: space.install_id,
+            namespace_key: space.namespace_key,
+            package_name: pkg.name,
+            package_info: pkg.info,
+            package_version_id: pkg.id,
+            package_version: pkg.version,
+            package_author: pkg.author_name,
+            package_author_email: pkg.author_email,
+            package_author_site: pkg.author_site,
+            gradient: staticGradients[space.id % staticGradients.length],
+        });
+    }
+
+    return formattedSpaces;
 }
 
 
@@ -857,4 +908,15 @@ export const getDocsIndex = async () => {
 
 export const getDocsFile = async (filePath: string) => {
     return iaxios.get<any>(`/core/docs/${filePath}`);
+}
+
+// Capabilities API
+export const getCapabilitiesDebug = async (capabilityName: string) => {
+    return iaxios.get<any>(`/capabilities/debug/${capabilityName}`);
+}
+
+// /zz/api/core/space/:install_id/spec.json
+
+export const getSpaceSpec = async (installId: number) => {
+    return iaxios.get<any>(`/core/space/${installId}/spec.json`);
 }

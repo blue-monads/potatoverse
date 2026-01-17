@@ -3,7 +3,7 @@ package file
 import (
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/gin-gonic/gin"
 	nanoid "github.com/jaevor/go-nanoid"
 	"github.com/upper/db/v4"

@@ -8,6 +8,33 @@ master_secret = "$POTATO_MASTER_SECRET"
 debug = true
 working_dir = "./tmp"
 
+rendezvous_urls = [
+    { url = "http://localhost:8080", provider = "http", priority = 1, simple_mode = true },
+]
+
+[[buddies]]
+pubkey = "1234567890"
+url = "http://localhost:8080"
+priority = 1
+provider = "http"
+pre_connect = true
+
+
+[backup-config]
+
+[litestream]
+full-snapshot-interval = "1h"
+delta-snapshot-interval = "10m"
+delete-interval = "1h"
+replicas = [
+    { type = "buddy", id ="pub123" },
+]
+
+[cdc]
+replicates = [
+    { type = "buddy", id ="pub123" },
+]
+
 # repo array
 [[repo]]
 url = "https://store.potatoverse.com/package_index.json"

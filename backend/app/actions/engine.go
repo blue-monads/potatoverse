@@ -7,14 +7,17 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"regexp"
+	"sort"
+	"strings"
 
-	"github.com/blue-monads/turnix/backend/engine/hubs/repohub"
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/kosher"
-	"github.com/blue-monads/turnix/backend/xtypes/models"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/kosher"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/bwmarrin/snowflake"
 	"github.com/tidwall/gjson"
 )
@@ -37,16 +40,70 @@ func (c *Controller) GetEngineDebugData() map[string]any {
 }
 
 func (c *Controller) DeletePackage(userId int64, packageId int64) error {
+
+	qq.Println("@DeletePackage/1", userId, packageId)
+
 	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
 	if err != nil {
 		return err
 	}
 
+	qq.Println("@DeletePackage/2", pkg)
+
 	if pkg.InstalledBy != userId {
+
 		return errors.New("you are not the owner of this package")
 	}
 
-	return c.database.GetPackageInstallOps().DeletePackage(packageId)
+	qq.Println("@DeletePackage/3", "you are the owner of this package")
+
+	err = c.database.GetPackageInstallOps().DeletePackage(packageId)
+	if err != nil {
+		return err
+	}
+
+	qq.Println("@DeletePackage/4", "deleting package")
+
+	pkvVersions, err := c.database.GetPackageInstallOps().ListPackageVersionsByPackageId(packageId)
+	if err != nil {
+		return err
+	}
+
+	qq.Println("@DeletePackage/5", pkvVersions)
+
+	spaceDb := c.database.GetSpaceOps()
+	pkgInstallDb := c.database.GetPackageInstallOps()
+
+	qq.Println("@DeletePackage/6")
+
+	for _, pkvVersion := range pkvVersions {
+
+		qq.Println("@DeletePackage/7", pkvVersion)
+
+		err = pkgInstallDb.DeletePackageVersion(pkvVersion.ID)
+		if err != nil {
+			return err
+		}
+
+		qq.Println("@DeletePackage/8", "deleting package version")
+
+		spaces, err := spaceDb.ListSpacesByPackageId(pkvVersion.InstallId)
+		if err != nil {
+			return err
+		}
+
+		qq.Println("@DeletePackage/9")
+
+		for _, space := range spaces {
+			err = spaceDb.RemoveSpace(space.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
 
 }
 
@@ -73,6 +130,7 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 		SpaceId:   req.SpaceId,
 		UserId:    userId,
 		Typeid:    signer.TokenTypeSpace,
+		InstallId: space.InstalledId,
 		SessionId: snode.Generate().Int64(),
 	})
 
@@ -80,7 +138,7 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 
 func (c *Controller) InstallPackageByUrl(userId int64, url string) (*InstallPackageResult, error) {
 
-	tmpFile, err := os.CreateTemp("", "turnix-package-*.zip")
+	tmpFile, err := os.CreateTemp("", "potato-package-*.zip")
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +171,16 @@ func (c *Controller) GetPackageVersion(packageVersionId int64) (*dbmodels.Packag
 
 func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (string, error) {
 	// Verify the user owns the package
-	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
+
+	pkgOps := c.database.GetPackageInstallOps()
+
+	pkg, err := pkgOps.GetPackage(packageId)
 	if err != nil {
 		return "", err
+	}
+
+	if pkg.DevToken != "" {
+		return pkg.DevToken, nil
 	}
 
 	if pkg.InstalledBy != userId {
@@ -123,11 +188,22 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 	}
 
 	// Generate the dev token
-	return c.signer.SignPackageDev(&signer.PackageDevClaim{
+	token, err := c.signer.SignPackageDev(&signer.PackageDevClaim{
 		InstallPackageId: packageId,
 		UserId:           userId,
 		Typeid:           signer.ToekenPackageDev,
 	})
+	if err != nil {
+		return "", err
+	}
+
+	// Store the dev token in the database
+	err = pkgOps.UpdatePackageDevToken(packageId, token)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug string) (*InstallPackageResult, error) {
@@ -135,13 +211,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 	var err error
 
 	repoHub := c.engine.GetRepoHub()
-	if repoHub != nil && repoSlug != "" {
-		// Use RepoHub to get package from specific repo
-		file, err = repohub.ZipEPackageFromRepo(repoHub, repoSlug, name)
-	} else {
-		// Fallback to default behavior for backward compatibility
-		file, err = repohub.ZipEPackage(name)
-	}
+	file, err = repoHub.ZipPackage(repoSlug, name, "")
 
 	if err != nil {
 		return nil, err
@@ -171,6 +241,10 @@ type InstallPackageResult struct {
 	InitPage    string `json:"init_page"`
 }
 
+// valid namespace should only contain letters, numbers, underscores and hyphens
+var validNamespaceRegex = regexp.MustCompile(`^[a-zA-Z0-9_:-]+$`)
+var validPkgSlugRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
 func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, file string) (*InstallPackageResult, error) {
 
 	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, "embed", file)
@@ -189,12 +263,34 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return nil, err
 	}
 
+	if !validPkgSlugRegex.MatchString(pkg.Slug) {
+		return nil, errors.New("package slug is invalid, it can only contain letters, numbers, and hyphens")
+	}
+
+	if strings.HasSuffix(pkg.Slug, "-") {
+		return nil, errors.New("package slug must not end with a hyphen")
+	}
+
+	if strings.HasPrefix(pkg.Slug, "-") {
+		return nil, errors.New("package slug must not start with a hyphen")
+	}
+
+	if strings.HasSuffix(pkg.Slug, "_") {
+		return nil, errors.New("package slug must not end with an underscore")
+	}
+
+	if strings.HasPrefix(pkg.Slug, "_") {
+		return nil, errors.New("package slug must not start with an underscore")
+	}
+
 	rootSpaceId := int64(0)
 	keySpace := pkg.Slug
 
 	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
 
 	spaceMap := make(map[string]int64)
+
+	foundRootSpace := false
 
 	for index, artifact := range artifacts {
 		kind := &pkg.Artifacts[index]
@@ -213,10 +309,38 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			return nil, errors.New("space namespace is required")
 		}
 
+		if space.Namespace == pkg.Slug {
+			if foundRootSpace {
+				return nil, errors.New("multiple root spaces found")
+			}
+
+			foundRootSpace = true
+		} else {
+			if !strings.HasPrefix(space.Namespace, pkg.Slug) {
+				return nil, errors.New("space namespace must start with package slug (i.e. 'my-package:my-space')")
+			} else if !strings.HasPrefix(space.Namespace, pkg.Slug+":") {
+				return nil, errors.New("space namespace must start with package slug (i.e. 'my-package:my-space')")
+			}
+		}
+
+		if !validNamespaceRegex.MatchString(space.Namespace) {
+			return nil, errors.New("space namespace is invalid, it can only contain letters, numbers, underscores and hyphens")
+		}
+
+		if strings.HasSuffix(space.Namespace, ":") {
+			return nil, errors.New("space namespace must not end with a colon")
+		}
+
+		if strings.HasPrefix(space.Namespace, ":") {
+			return nil, errors.New("space namespace must not start with a colon")
+		}
+
 		spaceId, err := installArtifactSpace(database, userId, installedId, &space)
 		if err != nil {
 			return nil, err
 		}
+
+		spaceMap[space.Namespace] = spaceId
 
 		if pkg.Slug == space.Namespace {
 			rootSpaceId = spaceId
@@ -225,6 +349,8 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		logger.Info("space installed", "space_id", spaceId)
 
 	}
+
+	qq.Println("@InstallPackageByFile/1", spaceMap)
 
 	for index, artifact := range artifacts {
 		kind := &pkg.Artifacts[index]
@@ -237,6 +363,8 @@ func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			if err != nil {
 				return nil, err
 			}
+
+			qq.Println("@InstallPackageByFile/2", capability.Spaces)
 
 			if len(capability.Spaces) != 0 {
 				for _, space := range capability.Spaces {
@@ -297,25 +425,17 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		return 0, err
 	}
 
-	mcpOptions, err := json.Marshal(artifact.McpOptions)
-	if err != nil {
-		return 0, err
-	}
-
 	return database.GetSpaceOps().AddSpace(&dbmodels.Space{
-		InstalledId:       installedId,
-		NamespaceKey:      artifact.Namespace,
-		ExecutorType:      artifact.ExecutorType,
-		ExecutorSubType:   artifact.ExecutorSubType,
-		SpaceType:         "App",
-		RouteOptions:      string(routeOptions),
-		McpEnabled:        artifact.McpOptions.Enabled,
-		McpDefinitionFile: artifact.McpOptions.DefinitionFile,
-		McpOptions:        string(mcpOptions),
-		DevServePort:      int64(artifact.DevServePort),
-		OwnerID:           userId,
-		IsInitilized:      false,
-		IsPublic:          true,
+		InstalledId:     installedId,
+		NamespaceKey:    artifact.Namespace,
+		ExecutorType:    artifact.ExecutorType,
+		ExecutorSubType: artifact.ExecutorSubType,
+		SpaceType:       "App",
+		RouteOptions:    string(routeOptions),
+		DevServePort:    int64(artifact.DevServePort),
+		OwnerID:         userId,
+		IsInitilized:    false,
+		IsPublic:        true,
 	})
 }
 
@@ -388,20 +508,12 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					return 0, err
 				}
 
-				mcpOptions, err := json.Marshal(space.McpOptions)
-				if err != nil {
-					return 0, err
-				}
-
 				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
-					"namespace_key":       space.Namespace,
-					"executor_type":       space.ExecutorType,
-					"executor_sub_type":   space.ExecutorSubType,
-					"space_type":          "App",
-					"route_options":       string(routeOptions),
-					"mcp_enabled":         space.McpOptions.Enabled,
-					"mcp_definition_file": space.McpOptions.DefinitionFile,
-					"mcp_options":         string(mcpOptions),
+					"namespace_key":     space.Namespace,
+					"executor_type":     space.ExecutorType,
+					"executor_sub_type": space.ExecutorSubType,
+					"space_type":        "App",
+					"route_options":     string(routeOptions),
 				})
 
 			} else {
@@ -427,8 +539,45 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return 0, err
 	}
 
+	// delete old versions, keeping 3 latest versions
+
+	allPVersions, err := pops.ListPackageVersionsByPackageId(installedId)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(allPVersions) > 3 {
+		sort.Slice(allPVersions, func(i, j int) bool {
+			return allPVersions[i].ID > allPVersions[j].ID
+		})
+
+		for _, pversion := range allPVersions[3:] {
+			err = pops.DeletePackageVersion(pversion.ID)
+			if err != nil {
+				c.logger.Error("failed to delete old package version", "error", err)
+				continue
+			}
+		}
+	}
+
 	c.engine.LoadRoutingIndexForPackages(installedId)
 
 	return pvid, nil
 
+}
+
+func (c *Controller) GetSpaceSpec(installedId int64) ([]byte, error) {
+	spec, err := c.database.GetPackageInstallOps().GetPackage(installedId)
+	if err != nil {
+		return nil, err
+	}
+
+	activeInstallVersionId := spec.ActiveInstallID
+
+	content, err := c.database.GetPackageFileOps().GetFileContentByPath(activeInstallVersionId, "", "spec.json")
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }

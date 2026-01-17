@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/upper/db/v4"
 )
 
@@ -69,6 +69,26 @@ func (d *UserOperations) ListUser(offset int, limit int) ([]dbmodels.User, error
 	users := make([]dbmodels.User, 0)
 
 	err := d.userTable().Find(db.Cond{"id >": offset}).Limit(limit).All(&users)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (d *UserOperations) ListUserByCond(cond map[any]any, offset int, limit int) ([]dbmodels.User, error) {
+
+	users := make([]dbmodels.User, 0)
+
+	query := d.userTable().Find(db.Cond(cond))
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	err := query.All(&users)
 	if err != nil {
 		return nil, err
 	}

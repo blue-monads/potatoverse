@@ -3,7 +3,7 @@ package stdio
 import (
 	"log/slog"
 
-	"github.com/blue-monads/turnix/backend/services/mailer"
+	"github.com/blue-monads/potatoverse/backend/services/mailer"
 )
 
 type Mailer struct {

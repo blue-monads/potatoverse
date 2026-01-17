@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/database/file"
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	xutils "github.com/blue-monads/turnix/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/upper/db/v4"
 )
 
@@ -143,6 +143,12 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int
 func (d *PackageInstallOperations) UpdateActiveInstallId(id int64, installId int64) error {
 	return d.installedPackagesTable().Find(db.Cond{"id": id}).Update(map[string]any{
 		"active_install_id": installId,
+	})
+}
+
+func (d *PackageInstallOperations) UpdatePackageDevToken(id int64, devToken string) error {
+	return d.installedPackagesTable().Find(db.Cond{"id": id}).Update(map[string]any{
+		"dev_token": devToken,
 	})
 }
 

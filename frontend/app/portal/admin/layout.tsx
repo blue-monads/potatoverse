@@ -6,6 +6,7 @@ import { useGApp } from "@/hooks";
 import { HelpCircleIcon, LogOut, MessageCircleIcon, Search } from "lucide-react";
 import useUserNotification from "@/hooks/useUserNotification";
 import MessagePanel from "@/contain/MessagePanel/MessagePanel";
+import Link from "next/link";
 
 
 
@@ -79,21 +80,21 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
       <nav className="fixed top-0 left-0 w-14 h-full border-r border-gray-200 bg-white space-y-8">
         <div className="flex flex-col h-full">
           <div className="h-16 flex items-center justify-center mx-auto">
-            <a href="/zz/pages/portal/admin" className="flex-none">
+            <Link href="/portal/admin" className="flex-none">
               <Image
                 src="/zz/pages/logo.png"
-                alt="Turnix Logo"
+                alt="Potatoverse Logo"
                 width={36}
                 height={36}
               />
 
-            </a>
+            </Link>
           </div>
           <div className="flex-1 flex flex-col h-full">
             <ul className="px-4 text-sm font-medium flex-1 flex flex-col gap-2">
               {navigation.map((item, idx) => (
                 <li key={idx}>
-                  <a
+                  <Link
                     href={item.href}
                     className="relative flex items-center justify-center gap-x-2 text-gray-600 p-2 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
                   >
@@ -101,7 +102,7 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
                     <span className="absolute left-14 py-2 px-1.5 rounded-md whitespace-nowrap text-xs text-white bg-gray-800 hidden group-hover:inline-block group-focus:hidden duration-150">
                       {item.name}
                     </span>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -135,13 +136,13 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
                   <li>
 
 
-                    <a
-                      href={`/zz/pages/portal/admin/profile`}
+                    <Link
+                      href="/portal/admin/profile"
                       title="Profile"
                       className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
                     >
                       <img src={`/zz/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
-                    </a>
+                    </Link>
 
 
                   </li>
@@ -176,7 +177,7 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
 
 const navigation = [
   {
-    href: "/zz/pages/portal/admin",
+    href: "/portal/admin",
     name: "Home",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" strokeWidth="1.5" viewBox="0 0 24 24" stroke="currentColor" fill="none" name="home" className="w-6 h-6">
@@ -186,7 +187,7 @@ const navigation = [
   },
 
   {
-    href: "/zz/pages/portal/admin/spaces",
+    href: "/portal/admin/spaces",
     name: "Spaces",
     icon: (
       <svg
@@ -206,7 +207,7 @@ const navigation = [
     ),
   },
   {
-    href: "/zz/pages/portal/admin/store",
+    href: "/portal/admin/store",
     name: "Store",
     icon: (
       <svg
@@ -227,7 +228,7 @@ const navigation = [
   },
 
   {
-    href: "/zz/pages/portal/admin/users",
+    href: "/portal/admin/users",
     name: "Users",
     icon: (
       <svg
@@ -249,7 +250,7 @@ const navigation = [
 
   },
   {
-    href: "/zz/pages/portal/admin/help",
+    href: "/portal/admin/help",
     name: "Help",
     icon: (
       <HelpCircleIcon className="w-6 h-6" />

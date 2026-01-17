@@ -15,12 +15,12 @@ const WithLoginLayout = (props: PropsType) => {
                     <div className="relative z-10 w-full max-w-md">
                         <Image
                             src="/zz/pages/logo.png"
-                            alt="Turnix Logo"
+                            alt="Potatoverse Logo"
                             width={200}
                             height={200}
                         />
                         <div className=" mt-16 space-y-3">
-                            <h3 className="text-white text-3xl font-bold">Turnix</h3>
+                            <h3 className="text-white text-3xl font-bold">Potatoverse</h3>
                             <p className="text-gray-300">
                                 Platfrom for your apps.
                             </p>

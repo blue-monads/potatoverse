@@ -2,17 +2,29 @@ package luaz
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/blue-monads/turnix/backend/engine/executors/luaz/binds"
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/utils/kosher"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/cjoudrey/gluahttp"
 	"github.com/gin-gonic/gin"
 
 	lua "github.com/yuin/gopher-lua"
+	luaJson "layeh.com/gopher-json"
 )
+
+/*
+
+- implement cleanup loop
+- use closer properly
+
+*/
 
 var luaHttpClient = &http.Client{}
 
@@ -66,6 +78,8 @@ type LuaContextOptions struct {
 func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[string]string) error {
 	ctxt := l.L.NewTable()
 
+	lh := l
+
 	l.logger().Info("handling http", "handler", handlerName, "params", params)
 
 	var reqCtx *lua.LUserData
@@ -93,9 +107,50 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 			l.Push(lua.LString(params[key]))
 			return 1
 		},
-	})
 
-	l.logger().Info("ctxt")
+		"get_user_claim": func(l *lua.LState) int {
+			claim, err := binds.GetUserClaim(ctx, lh.parent.parent.app.Signer())
+			if err != nil {
+				return luaplus.PushError(l, err)
+			}
+			claimTable, err := luaplus.StructToTable(l, claim)
+			if err != nil {
+				return luaplus.PushError(l, err)
+			}
+			l.Push(claimTable)
+			return 1
+		},
+
+		"get_header": func(l *lua.LState) int {
+			key := l.CheckString(1)
+			l.Push(lua.LString(ctx.GetHeader(key)))
+			return 1
+		},
+
+		"get_json": func(l *lua.LState) int {
+
+			var target any
+
+			err := ctx.BindJSON(&target)
+			if err != nil {
+				return luaplus.PushError(l, err)
+			}
+
+			result := luaplus.GoTypeToLuaType(l, target)
+			l.Push(result)
+			l.Push(lua.LNil)
+			return 2
+
+		},
+
+		"set_json": func(l *lua.LState) int {
+			code := l.CheckInt(1)
+			target := l.CheckTable(2)
+			targetMap := luaplus.TableToMap(l, target)
+			ctx.JSON(code, targetMap)
+			return 0
+		},
+	})
 
 	err := callHandler(l, ctxt, handlerName)
 	if err != nil {
@@ -106,23 +161,16 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 
 }
 
-func (l *LuaH) HandleEvent(event xtypes.EventExecution) error {
+var EmptyLazyData = lazydata.LazyDataBytes([]byte("{}"))
+
+func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 
 	ctxt := l.L.NewTable()
 
 	l.L.SetFuncs(ctxt, map[string]lua.LGFunction{
-		"request": func(L *lua.LState) int {
-			app := l.parent.parent.app
-			installId := l.parent.handle.InstalledId
-			spaceId := l.parent.handle.SpaceId
-			greq := event.Request
 
-			genCtxUserdata := binds.GenericContextModule(app, installId, spaceId, L, greq)
-			L.Push(genCtxUserdata)
-			return 1
-		},
 		"type": func(L *lua.LState) int {
-			L.Push(lua.LString("event"))
+			L.Push(lua.LString("action"))
 			return 1
 		},
 		"param": func(L *lua.LState) int {
@@ -130,7 +178,71 @@ func (l *LuaH) HandleEvent(event xtypes.EventExecution) error {
 			L.Push(lua.LString(event.Params[key]))
 			return 1
 		},
+
+		"get_inner_payload": func(L *lua.LState) int {
+			result, err := event.Request.ExecuteAction("as_json_value", EmptyLazyData)
+			if err != nil {
+				return luaplus.PushError(L, err)
+			}
+			resultTable := luaplus.GoTypeToLuaType(L, result)
+			L.Push(resultTable)
+			L.Push(lua.LNil)
+			return 2
+		},
+
+		"get_inner_value": func(L *lua.LState) int {
+			field := L.CheckString(1)
+			paramPayload := fmt.Sprintf(`{"path": "%s"}`, field)
+			paramLazyData := lazydata.LazyDataBytes(kosher.Byte(paramPayload))
+			result, err := event.Request.ExecuteAction("get_value", paramLazyData)
+			if err != nil {
+				return luaplus.PushError(L, err)
+			}
+			resultTable := luaplus.GoTypeToLuaType(L, result)
+			L.Push(resultTable)
+			L.Push(lua.LNil)
+			return 2
+		},
+
+		"execute": func(L *lua.LState) int {
+			actionName := L.CheckString(1)
+			params := L.CheckTable(2)
+
+			paramsLazyData := binds.NewLuaLazyData(L, params)
+
+			result, err := event.Request.ExecuteAction(actionName, paramsLazyData)
+			if err != nil {
+				return luaplus.PushError(L, err)
+			}
+			resultTable := luaplus.GoTypeToLuaType(L, result)
+			L.Push(resultTable)
+			L.Push(lua.LNil)
+			return 2
+		},
+
+		"list_methods": func(L *lua.LState) int {
+			actions, err := event.Request.ListActions()
+			if err != nil {
+				L.Push(lua.LNil)
+				return 1
+			}
+			table := L.NewTable()
+			for _, action := range actions {
+				L.Push(lua.LString(action))
+			}
+
+			L.Push(table)
+
+			return 1
+		},
 	})
+
+	method := fmt.Sprintf("on_%s", event.EventType)
+
+	err := callHandler(l, ctxt, method)
+	if err != nil {
+		return err
+	}
 
 	return nil
 
@@ -170,10 +282,12 @@ func (l *LuaH) registerModules() error {
 	installId := l.parent.handle.InstalledId
 	spaceId := l.parent.handle.SpaceId
 	app := l.parent.parent.app
+	packageVersionId := l.parent.handle.PackageVersionId
 
 	l.L.PreloadModule("pmcp", binds.BindMCP)
-	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, spaceId))
+	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, packageVersionId, spaceId))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
+	l.L.PreloadModule("json", luaJson.Loader)
 
 	return nil
 }

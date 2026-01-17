@@ -26,6 +26,7 @@ export default function RootLayout({
         // suppressHydrationWarning
       >
         <script src="/zz/api/core/global.js" />
+        <link rel="stylesheet" href="/zz/static/fontawesome/css/all.min.css" />
 
         <div className="hidden">
           {staticGradients.map((gradient, index) => (

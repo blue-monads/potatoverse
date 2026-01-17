@@ -28,6 +28,7 @@ type DeveloperOptions struct {
 	OutputZipFile string   `json:"output_zip_file,omitempty" toml:"output_zip_file,omitempty"`
 	IncludeFiles  []string `json:"include_files,omitempty" toml:"include_files,omitempty"`
 	ExcludeFiles  []string `json:"exclude_files,omitempty" toml:"exclude_files,omitempty"`
+	BuildCommand  string   `json:"build_command" toml:"build_command"`
 }
 
 type PotatoArtifact struct {
@@ -49,7 +50,6 @@ type ArtifactSpace struct {
 	ExecutorSubType string             `json:"executor_sub_type" toml:"executor_sub_type"`
 	ServerFile      string             `json:"server_file" toml:"server_file"`
 	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
-	McpOptions      PotatoMcpOptions   `json:"mcp_options" toml:"mcp_options"`
 	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
 }
 
@@ -58,6 +58,7 @@ type PotatoRouteOptions struct {
 	ServeFolder        string        `json:"serve_folder" toml:"serve_folder"`
 	ForceHtmlExtension bool          `json:"force_html_extension" toml:"force_html_extension"`
 	ForceIndexHtmlFile bool          `json:"force_index_html_file" toml:"force_index_html_file"`
+	OnNotFoundFile     string        `json:"on_not_found_file" toml:"on_not_found_file"`
 	TrimPathPrefix     string        `json:"trim_path_prefix" toml:"trim_path_prefix"`
 	TemplateFolder     string        `json:"template_folder" toml:"template_folder"`
 	Routes             []PotatoRoute `json:"routes" toml:"routes"`
@@ -69,11 +70,6 @@ type PotatoRoute struct {
 	Type    string `json:"type" toml:"type"`
 	Handler string `json:"handler" toml:"handler"`
 	File    string `json:"file" toml:"file"`
-}
-
-type PotatoMcpOptions struct {
-	Enabled        bool   `json:"enabled" toml:"enabled"`
-	DefinitionFile string `json:"definition_file" toml:"definition_file"`
 }
 
 type PotatoDevOptions struct {

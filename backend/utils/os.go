@@ -9,7 +9,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func FileExists(dpath, file string) bool {

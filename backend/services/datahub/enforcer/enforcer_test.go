@@ -88,6 +88,20 @@ func TestTransformQuery(t *testing.T) {
 			wantErr:          false,
 		},
 		{
+			name:             "CREATE VIRTUAL TABLE statement",
+			input:            "CREATE VIRTUAL TABLE EventLocations USING geopoly (event_id)",
+			shouldContain:    []string{expectedPrefix + "EventLocations"},
+			shouldNotContain: []string{"TABLE EventLocations", "TABLE \"EventLocations\""},
+			wantErr:          false,
+		},
+		{
+			name:             "CREATE VIRTUAL TABLE IF NOT EXISTS",
+			input:            "CREATE VIRTUAL TABLE IF NOT EXISTS FeatureLocations USING geopoly (feature_id)",
+			shouldContain:    []string{expectedPrefix + "FeatureLocations"},
+			shouldNotContain: []string{"TABLE FeatureLocations", "TABLE \"FeatureLocations\""},
+			wantErr:          false,
+		},
+		{
 			name:             "CREATE INDEX statement",
 			input:            "CREATE INDEX idx_name ON users (name)",
 			shouldContain:    []string{expectedPrefix + "users"},
@@ -149,6 +163,20 @@ func TestTransformQuery(t *testing.T) {
 			input:            "INSERT INTO users SELECT * FROM temp_users",
 			shouldContain:    []string{expectedPrefix + "users", expectedPrefix + "temp_users"},
 			shouldNotContain: []string{"INTO users", "FROM temp_users"},
+			wantErr:          false,
+		},
+		{
+			name:             "CREATE TABLE with FOREIGN KEY",
+			input:            "CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id))",
+			shouldContain:    []string{expectedPrefix + "orders", expectedPrefix + "users"},
+			shouldNotContain: []string{"TABLE orders", "REFERENCES users"},
+			wantErr:          false,
+		},
+		{
+			name:             "CREATE TABLE with FOREIGN KEY and multiple columns",
+			input:            "CREATE TABLE order_items (id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, FOREIGN KEY (order_id) REFERENCES orders(id), FOREIGN KEY (product_id) REFERENCES products(id))",
+			shouldContain:    []string{expectedPrefix + "order_items", expectedPrefix + "orders", expectedPrefix + "products"},
+			shouldNotContain: []string{"TABLE order_items", "REFERENCES orders", "REFERENCES products"},
 			wantErr:          false,
 		},
 		{

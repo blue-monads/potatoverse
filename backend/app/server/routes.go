@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/blue-monads/turnix/backend/utils/qq"
-	"github.com/blue-monads/turnix/docs"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/docs"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,7 +31,9 @@ func (a *Server) bindRoutes() {
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(root, coreApi)
-	a.helpRoutes(root)
+	a.spaceFileRoutes(coreApi.Group("/space_file"))
+
+	a.buddyRoutes.AttachRoutes(root)
 
 	coreApi.GET("/global.js", a.getGlobalJS)
 
@@ -97,6 +99,7 @@ func (a *Server) userRoutes(g *gin.RouterGroup) {
 	g.PUT("/messages/:id", a.withAccessTokenFn(a.updateUserMessage))
 	g.DELETE("/messages/:id", a.withAccessTokenFn(a.deleteUserMessage))
 	g.POST("/messages/:id/read", a.withAccessTokenFn(a.setMessageAsRead))
+	g.GET("/messages/ws", a.selfHandleUserWs)
 
 }
 
@@ -144,13 +147,13 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.DELETE("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
 
 	// Space Files API
-	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.ListSpaceFiles))
-	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.GetSpaceFile))
-	coreApi.GET("/space/:install_id/files/:fileId/download", a.withAccessTokenFn(a.DownloadSpaceFile))
-	coreApi.DELETE("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.DeleteSpaceFile))
-	coreApi.POST("/space/:install_id/files/upload", a.withAccessTokenFn(a.UploadSpaceFile))
-	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.CreateSpaceFolder))
-	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.CreatePresignedUploadURL))
+	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.adminListSpaceFiles))
+	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.adminGetSpaceFile))
+	coreApi.GET("/space/:install_id/files/:fileId/download", a.withAccessTokenFn(a.adminDownloadSpaceFile))
+	coreApi.DELETE("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.adminDeleteSpaceFile))
+	coreApi.POST("/space/:install_id/files/upload", a.withAccessTokenFn(a.adminUploadSpaceFile))
+	coreApi.POST("/space/:install_id/files/folder", a.withAccessTokenFn(a.adminCreateSpaceFolder))
+	coreApi.POST("/space/:install_id/files/presigned", a.withAccessTokenFn(a.adminCreatePresignedUploadURL))
 
 	// Space Capabilities API
 	coreApi.GET("/space/:install_id/capabilities", a.withAccessTokenFn(a.ListSpaceCapabilities))
@@ -172,11 +175,12 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/space/:install_id/events", a.withAccessTokenFn(a.CreateEventSubscription))
 	coreApi.PUT("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.UpdateEventSubscription))
 	coreApi.DELETE("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.DeleteEventSubscription))
+	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))
 
 	// Capability Types API
 	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))
 
-	zg.POST("/file/upload-presigned", a.UploadFileWithPresigned)
+	zg.POST("/file/upload-presigned", a.adminUploadFileWithPresigned)
 
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
@@ -192,11 +196,19 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	zg.Any("/api/space/:space_key/*subpath", a.handleSpaceApi)
 	zg.Any("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
 	zg.Any("/api/plugin/:space_key/:plugin_id/*subpath", a.handlePluginApi)
+
 	zg.Any("/api/capabilities/:space_key/:capability_name", a.handleCapabilities)
 	zg.Any("/api/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)
+	zg.GET("/api/capabilities/debug/:capability_name", a.withAccessTokenFn(a.handleCapabilitiesDebug))
 
 }
 
-func (a *Server) helpRoutes(g *gin.RouterGroup) {
+func (a *Server) spaceFileRoutes(g *gin.RouterGroup) {
+
+	g.GET("/list", a.spaceFileList)
+	g.GET("/download/:ref_id", a.spaceFileDownload)
+	g.GET("/preview/:ref_id", a.spaceFilePreview)
+	g.POST("/upload", a.spaceFileUpload)
+	g.POST("/create-folder", a.spaceFileCreateFolder)
 
 }

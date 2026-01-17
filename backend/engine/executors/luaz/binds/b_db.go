@@ -3,9 +3,9 @@ package binds
 import (
 	"strconv"
 
-	"github.com/blue-monads/turnix/backend/services/datahub"
-	"github.com/blue-monads/turnix/backend/utils/luaplus"
-	"github.com/blue-monads/turnix/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -267,8 +267,9 @@ func dbRunDDL(mod *luaDBModule, L *lua.LState) int {
 	if err != nil {
 		return pushError(L, err)
 	}
-	L.Push(lua.LNil)
-	return 1
+	L.Push(lua.LNil) // result
+	L.Push(lua.LNil) // error (nil on success)
+	return 2
 }
 
 func dbRunQuery(mod *luaDBModule, L *lua.LState) int {
@@ -506,3 +507,30 @@ func dbListTableColumns(mod *luaDBModule, L *lua.LState) int {
 	L.Push(resultTable)
 	return 1
 }
+
+/*
+
+const relations = {
+	product: [{
+		subtype = "sales",
+		type = "has_many",
+		from_field = "product_id",
+		to_field = "id",
+	}
+	{
+		subtype = "stockin",
+		type = "has_many",
+		from_field = "product_id",
+		to_field = "id",
+	}]
+}
+
+local l = get_with_sub_type({
+    root_type = "product",
+	relations = relations,
+	subtypes = {
+	   sales: ["id", "amount"],
+	}
+})
+
+*/

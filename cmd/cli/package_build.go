@@ -5,13 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 
 	"github.com/alecthomas/kong"
+	"github.com/blue-monads/potatoverse/cmd/cli/pkgutils"
 )
 
 func (c *PackageBuildCmd) Run(_ *kong.Context) error {
-	_, err := PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
+
+	err := RunBuildCommand(c.PotatoTomlFile)
+	if err != nil {
+		return err
+	}
+
+	_, err = PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
 	if err != nil {
 		return err
 	}
@@ -22,8 +30,43 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 // simple.chip.zip
 // simple.czip
 
+func RunBuildCommand(potatoTomlFile string) error {
+	fmt.Printf("Running build command\n")
+
+	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
+	if err != nil {
+		return err
+	}
+
+	buildCommand := ""
+
+	if potatoToml.Developer != nil &&
+		potatoToml.Developer.BuildCommand != "" {
+		buildCommand = potatoToml.Developer.BuildCommand
+	}
+
+	if buildCommand == "" {
+		fmt.Println("No build command found, skipping build")
+		return nil
+	}
+
+	cmd := exec.Command("bash", "-c", buildCommand)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Build command failed: %s\n", err)
+		return err
+	}
+
+	fmt.Printf("Build command completed successfully\n")
+	return nil
+}
+
 func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
-	potatoToml, err := readPotatoToml(potatoTomlFile)
+	fmt.Printf("Package files start\n")
+
+	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
 	if err != nil {
 		return "", err
 	}
@@ -46,14 +89,14 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 
 	potatoFileDir := path.Dir(potatoTomlFile)
 
-	err = packageFilesV2(potatoFileDir, potatoToml.Developer, zipWriter)
+	err = pkgutils.PackageFilesV2(potatoFileDir, potatoToml.Developer, zipWriter)
 	if err != nil {
 		return "", err
 	}
 
 	potatoToml.Developer = nil
 
-	potatoMap, err := readPotatoMap(potatoTomlFile)
+	potatoMap, err := pkgutils.ReadPotatoMap(potatoTomlFile)
 	if err != nil {
 		return "", err
 	}

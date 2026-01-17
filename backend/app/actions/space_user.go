@@ -3,7 +3,7 @@ package actions
 import (
 	"errors"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 )
 
 func (c *Controller) CreateSpaceUser(installId int64, data map[string]any) (*dbmodels.SpaceUser, error) {
@@ -68,4 +68,3 @@ func (c *Controller) QuerySpaceUsers(installId int64, cond map[any]any) ([]dbmod
 func (c *Controller) GetSpaceUserByID(installId int64, spaceUserId int64) (*dbmodels.SpaceUser, error) {
 	return c.database.GetSpaceOps().GetSpaceUser(installId, spaceUserId)
 }
-

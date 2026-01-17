@@ -7,10 +7,11 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { deletePackage, InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
+import { deletePackage, formatSpace, FormattedSpace, InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
+import useFavorites from '@/hooks/useFavorites/useFavorites';
 
 
 
@@ -27,13 +28,13 @@ export default function Page() {
 
 
 
-
 const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const gapp = useGApp();
-    const [packageIndex, setPackageIndex] = useState<Record<number, Package>>({});
     const router = useRouter();
+    const { favorites, addFavorite, removeFavorite } = useFavorites();
+    const [formattedSpaces, setFormattedSpaces] = useState<FormattedSpace[]>([]);
 
 
 
@@ -43,16 +44,11 @@ const SpacesDirectory = () => {
     });
 
     useEffect(() => {
-        if (loader.data && loader.data.packages) {
-            const nextPackageIndex = loader.data.packages.reduce((acc, pkg) => {
-                acc[pkg.install_id] = pkg;
-                return acc;
-            }, {} as Record<number, Package>);
-
-            setPackageIndex(nextPackageIndex);
+        if (loader.data) {
+            const nextFormattedSpaces = formatSpace(loader.data);
+            setFormattedSpaces(nextFormattedSpaces);
         }
     }, [loader.data]);
-
 
     const sortOptions = [
         'Relevance',
@@ -135,21 +131,31 @@ const SpacesDirectory = () => {
                         </div>
                     </div>
 
+                    {loader.data?.spaces.length === 0 && <EmptySpacesState /> }
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {loader.data?.spaces.map((space) => {
+                        
 
-                            const pkg = packageIndex[space.install_id] || { name: "Unknown", description: "Unknown" };
-                            const gradient = staticGradients[space.id % staticGradients.length];
-
+                        
+                        {formattedSpaces.map((space) => {
 
                             return <SpaceCard
-                                key={space.id}
+                                key={space.space_id}
+                                isFavorite={favorites.includes(space.space_id)}
+                                onToggleFavorite={() => {
+                                    if (favorites.includes(space.space_id)) {
+                                        removeFavorite(space.space_id);
+                                    } else {
+                                        addFavorite(space.space_id);
+                                    }
+                                }}
                                 actionHandler={async (action: string) => {
 
                                     const installId = space.install_id;
-                                    const spaceId = space.id;
+                                    const spaceId = space.space_id;
                                     const namespaceKey = space.namespace_key;
-                                    const packageVersionId = pkg.id;
+                                    const packageVersionId = space.package_version_id;
+                                    
 
                                     const params = new URLSearchParams();
                                     params.set("install_id", installId.toString());
@@ -157,6 +163,8 @@ const SpacesDirectory = () => {
                                     params.set("namespace_key", namespaceKey);
                                     params.set("nskey", namespaceKey);
                                     params.set("package_version_id", packageVersionId.toString());                   
+
+                                    console.log("params", params.toString());
 
 
                                     if (action === "delete") {
@@ -181,12 +189,12 @@ const SpacesDirectory = () => {
                                                     
                                                     <div className="bg-gray-50 p-4 rounded-lg">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-sm font-semibold`}>
-                                                                #{space.id}
+                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${space.gradient} flex items-center justify-center text-white text-sm font-semibold`}>
+                                                                #{space.space_id}
                                                             </div>
                                                             <div>
-                                                                <p className="font-medium text-gray-900">{pkg.name}</p>
-                                                                <p className="text-sm text-gray-600">{pkg.description || pkg.info}</p>
+                                                                <p className="font-medium text-gray-900">{space.package_name}</p>
+                                                                <p className="text-sm text-gray-600">{space.package_info}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -201,7 +209,7 @@ const SpacesDirectory = () => {
                                                         <button
                                                             onClick={async () => {
                                                                 try {
-                                                                    await deletePackage(space.id);
+                                                                    await deletePackage(installId);
                                                                     loader.reload();
                                                                     gapp.modal.closeModal();
                                                                 } catch (error) {
@@ -227,15 +235,13 @@ const SpacesDirectory = () => {
                                 }}
 
                                 space={{
-                                    id: space.id,
-                                    title: pkg.name,
-                                    description: pkg.description || pkg.info,
-                                    author: "",
-                                    timeAgo: "",
-                                    gradient: gradient,
-                                    from: space.namespace_key,
-                                    mcp: false,
-
+                                    id: space.space_id,
+                                    title: space.package_name,
+                                    description: space.package_info,
+                                    author: space.package_author,
+                                    // timeAgo: space.package_created_at,
+                                    gradient: space.gradient,
+                                    nskey: space.namespace_key,
                                 }} />
                         })}
                     </div>
@@ -246,8 +252,10 @@ const SpacesDirectory = () => {
     );
 };
 
-const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any }) => {
+const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { space: any, actionHandler: any, isFavorite: boolean, onToggleFavorite: () => void }) => {
     const router = useRouter();
+
+    console.log("space", space);
 
 
     return (
@@ -262,7 +270,7 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
                                 #{space.id}
                             </span>
                             <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm">
-                                {space.from}
+                                {space.nskey}
                             </span>
                             {space.mcp && (
                                 <span className="bg-pink-500/80 px-2 py-1 rounded text-xs">🔥 MCP</span>
@@ -270,9 +278,17 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
                         </div>
 
                         <div className='flex justify-end'>
-                            <div className="flex items-center gap-1 text-xs">
-                                <Heart className="w-4 h-4" />
-                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleFavorite();
+                                }}
+                                className="flex items-center gap-1 text-xs hover:scale-110 transition-transform cursor-pointer"
+                            >
+                                <Heart 
+                                    className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white/80'}`} 
+                                />
+                            </button>
                         </div>
 
                     </div>
@@ -302,7 +318,7 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
 
                             className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
                             onClick={() => {
-                                router.push(`/portal/admin/exec?nskey=${space.from}&space_id=${space.id}`);
+                                router.push(`/portal/admin/exec?nskey=${space.nskey}&space_id=${space.id}`);
                             }}
 
                         >
@@ -431,6 +447,66 @@ const ActionDropdown = (props: ActionDropdownProps) => {
                 document.body
             )}
         </>
+    );
+};
+
+const EmptySpacesState = () => {
+    const router = useRouter();
+    
+    return (
+        <div className="flex flex-col items-center justify-center py-16 px-6">
+            <div className="mb-8">
+                <svg
+                    width="200"
+                    height="160"
+                    viewBox="0 0 200 160"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="drop-shadow-sm"
+                >
+                    {/* Decorative circles */}
+                    <circle cx="50" cy="40" r="3" fill="#e5e7eb" opacity="0.5" />
+                    <circle cx="150" cy="30" r="2" fill="#e5e7eb" opacity="0.3" />
+                    <circle cx="170" cy="60" r="2.5" fill="#e5e7eb" opacity="0.4" />
+                    
+                    {/* Box/package icon */}
+                    <rect x="70" y="50" width="60" height="60" rx="4" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="2" />
+                    <rect x="80" y="60" width="40" height="30" rx="2" fill="#e5e7eb" opacity="0.5" />
+                    <line x1="100" y1="50" x2="100" y2="110" stroke="#e5e7eb" strokeWidth="2" />
+                    <line x1="70" y1="80" x2="130" y2="80" stroke="#e5e7eb" strokeWidth="2" />
+                    
+                    {/* Decorative stars */}
+                    <g className="animate-bounce" style={{ animationDelay: '0.5s' }}>
+                        <path d="M65 25l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z" fill="#fbbf24" />
+                    </g>
+                    <g className="animate-bounce" style={{ animationDelay: '1s' }}>
+                        <path d="M140 20l1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5 4.5-1.5 1.5-4.5z" fill="#f59e0b" />
+                    </g>
+                    <g className="animate-bounce" style={{ animationDelay: '1.5s' }}>
+                        <path d="M30 80l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z" fill="#fbbf24" />
+                    </g>
+                </svg>
+            </div>
+
+            {/* Content */}
+            <div className="text-center max-w-md">
+                <h3 className="text-xl font-semibold text-gray-700 mb-3">
+                    No spaces installed yet!
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                    Get started by installing your first space from the store.
+                </p>
+
+                <div className="flex justify-center">
+                    <button 
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
+                        onClick={() => router.push("/portal/admin/store")}
+                    >
+                        Go to Store
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 };
 

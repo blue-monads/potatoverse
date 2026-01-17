@@ -3,12 +3,12 @@ package actions
 import (
 	"time"
 
-	"github.com/blue-monads/turnix/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/turnix/backend/services/mailer"
-	"github.com/blue-monads/turnix/backend/services/signer"
-	xutils "github.com/blue-monads/turnix/backend/utils"
-	"github.com/blue-monads/turnix/backend/utils/libx/easyerr"
-	"github.com/blue-monads/turnix/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/services/mailer"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/easyerr"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (c *Controller) ListUsers(offset int, limit int) ([]dbmodels.User, error) {
@@ -144,10 +144,10 @@ func (c *Controller) AddUserInvite(email, role, invitedAsType string, invitedBy 
 
 	body := &mailer.SimpleMessage{
 		Text: fullUrl,
-		HTML: `<h1>Welcome to Turnix</h1><p> Please click the link below to accept the invite: <a href="` + fullUrl + `">` + fullUrl + `</a></p>`,
+		HTML: `<h1>Welcome to Potatoverse</h1><p> Please click the link below to accept the invite: <a href="` + fullUrl + `">` + fullUrl + `</a></p>`,
 	}
 
-	err = c.mailer.Send(email, "Welcome to Turnix", body)
+	err = c.mailer.Send(email, "Welcome to Potatoverse", body)
 	if err != nil {
 		return nil, err
 	}
@@ -204,10 +204,10 @@ func (c *Controller) ResendUserInvite(id int64) (*UserInviteResponse, error) {
 	// Send email
 	body := &mailer.SimpleMessage{
 		Text: fullUrl,
-		HTML: `<h1>Welcome to Turnix</h1><p> Please click the link below to accept the invite: <a href="` + fullUrl + `">` + fullUrl + `</a></p>`,
+		HTML: `<h1>Welcome to Potatoverse</h1><p> Please click the link below to accept the invite: <a href="` + fullUrl + `">` + fullUrl + `</a></p>`,
 	}
 
-	err = c.mailer.Send(invite.Email, "Welcome to Turnix", body)
+	err = c.mailer.Send(invite.Email, "Welcome to Potatoverse", body)
 	if err != nil {
 		return nil, err
 	}
