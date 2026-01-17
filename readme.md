@@ -3,7 +3,7 @@
 > ⚠️ **Alpha Software**: This is early alpha software being developed in spare weekend time. Expect bugs, breaking changes, and incomplete features.
 
 
-[DEMO SITE](https://tubersalltheway.top/zz/pages) 
+[DEMO SITE](https://tubersalltheway.top/zz/pages/auth/login) 
 
 
 PotatoVerse is a small app platform that hosts web applications with server-side code. Think of it as a hybrid between a CMS and Heroku-like PaaS, all in one binary.
