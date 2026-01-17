@@ -10,6 +10,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/blue-monads/potatoverse/backend"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -17,10 +18,11 @@ import (
 // server
 
 type ServerCmd struct {
-	Init        ServerInitCmd        `cmd:"" help:"Initialize the server with default options."`
-	Start       ServerStartCmd       `cmd:"" help:"Start the server."`
-	Stop        ServerStopCmd        `cmd:"" help:"Stop the server."`
-	ActualStart ServerActualStartCmd `cmd:"" help:"Actual start the server, called internally by the server start command."`
+	InitAndStart ServerInitCmd        `cmd:"" help:"Initialize the server with default options and start the server."`
+	Init         ServerInitCmd        `cmd:"" help:"Initialize the server with default options."`
+	Start        ServerStartCmd       `cmd:"" help:"Start the server."`
+	Stop         ServerStopCmd        `cmd:"" help:"Stop the server."`
+	ActualStart  ServerActualStartCmd `cmd:"" help:"Actual start the server, called internally by the server start command."`
 }
 
 type ServerInitCmd struct {
@@ -92,6 +94,12 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 		return err
 	}
 
+	qq.Println("@args", ctx.Args)
+
+	if len(ctx.Args) > 0 && ctx.Args[1] == "init-and-start" {
+		return RunServerStartCommand("./config.toml", true)
+	}
+
 	return nil
 
 }
@@ -102,7 +110,10 @@ type ServerStartCmd struct {
 }
 
 func (c *ServerStartCmd) Run(ctx *kong.Context) error {
+	return RunServerStartCommand(c.Config, c.AutoSeed)
+}
 
+func RunServerStartCommand(config string, autoSeed bool) error {
 	binary, err := os.Executable()
 	if err != nil {
 		return err
@@ -111,8 +122,8 @@ func (c *ServerStartCmd) Run(ctx *kong.Context) error {
 	// later we might start log collector in parallel process
 	// actual server runs in child process
 
-	args := []string{"server", "actual-start", "--config", c.Config}
-	if c.AutoSeed {
+	args := []string{"server", "actual-start", "--config", config}
+	if autoSeed {
 		args = append(args, "--auto-seed")
 	}
 
