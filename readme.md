@@ -4,7 +4,7 @@
 
 PotatoVerse is a small app platform that hosts web applications with server-side code. Think of it as a hybrid between a CMS and Heroku-like PaaS, all in one binary.
 
-https://github.com/user-attachments/assets/45279765-a19d-4d0a-97e9-631ceab786f1
+https://github.com/user-attachments/assets/120b826e-c5f9-4e1f-829e-816e7d2982ea
 
 ## Features
 
@@ -31,4 +31,5 @@ https://github.com/user-attachments/assets/45279765-a19d-4d0a-97e9-631ceab786f1
     - `public/{index.html, style.css, client.js}` (folder served to users running the space)
     - `server.lua`
 
-
+# Developing
+[How to develop](./docs/how_to_develop.md)
