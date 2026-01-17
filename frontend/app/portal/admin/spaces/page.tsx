@@ -11,6 +11,7 @@ import { deletePackage, InstalledSpace, installPackage, installPackageZip, listI
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
+import useFavorites from '@/hooks/useFavorites/useFavorites';
 
 
 
@@ -34,6 +35,7 @@ const SpacesDirectory = () => {
     const gapp = useGApp();
     const [packageIndex, setPackageIndex] = useState<Record<number, Package>>({});
     const router = useRouter();
+    const { favorites, addFavorite, removeFavorite } = useFavorites();
 
 
 
@@ -149,6 +151,14 @@ const SpacesDirectory = () => {
 
                             return <SpaceCard
                                 key={space.id}
+                                isFavorite={favorites.includes(space.id)}
+                                onToggleFavorite={() => {
+                                    if (favorites.includes(space.id)) {
+                                        removeFavorite(space.id);
+                                    } else {
+                                        addFavorite(space.id);
+                                    }
+                                }}
                                 actionHandler={async (action: string) => {
 
                                     const installId = space.install_id;
@@ -254,7 +264,7 @@ const SpacesDirectory = () => {
     );
 };
 
-const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any }) => {
+const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { space: any, actionHandler: any, isFavorite: boolean, onToggleFavorite: () => void }) => {
     const router = useRouter();
 
 
@@ -278,9 +288,17 @@ const SpaceCard = ({ space, actionHandler }: { space: any, actionHandler: any })
                         </div>
 
                         <div className='flex justify-end'>
-                            <div className="flex items-center gap-1 text-xs">
-                                <Heart className="w-4 h-4" />
-                            </div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleFavorite();
+                                }}
+                                className="flex items-center gap-1 text-xs hover:scale-110 transition-transform cursor-pointer"
+                            >
+                                <Heart 
+                                    className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white/80'}`} 
+                                />
+                            </button>
                         </div>
 
                     </div>
