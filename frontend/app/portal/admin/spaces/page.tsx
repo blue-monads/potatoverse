@@ -22,7 +22,48 @@ export default function Page() {
 }
 
 
+export type FormattedSpace = {
+    space_id: number;
+    install_id: number;
+    namespace_key: string;
+    package_name: string;
+    package_info: string;
+    package_version_id: number;    
+    package_version: string;
+    gradient: string;
 
+    package_author: string;
+    package_author_email: string;
+    package_author_site: string;
+}
+
+export  const formatSpace = (data: InstalledSpace) => {
+    const spaces = data.spaces;
+    const packages = data.packages;
+
+    const formattedSpaces: FormattedSpace[] = [];
+
+    for (const space of spaces) {
+        const pkg = packages.find((pkg) => pkg.install_id === space.install_id);
+        if (!pkg) continue;
+
+        formattedSpaces.push({
+            space_id: space.id,
+            install_id: space.install_id,
+            namespace_key: space.namespace_key,
+            package_name: pkg.name,
+            package_info: pkg.info,
+            package_version_id: pkg.id,
+            package_version: pkg.version,
+            package_author: pkg.author_name,
+            package_author_email: pkg.author_email,
+            package_author_site: pkg.author_site,
+            gradient: staticGradients[space.id % staticGradients.length],
+        });
+    }
+
+    return formattedSpaces;
+}
 
 
 
@@ -33,9 +74,9 @@ const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const gapp = useGApp();
-    const [packageIndex, setPackageIndex] = useState<Record<number, Package>>({});
     const router = useRouter();
     const { favorites, addFavorite, removeFavorite } = useFavorites();
+    const [formattedSpaces, setFormattedSpaces] = useState<FormattedSpace[]>([]);
 
 
 
@@ -45,16 +86,11 @@ const SpacesDirectory = () => {
     });
 
     useEffect(() => {
-        if (loader.data && loader.data.packages) {
-            const nextPackageIndex = loader.data.packages.reduce((acc, pkg) => {
-                acc[pkg.install_id] = pkg;
-                return acc;
-            }, {} as Record<number, Package>);
-
-            setPackageIndex(nextPackageIndex);
+        if (loader.data) {
+            const nextFormattedSpaces = formatSpace(loader.data);
+            setFormattedSpaces(nextFormattedSpaces);
         }
     }, [loader.data]);
-
 
     const sortOptions = [
         'Relevance',
@@ -143,28 +179,24 @@ const SpacesDirectory = () => {
                         
 
                         
-                        {loader.data?.spaces.map((space) => {
-
-                            const pkg = packageIndex[space.install_id] || { name: "Unknown", description: "Unknown" };
-                            const gradient = staticGradients[space.id % staticGradients.length];
-
+                        {formattedSpaces.map((space) => {
 
                             return <SpaceCard
-                                key={space.id}
-                                isFavorite={favorites.includes(space.id)}
+                                key={space.space_id}
+                                isFavorite={favorites.includes(space.space_id)}
                                 onToggleFavorite={() => {
-                                    if (favorites.includes(space.id)) {
-                                        removeFavorite(space.id);
+                                    if (favorites.includes(space.space_id)) {
+                                        removeFavorite(space.space_id);
                                     } else {
-                                        addFavorite(space.id);
+                                        addFavorite(space.space_id);
                                     }
                                 }}
                                 actionHandler={async (action: string) => {
 
                                     const installId = space.install_id;
-                                    const spaceId = space.id;
+                                    const spaceId = space.space_id;
                                     const namespaceKey = space.namespace_key;
-                                    const packageVersionId = pkg.id;
+                                    const packageVersionId = space.package_version_id;
                                     
 
                                     const params = new URLSearchParams();
@@ -199,12 +231,12 @@ const SpacesDirectory = () => {
                                                     
                                                     <div className="bg-gray-50 p-4 rounded-lg">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center text-white text-sm font-semibold`}>
-                                                                #{space.id}
+                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${space.gradient} flex items-center justify-center text-white text-sm font-semibold`}>
+                                                                #{space.space_id}
                                                             </div>
                                                             <div>
-                                                                <p className="font-medium text-gray-900">{pkg.name}</p>
-                                                                <p className="text-sm text-gray-600">{pkg.description || pkg.info}</p>
+                                                                <p className="font-medium text-gray-900">{space.package_name}</p>
+                                                                <p className="text-sm text-gray-600">{space.package_info}</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -245,15 +277,13 @@ const SpacesDirectory = () => {
                                 }}
 
                                 space={{
-                                    id: space.id,
-                                    title: pkg.name,
-                                    description: pkg.description || pkg.info,
+                                    id: space.space_id,
+                                    title: space.package_name,
+                                    description: space.package_info,
                                     author: "",
                                     timeAgo: "",
-                                    gradient: gradient,
-                                    from: space.namespace_key,
-                                    mcp: false,
-
+                                    gradient: space.gradient,
+                                    nskey: space.namespace_key,
                                 }} />
                         })}
                     </div>
@@ -280,7 +310,7 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
                                 #{space.id}
                             </span>
                             <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm">
-                                {space.from}
+                                {space.nskey}
                             </span>
                             {space.mcp && (
                                 <span className="bg-pink-500/80 px-2 py-1 rounded text-xs">🔥 MCP</span>
@@ -328,7 +358,7 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
 
                             className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
                             onClick={() => {
-                                router.push(`/portal/admin/exec?nskey=${space.from}&space_id=${space.id}`);
+                                router.push(`/portal/admin/exec?nskey=${space.nskey}&space_id=${space.id}`);
                             }}
 
                         >

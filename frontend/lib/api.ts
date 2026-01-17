@@ -276,6 +276,9 @@ export interface Package {
     type: string;
     tags: string;
     version: string;
+    author_name: string;
+    author_email: string;
+    author_site: string;
 }
 
 export interface Space {

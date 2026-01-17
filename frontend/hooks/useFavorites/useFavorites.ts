@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 const useFavorites = () => {
     const [favorites, setFavorites] = useState<number[]>([]);
+    const [favoritesLoaded, setFavoritesLoaded] = useState(false);
 
     const addFavorite = (spaceId: number) => {
         setFavorites([...favorites, spaceId]);
@@ -15,6 +16,7 @@ const useFavorites = () => {
     const loadFavorites = () => {
         const fromls = JSON.parse(localStorage.getItem('__favorite_space_ids__') || '[]');
         setFavorites(fromls as number[]);
+        setFavoritesLoaded(true);
     }
 
     const saveFavorites = () => {
@@ -37,6 +39,9 @@ const useFavorites = () => {
 
 
     useEffect(() => {
+
+        if (!favoritesLoaded) return;
+
 
         const existing = localStorage.getItem('__favorite_space_ids__') || '[]';
         const existingFavorites = JSON.parse(existing) as number[] || [];
@@ -65,7 +70,7 @@ const useFavorites = () => {
 
 
 
-    return { favorites, addFavorite, removeFavorite };
+    return { favorites, addFavorite, removeFavorite, favoritesLoaded };
 }
 
 export default useFavorites;
