@@ -11,6 +11,7 @@ type InstalledPackage struct {
 	ActiveInstallID int64      `json:"active_install_id" db:"active_install_id"`
 	InstalledBy     int64      `json:"installed_by" db:"installed_by"`
 	InstalledAt     *time.Time `json:"installed_at" db:"installed_at,omitempty"`
+	DevToken        string     `json:"dev_token" db:"dev_token"`
 }
 
 type PackageVersion struct {

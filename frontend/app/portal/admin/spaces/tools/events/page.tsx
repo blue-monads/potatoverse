@@ -80,7 +80,7 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
         <WithAdminBodyLayout
             Icon={Zap}
             name="Event Subscriptions"
-            description="Manage event-driven actions and triggers"
+            description="Subscribe events from other spaces and execute actions"
             rightContent={
                 <AddButton
                     name="+ New Subscription"

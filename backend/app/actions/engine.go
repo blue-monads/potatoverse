@@ -171,9 +171,16 @@ func (c *Controller) GetPackageVersion(packageVersionId int64) (*dbmodels.Packag
 
 func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (string, error) {
 	// Verify the user owns the package
-	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
+
+	pkgOps := c.database.GetPackageInstallOps()
+
+	pkg, err := pkgOps.GetPackage(packageId)
 	if err != nil {
 		return "", err
+	}
+
+	if pkg.DevToken != "" {
+		return pkg.DevToken, nil
 	}
 
 	if pkg.InstalledBy != userId {
@@ -181,11 +188,22 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 	}
 
 	// Generate the dev token
-	return c.signer.SignPackageDev(&signer.PackageDevClaim{
+	token, err := c.signer.SignPackageDev(&signer.PackageDevClaim{
 		InstallPackageId: packageId,
 		UserId:           userId,
 		Typeid:           signer.ToekenPackageDev,
 	})
+	if err != nil {
+		return "", err
+	}
+
+	// Store the dev token in the database
+	err = pkgOps.UpdatePackageDevToken(packageId, token)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug string) (*InstallPackageResult, error) {

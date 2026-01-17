@@ -146,6 +146,12 @@ func (d *PackageInstallOperations) UpdateActiveInstallId(id int64, installId int
 	})
 }
 
+func (d *PackageInstallOperations) UpdatePackageDevToken(id int64, devToken string) error {
+	return d.installedPackagesTable().Find(db.Cond{"id": id}).Update(map[string]any{
+		"dev_token": devToken,
+	})
+}
+
 func (d *PackageInstallOperations) ListPackages() ([]dbmodels.InstalledPackage, error) {
 	var packages []dbmodels.InstalledPackage
 	err := d.installedPackagesTable().Find().All(&packages)
