@@ -2,7 +2,6 @@ package backend
 
 import (
 	"log/slog"
-	"math/rand"
 	"os"
 	"path"
 
@@ -39,12 +38,12 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		options.Name = "PotatoVerse"
 	}
 
-	randNumber := rand.Intn(10000000)
-	randNumer2 := rand.Intn(10000000)
+	// randNumber := rand.Intn(10000000)
+	// randNumer2 := rand.Intn(10000000)
 
-	if randNumber == 11 && randNumer2 == 11 {
-		database.StartLitestream(dbFile)
-	}
+	// if randNumber == 11 && randNumer2 == 11 {
+	// 	database.StartLitestream(dbFile)
+	// }
 
 	if len(options.Repos) == 0 {
 		options.Repos = DefaultDevRepos
