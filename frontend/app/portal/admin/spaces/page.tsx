@@ -280,8 +280,8 @@ const SpacesDirectory = () => {
                                     id: space.space_id,
                                     title: space.package_name,
                                     description: space.package_info,
-                                    author: "",
-                                    timeAgo: "",
+                                    author: space.package_author,
+                                    // timeAgo: space.package_created_at,
                                     gradient: space.gradient,
                                     nskey: space.namespace_key,
                                 }} />
@@ -296,6 +296,8 @@ const SpacesDirectory = () => {
 
 const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { space: any, actionHandler: any, isFavorite: boolean, onToggleFavorite: () => void }) => {
     const router = useRouter();
+
+    console.log("space", space);
 
 
     return (
