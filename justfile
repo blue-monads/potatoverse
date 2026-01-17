@@ -1,7 +1,7 @@
 default:
 	just --list
 frontend_start_dev:
-	cd frontend && npm run dev
+	cd frontend && bun run dev
 backend_start_dev:
 	FRONTEND_DEV_SERVER="http://localhost:7779" go run -v cmd/dev/*.go
 
@@ -16,11 +16,11 @@ play:
 	FRONTEND_DEV_SERVER="http://localhost:7779" go run cli/play/play.go
 
 build:
-	cd frontend && npm run build
+	cd frontend && bun run build
 	go build -v -o ./tmp/potatoverse ./main.go
 
 build_frontend:
-	cd frontend && npm run build
+	cd frontend && bun run build
 
 build_backend:
 	go build -v -o tmp/potatoverse ./main.go
