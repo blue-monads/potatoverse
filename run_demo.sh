@@ -1,12 +1,19 @@
 #!/bin/bash
 
 # Demo reset script for potatoverse
-# - Deletes .pdata directory (state folder)
+# - Deletes .pdata/maindb directory (database state, keeps config intact)
 # - Runs server in a loop
 # - Resets demo every 2 hours
 # - Handles crashes and restarts automatically
+#
+# Usage:
+#   ./run_demo.sh                    # Uses default 'potatoverse' binary
+#   POTATOVERSE_BIN=./potato ./run_demo.sh  # Uses custom binary
 
 set -e
+
+# Binary to use (can be overridden with POTATOVERSE_BIN environment variable)
+POTATOVERSE_BIN="${POTATOVERSE_BIN:-potatoverse}"
 
 RESET_INTERVAL=7200  # 2 hours in seconds
 PID_FILE="/tmp/potatoverse_demo.pid"
@@ -44,14 +51,14 @@ cleanup() {
 # Trap signals for cleanup
 trap cleanup SIGINT SIGTERM EXIT
 
-# Function to delete .pdata directory
+# Function to delete .pdata/maindb directory (keeps config intact)
 reset_state() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Resetting demo state (deleting .pdata)..." | tee -a "$LOG_FILE"
-    if [ -d ".pdata" ]; then
-        rm -rf ".pdata"
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] .pdata directory deleted" | tee -a "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Resetting demo state (deleting .pdata/maindb)..." | tee -a "$LOG_FILE"
+    if [ -d ".pdata/maindb" ]; then
+        rm -rf ".pdata/maindb"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] .pdata/maindb directory deleted" | tee -a "$LOG_FILE"
     else
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] .pdata directory not found (already clean)" | tee -a "$LOG_FILE"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] .pdata/maindb directory not found (already clean)" | tee -a "$LOG_FILE"
     fi
 }
 
@@ -84,7 +91,7 @@ find_server_pid() {
     fi
     
     # Fallback: try to find potatoverse process with "actual-start" in command line
-    pid=$(pgrep -f "potatoverse server actual-start" | head -1 || true)
+    pid=$(pgrep -f "$POTATOVERSE_BIN server actual-start" | head -1 || true)
     
     if [ -n "$pid" ]; then
         echo "$pid"
@@ -99,7 +106,7 @@ start_server() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Initializing server..." | tee -a "$LOG_FILE"
     
     # Initialize server
-    if ! potatoverse server init >> "$LOG_FILE" 2>&1; then
+    if ! "$POTATOVERSE_BIN" server init >> "$LOG_FILE" 2>&1; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Server init failed" | tee -a "$LOG_FILE"
         return 1
     fi
@@ -107,7 +114,7 @@ start_server() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting server..." | tee -a "$LOG_FILE"
     
     # Start server in background
-    potatoverse server start >> "$LOG_FILE" 2>&1 &
+    "$POTATOVERSE_BIN" server start >> "$LOG_FILE" 2>&1 &
     PARENT_PID=$!
     
     # Find the actual server process (child process)
