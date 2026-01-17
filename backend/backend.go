@@ -123,15 +123,15 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 var DefaultDevRepos = []xtypes.RepoOptions{
 	{
-		Name: "Development Packages",
-		Type: "dev",
-		Slug: "Dev",
-	},
-	{
 		Name: "Official Potato Field",
 		Type: "harvester-v1",
 		Slug: "Official",
 		URL:  "https://github.com/blue-monads/store/raw/refs/heads/master",
+	},
+	{
+		Name: "Development Packages",
+		Type: "dev",
+		Slug: "Dev",
 	},
 }
 
