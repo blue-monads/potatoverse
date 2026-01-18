@@ -1,0 +1,33 @@
+Benchmark: direct binding type
+Number of Lua VMs: 500
+Initial memory allocated: 230KB
+
+Time: 03:08:05.656 | Memory allocated: 60MB
+Time: 03:08:06.043 | Memory allocated: 234MB
+Time: 03:08:06.123 | Memory allocated: 154MB
+Time: 03:08:06.569 | Memory allocated: 326MB
+Time: 03:08:06.710 | Memory allocated: 175MB
+Time: 03:08:06.954 | Memory allocated: 183MB
+Time: 03:08:07.356 | Memory allocated: 392MB
+Time: 03:08:07.559 | Memory allocated: 297MB
+Time: 03:08:07.676 | Memory allocated: 158MB
+Time: 03:08:07.980 | Memory allocated: 290MB
+Time: 03:08:08.128 | Memory allocated: 190MB
+Time: 03:08:08.381 | Memory allocated: 273MB
+Time: 03:08:08.499 | Memory allocated: 228MB
+Time: 03:08:08.621 | Memory allocated: 213MB
+Time: 03:08:08.682 | Memory allocated: 176MB
+Time: 03:08:09.095 | Memory allocated: 299MB
+Time: 03:08:11.216 | Memory allocated: 323MB
+Time: 03:08:11.333 | Memory allocated: 121MB
+Time: 03:08:11.484 | Memory allocated: 96MB
+Time: 03:08:11.650 | Memory allocated: 74MB
+Time: 03:08:11.857 | Memory allocated: 59MB
+Time: 03:08:12.067 | Memory allocated: 64MB
+Time: 03:08:12.259 | Memory allocated: 29MB
+Time: 03:08:12.427 | Memory allocated: 25MB
+
+Final memory allocated: 617KB
+Memory used: 387KB
+Time taken: 7.120224504s
+Average memory per VM: 774B

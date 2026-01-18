@@ -1,0 +1,38 @@
+Benchmark: metatable binding type
+Number of Lua VMs: 500
+Initial memory allocated: 231KB
+
+Time: 03:10:38.651 | Memory allocated: 67MB
+Time: 03:10:38.991 | Memory allocated: 262MB
+Time: 03:10:39.192 | Memory allocated: 220MB
+Time: 03:10:39.690 | Memory allocated: 304MB
+Time: 03:10:40.012 | Memory allocated: 391MB
+Time: 03:10:40.199 | Memory allocated: 290MB
+Time: 03:10:40.308 | Memory allocated: 218MB
+Time: 03:10:40.618 | Memory allocated: 262MB
+Time: 03:10:40.732 | Memory allocated: 147MB
+Time: 03:10:41.056 | Memory allocated: 362MB
+Time: 03:10:41.355 | Memory allocated: 304MB
+Time: 03:10:41.556 | Memory allocated: 263MB
+Time: 03:10:41.667 | Memory allocated: 188MB
+Time: 03:10:41.751 | Memory allocated: 204MB
+Time: 03:10:42.130 | Memory allocated: 256MB
+Time: 03:10:42.400 | Memory allocated: 177MB
+Time: 03:10:42.720 | Memory allocated: 214MB
+Time: 03:10:42.873 | Memory allocated: 184MB
+Time: 03:10:43.061 | Memory allocated: 235MB
+Time: 03:10:45.066 | Memory allocated: 264MB
+Time: 03:10:45.354 | Memory allocated: 92MB
+Time: 03:10:45.445 | Memory allocated: 122MB
+Time: 03:10:45.550 | Memory allocated: 90MB
+Time: 03:10:45.668 | Memory allocated: 80MB
+Time: 03:10:45.828 | Memory allocated: 66MB
+Time: 03:10:46.048 | Memory allocated: 60MB
+Time: 03:10:46.218 | Memory allocated: 62MB
+Time: 03:10:46.396 | Memory allocated: 18MB
+Time: 03:10:46.590 | Memory allocated: 7.5MB
+
+Final memory allocated: 620KB
+Memory used: 390KB
+Time taken: 8.271704104s
+Average memory per VM: 779B
