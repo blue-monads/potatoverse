@@ -240,7 +240,7 @@ func main() {
 		go func(id int) {
 			defer wg.Done()
 			L := lua.NewState()
-			defer L.Close()
+			// defer L.Close()
 			states[id] = L // Store the state reference to keep it alive
 
 			// Setup bindings
@@ -263,7 +263,7 @@ func main() {
 	close(done)
 
 	// Final memory stats after all states have been used
-	runtime.GC()
+	// runtime.GC()
 	runtime.ReadMemStats(&m)
 	final_mem := m.Alloc
 	humanReadableMemory := humanize.Bytes(uint64(final_mem))
