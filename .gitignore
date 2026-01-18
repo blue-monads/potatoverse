@@ -9,3 +9,4 @@ backend/engine/epackages/auth-example/auth-example.zip
 dist/*
 backend/labs/vfsync/data/*
 backend/labs/vfsync/vfs
+contrib/demo/demo_data
