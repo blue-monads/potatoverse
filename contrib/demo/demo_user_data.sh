@@ -342,7 +342,7 @@ def deploy():
         # Start server in background
         print("Starting server...")
         process = subprocess.Popen(
-            [target_binary, "server", "start"],
+            [target_binary, "server", "start", "--auto-seed"],
             stdout=None,  # Share stdout with parent
             stderr=None,  # Share stderr with parent
             cwd=WORK_DIR
