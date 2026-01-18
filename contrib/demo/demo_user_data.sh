@@ -426,34 +426,12 @@ def reset():
 
 class DeployHandler(BaseHTTPRequestHandler):
     """HTTP request handler for deployment endpoints."""
-    
+
     def do_GET(self):
-        """Handle GET requests."""
         parsed_path = urlparse(self.path)
         path_parts = parsed_path.path.strip("/").split("/")
-        
-        if len(path_parts) == 2 and path_parts[0] == "deploy":
-            secret_key = path_parts[1]
-            
-            if secret_key != SECRET_KEY:
-                self.send_response(401)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Unauthorized"}).encode())
-                return
-            
-            try:
-                result = deploy()
-                self.send_response(200)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps(result).encode())
-            except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": str(e)}).encode())
-        elif len(path_parts) == 2 and path_parts[0] == "status":
+
+        if len(path_parts) == 2 and path_parts[0] == "status":
             secret_key = path_parts[1]
             
             if secret_key != SECRET_KEY:
@@ -480,10 +458,43 @@ class DeployHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"error": "Not found"}).encode())
     
+    def perform_deploy(self):
+        """Handle deploy requests."""
+        parsed_path = urlparse(self.path)
+        path_parts = parsed_path.path.strip("/").split("/")
+        
+        if len(path_parts) == 2 and path_parts[0] == "deploy":
+            secret_key = path_parts[1]
+            
+            if secret_key != SECRET_KEY:
+                self.send_response(401)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Unauthorized"}).encode())
+                return
+            
+            try:
+                result = deploy()
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(result).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+
+    
     def do_POST(self):
         """Handle POST requests."""
         parsed_path = urlparse(self.path)
         path_parts = parsed_path.path.strip("/").split("/")
+
+        if len(path_parts) == 2 and path_parts[0] == "deploy":
+            self.perform_deploy()
+            return
+
         
         if len(path_parts) == 2 and path_parts[0] == "reset":
             secret_key = path_parts[1]
