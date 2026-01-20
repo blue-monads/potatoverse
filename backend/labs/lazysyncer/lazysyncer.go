@@ -11,6 +11,12 @@ import (
 	"github.com/tidwall/wal"
 )
 
+type BuddyEntry struct {
+	Table string
+	RowId int64
+	Mode  int // insert, update, delete, insert_future_delete, update_future_delete
+}
+
 func NewLazySyncEngine(folder string) (*LazySyncEngine, error) {
 
 	os.MkdirAll(folder, 0755)
@@ -35,7 +41,7 @@ type LazySyncEngine struct {
 type Entry struct {
 	Table string
 	Id    int64
-	Mode  int // 0: update_column, 1: insert_only, 2: scan_hash, 3: lazy_scan_hash
+	Mode  int64 // 0: insert, 1: update, 2: delete
 }
 
 func (e *LazySyncEngine) Notify(table string, id int64) error {
