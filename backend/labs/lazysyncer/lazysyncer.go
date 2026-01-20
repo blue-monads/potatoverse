@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"sync/atomic"
-	"time"
 
 	"github.com/tidwall/wal"
 )
@@ -68,52 +67,4 @@ func (e *LazySyncEngine) BatchNotify(table string, ids []int64) error {
 
 	return nil
 
-}
-
-func (e *LazySyncEngine) watchWal() error {
-
-	// lastTruncate := uint64(0)
-	lastProcessed := uint64(0)
-
-	for {
-
-		time.Sleep(1 * time.Second)
-
-		lastIndex, err := e.wal.LastIndex()
-		if err != nil {
-			return fmt.Errorf("wal.LastIndex: %w", err)
-		}
-
-		if lastIndex <= lastProcessed {
-			time.Sleep(2 * time.Second)
-			continue
-		}
-
-		i := lastProcessed + 1
-		for i < lastIndex {
-			data, err := e.wal.Read(i)
-			if err != nil {
-				return fmt.Errorf("wal.Read: %w", err)
-			}
-			var entry Entry
-			err = json.Unmarshal(data, &entry)
-			if err != nil {
-				return fmt.Errorf("json.Unmarshal: %w", err)
-			}
-			err = e.processWal(&entry)
-			if err != nil {
-				return fmt.Errorf("processWal: %w", err)
-			}
-
-			lastProcessed = i
-
-		}
-
-	}
-
-}
-
-func (e *LazySyncEngine) processWal(entry *Entry) error {
-
-	return nil
 }
