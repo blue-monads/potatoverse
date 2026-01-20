@@ -33,13 +33,13 @@ type LazySyncEngine struct {
 }
 
 type Entry struct {
-	Table   string
-	Id      int64
-	GroupOf int64
+	Table string
+	Id    int64
+	Mode  int // 0: update_column, 1: insert_only, 2: scan_hash, 3: lazy_scan_hash
 }
 
 func (e *LazySyncEngine) Notify(table string, id int64) error {
-	data, err := json.Marshal(Entry{Table: table, Id: id, GroupOf: 0})
+	data, err := json.Marshal(Entry{Table: table, Id: id, Mode: 0})
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
@@ -50,11 +50,9 @@ func (e *LazySyncEngine) Notify(table string, id int64) error {
 
 func (e *LazySyncEngine) BatchNotify(table string, ids []int64) error {
 
-	groupOf := int64(len(ids))
-
 	for _, id := range ids {
 
-		data, err := json.Marshal(Entry{Table: table, Id: id, GroupOf: groupOf})
+		data, err := json.Marshal(Entry{Table: table, Id: id, Mode: 0})
 		if err != nil {
 			return fmt.Errorf("json.Marshal: %w", err)
 		}
