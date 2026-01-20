@@ -1,6 +1,7 @@
 package binds
 
 import (
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -89,10 +90,8 @@ func capExecute(mod *luaCapModule, L *lua.LState) int {
 	capabilityName := L.CheckString(1)
 	method := L.CheckString(2)
 	params := L.CheckTable(3)
-	paramsLazyData := &LuaLazyData{
-		L:     L,
-		table: params,
-	}
+	paramsLazyData := lazylua.NewLuaLazyData(L, params)
+
 	result, err := mod.capabilities.Execute(mod.installId, mod.spaceId, capabilityName, method, paramsLazyData)
 	if err != nil {
 		return pushError(L, err)

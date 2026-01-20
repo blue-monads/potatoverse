@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
 	"github.com/blue-monads/potatoverse/backend/utils/kosher"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
@@ -208,7 +209,7 @@ func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 			actionName := L.CheckString(1)
 			params := L.CheckTable(2)
 
-			paramsLazyData := binds.NewLuaLazyData(L, params)
+			paramsLazyData := lazylua.NewLuaLazyData(L, params)
 
 			result, err := event.Request.ExecuteAction(actionName, paramsLazyData)
 			if err != nil {
