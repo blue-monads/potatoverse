@@ -33,6 +33,8 @@ type LazySyncEngine struct {
 	counter atomic.Uint64
 	wal     *wal.Log
 
+	lruCache any
+
 	// table__<table_name + row_id> -> wal_index -> [32][8][8]
 	// wal__<wal_index> -> <table_name + row_id> -> [8][32][8]
 }
