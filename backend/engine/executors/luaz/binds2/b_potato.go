@@ -37,7 +37,14 @@ func potatoModuleIndex(L *lua.LState) int {
 	return 1
 }
 
-func PotatoModule(es *executors.ExecState, submod map[string]map[string]lua.LGFunction) func(L *lua.LState) int {
+func PotatoModule(es *executors.ExecState) func(L *lua.LState) int {
+
+	bindables := GetBindables()
+	submod := make(map[string]map[string]lua.LGFunction)
+	for name, bindable := range bindables {
+		submod[name] = bindable(es.App)
+	}
+
 	return func(L *lua.LState) int {
 
 		// Register Potato Module Type

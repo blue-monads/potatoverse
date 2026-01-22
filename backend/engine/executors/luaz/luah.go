@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds2"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
 	"github.com/blue-monads/potatoverse/backend/utils/kosher"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
@@ -280,13 +282,26 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 }
 
 func (l *LuaH) registerModules() error {
-	installId := l.parent.handle.InstalledId
-	spaceId := l.parent.handle.SpaceId
-	app := l.parent.parent.app
-	packageVersionId := l.parent.handle.PackageVersionId
 
-	l.L.PreloadModule("pmcp", binds.BindMCP)
-	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, packageVersionId, spaceId))
+	/*
+
+		installId := l.parent.handle.InstalledId
+		spaceId := l.parent.handle.SpaceId
+		app := l.parent.parent.app
+		packageVersionId := l.parent.handle.PackageVersionId
+
+		l.L.PreloadModule("pmcp", binds.BindMCP)
+
+
+	*/
+
+	l.L.PreloadModule("potato", binds2.PotatoModule(&executors.ExecState{
+		SpaceId:          l.parent.handle.SpaceId,
+		InstalledId:      l.parent.handle.InstalledId,
+		PackageVersionId: l.parent.handle.PackageVersionId,
+		App:              l.parent.parent.app,
+	}))
+
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 	l.L.PreloadModule("json", luaJson.Loader)
 

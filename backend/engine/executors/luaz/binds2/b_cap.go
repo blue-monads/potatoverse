@@ -10,7 +10,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func RegisterModules(app xtypes.App) map[string]lua.LGFunction {
+func CapBindable(app xtypes.App) map[string]lua.LGFunction {
 
 	capHub := app.Engine().(xtypes.Engine).GetCapabilityHub().(xcapability.CapabilityHub)
 	sdb := app.Database().GetSpaceOps()

@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
+
+func init() {
+	registry.RegisterExecutorBuilderFactory("luaz", BuildLuazExecutorBuilder)
+}
 
 func BuildLuazExecutorBuilder(app xtypes.App) (xtypes.ExecutorBuilder, error) {
 	return &LuazExecutorBuilder{app: app}, nil

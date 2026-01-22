@@ -13,6 +13,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 
+	_ "github.com/blue-monads/potatoverse/backend/engine/executors/luaz"
 	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
 	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/harvester"
 )
