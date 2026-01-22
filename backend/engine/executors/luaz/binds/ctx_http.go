@@ -433,8 +433,8 @@ func reqRemoteIP(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 
 func reqJSON(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 	code := L.CheckInt(1)
-	jsonTbl := L.CheckTable(2)
-	jsonObj := luaplus.TableToMap(L, jsonTbl)
+	jsonTbl := L.CheckAny(2)
+	jsonObj := luaplus.LuaToAny(L, jsonTbl)
 	reqCtx.ctx.JSON(code, jsonObj)
 	return 0
 }
