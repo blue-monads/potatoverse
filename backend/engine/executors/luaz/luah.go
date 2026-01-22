@@ -295,13 +295,16 @@ func (l *LuaH) registerModules() error {
 
 	*/
 
-	l.L.PreloadModule("potato", binds2.PotatoModule(&executors.ExecState{
+	es := &executors.ExecState{
 		SpaceId:          l.parent.handle.SpaceId,
 		InstalledId:      l.parent.handle.InstalledId,
 		PackageVersionId: l.parent.handle.PackageVersionId,
 		App:              l.parent.parent.app,
-	}))
+	}
 
+	binds := l.parent.parent.binds
+
+	l.L.PreloadModule("potato", binds2.PotatoModule(es, binds))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 	l.L.PreloadModule("json", luaJson.Loader)
 

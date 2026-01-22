@@ -2,6 +2,7 @@ package binds2
 
 import (
 	"github.com/blue-monads/potatoverse/backend/engine/executors"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -37,13 +38,18 @@ func potatoModuleIndex(L *lua.LState) int {
 	return 1
 }
 
-func PotatoModule(es *executors.ExecState) func(L *lua.LState) int {
+func PotatoBindable(app xtypes.App) map[string]map[string]lua.LGFunction {
 
-	bindables := GetBindables()
 	submod := make(map[string]map[string]lua.LGFunction)
-	for name, bindable := range bindables {
-		submod[name] = bindable(es.App)
+	for name, bindable := range GetBindables() {
+		submod[name] = bindable(app)
 	}
+
+	return submod
+
+}
+
+func PotatoModule(es *executors.ExecState, submod map[string]map[string]lua.LGFunction) func(L *lua.LState) int {
 
 	return func(L *lua.LState) int {
 
