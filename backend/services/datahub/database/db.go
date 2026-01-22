@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
@@ -225,12 +226,12 @@ func (db *DB) GetLowDBOps(ownerType string, ownerID string) datahub.DBLowOps {
 	return low.NewLowDB(db.sess, ownerType, ownerID)
 }
 
-func (db *DB) GetLowPackageDBOps(ownerID string) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, "P", ownerID)
+func (db *DB) GetLowPackageDBOps(installId int64) datahub.DBLowOps {
+	return low.NewLowDB(db.sess, "P", strconv.FormatInt(installId, 10))
 }
 
-func (db *DB) GetLowCapabilityDBOps(ownerID string) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, "C", ownerID)
+func (db *DB) GetLowCapabilityDBOps(capabilityId int64) datahub.DBLowOps {
+	return low.NewLowDB(db.sess, "C", strconv.FormatInt(capabilityId, 10))
 }
 
 func (db *DB) GetMQSynk() datahub.MQSynk {

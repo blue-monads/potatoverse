@@ -1,7 +1,6 @@
 package ccurd
 
 import (
-	"fmt"
 	"regexp"
 
 	"github.com/blue-monads/potatoverse/backend/registry"
@@ -51,7 +50,7 @@ func (b *CcurdBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.
 	}
 
 	return &CcurdCapability{
-		db:           b.app.Database().GetLowCapabilityDBOps(fmt.Sprint(model.SpaceID)),
+		db:           b.app.Database().GetLowCapabilityDBOps(model.ID),
 		signer:       b.app.Signer(),
 		methods:      methods,
 		spaceId:      model.SpaceID,

@@ -23,8 +23,8 @@ type Database interface {
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
 
-	GetLowPackageDBOps(ownerID string) DBLowOps
-	GetLowCapabilityDBOps(ownerID string) DBLowOps
+	GetLowPackageDBOps(installId int64) DBLowOps
+	GetLowCapabilityDBOps(capabilityId int64) DBLowOps
 }
 
 type Core interface {
