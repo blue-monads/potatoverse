@@ -12,10 +12,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/mailer/stdio"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-
-	_ "github.com/blue-monads/potatoverse/backend/engine/executors/luaz"
-	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
-	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/harvester"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
