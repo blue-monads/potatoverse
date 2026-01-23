@@ -80,8 +80,6 @@ func (s *session) readPump() {
 
 		data, msg, err := wsutil.ReadClientData(s.conn)
 		if err != nil {
-			// Any read error means the connection is closed or broken
-			// Always send disconnect to ensure cleanup
 			if !s.closedAndCleaned {
 				s.room.disconnect <- s.connId
 			}
