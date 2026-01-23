@@ -7,6 +7,7 @@ toolchain go1.24.11
 require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/alecthomas/repr v0.5.1
+	github.com/brianvoe/gofakeit/v7 v7.14.0
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
@@ -28,7 +29,6 @@ require (
 	github.com/rqlite/sql v0.0.0-20251204023435-65660522892e
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/spf13/afero v1.15.0
-	github.com/tidwall/buntdb v1.3.2
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/wal v1.2.1
@@ -95,12 +95,8 @@ require (
 	github.com/studio-b12/gowebdav v0.11.0 // indirect
 	github.com/superfly/ltx v0.5.1 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
-	github.com/tidwall/btree v1.4.2 // indirect
-	github.com/tidwall/grect v0.1.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/rtred v0.1.2 // indirect
 	github.com/tidwall/tinylru v1.1.0 // indirect
-	github.com/tidwall/tinyqueue v0.1.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/tyler-smith/go-bip32 v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
