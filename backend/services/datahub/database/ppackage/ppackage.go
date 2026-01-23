@@ -243,7 +243,7 @@ func (d *PackageInstallOperations) AddPackageVersion(installId int64, filePath s
 // Private helper methods
 
 func (d *PackageInstallOperations) installedPackagesTable() db.Collection {
-	return d.db.Collection("InstalledPackages")
+	return d.db.Collection("PackageInstalls")
 }
 
 func (d *PackageInstallOperations) packageVersionsTable() db.Collection {
