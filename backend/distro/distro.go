@@ -2,7 +2,9 @@ package distro
 
 import (
 	// Capabilities
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/db/autoseeder"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/db/migrator"
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/db/staticseeder"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/system/ping"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws"
 

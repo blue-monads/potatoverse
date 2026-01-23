@@ -11,7 +11,7 @@ import (
 
 var (
 	Name         = "migrator"
-	Icon         = ""
+	Icon         = `<i class="fa-solid fa-database"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Migration Folder",

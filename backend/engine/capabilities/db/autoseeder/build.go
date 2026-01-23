@@ -9,7 +9,7 @@ import (
 
 var (
 	Name         = "autoseeder"
-	Icon         = ""
+	Icon         = `<i class="fa-solid fa-fill"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Seed Struct File",

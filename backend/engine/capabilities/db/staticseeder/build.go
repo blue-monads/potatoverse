@@ -9,7 +9,7 @@ import (
 
 var (
 	Name         = "staticseeder"
-	Icon         = ""
+	Icon         = `<i class="fa-solid fa-fill"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Seed Folder",
