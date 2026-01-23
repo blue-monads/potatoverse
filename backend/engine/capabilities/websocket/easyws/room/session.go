@@ -1,7 +1,6 @@
 package room
 
 import (
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -72,35 +71,24 @@ func (s *session) readPump() {
 
 	qq.Println("@readPump/0", s.connId, s.userId)
 
-	errCount := 0
-
 	for {
 		if s.closedAndCleaned {
 			break
-		}
-
-		if errCount > 3 {
-			s.room.disconnect <- s.connId
-			return
 		}
 
 		qq.Println("@readPump/1", s.connId, s.userId)
 
 		data, msg, err := wsutil.ReadClientData(s.conn)
 		if err != nil {
-			// check if the error is io.EOF
-			if err == io.EOF {
+			// Any read error means the connection is closed or broken
+			// Always send disconnect to ensure cleanup
+			if !s.closedAndCleaned {
 				s.room.disconnect <- s.connId
-				return
 			}
-
-			errCount++
 			return
 		}
 
 		qq.Println("@readPump/2", s.connId, s.userId, len(data), msg)
-
-		errCount = 0
 
 		if msg == ws.OpClose {
 			s.room.disconnect <- s.connId
