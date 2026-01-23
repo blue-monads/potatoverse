@@ -210,8 +210,8 @@ func readPackageFile(pops datahub.FileOps, es *executors.ExecState, L *lua.LStat
 }
 
 func coreListFiles(fops *corehub.CoreHub, es *executors.ExecState, L *lua.LState) int {
-
-	files, err := fops.ListSpaceFilesSigned(es.InstalledId, "")
+	path := L.OptString(1, "")
+	files, err := fops.ListSpaceFilesSigned(es.InstalledId, path)
 	if err != nil {
 		return luaplus.PushError(L, err)
 	}
