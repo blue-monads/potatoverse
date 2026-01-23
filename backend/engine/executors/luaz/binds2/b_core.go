@@ -185,7 +185,7 @@ func readPackageFile(pops datahub.FileOps, es *executors.ExecState, L *lua.LStat
 		dirPath = strings.Join(parts[:len(parts)-1], "/")
 	}
 
-	fileData, err := pops.GetFileContentByPath(es.InstalledId, dirPath, fileName)
+	fileData, err := pops.GetFileContentByPath(es.PackageVersionId, dirPath, fileName)
 	if err != nil {
 		return luaplus.PushError(L, err)
 	}
