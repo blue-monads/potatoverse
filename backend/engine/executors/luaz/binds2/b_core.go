@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/engine/executors"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
@@ -34,6 +35,19 @@ func CoreBindable(app xtypes.App) map[string]lua.LGFunction {
 		},
 		"read_package_file": func(L *lua.LState) int {
 			return readPackageFile(pops, GetExecState(L), L)
+		},
+		"list_files": func(L *lua.LState) int {
+			coreHub := app.CoreHub().(*corehub.CoreHub)
+
+			return coreListFiles(coreHub, GetExecState(L), L)
+		},
+		"decode_file_id": func(L *lua.LState) int {
+			coreHub := app.CoreHub().(*corehub.CoreHub)
+			return coreDecodeFileId(coreHub, L)
+		},
+		"encode_file_id": func(L *lua.LState) int {
+			coreHub := app.CoreHub().(*corehub.CoreHub)
+			return coreEncodeFileId(coreHub, L)
 		},
 	}
 
@@ -193,4 +207,51 @@ func readPackageFile(pops datahub.FileOps, es *executors.ExecState, L *lua.LStat
 	L.Push(lua.LNil)
 	return 2
 
+}
+
+func coreListFiles(fops *corehub.CoreHub, es *executors.ExecState, L *lua.LState) int {
+
+	files, err := fops.ListSpaceFilesSigned(es.InstalledId, "")
+	if err != nil {
+		return luaplus.PushError(L, err)
+	}
+	resultTable := L.NewTable()
+	for _, file := range files {
+
+		fileTable := L.NewTable()
+		fileTable.RawSetString("id", lua.LString(file.Id))
+		fileTable.RawSetString("name", lua.LString(file.Name))
+		fileTable.RawSetString("is_folder", lua.LBool(file.IsFolder))
+		fileTable.RawSetString("path", lua.LString(file.Path))
+		fileTable.RawSetString("size", lua.LNumber(file.Size))
+		fileTable.RawSetString("mime", lua.LString(file.Mime))
+		fileTable.RawSetString("hash", lua.LString(file.Hash))
+		resultTable.Append(fileTable)
+	}
+
+	L.Push(resultTable)
+	L.Push(lua.LNil)
+	return 2
+}
+
+func coreDecodeFileId(coreHub *corehub.CoreHub, L *lua.LState) int {
+	id := L.CheckString(1)
+	decodedId, err := coreHub.DecodeSpaceFileId(id)
+	if err != nil {
+		return luaplus.PushError(L, err)
+	}
+	L.Push(lua.LNumber(decodedId))
+	L.Push(lua.LNil)
+	return 2
+}
+
+func coreEncodeFileId(coreHub *corehub.CoreHub, L *lua.LState) int {
+	fid := L.CheckNumber(1)
+	encodedId, err := coreHub.EncodeSpaceFileId(int64(fid))
+	if err != nil {
+		return luaplus.PushError(L, err)
+	}
+	L.Push(lua.LString(encodedId))
+	L.Push(lua.LNil)
+	return 2
 }
