@@ -14,7 +14,8 @@ import {
     Check,
     Key,
     ExternalLink,
-    Info
+    Info,
+    FileIcon
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
@@ -376,6 +377,7 @@ interface VersionCardProps {
 }
 
 const VersionCard = ({ version, isActive }: VersionCardProps) => {
+    const router = useRouter();
     return (
         <div className={`relative overflow-hidden rounded-lg bg-gray-50 p-4 border-2 ${isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
             <div className="flex flex-col gap-2">
@@ -402,6 +404,8 @@ const VersionCard = ({ version, isActive }: VersionCardProps) => {
                     </div>
                 </div>
 
+                yyyyy
+
                 {version.info && (
                     <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                         {version.info}
@@ -421,6 +425,20 @@ const VersionCard = ({ version, isActive }: VersionCardProps) => {
                             <span>{version.license}</span>
                         </div>
                     )}
+
+                    {/* show version files btn */}
+                    <div className="flex items-center gap-2">
+                        <button 
+                        className=" text-blue-500 hover:text-blue-600 flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-xs border border-blue-500" 
+                        onClick={() => router.push(`/portal/admin/spaces/package-files?package_version_id=${version.id}`)}>
+                            <FileIcon className="w-3 h-3" />
+                            <span>Files</span>
+
+                        </button>
+
+                    </div>
+
+
                 </div>
             </div>
         </div>

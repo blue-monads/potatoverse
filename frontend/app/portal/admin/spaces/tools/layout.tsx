@@ -25,12 +25,6 @@ const navItems = [
         icon: Key,
     },
     {
-        label: 'Package Files',
-        value: 'package-files',
-        url: '/portal/admin/spaces/tools/package-files',
-        icon: Package,
-    },
-    {
         label: 'Capabilities',
         value: 'capabilities',
         url: '/portal/admin/spaces/tools/capabilities',
