@@ -253,4 +253,4 @@ CREATE TABLE IF NOT EXISTS CDCMeta (
   gc_max_records INTEGER NOT NULL DEFAULT 0,
   last_gc_at INTEGER NOT NULL DEFAULT 0,
   extrameta JSON NOT NULL DEFAULT '{}'
-)
+);
