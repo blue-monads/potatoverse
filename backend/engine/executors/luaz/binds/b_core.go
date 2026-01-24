@@ -14,6 +14,17 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+// presign package file presigned token
+// write_temporary_file
+// read_temporary_file
+// delete_temporary_file
+// create_temporary_folder
+// delete_temporary_folder
+// list_temporary_folder
+// read_seek_temporary_file
+// write_seek_temporary_file
+// get_temporary_file_info
+
 func CoreBindable(app xtypes.App) map[string]lua.LGFunction {
 
 	engine := app.Engine().(xtypes.Engine)
