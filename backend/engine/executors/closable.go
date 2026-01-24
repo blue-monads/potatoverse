@@ -19,6 +19,7 @@ func (c *Closable) AddCloser(closer func() error) uint16 {
 func (c *Closable) RemoveCloser(id uint16) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
+	delete(c.closables, id)
 }
 
 func (c *Closable) Close() error {
