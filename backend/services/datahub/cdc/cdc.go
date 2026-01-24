@@ -187,10 +187,22 @@ func DropCDC(db *sql.DB) error {
 			continue
 		}
 
+		// drop triggers on the table
+		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_insert_cdc"); err != nil {
+			return fmt.Errorf("failed to drop INSERT trigger for %s: %w", tableName, err)
+		}
+		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_update_cdc"); err != nil {
+			return fmt.Errorf("failed to drop UPDATE trigger for %s: %w", tableName, err)
+		}
+		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_delete_cdc"); err != nil {
+			return fmt.Errorf("failed to drop DELETE trigger for %s: %w", tableName, err)
+		}
+
 		cdcTableName := tableName + "_cdc"
 		if _, err := db.Exec("DROP TABLE IF EXISTS ?", cdcTableName); err != nil {
 			return fmt.Errorf("failed to drop CDC table %s: %w", cdcTableName, err)
 		}
+
 	}
 
 	// truncate CDCMeta table
