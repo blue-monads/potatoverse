@@ -1,72 +1,74 @@
 package binds
 
 import (
-	"github.com/blue-monads/potatoverse/backend/services/datahub"
-	"github.com/blue-monads/potatoverse/backend/services/signer"
+	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	lua "github.com/yuin/gopher-lua"
 )
 
 const (
-	luaKVModuleTypeName   = "potato.kv"
-	luaCapModuleTypeName  = "potato.cap"
-	luaDBModuleTypeName   = "potato.db"
-	luaTxnModuleTypeName  = "potato.txn"
-	luaCoreModuleTypeName = "potato.core"
+	luaPotatoModuleTypeName = "potato.module"
 )
 
-type luaCapModule struct {
-	app          xtypes.App
-	installId    int64
-	spaceId      int64
-	capabilities xcapability.CapabilityHub
+type luaPotatoModule struct {
+	es     *executors.ExecState
+	submod map[string]map[string]lua.LGFunction
 }
 
-type luaDBModule struct {
-	installId int64
-	db        datahub.DBLowCoreOps
+func registerPotatoModuleType(L *lua.LState) {
+	mt := L.NewTypeMetatable(luaPotatoModuleTypeName)
+	L.SetField(mt, "__index", L.NewFunction(potatoModuleIndex))
 }
 
-type luaTxnModule struct {
-	installId int64
-	txn       datahub.DBLowTxnOps
+func potatoModuleIndex(L *lua.LState) int {
+
+	ppmod := L.CheckUserData(1)
+
+	pmod, ok := ppmod.Value.(*luaPotatoModule)
+	if !ok {
+		L.ArgError(1, luaPotatoModuleTypeName+" expected")
+		return 0
+	}
+
+	method := L.CheckString(2)
+
+	table := L.NewTable()
+	L.SetFuncs(table, pmod.submod[method])
+	L.Push(table)
+	return 1
 }
 
-type luaCoreModule struct {
-	app              xtypes.App
-	installId        int64
-	packageVersionId int64
-	spaceId          int64
-	engine           xtypes.Engine
-	sig              *signer.Signer
+func PotatoBindable(app xtypes.App) map[string]map[string]lua.LGFunction {
+
+	submod := make(map[string]map[string]lua.LGFunction)
+	for name, bindable := range GetBindables() {
+		submod[name] = bindable(app)
+	}
+
+	return submod
+
 }
 
-func PotatoModule(app xtypes.App, installId int64, packageVersionId int64, spaceId int64) func(L *lua.LState) int {
+func PotatoModule(es *executors.ExecState, submod map[string]map[string]lua.LGFunction) func(L *lua.LState) int {
+
 	return func(L *lua.LState) int {
-		// Register type metatables
-		registerKVModuleType(L)
-		registerCapModuleType(L)
-		registerDBModuleType(L)
-		registerTxnModuleType(L)
-		registerCoreModuleType(L)
 
-		// Create main potato table
-		potatoTable := L.NewTable()
+		// Register Potato Module Type
 
-		// Create sub-modules as userdata
-		kvModule := newKVModule(L, app, installId)
-		capModule := newCapModule(L, app, installId, spaceId)
-		dbModule := newDBModule(L, app, installId)
-		coreModule := newCoreModule(L, app, installId, packageVersionId, spaceId)
+		registerPotatoModuleType(L)
+		ud := L.NewUserData()
+		ud.Value = &luaPotatoModule{
+			es:     es,
+			submod: submod,
+		}
+		L.SetMetatable(ud, L.GetTypeMetatable(luaPotatoModuleTypeName))
+		L.Push(ud)
 
-		// Set sub-modules on main table
-		potatoTable.RawSetString("kv", kvModule)
-		potatoTable.RawSetString("cap", capModule)
-		potatoTable.RawSetString("db", dbModule)
-		potatoTable.RawSetString("core", coreModule)
+		// attach exec state in global
+		esud := L.NewUserData()
+		esud.Value = es
+		L.SetGlobal("__es__", esud)
 
-		L.Push(potatoTable)
 		return 1
 	}
 }

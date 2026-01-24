@@ -1,4 +1,4 @@
-package binds2
+package binds
 
 import (
 	"github.com/blue-monads/potatoverse/backend/engine/executors"

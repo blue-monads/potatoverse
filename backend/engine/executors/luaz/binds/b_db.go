@@ -1,287 +1,191 @@
 package binds
 
 import (
-	"strconv"
-
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
-// DB Module
-func registerDBModuleType(L *lua.LState) {
-	mt := L.NewTypeMetatable(luaDBModuleTypeName)
-	L.SetField(mt, "__index", L.NewFunction(dbModuleIndex))
-}
+func DBBindable(app xtypes.App) map[string]lua.LGFunction {
+	db := app.Database()
 
-// fixme add to closer so any pending txns are committed/rolled back on app shutdown
-
-// Txn Module
-func registerTxnModuleType(L *lua.LState) {
-	mt := L.NewTypeMetatable(luaTxnModuleTypeName)
-	L.SetField(mt, "__index", L.NewFunction(txnModuleIndex))
-}
-
-func newTxnModule(L *lua.LState, installId int64, txn datahub.DBLowTxnOps) *lua.LUserData {
-	ud := L.NewUserData()
-	ud.Value = &luaTxnModule{
-		installId: installId,
-		txn:       txn,
-	}
-	L.SetMetatable(ud, L.GetTypeMetatable(luaTxnModuleTypeName))
-	return ud
-}
-
-func checkTxnModule(L *lua.LState) *luaTxnModule {
-	ud := L.CheckUserData(1)
-	if v, ok := ud.Value.(*luaTxnModule); ok {
-		return v
-	}
-	L.ArgError(1, luaTxnModuleTypeName+" expected")
-	return nil
-}
-
-func newDBModule(L *lua.LState, app xtypes.App, installId int64) *lua.LUserData {
-	ud := L.NewUserData()
-	ud.Value = &luaDBModule{
-		installId: installId,
-		db:        app.Database().GetLowDBOps("P", strconv.FormatInt(installId, 10)),
-	}
-	L.SetMetatable(ud, L.GetTypeMetatable(luaDBModuleTypeName))
-	return ud
-}
-
-func checkDBModule(L *lua.LState) *luaDBModule {
-	ud := L.CheckUserData(1)
-	if v, ok := ud.Value.(*luaDBModule); ok {
-		return v
-	}
-	L.ArgError(1, luaDBModuleTypeName+" expected")
-	return nil
-}
-
-func dbModuleIndex(L *lua.LState) int {
-	mod := checkDBModule(L)
-	method := L.CheckString(2)
-
-	switch method {
-	case "run_ddl":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbRunDDL(mod, L)
-		}))
-		return 1
-	case "run_query":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbRunQuery(mod, L)
-		}))
-		return 1
-	case "run_query_one":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbRunQueryOne(mod, L)
-		}))
-		return 1
-	case "insert":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbInsert(mod, L)
-		}))
-		return 1
-	case "update_by_id":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbUpdateById(mod, L)
-		}))
-		return 1
-	case "delete_by_id":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbDeleteById(mod, L)
-		}))
-		return 1
-	case "find_by_id":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindById(mod, L)
-		}))
-		return 1
-	case "update_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbUpdateByCond(mod, L)
-		}))
-		return 1
-	case "delete_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbDeleteByCond(mod, L)
-		}))
-		return 1
-	case "find_all_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindAllByCond(mod, L)
-		}))
-		return 1
-	case "find_one_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindOneByCond(mod, L)
-		}))
-		return 1
-	case "find_all_by_query":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindAllByQuery(mod, L)
-		}))
-		return 1
-	case "find_by_join":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindByJoin(mod, L)
-		}))
-		return 1
-	case "list_tables":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbListTables(mod, L)
-		}))
-		return 1
-	case "list_columns":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbListTableColumns(mod, L)
-		}))
-		return 1
-	case "start_txn":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbStartTxn(mod, L)
-		}))
-		return 1
+	getPackageDbOps := func(L *lua.LState) datahub.DBLowOps {
+		es := GetExecState(L)
+		installId := es.InstalledId
+		return db.GetLowPackageDBOps(installId)
 	}
 
-	return 0
-}
-
-func txnModuleIndex(L *lua.LState) int {
-	mod := checkTxnModule(L)
-	method := L.CheckString(2)
-
-	// Create a temporary db module wrapper to reuse the same method implementations
-	// Since DBLowTxnOps embeds DBLowCoreOps, we can use mod.txn as the db field
-	dbMod := &luaDBModule{
-		installId: mod.installId,
-		db:        mod.txn, // DBLowTxnOps embeds DBLowCoreOps
+	return map[string]lua.LGFunction{
+		"run_ddl": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbRunDDL(dbOps, L)
+		},
+		"run_query": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbRunQuery(dbOps, L)
+		},
+		"run_query_one": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbRunQueryOne(dbOps, L)
+		},
+		"insert": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbInsert(dbOps, L)
+		},
+		"update_by_id": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbUpdateById(dbOps, L)
+		},
+		"delete_by_id": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbDeleteById(dbOps, L)
+		},
+		"find_by_id": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbFindById(dbOps, L)
+		},
+		"update_by_cond": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbUpdateByCond(dbOps, L)
+		},
+		"delete_by_cond": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbDeleteByCond(dbOps, L)
+		},
+		"find_all_by_cond": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbFindAllByCond(dbOps, L)
+		},
+		"find_one_by_cond": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbFindOneByCond(dbOps, L)
+		},
+		"find_all_by_query": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbFindAllByQuery(dbOps, L)
+		},
+		"find_by_join": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbFindByJoin(dbOps, L)
+		},
+		"list_tables": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbListTables(dbOps, L)
+		},
+		"list_columns": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbListTableColumns(dbOps, L)
+		},
+		"start_txn": func(L *lua.LState) int {
+			dbOps := getPackageDbOps(L)
+			return dbStartTxn(dbOps, L)
+		},
 	}
 
-	switch method {
-	case "run_ddl":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbRunDDL(dbMod, L)
-		}))
-		return 1
-	case "run_query":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbRunQuery(dbMod, L)
-		}))
-		return 1
-	case "run_query_one":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbRunQueryOne(dbMod, L)
-		}))
-		return 1
-	case "insert":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbInsert(dbMod, L)
-		}))
-		return 1
-	case "update_by_id":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbUpdateById(dbMod, L)
-		}))
-		return 1
-	case "delete_by_id":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbDeleteById(dbMod, L)
-		}))
-		return 1
-	case "find_by_id":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindById(dbMod, L)
-		}))
-		return 1
-	case "update_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbUpdateByCond(dbMod, L)
-		}))
-		return 1
-	case "delete_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbDeleteByCond(dbMod, L)
-		}))
-		return 1
-	case "find_all_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindAllByCond(dbMod, L)
-		}))
-		return 1
-	case "find_one_by_cond":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindOneByCond(dbMod, L)
-		}))
-		return 1
-	case "find_all_by_query":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindAllByQuery(dbMod, L)
-		}))
-		return 1
-	case "find_by_join":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return dbFindByJoin(dbMod, L)
-		}))
-		return 1
-	case "commit":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return txnCommit(mod, L)
-		}))
-		return 1
-	case "rollback":
-		L.Push(L.NewFunction(func(L *lua.LState) int {
-			return txnRollback(mod, L)
-		}))
-		return 1
-	}
-
-	return 0
 }
 
-func txnCommit(mod *luaTxnModule, L *lua.LState) int {
-	err := mod.txn.Commit()
+func dbStartTxn(dbOps datahub.DBLowOps, L *lua.LState) int {
+	txn, err := dbOps.StartTxn()
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
-	L.Push(lua.LNil)
+
+	txnTable := L.NewTable()
+
+	L.SetFuncs(txnTable, map[string]lua.LGFunction{
+		"run_ddl": func(L *lua.LState) int {
+			return dbRunDDL(txn, L)
+		},
+		"run_query": func(L *lua.LState) int {
+			return dbRunQuery(txn, L)
+		},
+		"run_query_one": func(L *lua.LState) int {
+			return dbRunQueryOne(txn, L)
+		},
+		"insert": func(L *lua.LState) int {
+			return dbInsert(txn, L)
+		},
+		"update_by_id": func(L *lua.LState) int {
+			return dbUpdateById(txn, L)
+		},
+		"delete_by_id": func(L *lua.LState) int {
+			return dbDeleteById(txn, L)
+		},
+		"find_by_id": func(L *lua.LState) int {
+			return dbFindById(txn, L)
+		},
+		"update_by_cond": func(L *lua.LState) int {
+			return dbUpdateByCond(txn, L)
+		},
+		"delete_by_cond": func(L *lua.LState) int {
+			return dbDeleteByCond(txn, L)
+		},
+		"find_all_by_cond": func(L *lua.LState) int {
+			return dbFindAllByCond(txn, L)
+		},
+		"find_one_by_cond": func(L *lua.LState) int {
+			return dbFindOneByCond(txn, L)
+		},
+		"find_all_by_query": func(L *lua.LState) int {
+			return dbFindAllByQuery(txn, L)
+		},
+		"find_by_join": func(L *lua.LState) int {
+			return dbFindByJoin(txn, L)
+		},
+		"commit": func(L *lua.LState) int {
+			return dbCommit(txn, L)
+		},
+		"rollback": func(L *lua.LState) int {
+			return dbRollback(txn, L)
+		},
+	})
+	L.Push(txnTable)
+
 	return 1
 }
 
-func txnRollback(mod *luaTxnModule, L *lua.LState) int {
-	err := mod.txn.Rollback()
+func dbCommit(dbOps datahub.DBLowTxnOps, L *lua.LState) int {
+	err := dbOps.Commit()
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	L.Push(lua.LNil)
-	return 1
-}
-
-func dbRunDDL(mod *luaDBModule, L *lua.LState) int {
-	ddl := L.CheckString(1)
-	err := mod.db.RunDDL(ddl)
-	if err != nil {
-		return pushError(L, err)
-	}
-	L.Push(lua.LNil) // result
-	L.Push(lua.LNil) // error (nil on success)
+	L.Push(lua.LNil)
 	return 2
 }
 
-func dbRunQuery(mod *luaDBModule, L *lua.LState) int {
+func dbRollback(dbOps datahub.DBLowTxnOps, L *lua.LState) int {
+	err := dbOps.Rollback()
+	if err != nil {
+		return luaplus.PushError(L, err)
+	}
+	L.Push(lua.LNil)
+	L.Push(lua.LNil)
+	return 2
+}
+
+func dbRunDDL(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
+	ddl := L.CheckString(1)
+	err := dbOps.RunDDL(ddl)
+	if err != nil {
+		return luaplus.PushError(L, err)
+	}
+	L.Push(lua.LNil)
+	L.Push(lua.LNil)
+	return 2
+}
+
+func dbRunQuery(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	query := L.CheckString(1)
 	var args []any
 	for i := 2; i <= L.GetTop(); i++ {
 		arg := L.Get(i)
 		args = append(args, luaplus.LuaTypeToGoType(L, arg))
 	}
-	results, err := mod.db.RunQuery(query, args...)
+	results, err := dbOps.RunQuery(query, args...)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
 	for _, row := range results {
@@ -292,16 +196,16 @@ func dbRunQuery(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbRunQueryOne(mod *luaDBModule, L *lua.LState) int {
+func dbRunQueryOne(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	query := L.CheckString(1)
 	var args []any
 	for i := 2; i <= L.GetTop(); i++ {
 		arg := L.Get(i)
 		args = append(args, luaplus.LuaTypeToGoType(L, arg))
 	}
-	result, err := mod.db.RunQueryOne(query, args...)
+	result, err := dbOps.RunQueryOne(query, args...)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	if result == nil {
 		L.Push(lua.LNil)
@@ -312,48 +216,48 @@ func dbRunQueryOne(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbInsert(mod *luaDBModule, L *lua.LState) int {
+func dbInsert(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	dataTable := L.CheckTable(2)
 	dataMap := luaplus.TableToMap(L, dataTable)
-	id, err := mod.db.Insert(tableName, dataMap)
+	id, err := dbOps.Insert(tableName, dataMap)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	L.Push(lua.LNumber(id))
 	return 1
 }
 
-func dbUpdateById(mod *luaDBModule, L *lua.LState) int {
+func dbUpdateById(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	id := int64(L.CheckNumber(2))
 	dataTable := L.CheckTable(3)
 	dataMap := luaplus.TableToMap(L, dataTable)
-	err := mod.db.UpdateById(tableName, id, dataMap)
+	err := dbOps.UpdateById(tableName, id, dataMap)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	L.Push(lua.LNil)
 	return 1
 }
 
-func dbDeleteById(mod *luaDBModule, L *lua.LState) int {
+func dbDeleteById(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	id := int64(L.CheckNumber(2))
-	err := mod.db.DeleteById(tableName, id)
+	err := dbOps.DeleteById(tableName, id)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	L.Push(lua.LNil)
 	return 1
 }
 
-func dbFindById(mod *luaDBModule, L *lua.LState) int {
+func dbFindById(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	id := int64(L.CheckNumber(2))
-	result, err := mod.db.FindById(tableName, id)
+	result, err := dbOps.FindById(tableName, id)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	if result == nil {
 		L.Push(lua.LNil)
@@ -364,39 +268,39 @@ func dbFindById(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbUpdateByCond(mod *luaDBModule, L *lua.LState) int {
+func dbUpdateByCond(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	condTable := L.CheckTable(2)
 	dataTable := L.CheckTable(3)
 	condMap := luaplus.TableToMapAny(L, condTable)
 	dataMap := luaplus.TableToMap(L, dataTable)
-	err := mod.db.UpdateByCond(tableName, condMap, dataMap)
+	err := dbOps.UpdateByCond(tableName, condMap, dataMap)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	L.Push(lua.LNil)
 	return 1
 }
 
-func dbDeleteByCond(mod *luaDBModule, L *lua.LState) int {
+func dbDeleteByCond(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	condTable := L.CheckTable(2)
 	condMap := luaplus.TableToMapAny(L, condTable)
-	err := mod.db.DeleteByCond(tableName, condMap)
+	err := dbOps.DeleteByCond(tableName, condMap)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	L.Push(lua.LNil)
 	return 1
 }
 
-func dbFindAllByCond(mod *luaDBModule, L *lua.LState) int {
+func dbFindAllByCond(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	condTable := L.CheckTable(2)
 	condMap := luaplus.TableToMapAny(L, condTable)
-	results, err := mod.db.FindAllByCond(tableName, condMap)
+	results, err := dbOps.FindAllByCond(tableName, condMap)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
 	for _, row := range results {
@@ -407,13 +311,13 @@ func dbFindAllByCond(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbFindOneByCond(mod *luaDBModule, L *lua.LState) int {
+func dbFindOneByCond(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
 	condTable := L.CheckTable(2)
 	condMap := luaplus.TableToMapAny(L, condTable)
-	result, err := mod.db.FindOneByCond(tableName, condMap)
+	result, err := dbOps.FindOneByCond(tableName, condMap)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	if result == nil {
 		L.Push(lua.LNil)
@@ -424,16 +328,16 @@ func dbFindOneByCond(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbFindAllByQuery(mod *luaDBModule, L *lua.LState) int {
+func dbFindAllByQuery(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	queryTable := L.CheckTable(1)
 	query := &datahub.FindQuery{}
 	err := luaplus.MapToStruct(L, queryTable, query)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
-	results, err := mod.db.FindAllByQuery(query)
+	results, err := dbOps.FindAllByQuery(query)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
 	for _, row := range results {
@@ -444,16 +348,16 @@ func dbFindAllByQuery(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbFindByJoin(mod *luaDBModule, L *lua.LState) int {
+func dbFindByJoin(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 	queryTable := L.CheckTable(1)
 	query := &datahub.FindByJoin{}
 	err := luaplus.MapToStruct(L, queryTable, query)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
-	results, err := mod.db.FindByJoin(query)
+	results, err := dbOps.FindByJoin(query)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
 	for _, row := range results {
@@ -464,25 +368,10 @@ func dbFindByJoin(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbStartTxn(mod *luaDBModule, L *lua.LState) int {
-	db := mod.db.(datahub.DBLowOps)
-	txn, err := db.StartTxn()
+func dbListTables(dbOps datahub.DBLowOps, L *lua.LState) int {
+	tables, err := dbOps.ListTables()
 	if err != nil {
-		return pushError(L, err)
-	}
-
-	txnModule := newTxnModule(L, mod.installId, txn)
-	L.Push(txnModule)
-	return 1
-}
-
-func dbListTables(mod *luaDBModule, L *lua.LState) int {
-
-	db := mod.db.(datahub.DBLowOps)
-
-	tables, err := db.ListTables()
-	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
 	for _, tableName := range tables {
@@ -492,12 +381,11 @@ func dbListTables(mod *luaDBModule, L *lua.LState) int {
 	return 1
 }
 
-func dbListTableColumns(mod *luaDBModule, L *lua.LState) int {
+func dbListTableColumns(dbOps datahub.DBLowOps, L *lua.LState) int {
 	tableName := L.CheckString(1)
-	db := mod.db.(datahub.DBLowOps)
-	columns, err := db.ListTableColumns(tableName)
+	columns, err := dbOps.ListTableColumns(tableName)
 	if err != nil {
-		return pushError(L, err)
+		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
 	for _, column := range columns {
@@ -507,30 +395,3 @@ func dbListTableColumns(mod *luaDBModule, L *lua.LState) int {
 	L.Push(resultTable)
 	return 1
 }
-
-/*
-
-const relations = {
-	product: [{
-		subtype = "sales",
-		type = "has_many",
-		from_field = "product_id",
-		to_field = "id",
-	}
-	{
-		subtype = "stockin",
-		type = "has_many",
-		from_field = "product_id",
-		to_field = "id",
-	}]
-}
-
-local l = get_with_sub_type({
-    root_type = "product",
-	relations = relations,
-	subtypes = {
-	   sales: ["id", "amount"],
-	}
-})
-
-*/

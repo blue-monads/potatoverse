@@ -8,7 +8,6 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
-	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds2"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
 	"github.com/blue-monads/potatoverse/backend/utils/kosher"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
@@ -302,9 +301,9 @@ func (l *LuaH) registerModules() error {
 		App:              l.parent.parent.app,
 	}
 
-	binds := l.parent.parent.binds
+	sharedBinds := l.parent.parent.binds
 
-	l.L.PreloadModule("potato", binds2.PotatoModule(es, binds))
+	l.L.PreloadModule("potato", binds.PotatoModule(es, sharedBinds))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 	l.L.PreloadModule("json", luaJson.Loader)
 

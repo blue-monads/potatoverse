@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds2"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -17,7 +17,7 @@ func init() {
 }
 
 func BuildLuazExecutorBuilder(app xtypes.App) (xtypes.ExecutorBuilder, error) {
-	binds := binds2.PotatoBindable(app)
+	binds := binds.PotatoBindable(app)
 
 	return &LuazExecutorBuilder{app: app, binds: binds}, nil
 }
