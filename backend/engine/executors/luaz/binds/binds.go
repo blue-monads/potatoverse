@@ -5,11 +5,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-type HostHandle interface {
-	AddCloser(closer func() error) uint16
-	RemoveCloser(id uint16)
-}
-
 func pushError(L *lua.LState, err error) int {
 	return luaplus.PushError(L, err)
 }
