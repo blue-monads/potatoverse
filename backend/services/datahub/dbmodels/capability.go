@@ -7,5 +7,6 @@ type SpaceCapability struct {
 	InstallID      int64  `json:"install_id" db:"install_id"`
 	SpaceID        int64  `json:"space_id" db:"space_id"`
 	Options        string `json:"options" db:"options"`
+	OptionsType    string `json:"options_type" db:"options_type"`
 	ExtraMeta      string `json:"extrameta" db:"extrameta,omitempty"`
 }

@@ -184,6 +184,8 @@ CREATE TABLE IF NOT EXISTS SpaceCapabilities (
   space_id INTEGER NOT NULL DEFAULT 0,
   capability_type TEXT NOT NULL DEFAULT '',
   options JSON NOT NULL DEFAULT '{}',
+  options_type TEXT NOT NULL DEFAULT 'typed_json', -- typed_json, untyped_json, text
+
   extrameta JSON NOT NULL DEFAULT '{}',
   unique(install_id, space_id, name)
 
