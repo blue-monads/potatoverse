@@ -1,7 +1,7 @@
 package corehub
 
 import (
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/services/sockd"

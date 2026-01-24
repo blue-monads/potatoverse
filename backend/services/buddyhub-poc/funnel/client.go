@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"

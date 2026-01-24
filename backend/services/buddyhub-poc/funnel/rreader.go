@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/packetwire"
 )
 
 // responseReader reads response body from packets
