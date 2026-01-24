@@ -60,6 +60,10 @@ func CoreBindable(app xtypes.App) map[string]lua.LGFunction {
 			coreHub := app.CoreHub().(*corehub.CoreHub)
 			return coreEncodeFileId(coreHub, L)
 		},
+		"db_vendor": func(L *lua.LState) int {
+			L.Push(lua.LString(app.Database().Vender()))
+			return 1
+		},
 	}
 
 }
