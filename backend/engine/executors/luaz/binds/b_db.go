@@ -91,6 +91,17 @@ func dbStartTxn(dbOps datahub.DBLowOps, L *lua.LState) int {
 		return luaplus.PushError(L, err)
 	}
 
+	isClosed := false
+
+	es := GetExecState(L)
+
+	es.Closable.AddCloser(func() error {
+		if isClosed {
+			return nil
+		}
+		return txn.Rollback()
+	})
+
 	txnTable := L.NewTable()
 
 	L.SetFuncs(txnTable, map[string]lua.LGFunction{
@@ -134,10 +145,14 @@ func dbStartTxn(dbOps datahub.DBLowOps, L *lua.LState) int {
 			return dbFindByJoin(txn, L)
 		},
 		"commit": func(L *lua.LState) int {
-			return dbCommit(txn, L)
+			num := dbCommit(txn, L)
+			isClosed = true
+			return num
 		},
 		"rollback": func(L *lua.LState) int {
-			return dbRollback(txn, L)
+			num := dbRollback(txn, L)
+			isClosed = true
+			return num
 		},
 	})
 	L.Push(txnTable)

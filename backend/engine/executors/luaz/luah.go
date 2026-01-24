@@ -301,6 +301,8 @@ func (l *LuaH) registerModules() error {
 		App:              l.parent.parent.app,
 	}
 
+	es.Init()
+
 	sharedBinds := l.parent.parent.binds
 
 	l.L.PreloadModule("potato", binds.PotatoModule(es, sharedBinds))
