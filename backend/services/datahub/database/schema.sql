@@ -241,3 +241,14 @@ CREATE TABLE IF NOT EXISTS MQEventTargets (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
+CREATE TABLE IF NOT EXISTS CDCMeta (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  table_name TEXT NOT NULL DEFAULT '',
+  -- cdc_start_id rowid of the first record in the table, all records before this id has to be synced before syncing from cdc
+  cdc_start_id INTEGER NOT NULL DEFAULT 0, 
+  current_cdc_id INTEGER NOT NULL DEFAULT 0,
+  gc_max_records INTEGER NOT NULL DEFAULT 0,
+  last_gc_at INTEGER NOT NULL DEFAULT 0,
+  extrameta JSON NOT NULL DEFAULT '{}'
+)
