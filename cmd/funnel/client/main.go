@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/funnel"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 

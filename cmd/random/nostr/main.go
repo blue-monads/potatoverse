@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub/nostrout"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/nostrout"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/nbd-wtf/go-nostr"
