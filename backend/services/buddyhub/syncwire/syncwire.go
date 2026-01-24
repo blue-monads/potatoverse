@@ -19,6 +19,7 @@ type SyncWireSyncData struct {
 }
 
 type Record struct {
+	Id        int64  `json:"id"`
 	RowId     int64  `json:"row_id"`
 	Operation int    `json:"operation"`
 	Data      []byte `json:"data"`
