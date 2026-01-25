@@ -12,3 +12,5 @@ type BuddyHub struct {
 	logger *slog.Logger
 	app    xtypes.App
 }
+
+// hq for buddy discovery and address publishing
