@@ -117,7 +117,7 @@ func (h *HQ) FindBuddyInfo(pubkey string) (*SelfInfo, error) {
 	}
 
 	filter := nostr.Filter{
-		Kinds:   []int{KindPotato},
+		Kinds:   []int{nostr.KindTextNote},
 		Authors: []string{hexPubKey},
 		Limit:   1,
 	}
