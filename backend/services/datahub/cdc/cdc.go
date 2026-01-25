@@ -165,7 +165,7 @@ func ensureCDCMeta(db *sql.DB, tableName string, pkColumn string) error {
 	} else {
 		// Insert new record
 		_, err = db.Exec(`
-			INSERT INTO CDCMeta (table_name, cdc_start_id, current__cdc_id, gc_max_records, last_gc_at, extrameta)
+			INSERT INTO CDCMeta (table_name, cdc_start_id, current_cdc_id, gc_max_records, last_gc_at, extrameta)
 			VALUES (?, ?, 0, 0, 0, '{}')
 		`, tableName, cdcStartID)
 		if err != nil {
