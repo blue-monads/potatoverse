@@ -2,19 +2,28 @@ package cdc
 
 import (
 	"database/sql"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/upper/db/v4"
 )
 
+const CACHE_INTERVAL = 30 * time.Second
+const NotifyMode = true
+
 type CDCSyncer struct {
-	db        db.Session
-	isEnabled bool
+	db            db.Session
+	isEnabled     bool
+	ontableChange chan string
 }
 
 func NewCDCSyncer(db db.Session, isEnabled bool) *CDCSyncer {
-	return &CDCSyncer{db: db, isEnabled: isEnabled}
+	return &CDCSyncer{
+		db:            db,
+		isEnabled:     isEnabled,
+		ontableChange: make(chan string, 100),
+	}
 }
 
 func (s *CDCSyncer) Start() error {
@@ -30,7 +39,11 @@ func (s *CDCSyncer) Start() error {
 		}
 	}
 
-	go s.syncLoop()
+	if NotifyMode {
+		go s.notifySyncLoop()
+	} else {
+		go s.pollSyncLoop()
+	}
 
 	return nil
 }
@@ -50,9 +63,7 @@ func (s *CDCSyncer) AttachMissingTables() error {
 
 }
 
-const CACHE_INTERVAL = 30 * time.Second
-
-func (s *CDCSyncer) syncLoop() {
+func (s *CDCSyncer) pollSyncLoop() {
 	driver := s.db.Driver().(*sql.DB)
 
 	for {
@@ -77,6 +88,36 @@ func (s *CDCSyncer) syncLoop() {
 			}
 		}
 
+	}
+
+}
+
+func (s *CDCSyncer) notifySyncLoop() {
+
+	readAllPendingTables := func() []string {
+		tables := make([]string, 0, 1)
+
+		for {
+			select {
+			case tableName := <-s.ontableChange:
+
+				if slices.Contains(tables, tableName) {
+					continue
+				}
+
+				tables = append(tables, tableName)
+			default:
+				return tables
+			}
+		}
+
+	}
+
+	for {
+		tables := readAllPendingTables()
+		for _, tableName := range tables {
+			s.UpdateCurrentCdcId(tableName)
+		}
 	}
 
 }
