@@ -78,6 +78,7 @@ func (h *HQ) PublishSelfAddress(info *SelfInfo) error {
 	}
 
 	ev := nostr.Event{
+		PubKey:    h.hexPublicKey,
 		Kind:      nostr.KindTextNote,
 		Content:   string(content),
 		CreatedAt: nostr.Now(),
