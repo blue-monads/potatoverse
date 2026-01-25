@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/cdc"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
@@ -142,7 +143,21 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 	}, nil
 }
 
+const (
+	CDC_ENABLED = true
+)
+
 func (db *DB) Init() error {
+
+	if CDC_ENABLED {
+		if err := cdc.EnsureCDC(db.sess.Driver().(*sql.DB)); err != nil {
+			return err
+		}
+	} else {
+		if err := cdc.DropCDC(db.sess.Driver().(*sql.DB)); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

@@ -29,6 +29,11 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		return nil, err
 	}
 
+	if err := db.Init(); err != nil {
+		logger.Error("Failed to initialize database", "err", err)
+		return nil, err
+	}
+
 	m := stdio.NewMailer(logger.With("module", "mailer"))
 
 	if options.Name == "" {
