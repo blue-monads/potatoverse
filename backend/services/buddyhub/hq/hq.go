@@ -6,9 +6,12 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/nbd-wtf/go-nostr"
 	"github.com/nbd-wtf/go-nostr/nip19"
 )
+
+// hq for buddy discovery
 
 const (
 	KindPotato = nostr.KindHTTPAuth + 2
@@ -32,16 +35,14 @@ type HQ struct {
 
 func New(privateKey, publicKey string, logger *slog.Logger) (*HQ, error) {
 	// Decode keys if they're nip19 encoded
-	hexPrivKey := privateKey
-	_, privval, err := nip19.Decode(privateKey)
-	if err == nil {
-		hexPrivKey = privval.(string)
+	hexPrivKey, err := nostrutils.DecodeKeyToHex(privateKey)
+	if err != nil {
+		return nil, err
 	}
 
-	hexPubKey := publicKey
-	_, pubval, err := nip19.Decode(publicKey)
-	if err == nil {
-		hexPubKey = pubval.(string)
+	hexPubKey, err := nostrutils.DecodeKeyToHex(publicKey)
+	if err != nil {
+		return nil, err
 	}
 
 	hq := &HQ{
@@ -77,7 +78,7 @@ func (h *HQ) PublishSelfAddress(info *SelfInfo) error {
 	}
 
 	ev := nostr.Event{
-		Kind:      KindPotato,
+		Kind:      nostr.KindTextNote,
 		Content:   string(content),
 		CreatedAt: nostr.Now(),
 		Tags: []nostr.Tag{

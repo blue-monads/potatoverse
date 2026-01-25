@@ -8,7 +8,7 @@ import (
 
 	buddy "github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/buddytypes"
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/funnel"
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
@@ -75,7 +75,7 @@ func NewBuddyHub(opt Options) *BuddyHub {
 		staticBuddies: make(map[string]*xtypes.BuddyInfo),
 	}
 
-	pubkey, pk, err := xutils.GenerateKeyPair(config.MasterSecret)
+	pubkey, pk, err := nostrutils.GenerateKeyPair(config.MasterSecret)
 	if err != nil {
 		b.logger.Error("Failed to generate key pair", "err", err)
 		panic(err)

@@ -2,7 +2,7 @@ package buddyhub
 
 import (
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/funnel"
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
@@ -24,7 +24,7 @@ func (h *BuddyHub) rLoopHandle(rendezvousUrl *xtypes.RendezvousUrl) {
 		ServerId:        h.pubkey,
 	})
 
-	token, err := xutils.GenerateNostrAuthToken(h.privkey, rendezvousUrl.URL, "GET")
+	token, err := nostrutils.GenerateNostrAuthToken(h.privkey, rendezvousUrl.URL, "GET")
 	if err != nil {
 		h.logger.Error("Failed to generate nostr auth token", "err", err)
 		return

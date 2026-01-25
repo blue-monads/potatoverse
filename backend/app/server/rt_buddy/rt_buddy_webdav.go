@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/blue-monads/potatoverse/backend/app/server/rt_buddy/webdav"
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +30,7 @@ func (s *BuddyRouteServer) handleBuddyWebdav(ctx *gin.Context) {
 		return
 	}
 
-	ev, err := xutils.VerifyNostrAuth(authKey)
+	ev, err := nostrutils.VerifyNostrAuth(authKey)
 	if err != nil {
 		httpx.WriteAuthErr(ctx, err)
 		return

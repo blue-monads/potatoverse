@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/nostrout"
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/nbd-wtf/go-nostr"
 )
@@ -85,7 +85,7 @@ func main() {
 
 func createNode(key string) (*nostrout.NostrRout, error) {
 
-	pubkey, privkey, err := xutils.GenerateKeyPair(key)
+	pubkey, privkey, err := nostrutils.GenerateKeyPair(key)
 	if err != nil {
 		return nil, err
 	}
