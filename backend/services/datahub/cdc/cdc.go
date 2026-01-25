@@ -37,8 +37,8 @@ func EnsureCDC(db *sql.DB) error {
 			continue
 		}
 
-		// check if there is {table_name}_cdc table
-		cdcTableName := tableName + "_cdc"
+		// check if there is {table_name}__cdc table
+		cdcTableName := tableName + "__cdc"
 		var exists int
 		err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?", cdcTableName).Scan(&exists)
 		if err != nil {
@@ -59,9 +59,9 @@ func EnsureCDC(db *sql.DB) error {
 		return fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	// for each table, create a table with the name {table_name}_cdc
+	// for each table, create a table with the name {table_name}__cdc
 	for _, tableName := range tables {
-		cdcTableName := tableName + "_cdc"
+		cdcTableName := tableName + "__cdc"
 
 		// Detect primary key column
 		pkColumn, err := getPrimaryKeyColumn(db, tableName)
@@ -82,7 +82,7 @@ func EnsureCDC(db *sql.DB) error {
 		// create a trigger on the table for each operation
 		// Trigger for INSERT
 		insertTrigger := fmt.Sprintf(`
-			CREATE TRIGGER IF NOT EXISTS %s_insert_cdc
+			CREATE TRIGGER IF NOT EXISTS %s_insert__cdc
 			AFTER INSERT ON %s
 			BEGIN
 				INSERT INTO %s (record_id, operation) VALUES (NEW.%s, 0);
@@ -95,7 +95,7 @@ func EnsureCDC(db *sql.DB) error {
 
 		// Trigger for UPDATE
 		updateTrigger := fmt.Sprintf(`
-			CREATE TRIGGER IF NOT EXISTS %s_update_cdc
+			CREATE TRIGGER IF NOT EXISTS %s_update__cdc
 			AFTER UPDATE ON %s
 			BEGIN
 				INSERT INTO %s (record_id, operation) VALUES (NEW.%s, 1);
@@ -108,7 +108,7 @@ func EnsureCDC(db *sql.DB) error {
 
 		// Trigger for DELETE
 		deleteTrigger := fmt.Sprintf(`
-			CREATE TRIGGER IF NOT EXISTS %s_delete_cdc
+			CREATE TRIGGER IF NOT EXISTS %s_delete__cdc
 			AFTER DELETE ON %s
 			BEGIN
 				INSERT INTO %s (record_id, operation) VALUES (OLD.%s, 2);
@@ -165,7 +165,7 @@ func ensureCDCMeta(db *sql.DB, tableName string, pkColumn string) error {
 	} else {
 		// Insert new record
 		_, err = db.Exec(`
-			INSERT INTO CDCMeta (table_name, cdc_start_id, current_cdc_id, gc_max_records, last_gc_at, extrameta)
+			INSERT INTO CDCMeta (table_name, cdc_start_id, current__cdc_id, gc_max_records, last_gc_at, extrameta)
 			VALUES (?, ?, 0, 0, 0, '{}')
 		`, tableName, cdcStartID)
 		if err != nil {
@@ -183,22 +183,22 @@ func DropCDC(db *sql.DB) error {
 	}
 
 	for _, tableName := range tableNames {
-		if strings.HasSuffix(tableName, "_cdc") {
+		if strings.HasSuffix(tableName, "__cdc") {
 			continue
 		}
 
 		// drop triggers on the table
-		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_insert_cdc"); err != nil {
+		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_insert__cdc"); err != nil {
 			return fmt.Errorf("failed to drop INSERT trigger for %s: %w", tableName, err)
 		}
-		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_update_cdc"); err != nil {
+		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_update__cdc"); err != nil {
 			return fmt.Errorf("failed to drop UPDATE trigger for %s: %w", tableName, err)
 		}
-		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_delete_cdc"); err != nil {
+		if _, err := db.Exec("DROP TRIGGER IF EXISTS ?", tableName+"_delete__cdc"); err != nil {
 			return fmt.Errorf("failed to drop DELETE trigger for %s: %w", tableName, err)
 		}
 
-		cdcTableName := tableName + "_cdc"
+		cdcTableName := tableName + "__cdc"
 		if _, err := db.Exec("DROP TABLE IF EXISTS ?", cdcTableName); err != nil {
 			return fmt.Errorf("failed to drop CDC table %s: %w", cdcTableName, err)
 		}
