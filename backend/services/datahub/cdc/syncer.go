@@ -67,16 +67,18 @@ func (s *CDCSyncer) updateStateCache() error {
 		return err
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.cdcIdIndex = make(map[int64]string)
-	s.stateCache = make(map[string]*CDCMeta)
+	cdcIdIndex := make(map[int64]string)
+	stateCache := make(map[string]*CDCMeta)
 
 	for _, cmeta := range cmetas {
-		s.cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
-		s.stateCache[cmeta.TableName] = cmeta
+		cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
+		stateCache[cmeta.TableName] = cmeta
 	}
+
+	s.mu.Lock()
+	s.cdcIdIndex = cdcIdIndex
+	s.stateCache = stateCache
+	s.mu.Unlock()
 
 	return nil
 }
@@ -198,4 +200,22 @@ func (s *CDCSyncer) GetTableRecords(tableName string, offset int64, limit int64)
 	}
 
 	return records, nil
+}
+
+func (s *CDCSyncer) GetCDCCache() map[int64]int64 {
+	cache := make(map[int64]int64)
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for id, tableName := range s.cdcIdIndex {
+		cmeta, ok := s.stateCache[tableName]
+		if !ok {
+			continue
+		}
+
+		cache[id] = cmeta.CurrentCDCID
+	}
+
+	return cache
 }
