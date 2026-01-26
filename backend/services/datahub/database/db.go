@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/cdc"
+
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
@@ -18,6 +18,7 @@ import (
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/cdc"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
