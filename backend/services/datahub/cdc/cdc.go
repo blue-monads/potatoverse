@@ -17,11 +17,11 @@ CREATE TABLE IF NOT EXISTS {{.TableName}} (
 );
 `
 
-func EnsureCDC(db *sql.DB) error {
+func EnsureCDC(db *sql.DB) (int, error) {
 	// list all tables in the database
 	tableNames, err := getTableNames(db)
 	if err != nil {
-		return fmt.Errorf("failed to list tables: %w", err)
+		return 0, fmt.Errorf("failed to list tables: %w", err)
 	}
 
 	var tables []string
@@ -42,7 +42,7 @@ func EnsureCDC(db *sql.DB) error {
 		var exists int
 		err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?", cdcTableName).Scan(&exists)
 		if err != nil {
-			return fmt.Errorf("failed to check CDC table existence: %w", err)
+			return 0, fmt.Errorf("failed to check CDC table existence: %w", err)
 		}
 
 		if exists > 0 {
@@ -56,8 +56,10 @@ func EnsureCDC(db *sql.DB) error {
 	// Parse the template
 	tmpl, err := template.New("cdc_table").Parse(TemplateTable)
 	if err != nil {
-		return fmt.Errorf("failed to parse template: %w", err)
+		return 0, fmt.Errorf("failed to parse template: %w", err)
 	}
+
+	newEntries := 0
 
 	// for each table, create a table with the name {table_name}__cdc
 	for _, tableName := range tables {
@@ -66,17 +68,17 @@ func EnsureCDC(db *sql.DB) error {
 		// Detect primary key column
 		pkColumn, err := getPrimaryKeyColumn(db, tableName)
 		if err != nil {
-			return fmt.Errorf("failed to get primary key for table %s: %w", tableName, err)
+			return 0, fmt.Errorf("failed to get primary key for table %s: %w", tableName, err)
 		}
 
 		// Create CDC table
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, map[string]string{"TableName": cdcTableName}); err != nil {
-			return fmt.Errorf("failed to execute template for %s: %w", tableName, err)
+			return 0, fmt.Errorf("failed to execute template for %s: %w", tableName, err)
 		}
 
 		if _, err := db.Exec(buf.String()); err != nil {
-			return fmt.Errorf("failed to create CDC table %s: %w", cdcTableName, err)
+			return 0, fmt.Errorf("failed to create CDC table %s: %w", cdcTableName, err)
 		}
 
 		// create a trigger on the table for each operation
@@ -90,7 +92,7 @@ func EnsureCDC(db *sql.DB) error {
 		`, tableName, tableName, cdcTableName, pkColumn)
 
 		if _, err := db.Exec(insertTrigger); err != nil {
-			return fmt.Errorf("failed to create INSERT trigger for %s: %w", tableName, err)
+			return 0, fmt.Errorf("failed to create INSERT trigger for %s: %w", tableName, err)
 		}
 
 		// Trigger for UPDATE
@@ -103,7 +105,7 @@ func EnsureCDC(db *sql.DB) error {
 		`, tableName, tableName, cdcTableName, pkColumn)
 
 		if _, err := db.Exec(updateTrigger); err != nil {
-			return fmt.Errorf("failed to create UPDATE trigger for %s: %w", tableName, err)
+			return 0, fmt.Errorf("failed to create UPDATE trigger for %s: %w", tableName, err)
 		}
 
 		// Trigger for DELETE
@@ -116,17 +118,19 @@ func EnsureCDC(db *sql.DB) error {
 		`, tableName, tableName, cdcTableName, pkColumn)
 
 		if _, err := db.Exec(deleteTrigger); err != nil {
-			return fmt.Errorf("failed to create DELETE trigger for %s: %w", tableName, err)
+			return 0, fmt.Errorf("failed to create DELETE trigger for %s: %w", tableName, err)
 		}
 
 		// Insert or update a record in CDCMeta table
 		// If table already has records, set cdc_start_id to max rowid
 		if err := ensureCDCMeta(db, tableName, pkColumn); err != nil {
-			return fmt.Errorf("failed to ensure CDCMeta for table %s: %w", tableName, err)
+			return 0, fmt.Errorf("failed to ensure CDCMeta for table %s: %w", tableName, err)
 		}
+
+		newEntries++
 	}
 
-	return nil
+	return newEntries, nil
 }
 
 // ensureCDCMeta ensures a CDCMeta record exists for the given table.

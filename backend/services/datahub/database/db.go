@@ -37,6 +37,8 @@ type DB struct {
 	packageFileOps    *fileops.FileOperations
 	packageInstallOps *ppackage.PackageInstallOperations
 	eventOps          *event.EventOperations
+
+	cdcSyncer *cdc.CDCSyncer
 }
 
 const (
@@ -130,6 +132,8 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		return nil, err
 	}
 
+	cdcSyncer := cdc.NewCDCSyncer(sess, CDC_ENABLED)
+
 	return &DB{
 		sess:                 sess,
 		minFileMultiPartSize: 1024 * 1024 * 8,
@@ -140,6 +144,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
 		eventOps:             eventOps,
+		cdcSyncer:            cdcSyncer,
 	}, nil
 }
 
@@ -149,14 +154,8 @@ const (
 
 func (db *DB) Init() error {
 
-	if CDC_ENABLED {
-		if err := cdc.EnsureCDC(db.sess.Driver().(*sql.DB)); err != nil {
-			return err
-		}
-	} else {
-		if err := cdc.DropCDC(db.sess.Driver().(*sql.DB)); err != nil {
-			return err
-		}
+	if err := db.cdcSyncer.Start(); err != nil {
+		return err
 	}
 
 	return nil

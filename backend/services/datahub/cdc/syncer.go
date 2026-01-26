@@ -19,6 +19,7 @@ type CDCSyncer struct {
 	isEnabled     bool
 	ontableChange chan string
 
+	cdcIdIndex map[int64]string
 	stateCache map[string]*CDCMeta
 	mu         sync.RWMutex
 }
@@ -28,6 +29,9 @@ func NewCDCSyncer(db db.Session, isEnabled bool) *CDCSyncer {
 		db:            db,
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
+		cdcIdIndex:    make(map[int64]string),
+		stateCache:    make(map[string]*CDCMeta),
+		mu:            sync.RWMutex{},
 	}
 }
 
@@ -35,7 +39,7 @@ func (s *CDCSyncer) Start() error {
 	driver := s.db.Driver().(*sql.DB)
 
 	if s.isEnabled {
-		if err := EnsureCDC(driver); err != nil {
+		if _, err := EnsureCDC(driver); err != nil {
 			return err
 		}
 	} else {
@@ -44,24 +48,31 @@ func (s *CDCSyncer) Start() error {
 		}
 	}
 
+	if err := s.updateStateCache(); err != nil {
+		return err
+	}
+
+	if NotifyMode {
+		go s.notifySyncLoop()
+	} else {
+		go s.pollSyncLoop()
+	}
+
+	return nil
+}
+
+func (s *CDCSyncer) updateStateCache() error {
 	cmetas, err := s.GetAllCdcMeta()
 	if err != nil {
 		return err
 	}
 
 	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	s.stateCache = make(map[string]*CDCMeta)
 	for _, cmeta := range cmetas {
+		s.cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
 		s.stateCache[cmeta.TableName] = cmeta
-	}
-
-	s.mu.Unlock()
-
-	if NotifyMode {
-		go s.notifySyncLoop()
-	} else {
-		go s.pollSyncLoop()
 	}
 
 	return nil
@@ -74,8 +85,15 @@ func (s *CDCSyncer) AttachMissingTables() error {
 
 	driver := s.db.Driver().(*sql.DB)
 
-	if err := EnsureCDC(driver); err != nil {
+	newEntries, err := EnsureCDC(driver)
+	if err != nil {
 		return err
+	}
+
+	if newEntries > 0 {
+		if err := s.updateStateCache(); err != nil {
+			return err
+		}
 	}
 
 	return nil
