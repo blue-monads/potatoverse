@@ -1,4 +1,4 @@
-package cdc
+package selfcdc
 
 import (
 	"time"
@@ -15,7 +15,7 @@ type CDCMeta struct {
 	LastCachedAt *time.Time `json:"last_cached_at"`
 }
 
-func (s *CDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
+func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	// query table for max rowid
 	row, err := s.db.SQL().QueryRow("SELECT MAX(rowid) FROM ?", tableName)
 	if err != nil {
@@ -47,7 +47,7 @@ func (s *CDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	return maxRowid, nil
 }
 
-func (s *CDCSyncer) GetCDCMeta(tableName string) (*CDCMeta, error) {
+func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*CDCMeta, error) {
 	var cdcMeta CDCMeta
 	err := s.tableName().Find(db.Cond{"table_name": tableName}).One(&cdcMeta)
 	if err != nil {
@@ -57,6 +57,6 @@ func (s *CDCSyncer) GetCDCMeta(tableName string) (*CDCMeta, error) {
 	return &cdcMeta, nil
 }
 
-func (s *CDCSyncer) tableName() db.Collection {
+func (s *SelfCDCSyncer) tableName() db.Collection {
 	return s.db.Collection("CDCMeta")
 }

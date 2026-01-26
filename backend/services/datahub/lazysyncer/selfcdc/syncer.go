@@ -1,4 +1,4 @@
-package cdc
+package selfcdc
 
 import (
 	"database/sql"
@@ -14,7 +14,7 @@ import (
 const CACHE_INTERVAL = 30 * time.Second
 const NotifyMode = true
 
-type CDCSyncer struct {
+type SelfCDCSyncer struct {
 	db            db.Session
 	isEnabled     bool
 	ontableChange chan string
@@ -24,8 +24,8 @@ type CDCSyncer struct {
 	mu         sync.RWMutex
 }
 
-func NewCDCSyncer(db db.Session, isEnabled bool) *CDCSyncer {
-	return &CDCSyncer{
+func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
+	return &SelfCDCSyncer{
 		db:            db,
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
@@ -35,7 +35,7 @@ func NewCDCSyncer(db db.Session, isEnabled bool) *CDCSyncer {
 	}
 }
 
-func (s *CDCSyncer) Start() error {
+func (s *SelfCDCSyncer) Start() error {
 	driver := s.db.Driver().(*sql.DB)
 
 	if s.isEnabled {
@@ -61,7 +61,7 @@ func (s *CDCSyncer) Start() error {
 	return nil
 }
 
-func (s *CDCSyncer) updateStateCache() error {
+func (s *SelfCDCSyncer) updateStateCache() error {
 	cmetas, err := s.GetAllCdcMeta()
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (s *CDCSyncer) updateStateCache() error {
 	return nil
 }
 
-func (s *CDCSyncer) AttachMissingTables() error {
+func (s *SelfCDCSyncer) AttachMissingTables() error {
 	if !s.isEnabled {
 		return nil
 	}
@@ -105,7 +105,7 @@ func (s *CDCSyncer) AttachMissingTables() error {
 
 }
 
-func (s *CDCSyncer) pollSyncLoop() {
+func (s *SelfCDCSyncer) pollSyncLoop() {
 	driver := s.db.Driver().(*sql.DB)
 
 	for {
@@ -137,7 +137,7 @@ func (s *CDCSyncer) pollSyncLoop() {
 
 }
 
-func (s *CDCSyncer) notifySyncLoop() {
+func (s *SelfCDCSyncer) notifySyncLoop() {
 
 	readAllPendingTables := func() []string {
 		tables := make([]string, 0, 1)
@@ -170,7 +170,7 @@ func (s *CDCSyncer) notifySyncLoop() {
 
 }
 
-func (s *CDCSyncer) GetAllCdcMeta() ([]*CDCMeta, error) {
+func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*CDCMeta, error) {
 	table := s.tableName()
 	var cdcMeta []*CDCMeta
 	err := table.Find().All(&cdcMeta)
@@ -191,7 +191,7 @@ func (s *CDCSyncer) GetAllCdcMeta() ([]*CDCMeta, error) {
 	return cdcMeta, nil
 }
 
-func (s *CDCSyncer) GetTableRecords(tableName string, offset int64, limit int64) ([]map[string]any, error) {
+func (s *SelfCDCSyncer) GetTableRecords(tableName string, offset int64, limit int64) ([]map[string]any, error) {
 	table := s.db.Collection(tableName)
 	var records []map[string]any
 	err := table.Find(db.Cond{"rowid >": offset}).Limit(int(limit)).All(&records)
@@ -202,7 +202,7 @@ func (s *CDCSyncer) GetTableRecords(tableName string, offset int64, limit int64)
 	return records, nil
 }
 
-func (s *CDCSyncer) GetCDCCache() map[int64]int64 {
+func (s *SelfCDCSyncer) GetCDCCache() map[int64]int64 {
 	cache := make(map[int64]int64)
 
 	s.mu.RLock()

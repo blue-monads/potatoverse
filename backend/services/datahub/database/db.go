@@ -18,7 +18,7 @@ import (
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/cdc"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -39,7 +39,7 @@ type DB struct {
 	packageInstallOps *ppackage.PackageInstallOperations
 	eventOps          *event.EventOperations
 
-	cdcSyncer *cdc.CDCSyncer
+	lazySyncer *lazysyncer.LazySyncer
 }
 
 const (
@@ -133,7 +133,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		return nil, err
 	}
 
-	cdcSyncer := cdc.NewCDCSyncer(sess, CDC_ENABLED)
+	lazySyncer := lazysyncer.NewLazySyncer(sess, CDC_ENABLED)
 
 	return &DB{
 		sess:                 sess,
@@ -145,7 +145,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
 		eventOps:             eventOps,
-		cdcSyncer:            cdcSyncer,
+		lazySyncer:           lazySyncer,
 	}, nil
 }
 
@@ -155,7 +155,7 @@ const (
 
 func (db *DB) Init() error {
 
-	if err := db.cdcSyncer.Start(); err != nil {
+	if err := db.lazySyncer.Start(); err != nil {
 		return err
 	}
 
