@@ -1,7 +1,8 @@
 package syncwire
 
 const (
-	FrameWireInit = iota
-	FrameWireData = iota
-	FrameWireEnd  = iota
+	FWOneShotSendType = iota
+	FWMultiFrameSendStartType
+	FWMultiFrameSendData
+	FWMultiFrameSendEnd
 )
