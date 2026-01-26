@@ -70,6 +70,9 @@ func (s *CDCSyncer) updateStateCache() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	s.cdcIdIndex = make(map[int64]string)
+	s.stateCache = make(map[string]*CDCMeta)
+
 	for _, cmeta := range cmetas {
 		s.cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
 		s.stateCache[cmeta.TableName] = cmeta
