@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -16,6 +18,9 @@ type CDCSyncer struct {
 	db            db.Session
 	isEnabled     bool
 	ontableChange chan string
+
+	stateCache map[string]*CDCMeta
+	mu         sync.RWMutex
 }
 
 func NewCDCSyncer(db db.Session, isEnabled bool) *CDCSyncer {
@@ -38,6 +43,20 @@ func (s *CDCSyncer) Start() error {
 			return err
 		}
 	}
+
+	cmetas, err := s.GetAllCdcMeta()
+	if err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+
+	s.stateCache = make(map[string]*CDCMeta)
+	for _, cmeta := range cmetas {
+		s.stateCache[cmeta.TableName] = cmeta
+	}
+
+	s.mu.Unlock()
 
 	if NotifyMode {
 		go s.notifySyncLoop()
@@ -83,9 +102,12 @@ func (s *CDCSyncer) pollSyncLoop() {
 				continue
 			}
 
-			if err := s.UpdateCurrentCdcId(table); err != nil {
+			currentCdcId, err := s.UpdateCurrentCdcId(table)
+			if err != nil {
 				continue
 			}
+
+			qq.Println("currentCdcId", currentCdcId)
 		}
 
 	}
@@ -116,7 +138,10 @@ func (s *CDCSyncer) notifySyncLoop() {
 	for {
 		tables := readAllPendingTables()
 		for _, tableName := range tables {
-			s.UpdateCurrentCdcId(tableName)
+			_, err := s.UpdateCurrentCdcId(tableName)
+			if err != nil {
+				continue
+			}
 		}
 	}
 
