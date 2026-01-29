@@ -142,6 +142,9 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 	readAllPendingTables := func() []string {
 		tables := make([]string, 0, 1)
 
+		timer := time.NewTimer(5)
+		defer timer.Stop()
+
 		for {
 			select {
 			case tableName := <-s.ontableChange:
@@ -151,7 +154,7 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 				}
 
 				tables = append(tables, tableName)
-			default:
+			case <-timer.C:
 				return tables
 			}
 		}
