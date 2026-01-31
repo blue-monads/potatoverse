@@ -4,8 +4,15 @@ import (
 	"context"
 	"log"
 
+	"github.com/blue-monads/potatoverse/cmd/cli"
 	"github.com/fiatjaf/relayer/v2"
 )
+
+func init() {
+	cli.RegisterExtraCommand("nostr-hq", func(args []string) error {
+		return Run(context.Background())
+	})
+}
 
 func Run(ctx context.Context) error {
 
