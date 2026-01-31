@@ -12,6 +12,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/app/server/rt_buddy/webdav"
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +27,9 @@ type BuddyRouteServer struct {
 	serverPubKey  string
 	webdavServers map[string]*webdav.WebdavServer
 	webdavLock    sync.RWMutex
+
+	// lazy cdc
+	selfcdc *selfcdc.SelfCDCSyncer
 }
 
 func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRouteServer {
@@ -42,6 +46,10 @@ func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
 	g.POST("/buddy/ping", a.handleBuddyPing)
 	g.Any("/buddy/route", a.handleBuddyRoute)
 	g.Any("/buddy/webdav/*path", a.handleBuddyWebdav)
+
+	g.GET("/buddy/lazycdc/init", a.handleBuddyLazyCDCInit)
+	g.POST("/buddy/lazycdc/sync/record", a.handleBuddyLazyCDCSyncRecord)
+	g.POST("/buddy/lazycdc/sync/meta", a.handleBuddyLazyCDCSyncMeta)
 }
 
 func (a *BuddyRouteServer) handleBuddyPing(ctx *gin.Context) {

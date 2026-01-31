@@ -2,6 +2,7 @@ package selfcdc
 
 import (
 	"database/sql"
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
@@ -194,7 +195,28 @@ func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*CDCMeta, error) {
 	return cdcMeta, nil
 }
 
-func (s *SelfCDCSyncer) GetTableRecords(tableName string, offset int64, limit int64) ([]map[string]any, error) {
+func (s *SelfCDCSyncer) getTableName(tblId int64) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	tableName, ok := s.cdcIdIndex[tblId]
+	if !ok {
+		return ""
+	}
+
+	return tableName
+}
+
+var (
+	ErrTableNotFound = fmt.Errorf("table not found")
+)
+
+func (s *SelfCDCSyncer) GetTableRecords(tblId int64, offset int64, limit int64) ([]map[string]any, error) {
+	tableName := s.getTableName(tblId)
+	if tableName == "" {
+		return nil, ErrTableNotFound
+	}
+
 	table := s.db.Collection(tableName)
 	var records []map[string]any
 	err := table.Find(db.Cond{"rowid >": offset}).Limit(int(limit)).All(&records)
