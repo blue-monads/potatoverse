@@ -14,6 +14,14 @@ func (b *BuddyRouteServer) handleBuddyLazyCDCInit(ctx *gin.Context) {
 	b.handleBuddyLazyCDCSyncMeta(ctx)
 }
 
+/*
+
+todo => encrypt tablename and records
+
+
+
+*/
+
 func (b *BuddyRouteServer) handleBuddyLazyCDCSyncMeta(ctx *gin.Context) {
 	_, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
