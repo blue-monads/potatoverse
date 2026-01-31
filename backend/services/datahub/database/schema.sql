@@ -253,7 +253,6 @@ CREATE TABLE IF NOT EXISTS SelfCDCMeta (
   gc_max_records INTEGER NOT NULL DEFAULT 0,
   last_gc_at INTEGER NOT NULL DEFAULT 0,
   last_current_cached_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  init_schema_hash TEXT NOT NULL DEFAULT '',
   init_schema_text TEXT NOT NULL DEFAULT '',
 
   extrameta JSON NOT NULL DEFAULT '{}'
@@ -266,7 +265,6 @@ CREATE TABLE IF NOT EXISTS BuddyCDCMeta (
   table_name TEXT NOT NULL,
   cdc_start_id INTEGER NOT NULL DEFAULT 0,
   current_cdc_id INTEGER NOT NULL DEFAULT 0,
-  init_schema_hash TEXT NOT NULL DEFAULT '',
   init_schema_text TEXT NOT NULL DEFAULT '',
   is_deleted BOOLEAN NOT NULL DEFAULT 0,
   extrameta JSON NOT NULL DEFAULT '{}'

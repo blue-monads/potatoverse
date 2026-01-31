@@ -9,6 +9,5 @@ type SelfCDCMeta struct {
 	GCMaxRecords   int64      `json:"gc_max_records" db:"gc_max_records"`
 	LastGCAt       *time.Time `json:"last_gc_at" db:"last_gc_at"`
 	LastCachedAt   *time.Time `json:"last_cached_at" db:"last_cached_at"`
-	InitSchemaHash string     `json:"init_schema_hash" db:"init_schema_hash"`
 	InitSchemaText string     `json:"init_schema_text" db:"init_schema_text"`
 }

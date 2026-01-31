@@ -7,7 +7,6 @@ type BuddyCDCMeta struct {
 	TableName      string `json:"table_name" db:"table_name"`
 	CDCStartID     int64  `json:"cdc_start_id" db:"cdc_start_id"`
 	CurrentCDCID   int64  `json:"current_cdc_id" db:"current_cdc_id"`
-	InitSchemaHash string `json:"init_schema_hash" db:"init_schema_hash"`
 	InitSchemaText string `json:"init_schema_text" db:"init_schema_text"`
 	IsDeleted      bool   `json:"is_deleted" db:"is_deleted"`
 }
