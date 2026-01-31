@@ -1,18 +1,13 @@
 package selfcdc
 
 import (
-	"time"
-
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
 	"github.com/upper/db/v4"
 )
 
-type CDCMeta struct {
-	TableName    string     `json:"table_name"`
-	CDCStartID   int64      `json:"cdc_start_id"`
-	CurrentCDCID int64      `json:"current_cdc_id"`
-	GCMaxRecords int64      `json:"gc_max_records"`
-	LastGCAt     *time.Time `json:"last_gc_at"`
-	LastCachedAt *time.Time `json:"last_cached_at"`
+var SkipTables = []string{
+	"SelfCDCMeta",
+	"BuddyCDCMeta",
 }
 
 func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
@@ -47,8 +42,8 @@ func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	return maxRowid, nil
 }
 
-func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*CDCMeta, error) {
-	var cdcMeta CDCMeta
+func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazymodel.SelfCDCMeta, error) {
+	var cdcMeta lazymodel.SelfCDCMeta
 	err := s.tableName().Find(db.Cond{"table_name": tableName}).One(&cdcMeta)
 	if err != nil {
 		return nil, err
@@ -58,5 +53,5 @@ func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*CDCMeta, error) {
 }
 
 func (s *SelfCDCSyncer) tableName() db.Collection {
-	return s.db.Collection("CDCMeta")
+	return s.db.Collection("SelfCDCMeta")
 }

@@ -1,5 +1,9 @@
 package buddycdc
 
+import (
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+)
+
 const TemplateTable = `
 CREATE TABLE IF NOT EXISTS {{.TableName}} (
     id INTEGER PRIMARY KEY,
@@ -8,14 +12,7 @@ CREATE TABLE IF NOT EXISTS {{.TableName}} (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 `
-const MetaTable = `
-CREATE TABLE IF NOT EXISTS BuddyCDCMeta (
-  id INTEGER PRIMARY KEY,
-  remote_table_id INTEGER NOT NULL,
-  table_name TEXT NOT NULL,
-  cdc_start_id INTEGER NOT NULL DEFAULT 0,
-  current_cdc_id INTEGER NOT NULL DEFAULT 0,
-  extrameta JSON NOT NULL DEFAULT '{}'
-);
 
-`
+func (b *BuddyCDC) applyMeta(meta *lazymodel.BuddyCDCMeta) {
+
+}

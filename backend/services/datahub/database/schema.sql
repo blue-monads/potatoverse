@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS MQEventTargets (
 );
 
 
-CREATE TABLE IF NOT EXISTS CDCMeta (
+CREATE TABLE IF NOT EXISTS SelfCDCMeta (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   table_name TEXT NOT NULL DEFAULT '',
   -- cdc_start_id rowid of the first record in the table, all records before this id has to be synced before syncing from cdc
@@ -254,5 +254,16 @@ CREATE TABLE IF NOT EXISTS CDCMeta (
   last_gc_at INTEGER NOT NULL DEFAULT 0,
   last_current_cached_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+  extrameta JSON NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS BuddyCDCMeta (
+  id INTEGER PRIMARY KEY,
+  pubkey TEXT NOT NULL,
+  remote_table_id INTEGER NOT NULL,
+  table_name TEXT NOT NULL,
+  cdc_start_id INTEGER NOT NULL DEFAULT 0,
+  current_cdc_id INTEGER NOT NULL DEFAULT 0,
+  is_deleted BOOLEAN NOT NULL DEFAULT 0,
   extrameta JSON NOT NULL DEFAULT '{}'
 );

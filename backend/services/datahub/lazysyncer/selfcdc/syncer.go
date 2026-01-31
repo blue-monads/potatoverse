@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
@@ -21,7 +22,7 @@ type SelfCDCSyncer struct {
 	ontableChange chan string
 
 	cdcIdIndex map[int64]string
-	stateCache map[string]*CDCMeta
+	stateCache map[string]*lazymodel.SelfCDCMeta
 	mu         sync.RWMutex
 }
 
@@ -31,7 +32,7 @@ func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
 		cdcIdIndex:    make(map[int64]string),
-		stateCache:    make(map[string]*CDCMeta),
+		stateCache:    make(map[string]*lazymodel.SelfCDCMeta),
 		mu:            sync.RWMutex{},
 	}
 }
@@ -69,7 +70,7 @@ func (s *SelfCDCSyncer) updateStateCache() error {
 	}
 
 	cdcIdIndex := make(map[int64]string)
-	stateCache := make(map[string]*CDCMeta)
+	stateCache := make(map[string]*lazymodel.SelfCDCMeta)
 
 	for _, cmeta := range cmetas {
 		cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
@@ -117,16 +118,17 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 			continue
 		}
 
-		for _, table := range alltables {
-			if table == "CDCMeta" {
+		for _, tableName := range alltables {
+
+			if slices.Contains(SkipTables, tableName) {
 				continue
 			}
 
-			if strings.HasSuffix(table, "__cdc") {
+			if strings.HasSuffix(tableName, "__cdc") {
 				continue
 			}
 
-			currentCdcId, err := s.UpdateCurrentCdcId(table)
+			currentCdcId, err := s.UpdateCurrentCdcId(tableName)
 			if err != nil {
 				continue
 			}
@@ -174,23 +176,13 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 
 }
 
-func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*CDCMeta, error) {
+func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*lazymodel.SelfCDCMeta, error) {
 	table := s.tableName()
-	var cdcMeta []*CDCMeta
+	var cdcMeta []*lazymodel.SelfCDCMeta
 	err := table.Find().All(&cdcMeta)
 	if err != nil {
 		return nil, err
 	}
-
-	/*
-
-		for _, cdc := range cdcMeta {
-			// fixme => scramble / encrypt table name
-			cdc.TableName = cdc.TableName
-
-		}
-
-	*/
 
 	return cdcMeta, nil
 }
