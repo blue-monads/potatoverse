@@ -7,17 +7,9 @@ import (
 	"slices"
 	"strings"
 	"text/template"
-)
 
-const TemplateTable = `
-CREATE TABLE IF NOT EXISTS {{.TableName}} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-	record_id INTEGER NOT NULL,
-	operation INTEGER NOT NULL, -- 0: insert, 1: update, 2: delete, 3: schema_change
-	schema_text TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-`
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+)
 
 func EnsureCDC(db *sql.DB) (int, error) {
 	// list all tables in the database
@@ -56,7 +48,7 @@ func EnsureCDC(db *sql.DB) (int, error) {
 	}
 
 	// Parse the template
-	tmpl, err := template.New("cdc_table").Parse(TemplateTable)
+	tmpl, err := template.New("cdc_table").Parse(lazymodel.CDCTableTemplate)
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse template: %w", err)
 	}
