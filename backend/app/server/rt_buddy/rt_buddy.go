@@ -153,12 +153,12 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW(ctx *gin.Context) {
 
 	// buddy start
 
-	if strings.HasPrefix(subdomain, "npub") {
+	if strings.HasPrefix(subdomain, "buddy") {
 		a.routeToBuddy(subdomain, ctx)
 		return
 	}
 
-	if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "npub") {
+	if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "buddy") {
 		a.routeToBuddy(subdomain, ctx)
 		return
 	}
@@ -168,6 +168,6 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW(ctx *gin.Context) {
 }
 
 func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
-	extractedPubkey := strings.Split(subdomain, "npub")[1]
+	extractedPubkey := strings.Split(subdomain, "buddy")[1]
 	a.buddyhub.HandleFunnelRoute(fmt.Sprintf("npub%s", extractedPubkey), ctx)
 }
