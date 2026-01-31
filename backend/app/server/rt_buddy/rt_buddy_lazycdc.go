@@ -44,7 +44,7 @@ type SyncRequest struct {
 	Limit        int64 `json:"limit"`
 }
 
-func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecord(ctx *gin.Context) {
+func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecordSerial(ctx *gin.Context) {
 	_, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -62,7 +62,7 @@ func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecord(ctx *gin.Context) {
 		limit = MaxLazyCDCBatchSize
 	}
 
-	records, err := b.selfcdc.GetTableRecords(req.TableId, req.LastSyncedId, int64(limit))
+	records, err := b.selfcdc.GetTableRecordsSerial(req.TableId, req.LastSyncedId, int64(limit))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -74,5 +74,9 @@ func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecord(ctx *gin.Context) {
 		"records":         records,
 		"table_cdc_index": tableCDCIndex,
 	})
+
+}
+
+func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecordCDC(ctx *gin.Context) {
 
 }

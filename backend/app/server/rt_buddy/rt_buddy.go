@@ -43,7 +43,8 @@ func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
 	g.Any("/buddy/webdav/*path", a.handleBuddyWebdav)
 
 	g.GET("/buddy/lazycdc/init", a.handleBuddyLazyCDCInit)
-	g.POST("/buddy/lazycdc/sync/record", a.handleBuddyLazyCDCSyncRecord)
+	g.POST("/buddy/lazycdc/sync/serial", a.handleBuddyLazyCDCSyncRecordSerial)
+	g.POST("/buddy/lazycdc/sync/cdc", a.handleBuddyLazyCDCSyncRecordCDC)
 	g.POST("/buddy/lazycdc/sync/meta", a.handleBuddyLazyCDCSyncMeta)
 }
 

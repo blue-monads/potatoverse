@@ -8,6 +8,10 @@ import (
 	"github.com/upper/db/v4"
 )
 
+func (b *BuddyCDC) evLoop() {
+
+}
+
 func (b *BuddyCDC) applyTablesMeta(tables []*lazymodel.BuddyCDCMeta) error {
 
 	for _, tableMeta := range tables {
