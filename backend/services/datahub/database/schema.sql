@@ -142,10 +142,14 @@ CREATE TABLE IF NOT EXISTS Spaces (
   executor_sub_type TEXT NOT NULL DEFAULT '',
   route_options JSON NOT NULL DEFAULT '{}',
   server_file TEXT NOT NULL DEFAULT '',
-  
-  overlay_for_space_id INTEGER NOT NULL DEFAULT 0,  
   owned_by INTEGER NOT NULL, 
+
+  mod_overlay_script TEXT NOT NULL DEFAULT '',
+  mod_env_vars JSON NOT NULL DEFAULT '{}',
+
+
   extrameta JSON NOT NULL DEFAULT '{}', 
+
   is_initilized BOOLEAN NOT NULL DEFAULT FALSE, 
   is_public BOOLEAN NOT NULL DEFAULT FALSE
 );

@@ -110,6 +110,23 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 			return 1
 		},
 
+		"next": func(l *lua.LState) int {
+
+			caller, ok := ctx.Get("yielder")
+			if !ok {
+				return luaplus.PushError(l, errors.New("yielder not found"))
+			}
+
+			callerFn, ok := caller.(func())
+			if !ok {
+				return luaplus.PushError(l, errors.New("yielder is not a function"))
+			}
+
+			callerFn()
+
+			return 0
+		},
+
 		"get_user_claim": func(l *lua.LState) int {
 			claim, err := binds.GetUserClaim(ctx, lh.parent.parent.app.Signer())
 			if err != nil {
