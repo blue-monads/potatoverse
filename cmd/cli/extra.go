@@ -2,9 +2,33 @@ package cli
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/alecthomas/kong"
 )
+
+var (
+	extraCommans = map[string]func(args []string) error{}
+	ecLock       sync.Mutex
+)
+
+func RegisterExtraCommand(name string, runner func(args []string) error) {
+	ecLock.Lock()
+	defer ecLock.Unlock()
+
+	extraCommans[name] = runner
+}
+
+func GetExtraCommand(name string) func(args []string) error {
+	ecLock.Lock()
+	defer ecLock.Unlock()
+
+	runner, found := extraCommans[name]
+	if !found {
+		return nil
+	}
+	return runner
+}
 
 type ExtraCmd struct {
 	CombinedArgs []string `arg:"" passthrough:"partial" help:"Extra command and its arguments."`
@@ -27,5 +51,11 @@ func (e *ExtraCmd) Run(ctx *kong.Context) error {
 	fmt.Printf("Executing Extra Command: %s\n", e.Command)
 	fmt.Printf("With Unparsed Args: %v\n", e.Args)
 
-	return nil
+	runner := GetExtraCommand(e.Command)
+	if runner == nil {
+		return fmt.Errorf("extra command not found: %s", e.Command)
+	}
+
+	return runner(e.Args)
+
 }

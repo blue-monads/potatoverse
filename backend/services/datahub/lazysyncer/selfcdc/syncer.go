@@ -2,11 +2,13 @@ package selfcdc
 
 import (
 	"database/sql"
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
@@ -20,7 +22,7 @@ type SelfCDCSyncer struct {
 	ontableChange chan string
 
 	cdcIdIndex map[int64]string
-	stateCache map[string]*CDCMeta
+	stateCache map[string]*lazymodel.SelfCDCMeta
 	mu         sync.RWMutex
 }
 
@@ -30,7 +32,7 @@ func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
 		cdcIdIndex:    make(map[int64]string),
-		stateCache:    make(map[string]*CDCMeta),
+		stateCache:    make(map[string]*lazymodel.SelfCDCMeta),
 		mu:            sync.RWMutex{},
 	}
 }
@@ -68,7 +70,7 @@ func (s *SelfCDCSyncer) updateStateCache() error {
 	}
 
 	cdcIdIndex := make(map[int64]string)
-	stateCache := make(map[string]*CDCMeta)
+	stateCache := make(map[string]*lazymodel.SelfCDCMeta)
 
 	for _, cmeta := range cmetas {
 		cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
@@ -116,16 +118,17 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 			continue
 		}
 
-		for _, table := range alltables {
-			if table == "CDCMeta" {
+		for _, tableName := range alltables {
+
+			if slices.Contains(SkipTables, tableName) {
 				continue
 			}
 
-			if strings.HasSuffix(table, "__cdc") {
+			if strings.HasSuffix(tableName, "__cdc") {
 				continue
 			}
 
-			currentCdcId, err := s.UpdateCurrentCdcId(table)
+			currentCdcId, err := s.UpdateCurrentCdcId(tableName)
 			if err != nil {
 				continue
 			}
@@ -173,36 +176,93 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 
 }
 
-func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*CDCMeta, error) {
+func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*lazymodel.SelfCDCMeta, error) {
 	table := s.tableName()
-	var cdcMeta []*CDCMeta
+	var cdcMeta []*lazymodel.SelfCDCMeta
 	err := table.Find().All(&cdcMeta)
 	if err != nil {
 		return nil, err
 	}
 
-	/*
-
-		for _, cdc := range cdcMeta {
-			// fixme => scramble / encrypt table name
-			cdc.TableName = cdc.TableName
-
-		}
-
-	*/
-
 	return cdcMeta, nil
 }
 
-func (s *SelfCDCSyncer) GetTableRecords(tableName string, offset int64, limit int64) ([]map[string]any, error) {
+func (s *SelfCDCSyncer) getTableName(tblId int64) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	tableName, ok := s.cdcIdIndex[tblId]
+	if !ok {
+		return ""
+	}
+
+	return tableName
+}
+
+var (
+	ErrTableNotFound = fmt.Errorf("table not found")
+)
+
+func (s *SelfCDCSyncer) GetTableRecordsSerial(tblId int64, offset int64, limit int64) (map[int64]map[string]any, error) {
+	tableName := s.getTableName(tblId)
+	if tableName == "" {
+		return nil, ErrTableNotFound
+	}
+
 	table := s.db.Collection(tableName)
 	var records []map[string]any
-	err := table.Find(db.Cond{"rowid >": offset}).Limit(int(limit)).All(&records)
+	err := table.Find(db.Cond{"rowid >": offset}).Select("rowid", "*").Limit(int(limit)).All(&records)
 	if err != nil {
 		return nil, err
 	}
 
-	return records, nil
+	final := make(map[int64]map[string]any, len(records))
+	for _, record := range records {
+		rowidAny, ok := record["rowid"]
+		if !ok {
+			continue
+		}
+
+		rowid, ok := rowidAny.(int64)
+		if !ok {
+			continue
+		}
+
+		final[rowid] = record
+	}
+
+	return final, nil
+}
+
+func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) (map[int64]map[string]any, error) {
+	tableName := s.getTableName(tableId)
+	if tableName == "" {
+		return nil, ErrTableNotFound
+	}
+
+	table := s.db.Collection(tableName)
+	var records []map[string]any
+	err := table.Find(db.Cond{"rowid": ids}).All(&records)
+	if err != nil {
+		return nil, err
+	}
+
+	final := make(map[int64]map[string]any, len(records))
+	for _, record := range records {
+		rowidAny, ok := record["rowid"]
+		if !ok {
+			continue
+		}
+
+		rowid, ok := rowidAny.(int64)
+		if !ok {
+			continue
+		}
+
+		final[rowid] = record
+	}
+
+	return final, nil
 }
 
 func (s *SelfCDCSyncer) GetCDCCache() map[int64]int64 {

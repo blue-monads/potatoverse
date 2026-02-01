@@ -4,18 +4,12 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strings"
 	"text/template"
-)
 
-const TemplateTable = `
-CREATE TABLE IF NOT EXISTS {{.TableName}} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-	record_id INTEGER NOT NULL,
-	operation INTEGER NOT NULL, -- 0: insert, 1: update, 2: delete
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-`
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+)
 
 func EnsureCDC(db *sql.DB) (int, error) {
 	// list all tables in the database
@@ -33,7 +27,7 @@ func EnsureCDC(db *sql.DB) (int, error) {
 			continue
 		}
 
-		if tableName == "CDCMeta" {
+		if slices.Contains(SkipTables, tableName) {
 			continue
 		}
 
@@ -54,7 +48,7 @@ func EnsureCDC(db *sql.DB) (int, error) {
 	}
 
 	// Parse the template
-	tmpl, err := template.New("cdc_table").Parse(TemplateTable)
+	tmpl, err := template.New("cdc_table").Parse(lazymodel.CDCTableTemplate)
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse template: %w", err)
 	}
@@ -133,12 +127,12 @@ func EnsureCDC(db *sql.DB) (int, error) {
 	return newEntries, nil
 }
 
-// ensureCDCMeta ensures a CDCMeta record exists for the given table.
+// ensureCDCMeta ensures a SelfCDCMeta record exists for the given table.
 // If the table already has records, it sets cdc_start_id to the max primary key value.
 func ensureCDCMeta(db *sql.DB, tableName string, pkColumn string) error {
 	// Check if CDCMeta record already exists
 	var existingID int
-	err := db.QueryRow("SELECT id FROM CDCMeta WHERE table_name = ?", tableName).Scan(&existingID)
+	err := db.QueryRow("SELECT id FROM SelfCDCMeta WHERE table_name = ?", tableName).Scan(&existingID)
 	recordExists := err == nil
 
 	// Get max primary key value from the table
@@ -159,21 +153,21 @@ func ensureCDCMeta(db *sql.DB, tableName string, pkColumn string) error {
 	if recordExists {
 		// Update existing record (only if cdc_start_id is 0, meaning it hasn't been set yet)
 		_, err = db.Exec(`
-			UPDATE CDCMeta 
+			UPDATE SelfCDCMeta 
 			SET cdc_start_id = ? 
 			WHERE table_name = ? AND cdc_start_id = 0
 		`, cdcStartID, tableName)
 		if err != nil {
-			return fmt.Errorf("failed to update CDCMeta for table %s: %w", tableName, err)
+			return fmt.Errorf("failed to update SelfCDCMeta for table %s: %w", tableName, err)
 		}
 	} else {
 		// Insert new record
 		_, err = db.Exec(`
-			INSERT INTO CDCMeta (table_name, cdc_start_id, current_cdc_id, gc_max_records, last_gc_at, extrameta)
+			INSERT INTO SelfCDCMeta (table_name, cdc_start_id, current_cdc_id, gc_max_records, last_gc_at, extrameta)
 			VALUES (?, ?, 0, 0, 0, '{}')
 		`, tableName, cdcStartID)
 		if err != nil {
-			return fmt.Errorf("failed to insert CDCMeta for table %s: %w", tableName, err)
+			return fmt.Errorf("failed to insert SelfCDCMeta for table %s: %w", tableName, err)
 		}
 	}
 
@@ -209,9 +203,9 @@ func DropCDC(db *sql.DB) error {
 
 	}
 
-	// truncate CDCMeta table
-	if _, err := db.Exec("TRUNCATE TABLE CDCMeta"); err != nil {
-		return fmt.Errorf("failed to truncate CDCMeta table: %w", err)
+	// truncate SelfCDCMeta table
+	if _, err := db.Exec("TRUNCATE TABLE SelfCDCMeta"); err != nil {
+		return fmt.Errorf("failed to truncate SelfCDCMeta table: %w", err)
 	}
 
 	return nil
