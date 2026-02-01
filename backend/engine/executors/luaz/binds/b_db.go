@@ -17,6 +17,11 @@ func DBBindable(app xtypes.App) map[string]lua.LGFunction {
 	}
 
 	return map[string]lua.LGFunction{
+		"vender": func(L *lua.LState) int {
+			vender := db.Vender()
+			L.Push(lua.LString(vender))
+			return 1
+		},
 		"run_ddl": func(L *lua.LState) int {
 			dbOps := getPackageDbOps(L)
 			return dbRunDDL(dbOps, L)
