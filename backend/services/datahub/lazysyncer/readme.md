@@ -20,4 +20,4 @@ Lazysyncer is a service design to capture data changes from a local SQLite datab
 
 ## Usage
 
-The service runs an event loop that periodically checks for updates from the buddy and applies them to the local `zz_buddy_*` tables.
+The service runs an event loop that periodically checks for updates from the buddy and applies them to the local `zz_buddy_*` tables. Because it syncs data lazily without capturing a full snapshot of the records, the synced data may not reflect a strict point-in-time state of the system; instead, it represents an eventually converging state.
