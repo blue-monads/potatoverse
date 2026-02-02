@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/upper/db/v4"
 )
 
 func (b *BuddyCDC) evLoop() {
@@ -62,8 +63,9 @@ func (b *BuddyCDC) evLoop() {
 				}
 				qq.Println("Synced serial records:", len(data.Records), "for table:", localMeta.TableName)
 
-				localMeta.SyncedRowID = data.SyncTillId
-				if err := b.updateMeta(localMeta); err != nil {
+				if err := b.updateMeta(localMeta.Id, map[string]any{
+					"start_row_id": data.SyncTillId,
+				}); err != nil {
 					qq.Println("Error updating meta after serial sync:", err)
 					break
 				}
@@ -83,8 +85,16 @@ func (b *BuddyCDC) evLoop() {
 						// For now let's break to avoid infinite loop if something is wrong
 						// OR rely on SyncTillId from response if it advances even empty
 						if data != nil && data.SyncTillId > localMeta.SyncedCDCID {
-							localMeta.SyncedCDCID = data.SyncTillId
-							b.updateMeta(localMeta)
+							// localMeta.SyncedCDCID = data.SyncTillId
+							// b.updateMeta(localMeta
+
+							err = b.updateMeta(localMeta.Id, map[string]any{
+								"synced_cdc_id": data.SyncTillId,
+							})
+							if err != nil {
+								qq.Println("@err updating", err.Error())
+							}
+
 							continue
 						}
 						break
@@ -96,15 +106,22 @@ func (b *BuddyCDC) evLoop() {
 					}
 					qq.Println("Synced CDC records:", len(data.Records), "for table:", localMeta.TableName)
 
-					localMeta.SyncedCDCID = data.SyncTillId
-					if err := b.updateMeta(localMeta); err != nil {
-						qq.Println("Error updating meta after CDC sync:", err)
-						break
+					err = b.updateMeta(localMeta.Id, map[string]any{
+						"synced_cdc_id": data.SyncTillId,
+					})
+					if err != nil {
+						qq.Println("@err updating", err.Error())
 					}
+
 				}
 			}
 		}
 
 	}
 
+}
+
+func (b *BuddyCDC) updateMeta(tid int64, data map[string]any) error {
+	btable := b.buddyMetaTable()
+	return btable.Find(db.Cond{"id": tid}).Update(data)
 }

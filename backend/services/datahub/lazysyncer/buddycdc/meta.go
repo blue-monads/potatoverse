@@ -33,11 +33,6 @@ func (b *BuddyCDC) saveRecords(tableName string, records map[int64]map[string]an
 	return nil
 }
 
-func (b *BuddyCDC) updateMeta(meta *lazytypes.BuddyCDCMeta) error {
-	btable := b.buddyMetaTable()
-	return btable.Find(db.Cond{"id": meta.Id}).Update(meta)
-}
-
 func (b *BuddyCDC) applyTablesMeta(tables []*lazytypes.BuddyCDCMeta) error {
 
 	for _, tableMeta := range tables {
