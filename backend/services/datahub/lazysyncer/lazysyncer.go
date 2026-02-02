@@ -2,6 +2,7 @@ package lazysyncer
 
 import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
+
 	"github.com/upper/db/v4"
 )
 

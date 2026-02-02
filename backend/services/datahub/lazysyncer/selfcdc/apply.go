@@ -1,4 +1,4 @@
-package selfcdc2
+package selfcdc
 
 import (
 	"crypto/sha256"
