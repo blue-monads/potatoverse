@@ -9,25 +9,13 @@ import (
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
-type BuddyData struct {
-	Records       map[int64]map[string]any `json:"records"`
-	TableCDCIndex map[int64]int64          `json:"table_cdc_index"`
-	SyncTillId    int64                    `json:"sync_till_id"`
-}
-
-type RemoteBuddyTransport interface {
-	GetMeta() ([]*lazytypes.BuddyCDCMeta, error)
-	GetDataSerial(tableId int64, sinceRowId int64) (*BuddyData, error)
-	GetDataCDC(tableId int64, sinceCdcId int64) (*BuddyData, error)
-}
-
 type BuddyCDC struct {
 	buddyPubKey string
 	mainDb      db.Session
 	dbSession   db.Session
 	state       map[int64]int64
 
-	transport RemoteBuddyTransport
+	transport lazytypes.RemoteBuddyTransport
 }
 
 func NewBuddyCDC(maindb db.Session, basePath, buddyPubKey string) (*BuddyCDC, error) {
