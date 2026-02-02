@@ -41,17 +41,21 @@ func (b *BuddyCDC) evLoop() {
 			continue
 		}
 
-		for _, tableMeta := range tables {
-			localMeta, err := b.getMetaForTableId(tableMeta.RemoteTableID)
+		for _, remoteTableMeta := range tables {
+			localMeta, err := b.getMetaForTableId(remoteTableMeta.RemoteTableID)
 			if err != nil {
-				qq.Println("Error fetching buddy meta for table id:", tableMeta.RemoteTableID, err)
+				qq.Println("Error fetching buddy meta for table id:", remoteTableMeta.RemoteTableID, err)
 				continue
 			}
 
-			if localMeta.CurrentCDCID < tableMeta.CurrentCDCID {
+			if localMeta.StartRowID > 0 && localMeta.CurrentMaxCDCID > remoteTableMeta.CurrentMaxCDCID {
 				qq.Println("Need to sync table:", localMeta.TableName)
-
 			}
+
+			// if localMeta.CurrentCDCID < tableMeta.CurrentCDCID {
+			// 	qq.Println("Need to sync table:", localMeta.TableName)
+
+			// }
 
 			// localMeta.TableName
 
