@@ -40,7 +40,7 @@ func (b *BuddyCDC) evLoop() {
 		}
 
 		for _, remoteTableMeta := range tables {
-			localMeta, err := b.getMetaForTableName(remoteTableMeta.TableName)
+			localMeta, err := b.getMetaForTableId(remoteTableMeta.Id)
 			if err != nil {
 				qq.Println("Error fetching buddy meta for table id:", remoteTableMeta.Id, err)
 				continue

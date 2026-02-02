@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS {{.TableName}} (
 	record_id INTEGER NOT NULL,
 	operation INTEGER NOT NULL, -- 0: insert, 1: update, 2: delete, 3: schema_init 4:schema_change
 	payload blob,
+	linked_cdc_id INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 `

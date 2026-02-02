@@ -1,9 +1,16 @@
 package lazytypes
 
 type BuddyData struct {
-	Records       map[int64]map[string]any `json:"records"`
-	TableCDCIndex map[int64]int64          `json:"table_cdc_index"`
-	SyncTillId    int64                    `json:"sync_till_id"`
+	Records       []Record        `json:"records"`
+	TableCDCIndex map[int64]int64 `json:"table_cdc_index"`
+	SyncTillId    int64           `json:"sync_till_id"`
+}
+
+type Record struct {
+	Id          int64  `json:"id"`
+	LinkedCDCId int64  `json:"linked_cdc_id"`
+	Operation   string `json:"operation"`
+	Payload     []byte `json:"payload"`
 }
 
 type RemoteBuddyTransport interface {

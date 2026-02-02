@@ -8,26 +8,25 @@ import (
 	"github.com/upper/db/v4"
 )
 
-func (b *BuddyCDC) saveRecords(tableName string, records map[int64]map[string]any) error {
+func (b *BuddyCDC) saveRecords(tableName string, records []lazytypes.Record) error {
 	tbl := b.dbSession.Collection(tableName)
 
-	for id, record := range records {
-		record["id"] = id // Ensure ID is present in the record
+	for _, record := range records {
 
-		exists, err := tbl.Find(db.Cond{"id": id}).Exists()
+		data := map[string]any{
+			"linked_cdc_id": record.LinkedCDCId,
+			"operation":     record.Operation,
+		}
+
+		if record.Payload != nil {
+			data["payload"] = record.Payload
+		}
+
+		_, err := tbl.Insert(data)
 		if err != nil {
 			return err
 		}
 
-		if exists {
-			err = tbl.Find(db.Cond{"id": id}).Update(record)
-		} else {
-			_, err = tbl.Insert(record)
-		}
-
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

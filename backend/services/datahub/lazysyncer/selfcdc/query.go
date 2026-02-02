@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -32,20 +33,71 @@ func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytyp
 		}
 	}
 
+	// fixme
+
 	return &lazytypes.BuddyData{
-		Records:       records,
+		Records:       nil,
 		TableCDCIndex: map[int64]int64{tableId: maxRowId},
 		SyncTillId:    maxRowId,
 	}, nil
 }
 
 func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.BuddyData, error) {
+	tableName := s.getTableName(tableId)
+	if tableName == "" {
+		return nil, ErrTableNotFound
+	}
 
-	// list cdc since cdc id
-	// make list of rows to fetch
-	// fetch records
+	cdcTable := tableName + "__cdc"
 
-	return nil, nil
+	var cdcRows []struct {
+		Id       int64 `db:"id"`
+		RecordId int64 `db:"record_id"`
+	}
+
+	// fetch limit 100
+	err := s.db.Collection(cdcTable).Find(db.Cond{"id >": sinceCdcId}).Limit(100).OrderBy("id").All(&cdcRows)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cdcRows) == 0 {
+		return &lazytypes.BuddyData{
+			Records:       nil,
+			TableCDCIndex: map[int64]int64{tableId: sinceCdcId},
+			SyncTillId:    sinceCdcId,
+		}, nil
+	}
+
+	uniqueRecordIds := make(map[int64]struct{})
+	var recordIds []int64
+	maxCdcId := sinceCdcId
+
+	for _, row := range cdcRows {
+		if _, ok := uniqueRecordIds[row.RecordId]; !ok {
+			uniqueRecordIds[row.RecordId] = struct{}{}
+			recordIds = append(recordIds, row.RecordId)
+		}
+
+		if row.Id > maxCdcId {
+			maxCdcId = row.Id
+		}
+	}
+
+	records, err := s.GetTableRecords(tableId, recordIds)
+	if err != nil {
+		return nil, err
+	}
+
+	qq.Println(records)
+
+	// fixme
+
+	return &lazytypes.BuddyData{
+		Records:       nil,
+		TableCDCIndex: map[int64]int64{tableId: maxCdcId},
+		SyncTillId:    maxCdcId,
+	}, nil
 }
 
 //
