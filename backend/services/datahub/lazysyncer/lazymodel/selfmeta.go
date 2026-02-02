@@ -2,6 +2,11 @@ package lazymodel
 
 import "time"
 
+var SkipTables = []string{
+	"SelfCDCMeta",
+	"BuddyCDCMeta",
+}
+
 type SelfCDCMeta struct {
 	TableName         string     `json:"table_name" db:"table_name"`
 	CDCStartID        int64      `json:"cdc_start_id" db:"cdc_start_id"`

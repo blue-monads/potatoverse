@@ -5,11 +5,6 @@ import (
 	"github.com/upper/db/v4"
 )
 
-var SkipTables = []string{
-	"SelfCDCMeta",
-	"BuddyCDCMeta",
-}
-
 func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	// query table for max rowid
 	row, err := s.db.SQL().QueryRow("SELECT MAX(rowid) FROM ?", tableName)

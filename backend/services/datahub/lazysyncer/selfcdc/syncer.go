@@ -120,7 +120,7 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 
 		for _, tableName := range alltables {
 
-			if slices.Contains(SkipTables, tableName) {
+			if slices.Contains(lazymodel.SkipTables, tableName) {
 				continue
 			}
 

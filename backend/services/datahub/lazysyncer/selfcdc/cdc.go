@@ -29,7 +29,7 @@ func EnsureCDC(db *sql.DB) (int, error) {
 			continue
 		}
 
-		if slices.Contains(SkipTables, tableName) {
+		if slices.Contains(lazymodel.SkipTables, tableName) {
 			continue
 		}
 
