@@ -69,3 +69,33 @@ func buildTriggerSchema(tableName string, pkColumn string) (string, error) {
 	return buf.String(), nil
 
 }
+
+func buildDropTriggerSchema(tableName string) (string, error) {
+	var buf bytes.Buffer
+
+	insertTrigger := fmt.Sprintf(`
+		DROP TRIGGER IF EXISTS %s_insert__cdc;
+	`, tableName)
+
+	buf.WriteString(insertTrigger)
+
+	updateTrigger := fmt.Sprintf(`
+		DROP TRIGGER IF EXISTS %s_update__cdc;
+	`, tableName)
+
+	buf.WriteString(updateTrigger)
+
+	deleteTrigger := fmt.Sprintf(`
+		DROP TRIGGER IF EXISTS %s_delete__cdc;
+	`, tableName)
+
+	buf.WriteString(deleteTrigger)
+
+	cdcTableDrop := fmt.Sprintf(`
+		DROP TABLE IF EXISTS %s;
+	`, tableName+"__cdc")
+
+	buf.WriteString(cdcTableDrop)
+
+	return buf.String(), nil
+}

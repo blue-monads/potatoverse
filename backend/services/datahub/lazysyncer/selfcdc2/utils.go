@@ -8,7 +8,7 @@ import (
 	"github.com/upper/db/v4"
 )
 
-func (c *CDCMaker) getTableNames() ([]string, error) {
+func (c *SelfCDCSyncer) getTableNames() ([]string, error) {
 
 	tableNames := []string{}
 
@@ -21,7 +21,7 @@ func (c *CDCMaker) getTableNames() ([]string, error) {
 
 }
 
-func (c *CDCMaker) getPrimaryKeyColumn(tableName string) (string, error) {
+func (c *SelfCDCSyncer) getPrimaryKeyColumn(tableName string) (string, error) {
 	quotedTableName := fmt.Sprintf(`"%s"`, strings.ReplaceAll(tableName, `"`, `""`))
 	rows, err := c.db.SQL().Query(fmt.Sprintf("PRAGMA table_info(%s)", quotedTableName))
 	if err != nil {
@@ -61,7 +61,7 @@ func (c *CDCMaker) getPrimaryKeyColumn(tableName string) (string, error) {
 	return pkColumn, nil
 }
 
-func (c *CDCMaker) getTableInfo(tableName string) (*dbmodels.TableInfo, error) {
+func (c *SelfCDCSyncer) getTableInfo(tableName string) (*dbmodels.TableInfo, error) {
 
 	info := &dbmodels.TableInfo{}
 

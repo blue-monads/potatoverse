@@ -12,15 +12,7 @@ import (
 	"github.com/upper/db/v4"
 )
 
-type CDCMaker struct {
-	db db.Session
-}
-
-func NewCDCMaker(db db.Session) *CDCMaker {
-	return &CDCMaker{db: db}
-}
-
-func (c *CDCMaker) ApplyCDC() error {
+func (c *SelfCDCSyncer) ApplyCDC() error {
 
 	tableNames, err := c.getTableNames()
 	if err != nil {
@@ -56,7 +48,7 @@ func (c *CDCMaker) ApplyCDC() error {
 
 }
 
-func (c *CDCMaker) createCDC(tableName string) error {
+func (c *SelfCDCSyncer) createCDC(tableName string) error {
 	cdcTable := tableName + "__cdc"
 
 	pkColumn, err := c.getPrimaryKeyColumn(tableName)
@@ -112,7 +104,7 @@ func (c *CDCMaker) createCDC(tableName string) error {
 	return nil
 }
 
-func (s *CDCMaker) setHash(tableName string, schema, shash string, isInit bool) error {
+func (s *SelfCDCSyncer) setHash(tableName string, schema, shash string, isInit bool) error {
 
 	// 3: schema_init 4:schema_change
 	opId := 4
@@ -139,8 +131,7 @@ func (s *CDCMaker) setHash(tableName string, schema, shash string, isInit bool) 
 
 }
 
-// fixme move this to meta db handle
-func (s *CDCMaker) GetCDCMeta(tableName string) (*lazymodel.SelfCDCMeta, error) {
+func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazymodel.SelfCDCMeta, error) {
 	var cdcMeta lazymodel.SelfCDCMeta
 	err := s.selfcdcTable().Find(db.Cond{"table_name": tableName}).One(&cdcMeta)
 	if err != nil {
@@ -152,11 +143,11 @@ func (s *CDCMaker) GetCDCMeta(tableName string) (*lazymodel.SelfCDCMeta, error) 
 
 // private
 
-func (c *CDCMaker) tableExists(tableName string) (bool, error) {
+func (c *SelfCDCSyncer) tableExists(tableName string) (bool, error) {
 	return c.db.Collection(tableName).Exists()
 }
 
-func (s *CDCMaker) selfcdcTable() db.Collection {
+func (s *SelfCDCSyncer) selfcdcTable() db.Collection {
 	return s.db.Collection("SelfCDCMeta")
 }
 
