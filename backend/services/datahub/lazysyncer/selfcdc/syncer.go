@@ -43,9 +43,9 @@ func (s *SelfCDCSyncer) Start() error {
 			return err
 		}
 	} else {
-		// if err := s.DropCDC(); err != nil {
-		// 	return err
-		// }
+		if err := s.UnapplyCDC(); err != nil {
+			return err
+		}
 	}
 
 	if err := s.updateStateCache(); err != nil {
