@@ -3,6 +3,9 @@ package selfcdc2
 import (
 	"fmt"
 	"strings"
+
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/upper/db/v4"
 )
 
 func (c *CDCMaker) getTableNames() ([]string, error) {
@@ -56,4 +59,17 @@ func (c *CDCMaker) getPrimaryKeyColumn(tableName string) (string, error) {
 	}
 
 	return pkColumn, nil
+}
+
+func (c *CDCMaker) getTableInfo(tableName string) (*dbmodels.TableInfo, error) {
+
+	info := &dbmodels.TableInfo{}
+
+	err := c.db.Collection("sqlite_master").
+		Find(db.Cond{"name": tableName}).One(info)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
 }

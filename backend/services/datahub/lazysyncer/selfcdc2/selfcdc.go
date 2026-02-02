@@ -1,7 +1,9 @@
 package selfcdc2
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"slices"
 	"strings"
@@ -84,11 +86,83 @@ func (c *CDCMaker) createCDC(tableName string) error {
 		return fmt.Errorf("failed to create trigger for table %s: %w", tableName, err)
 	}
 
+	meta, err := c.GetCDCMeta(tableName)
+	if err != nil {
+		return fmt.Errorf("failed to get cdc meta for table %s: %w", tableName, err)
+	}
+
+	tinfo, err := c.getTableInfo(tableName)
+	if err != nil {
+		return fmt.Errorf("failed to get table info for table %s: %w", tableName, err)
+	}
+
+	shash := hashTableSchema(tinfo.Sql)
+
+	if meta.CurrentSchemaHash == shash {
+
+		isInit := meta.CurrentSchemaHash == ""
+
+		err := c.setHash(tableName, tinfo.Sql, shash, isInit)
+		if err != nil {
+			return fmt.Errorf("failed to set schema for table %s: %w", tableName, err)
+		}
+
+	}
+
 	return nil
+}
+
+func (s *CDCMaker) setHash(tableName string, schema, shash string, isInit bool) error {
+
+	// 3: schema_init 4:schema_change
+	opId := 4
+	if isInit {
+		opId = 3
+	}
+
+	_, err := s.db.Collection(tableName + "__cdc").Insert(db.Cond{
+		"record_id":   0,
+		"operation":   opId,
+		"schema_text": schema,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to insert schema for table %s: %w", tableName, err)
+	}
+
+	err = s.selfcdcTable().Find(db.Cond{"table_name": tableName}).Update(map[string]any{"current_schema_hash": shash})
+	if err != nil {
+		return fmt.Errorf("failed to update schema hash for table %s: %w", tableName, err)
+	}
+
+	return nil
+
+}
+
+// fixme move this to meta db handle
+func (s *CDCMaker) GetCDCMeta(tableName string) (*lazymodel.SelfCDCMeta, error) {
+	var cdcMeta lazymodel.SelfCDCMeta
+	err := s.selfcdcTable().Find(db.Cond{"table_name": tableName}).One(&cdcMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cdcMeta, nil
 }
 
 // private
 
 func (c *CDCMaker) tableExists(tableName string) (bool, error) {
 	return c.db.Collection(tableName).Exists()
+}
+
+func (s *CDCMaker) selfcdcTable() db.Collection {
+	return s.db.Collection("SelfCDCMeta")
+}
+
+func hashTableSchema(schema string) string {
+
+	h := sha256.Sum256([]byte(schema))
+
+	return hex.EncodeToString(h[:])
 }
