@@ -2,7 +2,9 @@ package selfcdc
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
 	"slices"
 	"strings"
@@ -121,6 +123,28 @@ func EnsureCDC(db *sql.DB) (int, error) {
 			return 0, fmt.Errorf("failed to ensure CDCMeta for table %s: %w", tableName, err)
 		}
 
+		// once we create SelfCDCMeta, read table schema and insert in __cdc table, the schema of the table as
+		// fist record
+		var schemaSQL string
+		err = db.QueryRow("SELECT sql FROM sqlite_master WHERE type='table' AND name=?", tableName).Scan(&schemaSQL)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get schema for table %s: %w", tableName, err)
+		}
+
+		h := sha1.New()
+		h.Write([]byte(schemaSQL))
+		hash := hex.EncodeToString(h.Sum(nil))
+
+		// now update current_schema_hash in SelfCDCMeta
+		_, err = db.Exec(`
+			UPDATE SelfCDCMeta 
+			SET current_schema_hash = ? 
+			WHERE table_name = ?
+		`, hash, tableName)
+		if err != nil {
+			return 0, fmt.Errorf("failed to update current_schema_hash for table %s: %w", tableName, err)
+		}
+
 		newEntries++
 	}
 
@@ -169,6 +193,22 @@ func ensureCDCMeta(db *sql.DB, tableName string, pkColumn string) error {
 		if err != nil {
 			return fmt.Errorf("failed to insert SelfCDCMeta for table %s: %w", tableName, err)
 		}
+
+		// once we create SelfCDCMeta, read table schema and insert in __cdc table, the schema of the table as
+		// fist record
+		var schemaSQL string
+		err = db.QueryRow("SELECT sql FROM sqlite_master WHERE type='table' AND name=?", tableName).Scan(&schemaSQL)
+		if err != nil {
+			return fmt.Errorf("failed to get schema for table %s: %w", tableName, err)
+		}
+
+		cdcTableName := tableName + "__cdc"
+
+		_, err = db.Exec(fmt.Sprintf("INSERT INTO %s (record_id, operation, schema_text) VALUES (0, 3, ?)", cdcTableName), schemaSQL)
+		if err != nil {
+			return fmt.Errorf("failed to insert schema init record for %s: %w", tableName, err)
+		}
+
 	}
 
 	return nil
