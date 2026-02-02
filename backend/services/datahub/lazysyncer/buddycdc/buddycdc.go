@@ -1,10 +1,12 @@
 package buddycdc
 
 import (
-	"database/sql"
+	"fmt"
+	"path/filepath"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
 	"github.com/upper/db/v4"
+	"github.com/upper/db/v4/adapter/sqlite"
 )
 
 type BuddyData struct {
@@ -21,16 +23,33 @@ type RemoteBuddyTransport interface {
 
 type BuddyCDC struct {
 	buddyPubKey string
-	metaDb      db.Session
-	db          *sql.Conn
+	dbSession   db.Session
 	state       map[int64]int64
 
 	transport RemoteBuddyTransport
 }
 
-func NewBuddyCDC(db *sql.Conn) *BuddyCDC {
-	return &BuddyCDC{
-		db:    db,
-		state: make(map[int64]int64),
+func NewBuddyCDC(basePath, buddyPubKey string) (*BuddyCDC, error) {
+
+	dbSession, err := sqlite.Open(sqlite.ConnectionURL{
+		Database: filepath.Join(basePath, fmt.Sprintf("buddycdc_%s.db", buddyPubKey)),
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	buddyCDC := &BuddyCDC{
+		buddyPubKey: buddyPubKey,
+		dbSession:   dbSession,
+		state:       make(map[int64]int64),
+	}
+
+	buddyCDC.Start()
+
+	return buddyCDC, nil
+}
+
+func (b *BuddyCDC) Start() {
+
+	go b.evLoop()
 }

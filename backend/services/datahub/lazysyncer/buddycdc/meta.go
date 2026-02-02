@@ -141,7 +141,7 @@ func (b *BuddyCDC) getMetaForTable(tableName string) (*lazymodel.BuddyCDCMeta, e
 }
 
 func (b *BuddyCDC) buddyMetaTable() db.Collection {
-	return b.metaDb.Collection("BuddyCDCMeta")
+	return b.dbSession.Collection("BuddyCDCMeta")
 }
 
 func tableName(tableId int64) string {
