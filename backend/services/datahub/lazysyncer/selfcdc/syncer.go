@@ -43,7 +43,7 @@ func (s *SelfCDCSyncer) Start() error {
 			return err
 		}
 	} else {
-		if err := s.UnapplyCDC(); err != nil {
+		if err := s.UnApplyCDC(); err != nil {
 			return err
 		}
 	}

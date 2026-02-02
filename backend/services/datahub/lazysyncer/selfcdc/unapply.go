@@ -8,7 +8,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
 )
 
-func (s *SelfCDCSyncer) UnapplyCDC() error {
+func (s *SelfCDCSyncer) UnApplyCDC() error {
 
 	tables, err := s.getTableNames()
 	if err != nil {
