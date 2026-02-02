@@ -51,7 +51,8 @@ func getPrimaryKeyColumn(db *sql.DB, tableName string) (string, error) {
 }
 
 func getTableNames(db *sql.DB) ([]string, error) {
-	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+	// Add query optimization hint for SQLite
+	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
 	if err != nil {
 		return nil, err
 	}
@@ -71,4 +72,43 @@ func getTableNames(db *sql.DB) ([]string, error) {
 	}
 
 	return tableNames, nil
+}
+
+// getExistingCDCTables checks existence of multiple CDC tables in one query
+func getExistingCDCTables(db *sql.DB, cdcTableNames []string) (map[string]bool, error) {
+	if len(cdcTableNames) == 0 {
+		return make(map[string]bool), nil
+	}
+
+	// Build IN clause with placeholders
+	placeholders := make([]string, len(cdcTableNames))
+	args := make([]interface{}, len(cdcTableNames))
+	for i, name := range cdcTableNames {
+		placeholders[i] = "?"
+		args[i] = name
+	}
+
+	query := fmt.Sprintf("SELECT name FROM sqlite_master WHERE type='table' AND name IN (%s)",
+		strings.Join(placeholders, ","))
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	existing := make(map[string]bool)
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
+			return nil, err
+		}
+		existing[tableName] = true
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
 }
