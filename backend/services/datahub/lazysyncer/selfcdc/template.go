@@ -3,31 +3,7 @@ package selfcdc
 import (
 	"bytes"
 	"fmt"
-	"text/template"
-
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
 )
-
-var (
-	cdcTableTmpl *template.Template
-)
-
-func init() {
-	var err error
-	cdcTableTmpl, err = template.New("cdc_table").Parse(lazymodel.CDCTableTemplate)
-	if err != nil {
-		panic(fmt.Errorf("failed to parse template: %w", err))
-	}
-}
-
-func buildCDCTableSchema(tableName string) (string, error) {
-	var buf bytes.Buffer
-	if err := cdcTableTmpl.Execute(&buf, map[string]string{"TableName": tableName}); err != nil {
-		return "", fmt.Errorf("failed to execute template for %s: %w", tableName, err)
-	}
-
-	return buf.String(), nil
-}
 
 func buildTriggerSchema(tableName string, pkColumn string) (string, error) {
 

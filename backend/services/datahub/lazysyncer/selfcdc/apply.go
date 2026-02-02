@@ -56,7 +56,7 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 		return fmt.Errorf("failed to get primary key for table %s: %w", tableName, err)
 	}
 
-	cdcTableSQL, err := buildCDCTableSchema(tableName)
+	cdcTableSQL, err := lazymodel.BuildCDCTableSchema(tableName)
 	if err != nil {
 		return fmt.Errorf("failed to build template for table %s: %w", tableName, err)
 	}
@@ -113,9 +113,9 @@ func (s *SelfCDCSyncer) setHash(tableName string, schema, shash string, isInit b
 	}
 
 	_, err := s.db.Collection(tableName + "__cdc").Insert(db.Cond{
-		"record_id":   0,
-		"operation":   opId,
-		"schema_text": schema,
+		"record_id": 0,
+		"operation": opId,
+		"payload":   []byte(schema),
 	})
 
 	if err != nil {
