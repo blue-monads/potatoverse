@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 	"github.com/upper/db/v4"
 )
 
@@ -25,7 +25,7 @@ func (c *SelfCDCSyncer) ApplyCDC() error {
 			continue
 		}
 
-		if slices.Contains(lazymodel.SkipTables, tableName) {
+		if slices.Contains(lazytypes.SkipTables, tableName) {
 			continue
 		}
 
@@ -56,7 +56,7 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 		return fmt.Errorf("failed to get primary key for table %s: %w", tableName, err)
 	}
 
-	cdcTableSQL, err := lazymodel.BuildCDCTableSchema(tableName)
+	cdcTableSQL, err := lazytypes.BuildCDCTableSchema(tableName)
 	if err != nil {
 		return fmt.Errorf("failed to build template for table %s: %w", tableName, err)
 	}
@@ -131,8 +131,8 @@ func (s *SelfCDCSyncer) setHash(tableName string, schema, shash string, isInit b
 
 }
 
-func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazymodel.SelfCDCMeta, error) {
-	var cdcMeta lazymodel.SelfCDCMeta
+func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazytypes.SelfCDCMeta, error) {
+	var cdcMeta lazytypes.SelfCDCMeta
 	err := s.selfcdcTable().Find(db.Cond{"table_name": tableName}).One(&cdcMeta)
 	if err != nil {
 		return nil, err

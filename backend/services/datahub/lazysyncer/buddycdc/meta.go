@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
@@ -33,12 +33,12 @@ func (b *BuddyCDC) saveRecords(tableName string, records map[int64]map[string]an
 	return nil
 }
 
-func (b *BuddyCDC) updateMeta(meta *lazymodel.BuddyCDCMeta) error {
+func (b *BuddyCDC) updateMeta(meta *lazytypes.BuddyCDCMeta) error {
 	btable := b.buddyMetaTable()
 	return btable.Find(db.Cond{"id": meta.Id}).Update(meta)
 }
 
-func (b *BuddyCDC) applyTablesMeta(tables []*lazymodel.BuddyCDCMeta) error {
+func (b *BuddyCDC) applyTablesMeta(tables []*lazytypes.BuddyCDCMeta) error {
 
 	for _, tableMeta := range tables {
 		remoteTableId := tableMeta.RemoteTableID
@@ -51,7 +51,7 @@ func (b *BuddyCDC) applyTablesMeta(tables []*lazymodel.BuddyCDCMeta) error {
 				qq.Println("Creating new buddy table:", tableName, "for remote table:", tableMeta.TableName)
 
 				// 1. Create Meta
-				newMeta := &lazymodel.BuddyCDCMeta{
+				newMeta := &lazytypes.BuddyCDCMeta{
 					PubKey:          b.buddyPubKey,
 					RemoteTableID:   remoteTableId,
 					TableName:       tableName,
@@ -66,7 +66,7 @@ func (b *BuddyCDC) applyTablesMeta(tables []*lazymodel.BuddyCDCMeta) error {
 					return fmt.Errorf("failed to insert buddy meta: %w", err)
 				}
 
-				cdcTableSQL, err := lazymodel.BuildCDCTableSchema(tableName)
+				cdcTableSQL, err := lazytypes.BuildCDCTableSchema(tableName)
 				if err != nil {
 					return fmt.Errorf("failed to build template for table %s: %w", tableName, err)
 				}
@@ -86,8 +86,8 @@ func (b *BuddyCDC) applyTablesMeta(tables []*lazymodel.BuddyCDCMeta) error {
 	return nil
 }
 
-func (b *BuddyCDC) getMetaForTableId(tableId int64) (*lazymodel.BuddyCDCMeta, error) {
-	meta := &lazymodel.BuddyCDCMeta{}
+func (b *BuddyCDC) getMetaForTableId(tableId int64) (*lazytypes.BuddyCDCMeta, error) {
+	meta := &lazytypes.BuddyCDCMeta{}
 	btable := b.buddyMetaTable()
 
 	err := btable.Find(db.Cond{
@@ -102,9 +102,9 @@ func (b *BuddyCDC) getMetaForTableId(tableId int64) (*lazymodel.BuddyCDCMeta, er
 	return meta, nil
 }
 
-func (b *BuddyCDC) getMetaForTables() ([]*lazymodel.BuddyCDCMeta, error) {
+func (b *BuddyCDC) getMetaForTables() ([]*lazytypes.BuddyCDCMeta, error) {
 
-	metas := []*lazymodel.BuddyCDCMeta{}
+	metas := []*lazytypes.BuddyCDCMeta{}
 
 	btable := b.buddyMetaTable()
 

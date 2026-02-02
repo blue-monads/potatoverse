@@ -1,4 +1,4 @@
-package lazymodel
+package lazytypes
 
 import (
 	"bytes"

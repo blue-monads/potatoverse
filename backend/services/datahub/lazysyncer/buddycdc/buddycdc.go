@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -16,7 +16,7 @@ type BuddyData struct {
 }
 
 type RemoteBuddyTransport interface {
-	GetMeta() ([]*lazymodel.BuddyCDCMeta, error)
+	GetMeta() ([]*lazytypes.BuddyCDCMeta, error)
 	GetDataSerial(tableId int64, sinceRowId int64) (*BuddyData, error)
 	GetDataCDC(tableId int64, sinceCdcId int64) (*BuddyData, error)
 }

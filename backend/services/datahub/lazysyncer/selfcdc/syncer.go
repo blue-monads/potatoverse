@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
@@ -20,7 +20,7 @@ type SelfCDCSyncer struct {
 	ontableChange chan string
 
 	cdcIdIndex map[int64]string
-	stateCache map[string]*lazymodel.SelfCDCMeta
+	stateCache map[string]*lazytypes.SelfCDCMeta
 	mu         sync.RWMutex
 }
 
@@ -30,7 +30,7 @@ func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
 		cdcIdIndex:    make(map[int64]string),
-		stateCache:    make(map[string]*lazymodel.SelfCDCMeta),
+		stateCache:    make(map[string]*lazytypes.SelfCDCMeta),
 		mu:            sync.RWMutex{},
 	}
 }
@@ -67,7 +67,7 @@ func (s *SelfCDCSyncer) updateStateCache() error {
 	}
 
 	cdcIdIndex := make(map[int64]string)
-	stateCache := make(map[string]*lazymodel.SelfCDCMeta)
+	stateCache := make(map[string]*lazytypes.SelfCDCMeta)
 
 	for _, cmeta := range cmetas {
 		cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
@@ -110,7 +110,7 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 
 		for _, tableName := range alltables {
 
-			if slices.Contains(lazymodel.SkipTables, tableName) {
+			if slices.Contains(lazytypes.SkipTables, tableName) {
 				continue
 			}
 
@@ -166,9 +166,9 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 
 }
 
-func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*lazymodel.SelfCDCMeta, error) {
+func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*lazytypes.SelfCDCMeta, error) {
 
-	var cdcMeta []*lazymodel.SelfCDCMeta
+	var cdcMeta []*lazytypes.SelfCDCMeta
 	err := s.selfcdcTable().Find().All(&cdcMeta)
 	if err != nil {
 		return nil, err

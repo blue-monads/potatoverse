@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazymodel"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 )
 
 func (s *SelfCDCSyncer) UnApplyCDC() error {
@@ -22,7 +22,7 @@ func (s *SelfCDCSyncer) UnApplyCDC() error {
 			continue
 		}
 
-		if slices.Contains(lazymodel.SkipTables, tableName) {
+		if slices.Contains(lazytypes.SkipTables, tableName) {
 			continue
 		}
 

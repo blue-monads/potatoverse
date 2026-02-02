@@ -1,4 +1,4 @@
-package lazymodel
+package lazytypes
 
 type BuddyCDCMeta struct {
 	Id            int64  `json:"id" db:"id"`
