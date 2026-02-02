@@ -23,13 +23,14 @@ type RemoteBuddyTransport interface {
 
 type BuddyCDC struct {
 	buddyPubKey string
+	mainDb      db.Session
 	dbSession   db.Session
 	state       map[int64]int64
 
 	transport RemoteBuddyTransport
 }
 
-func NewBuddyCDC(basePath, buddyPubKey string) (*BuddyCDC, error) {
+func NewBuddyCDC(maindb db.Session, basePath, buddyPubKey string) (*BuddyCDC, error) {
 
 	dbSession, err := sqlite.Open(sqlite.ConnectionURL{
 		Database: filepath.Join(basePath, fmt.Sprintf("buddycdc_%s.db", buddyPubKey)),
@@ -39,6 +40,7 @@ func NewBuddyCDC(basePath, buddyPubKey string) (*BuddyCDC, error) {
 	}
 
 	buddyCDC := &BuddyCDC{
+		mainDb:      maindb,
 		buddyPubKey: buddyPubKey,
 		dbSession:   dbSession,
 		state:       make(map[int64]int64),

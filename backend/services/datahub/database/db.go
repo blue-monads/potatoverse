@@ -133,7 +133,12 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		return nil, err
 	}
 
-	lazySyncer := lazysyncer.NewLazySyncer(sess, CDC_ENABLED)
+	lazySyncer := lazysyncer.NewLazySyncer(lazysyncer.Options{
+		DbSession:     sess,
+		IsSelfEnabled: CDC_ENABLED,
+		Buddies:       []string{},
+		BasePath:      "./buddies",
+	})
 
 	return &DB{
 		sess:                 sess,
