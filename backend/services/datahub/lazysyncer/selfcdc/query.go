@@ -117,6 +117,10 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 				Payload:     cdcRow.Payload,
 			})
 
+			if cdcRow.Id > maxCdcId {
+				maxCdcId = cdcRow.Id
+			}
+
 			continue
 		}
 
