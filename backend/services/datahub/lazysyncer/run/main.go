@@ -47,6 +47,11 @@ func getDatabase() db.Session {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}
 
+	_, err = sqlconn.Exec("CREATE TABLE IF NOT EXISTS test2 (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")
+	if err != nil {
+		panic(fmt.Errorf("failed to insert user: %w", err))
+	}
+
 	return db
 }
 
@@ -57,6 +62,8 @@ func main() {
 	db := getDatabase()
 	defer db.Close()
 
+	sqlconn := db.Driver().(*sql.DB)
+
 	ls := lazysyncer.NewTest(lazysyncer.Options{
 		DbSession:     db,
 		IsSelfEnabled: true,
@@ -64,12 +71,15 @@ func main() {
 		BasePath:      tmpFolder,
 	})
 
-	err := ls.Start()
+	_, err := sqlconn.Exec("INSERT INTO test2 (name) VALUES ('Alice')")
+	if err != nil {
+		panic(fmt.Errorf("failed to insert user: %w", err))
+	}
+
+	err = ls.Start()
 	if err != nil {
 		panic(fmt.Errorf("failed to start syncer: %w", err))
 	}
-
-	sqlconn := db.Driver().(*sql.DB)
 
 	for {
 

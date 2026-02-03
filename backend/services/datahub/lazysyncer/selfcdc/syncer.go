@@ -207,9 +207,8 @@ func (s *SelfCDCSyncer) GetCDCCache() map[int64]int64 {
 	return cache
 }
 
-func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
-	// query CDC table for max id
-	row, err := s.db.SQL().QueryRow(fmt.Sprintf("SELECT MAX(id) FROM %s__cdc", tableName))
+func (s *SelfCDCSyncer) tableMaxId(tableName, idColumn string) (int64, error) {
+	row, err := s.db.SQL().QueryRow(fmt.Sprintf("SELECT MAX(%s) FROM %s", idColumn, tableName))
 	if err != nil {
 		return 0, err
 	}
@@ -218,6 +217,16 @@ func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	if err := row.Scan(&maxRowid); err != nil {
 		// If no rows, maxRowid will be nil/0, Scan into int64 works for 0
 		return 0, nil
+	}
+
+	return maxRowid, nil
+}
+
+func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
+
+	maxRowid, err := s.tableMaxId(tableName+"__log", "id")
+	if err != nil {
+		return 0, err
 	}
 
 	newData := map[string]any{
