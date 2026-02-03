@@ -73,7 +73,7 @@ func main() {
 
 	for {
 
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Second)
 
 		_, err = sqlconn.Exec("INSERT INTO test (name) VALUES ('Alice')")
 		if err != nil {

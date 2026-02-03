@@ -3,6 +3,7 @@ package selfcdc
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 	"github.com/upper/db/v4"
@@ -103,8 +104,21 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 	uniqueRecordIds := make(map[int64]int)
 	recordIds := make([]int64, 0, len(cdcRows))
 	maxCdcId := sinceCdcId
+	records := make([]lazytypes.Record, 0)
 
 	for idx, cdcRow := range cdcRows {
+
+		if cdcRow.Operation == 3 || cdcRow.Operation == 4 {
+
+			records = append(records, lazytypes.Record{
+				RecordId:    cdcRow.RecordId,
+				Operation:   cdcRow.Operation,
+				LinkedCDCId: cdcRow.Id,
+				Payload:     cdcRow.Payload,
+			})
+
+			continue
+		}
 
 		existingEntry, ok := uniqueRecordIds[cdcRow.RecordId]
 		if ok {
@@ -125,8 +139,6 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 	if err != nil {
 		return nil, err
 	}
-
-	records := make([]lazytypes.Record, 0, len(datas))
 
 	for _, data := range datas {
 		rowidAny, ok := data["rowid"]
@@ -157,6 +169,10 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 			Payload:     payload,
 		})
 	}
+
+	slices.SortFunc(records, func(a, b lazytypes.Record) int {
+		return int(a.LinkedCDCId - b.LinkedCDCId)
+	})
 
 	return &lazytypes.BuddyData{
 		Records:       records,
