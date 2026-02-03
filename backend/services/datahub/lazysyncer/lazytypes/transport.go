@@ -8,8 +8,9 @@ type BuddyData struct {
 
 type Record struct {
 	Id          int64  `json:"id"`
+	RecordId    int64  `json:"record_id"`
+	Operation   int64  `json:"operation"`
 	LinkedCDCId int64  `json:"linked_cdc_id"`
-	Operation   string `json:"operation"`
 	Payload     []byte `json:"payload"`
 }
 

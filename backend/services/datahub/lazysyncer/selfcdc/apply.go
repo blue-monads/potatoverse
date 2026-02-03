@@ -56,7 +56,7 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 		return fmt.Errorf("failed to get primary key for table %s: %w", tableName, err)
 	}
 
-	cdcTableSQL, err := lazytypes.BuildCDCTableSchema(tableName)
+	cdcTableSQL, err := lazytypes.BuildSelfCDCTableSchema(tableName)
 	if err != nil {
 		return fmt.Errorf("failed to build template for table %s: %w", tableName, err)
 	}

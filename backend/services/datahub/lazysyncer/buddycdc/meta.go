@@ -55,7 +55,7 @@ func (b *BuddyCDC) applyTablesMeta(tables []*lazytypes.SelfCDCMeta) error {
 					return fmt.Errorf("failed to insert buddy meta: %w", err)
 				}
 
-				cdcTableSQL, err := lazytypes.BuildCDCTableSchema(tableMeta.TableName)
+				cdcTableSQL, err := lazytypes.BuildBuddyCDCTableSchema(tableMeta.TableName)
 				if err != nil {
 					return fmt.Errorf("failed to build template for table %s: %w", tableMeta.TableName, err)
 				}
