@@ -16,6 +16,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/low"
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
@@ -23,9 +24,6 @@ import (
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
-
-//go:embed schema.sql
-var schema string
 
 type DB struct {
 	sess                 upperdb.Session
@@ -77,6 +75,8 @@ func AutoMigrate(sess upperdb.Session) error {
 		pschema := strings.Replace(fileops.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
 		pschema = strings.Replace(pschema, "FileBlob", "PFileBlob", 1)
 		pschema = strings.Replace(pschema, "FileShares", "PFileShares", 1)
+
+		schema := schema.Get()
 
 		buf.WriteString(schema)
 		buf.WriteString("\n")

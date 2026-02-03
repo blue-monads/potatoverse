@@ -1,6 +1,7 @@
 package selfcdc
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
@@ -11,8 +12,8 @@ import (
 	"github.com/upper/db/v4"
 )
 
-const CACHE_INTERVAL = 30 * time.Second
-const NotifyMode = true
+const CACHE_INTERVAL = 2 * time.Second
+const NotifyMode = false
 
 type SelfCDCSyncer struct {
 	db            db.Session
@@ -70,7 +71,7 @@ func (s *SelfCDCSyncer) updateStateCache() error {
 	stateCache := make(map[string]*lazytypes.SelfCDCMeta)
 
 	for _, cmeta := range cmetas {
-		cdcIdIndex[cmeta.CurrentCDCID] = cmeta.TableName
+		cdcIdIndex[cmeta.Id] = cmeta.TableName
 		stateCache[cmeta.TableName] = cmeta
 	}
 
@@ -208,18 +209,22 @@ func (s *SelfCDCSyncer) GetCDCCache() map[int64]int64 {
 }
 
 func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
-	// query table for max rowid
-	row, err := s.db.SQL().QueryRow("SELECT MAX(rowid) FROM ?", tableName)
+	// query CDC table for max id
+	row, err := s.db.SQL().QueryRow(fmt.Sprintf("SELECT MAX(id) FROM %s__cdc", tableName))
 	if err != nil {
 		return 0, err
 	}
 
 	var maxRowid int64
 	if err := row.Scan(&maxRowid); err != nil {
-		return 0, err
+		// If no rows, maxRowid will be nil/0, Scan into int64 works for 0
+		return 0, nil
 	}
 
-	newData := map[string]any{"current_cdc_id": maxRowid}
+	newData := map[string]any{
+		"current_cdc_id":     maxRowid,
+		"current_max_cdc_id": maxRowid,
+	}
 
 	// update current_cdc_id in CDCMeta table
 	err = s.selfcdcTable().Find(db.Cond{"table_name": tableName}).Update(newData)

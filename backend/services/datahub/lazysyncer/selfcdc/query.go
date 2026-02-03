@@ -32,6 +32,10 @@ func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytyp
 	for _, data := range datas {
 		rowidAny, ok := data["rowid"]
 		if !ok {
+			rowidAny, ok = data["id"]
+		}
+
+		if !ok {
 			continue
 		}
 
@@ -127,6 +131,10 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 	for _, data := range datas {
 		rowidAny, ok := data["rowid"]
 		if !ok {
+			rowidAny, ok = data["id"]
+		}
+
+		if !ok {
 			continue
 		}
 
@@ -183,7 +191,7 @@ func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) ([]map[strin
 
 	table := s.db.Collection(tableName)
 	var records []map[string]any
-	err := table.Find(db.Cond{"rowid": ids}).All(&records)
+	err := table.Find(db.Cond{"rowid": ids}).Select("rowid", "*").All(&records)
 	if err != nil {
 		return nil, err
 	}

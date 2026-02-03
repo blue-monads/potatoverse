@@ -14,6 +14,7 @@ func (b *BuddyCDC) saveRecords(tableName string, records []lazytypes.Record) err
 	for _, record := range records {
 
 		data := map[string]any{
+			"record_id":     record.RecordId,
 			"linked_cdc_id": record.LinkedCDCId,
 			"operation":     record.Operation,
 		}

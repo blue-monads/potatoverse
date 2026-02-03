@@ -112,7 +112,7 @@ func (s *SelfCDCSyncer) setHash(tableName string, schema, shash string, isInit b
 		opId = 3
 	}
 
-	_, err := s.db.Collection(tableName + "__cdc").Insert(db.Cond{
+	_, err := s.db.Collection(tableName + "__cdc").Insert(map[string]any{
 		"record_id": 0,
 		"operation": opId,
 		"payload":   []byte(schema),
