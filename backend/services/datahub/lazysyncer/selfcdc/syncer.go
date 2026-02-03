@@ -139,7 +139,7 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 	readAllPendingTables := func() []string {
 		tables := make([]string, 0, 1)
 
-		timer := time.NewTimer(5)
+		timer := time.NewTimer(time.Second * 5)
 		defer timer.Stop()
 
 		for {
