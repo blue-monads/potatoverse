@@ -161,7 +161,18 @@ func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazytypes.SelfCDCMeta, er
 // private
 
 func (c *SelfCDCSyncer) tableExists(tableName string) (bool, error) {
-	return c.db.Collection(tableName).Exists()
+	row, err := c.db.SQL().QueryRow("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", tableName)
+	if err != nil {
+		return false, err
+	}
+
+	var name string
+	err = row.Scan(&name)
+	if err != nil {
+		return false, nil // Row not found
+	}
+
+	return true, nil
 }
 
 func (s *SelfCDCSyncer) selfcdcTable() db.Collection {

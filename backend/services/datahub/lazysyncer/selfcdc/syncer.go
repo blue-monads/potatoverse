@@ -168,7 +168,6 @@ func (s *SelfCDCSyncer) notifySyncLoop() {
 }
 
 func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*lazytypes.SelfCDCMeta, error) {
-
 	var cdcMeta []*lazytypes.SelfCDCMeta
 	err := s.selfcdcTable().Find().All(&cdcMeta)
 	if err != nil {
