@@ -101,6 +101,7 @@ func (c *SelfCDCSyncer) ensureCDC(tableName string) error {
 				"table_name":          tableName,
 				"current_schema_hash": "",
 				"start_row_id":        maxRowid,
+				"primary_key":         pkColumn,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to insert cdc meta for table %s: %w", tableName, err)

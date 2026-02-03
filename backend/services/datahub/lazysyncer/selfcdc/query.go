@@ -19,6 +19,17 @@ func (s *SelfCDCSyncer) GetMeta() ([]*lazytypes.SelfCDCMeta, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	for _, meta := range metas {
+		maxRowId, err := s.tableMaxId(meta.TableName, meta.PrimaryKey)
+		if err != nil {
+			continue
+		}
+
+		qq.Println("@setting_max_row_id", meta.TableName, maxRowId)
+		meta.MaxRowID = maxRowId
+	}
+
 	return metas, nil
 }
 func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytypes.BuddyData, error) {

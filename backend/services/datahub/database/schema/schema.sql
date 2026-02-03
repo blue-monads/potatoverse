@@ -250,7 +250,8 @@ CREATE TABLE IF NOT EXISTS MQEventTargets (
 
 CREATE TABLE IF NOT EXISTS SelfCDCMeta (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  table_name TEXT NOT NULL DEFAULT '',
+  table_name TEXT NOT NULL,
+  primary_key TEXT NOT NULL,
   -- start_row_id rowid of the first record in the table, all records before this id has to be synced before syncing from cdc
   
   start_row_id INTEGER NOT NULL DEFAULT 0,
