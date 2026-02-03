@@ -91,9 +91,16 @@ func (c *SelfCDCSyncer) ensureCDC(tableName string) error {
 	if err != nil {
 		if err == db.ErrNoMoreRows {
 			// create meta
+
+			maxRowid, err := c.tableMaxId(tableName, pkColumn)
+			if err != nil {
+				return fmt.Errorf("failed to get max rowid for table %s: %w", tableName, err)
+			}
+
 			_, err = c.selfcdcTable().Insert(map[string]any{
 				"table_name":          tableName,
 				"current_schema_hash": "",
+				"start_row_id":        maxRowid,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to insert cdc meta for table %s: %w", tableName, err)
