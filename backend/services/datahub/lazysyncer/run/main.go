@@ -7,17 +7,22 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
+	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
 
-func main() {
+var (
+	tmpFolder string
+)
 
+func getDatabase() db.Session {
 	tmpDir, err := os.MkdirTemp("", "datahub_test_*")
 	if err != nil {
 		panic(fmt.Errorf("failed to create temp dir: %w", err))
 	}
-	defer os.RemoveAll(tmpDir)
+
+	tmpFolder = tmpDir
 
 	// Create a new SQLite database
 	settings := sqlite.ConnectionURL{
@@ -39,23 +44,39 @@ func main() {
 		panic(fmt.Errorf("failed to execute schema: %w", err))
 	}
 
-	_, err = sqlconn.Exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")
+	_, err = sqlconn.Exec("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")
 	if err != nil {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}
 
-	scs := selfcdc.NewSelfCDCSyncer(db, true)
+	return db
+}
 
-	err = scs.Start()
+func main() {
+
+	defer os.RemoveAll(tmpFolder)
+
+	db := getDatabase()
+
+	ls := lazysyncer.New(lazysyncer.Options{
+		DbSession:     db,
+		IsSelfEnabled: true,
+		Buddies:       []string{"buddy1"},
+		BasePath:      tmpFolder,
+	})
+
+	err := ls.Start()
 	if err != nil {
 		panic(fmt.Errorf("failed to start syncer: %w", err))
 	}
+
+	sqlconn := db.Driver().(*sql.DB)
 
 	for {
 
 		time.Sleep(1 * time.Second)
 
-		_, err = sqlconn.Exec("INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com')")
+		_, err = sqlconn.Exec("INSERT INTO test (name) VALUES ('Alice')")
 		if err != nil {
 			panic(fmt.Errorf("failed to insert user: %w", err))
 		}

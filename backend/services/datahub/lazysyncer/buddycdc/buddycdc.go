@@ -42,12 +42,12 @@ func NewBuddyCDC(opts Options) (*BuddyCDC, error) {
 		transport:   opts.Transport,
 	}
 
-	buddyCDC.Start()
-
 	return buddyCDC, nil
 }
 
-func (b *BuddyCDC) Start() {
+func (b *BuddyCDC) Start() error {
 
 	go b.evLoop()
+
+	return nil
 }

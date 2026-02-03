@@ -76,7 +76,16 @@ func NewTest(opts Options) *LazySyncer {
 }
 
 func (l *LazySyncer) Start() error {
-	return l.cdcSyncer.Start()
+	err := l.cdcSyncer.Start()
+	if err != nil {
+		return err
+	}
+
+	for _, buddyCDC := range l.buddySyncers {
+		buddyCDC.Start()
+	}
+
+	return nil
 }
 
 func (l *LazySyncer) GetSelfCDCSyncer() *selfcdc.SelfCDCSyncer {
