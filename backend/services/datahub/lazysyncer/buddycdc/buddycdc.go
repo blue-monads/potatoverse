@@ -18,20 +18,28 @@ type BuddyCDC struct {
 	transport lazytypes.RemoteBuddyTransport
 }
 
-func NewBuddyCDC(maindb db.Session, basePath, buddyPubKey string) (*BuddyCDC, error) {
+type Options struct {
+	MainDb      db.Session
+	BasePath    string
+	BuddyPubKey string
+	Transport   lazytypes.RemoteBuddyTransport
+}
+
+func NewBuddyCDC(opts Options) (*BuddyCDC, error) {
 
 	dbSession, err := sqlite.Open(sqlite.ConnectionURL{
-		Database: filepath.Join(basePath, fmt.Sprintf("buddycdc_%s.db", buddyPubKey)),
+		Database: filepath.Join(opts.BasePath, fmt.Sprintf("buddycdc_%s.db", opts.BuddyPubKey)),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	buddyCDC := &BuddyCDC{
-		mainDb:      maindb,
-		buddyPubKey: buddyPubKey,
+		mainDb:      opts.MainDb,
+		buddyPubKey: opts.BuddyPubKey,
 		dbSession:   dbSession,
 		state:       make(map[int64]int64),
+		transport:   opts.Transport,
 	}
 
 	buddyCDC.Start()
