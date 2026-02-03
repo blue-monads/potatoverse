@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -29,7 +30,7 @@ func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytyp
 
 	records := make([]lazytypes.Record, 0, len(datas))
 
-	maxRowId := int64(0)
+	maxRowId := int64(sinceRowId)
 	for _, data := range datas {
 		rowidAny, ok := data["rowid"]
 		if !ok {
@@ -45,6 +46,10 @@ func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytyp
 			continue
 		}
 
+		if rowid > maxRowId {
+			maxRowId = rowid
+		}
+
 		payload, err := json.Marshal(data)
 		if err != nil {
 			return nil, err
@@ -57,10 +62,9 @@ func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytyp
 			Payload:     payload,
 		})
 
-		if rowid > maxRowId {
-			maxRowId = rowid
-		}
 	}
+
+	qq.Println("@sending_with_max_rowid", maxRowId)
 
 	return &lazytypes.BuddyData{
 		Records:       records,
