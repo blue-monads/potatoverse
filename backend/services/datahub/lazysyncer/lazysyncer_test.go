@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -35,61 +36,12 @@ func setupTestDB(t *testing.T, dbName string) (db.Session, string, func()) {
 	// We need SelfCDCMeta, BuddyCDCMeta and a test table.
 	// We can use the schema from schema.sql ideally, but for now we'll create what's needed.
 
-	schemas := []string{
-		`CREATE TABLE IF NOT EXISTS test_records (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			name TEXT,
-			value TEXT
-		)`,
-		`CREATE TABLE IF NOT EXISTS SelfCDCMeta (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			table_name TEXT NOT NULL DEFAULT '',
-			start_row_id INTEGER NOT NULL DEFAULT 0,
-			current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
-			current_cdc_id INTEGER NOT NULL DEFAULT 0,
-			gc_max_records INTEGER NOT NULL DEFAULT 0,
-			last_gc_at TIMESTAMP,
-			last_cached_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			current_schema_hash TEXT NOT NULL DEFAULT '',
-			extrameta JSON NOT NULL DEFAULT '{}'
-		)`,
-		`CREATE TABLE IF NOT EXISTS BuddyCDCMeta (
-			id INTEGER PRIMARY KEY,
-			pubkey TEXT NOT NULL,
-			remote_table_id INTEGER NOT NULL,
-			table_name TEXT NOT NULL,
-			start_row_id INTEGER NOT NULL DEFAULT 0,
-			synced_row_id INTEGER NOT NULL DEFAULT 0,
-			current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
-			synced_cdc_id INTEGER NOT NULL DEFAULT 0,
-			current_cdc_id INTEGER NOT NULL DEFAULT 0,
-			current_schema_hash TEXT NOT NULL DEFAULT '',
-			is_deleted BOOLEAN NOT NULL DEFAULT 0,
-			extrameta JSON NOT NULL DEFAULT '{}'
-		)`,
-		// CDC table for test_records
-		`CREATE TABLE IF NOT EXISTS test_records__cdc (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			record_id INTEGER NOT NULL,
-			operation INTEGER NOT NULL,
-			payload BLOB,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-		)`,
-	}
+	schema := schema.Get()
 
-	for _, schema := range schemas {
-		_, err := sess.SQL().Exec(schema)
-		if err != nil {
-			t.Fatalf("Failed to execute schema: %v", err)
-		}
+	_, err = sess.SQL().Exec(schema)
+	if err != nil {
+		t.Fatalf("Failed to execute schema: %v", err)
 	}
-
-	// Initialize SelfCDCMeta for test_records
-	// We need to insert a record into SelfCDCMeta so the syncer knows about it?
-	// Or maybe the syncer discovers it?
-	// Looking at selfcdc/syncer.go: getTableNames(), it seems it might scan tables?
-	// selfcdc/syncer.go:85 AttachMissingTables() -> calling s.ApplyCDC()
-	// Let's assume ApplyCDC does the magic.
 
 	cleanup := func() {
 		sess.Close()
@@ -121,41 +73,24 @@ func TestLazySyncerBasic(t *testing.T) {
 		t.Fatalf("Failed to create LazySyncer")
 	}
 
-	// 4. Insert initial data into SelfCDCMeta for the test_records table
-	// The ApplyCDC logic usually handles creating triggers and meta entries.
-	// Since we are mocking/using partial setup, we might need to manually trigger ApplyCDC or insert meta.
-	// Let's try calling Start() which calls ApplyCDC.
-
-	// Create a trigger manually if ApplyCDC isn't fully working in this test env or rely on it.
-	// Looking at selfcdc/apply.go (not read yet), it likely creates triggers.
-	// For this test, let's manually insert into SelfCDCMeta to "enable" CDC for our table if needed.
-	// But Start() calls ApplyCDC(), so hopefully that works.
-
-	// However, we also need to ensure `test_records` is tracked.
-	// If ApplyCDC scans for tables ending in __cdc, or if it creates them...
-	// Usually CDC systems look for tables and create __cdc tables.
-	// Let's assume for this test we need to manually register the table in SelfCDCMeta if ApplyCDC doesn't auto-discover all tables.
-	// selfcdc.go: NewSelfCDCSyncer does not seem to take a list of tables.
-
-	// Let's manually insert the meta row to be safe/explicit.
-	_, err := mainDB.Collection("SelfCDCMeta").Insert(map[string]interface{}{
-		"table_name": "test_records",
-	})
-	if err != nil {
-		t.Fatalf("Failed to insert SelfCDCMeta: %v", err)
-	}
-
-	// Also ensure we have the trigger or the __cdc table populated.
-	// If the real system uses triggers, we need them.
-	// Let's simulate the CDC log insertion manually in the loop if we don't trust ApplyCDC setup in test.
-	// But the user asked for "pass it and in one goroutine in loop every 5 second insert record".
-	// This implies we should be inserting into the main table and expect the CDC to pick it up.
-	// To make this work without full ApplyCDC magic (which might depend on sqlite triggers),
-	// we will manually insert into `test_records__cdc` as well when we insert into `test_records`.
-
-	err = ls.Start()
+	// 4. Start LazySyncer
+	// ApplyCDC logic will handle creating triggers and meta entries.
+	err := ls.Start()
 	if err != nil {
 		t.Fatalf("Failed to start LazySyncer: %v", err)
+	}
+
+	// Verify triggers are created
+	var triggerCount int
+	row, err := mainDB.SQL().QueryRow("SELECT count(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'test_records_%'")
+	if err != nil {
+		t.Fatalf("Failed to query triggers: %v", err)
+	}
+	if err := row.Scan(&triggerCount); err != nil {
+		t.Fatalf("Failed to scan trigger count: %v", err)
+	}
+	if triggerCount < 3 {
+		t.Fatalf("Expected at least 3 triggers for test_records, got %d", triggerCount)
 	}
 
 	// 5. Start Data Generation Loop
@@ -238,6 +173,8 @@ func TestLazySyncerBasic(t *testing.T) {
 		}
 		time.Sleep(1 * time.Second)
 	}
+
+	time.Sleep(1 * time.Hour)
 
 	close(stopCh)
 

@@ -38,7 +38,7 @@ func (c *SelfCDCSyncer) ApplyCDC() error {
 			continue
 		}
 
-		if err := c.createCDC(tableName); err != nil {
+		if err := c.ensureCDC(tableName); err != nil {
 			return err
 		}
 
@@ -48,7 +48,7 @@ func (c *SelfCDCSyncer) ApplyCDC() error {
 
 }
 
-func (c *SelfCDCSyncer) createCDC(tableName string) error {
+func (c *SelfCDCSyncer) ensureCDC(tableName string) error {
 	cdcTable := tableName + "__cdc"
 
 	pkColumn, err := c.getPrimaryKeyColumn(tableName)
@@ -56,7 +56,7 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 		return fmt.Errorf("failed to get primary key for table %s: %w", tableName, err)
 	}
 
-	cdcTableSQL, err := lazytypes.BuildSelfCDCTableSchema(tableName)
+	cdcTableSQL, err := lazytypes.BuildSelfCDCTableSchema(cdcTable)
 	if err != nil {
 		return fmt.Errorf("failed to build template for table %s: %w", tableName, err)
 	}
@@ -65,7 +65,9 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 
 	_, err = sqlconn.Exec(cdcTableSQL)
 	if err != nil {
-		return fmt.Errorf("failed to create CDC table %s: %w", cdcTable, err)
+		if !strings.Contains(err.Error(), "already exists") {
+			return fmt.Errorf("failed to create CDC table %s: %w", cdcTable, err)
+		}
 	}
 
 	triggerSQL, err := buildTriggerSchema(tableName, pkColumn)
@@ -78,11 +80,6 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 		return fmt.Errorf("failed to create trigger for table %s: %w", tableName, err)
 	}
 
-	meta, err := c.GetCDCMeta(tableName)
-	if err != nil {
-		return fmt.Errorf("failed to get cdc meta for table %s: %w", tableName, err)
-	}
-
 	tinfo, err := c.getTableInfo(tableName)
 	if err != nil {
 		return fmt.Errorf("failed to get table info for table %s: %w", tableName, err)
@@ -90,7 +87,27 @@ func (c *SelfCDCSyncer) createCDC(tableName string) error {
 
 	shash := hashTableSchema(tinfo.Sql)
 
-	if meta.CurrentSchemaHash == shash {
+	meta, err := c.GetCDCMeta(tableName)
+	if err != nil {
+		if err == db.ErrNoMoreRows {
+			// create meta
+			_, err = c.selfcdcTable().Insert(map[string]any{
+				"table_name":          tableName,
+				"current_schema_hash": "",
+			})
+			if err != nil {
+				return fmt.Errorf("failed to insert cdc meta for table %s: %w", tableName, err)
+			}
+			meta, err = c.GetCDCMeta(tableName)
+			if err != nil {
+				return fmt.Errorf("failed to get cdc meta for table %s after insert: %w", tableName, err)
+			}
+		} else {
+			return fmt.Errorf("failed to get cdc meta for table %s: %w", tableName, err)
+		}
+	}
+
+	if meta.CurrentSchemaHash != shash {
 
 		isInit := meta.CurrentSchemaHash == ""
 
