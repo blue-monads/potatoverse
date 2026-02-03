@@ -43,6 +43,12 @@ func setupTestDB(t *testing.T, dbName string) (db.Session, string, func()) {
 		t.Fatalf("Failed to execute schema: %v", err)
 	}
 
+	// Create test table
+	_, err = sess.SQL().Exec("CREATE TABLE test_records (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, value TEXT)")
+	if err != nil {
+		t.Fatalf("Failed to create test table: %v", err)
+	}
+
 	cleanup := func() {
 		sess.Close()
 		os.RemoveAll(tmpDir)

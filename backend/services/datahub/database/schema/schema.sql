@@ -255,6 +255,7 @@ CREATE TABLE IF NOT EXISTS SelfCDCMeta (
   
   start_row_id INTEGER NOT NULL DEFAULT 0,
   current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
+  current_cdc_id INTEGER NOT NULL DEFAULT 0,
 
   gc_max_records INTEGER NOT NULL DEFAULT 0,
   last_gc_at INTEGER NOT NULL DEFAULT 0,
