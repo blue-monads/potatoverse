@@ -111,6 +111,8 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 
 		for _, tableName := range alltables {
 
+			qq.Println("@start_poll_table_stat", tableName)
+
 			if slices.Contains(lazytypes.SkipTables, tableName) {
 				continue
 			}
@@ -124,7 +126,8 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 				continue
 			}
 
-			qq.Println("currentCdcId", currentCdcId)
+			qq.Println("@end_poll_table_stat", tableName, currentCdcId)
+
 		}
 
 	}

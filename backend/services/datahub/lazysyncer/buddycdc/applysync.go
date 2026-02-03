@@ -3,6 +3,7 @@ package buddycdc
 import (
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -35,6 +36,9 @@ func (b *BuddyCDC) evLoop() {
 		}
 
 		for _, remoteTableMeta := range tables {
+
+			qq.Println("@start_poll_table_stat", remoteTableMeta.TableName)
+
 			localMeta, err := b.getMetaForTableId(remoteTableMeta.Id)
 			if err != nil {
 				continue
@@ -94,6 +98,8 @@ func (b *BuddyCDC) evLoop() {
 					}
 				}
 			}
+
+			qq.Println("@end_poll_table_stat", remoteTableMeta.TableName)
 		}
 	}
 }
