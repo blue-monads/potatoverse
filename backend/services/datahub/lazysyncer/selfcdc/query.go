@@ -1,10 +1,10 @@
 package selfcdc
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -21,25 +21,54 @@ func (s *SelfCDCSyncer) GetMeta() ([]*lazytypes.SelfCDCMeta, error) {
 }
 func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytypes.BuddyData, error) {
 
-	records, err := s.GetTableRecordsSerial(tableId, sinceRowId, 100)
+	datas, err := s.GetTableRecordsSerial(tableId, sinceRowId, 100)
 	if err != nil {
 		return nil, err
 	}
 
+	records := make([]lazytypes.Record, 0, len(datas))
+
 	maxRowId := int64(0)
-	for rowid := range records {
+	for _, data := range datas {
+		rowidAny, ok := data["rowid"]
+		if !ok {
+			continue
+		}
+
+		rowid, ok := rowidAny.(int64)
+		if !ok {
+			continue
+		}
+
+		payload, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, lazytypes.Record{
+			RecordId:    rowid,
+			Operation:   0,
+			LinkedCDCId: 0,
+			Payload:     payload,
+		})
+
 		if rowid > maxRowId {
 			maxRowId = rowid
 		}
 	}
 
-	// fixme
-
 	return &lazytypes.BuddyData{
-		Records:       nil,
+		Records:       records,
 		TableCDCIndex: map[int64]int64{tableId: maxRowId},
 		SyncTillId:    maxRowId,
 	}, nil
+}
+
+type cdcRow struct {
+	Id        int64  `db:"id"`
+	RecordId  int64  `db:"record_id"`
+	Operation int64  `db:"operation"`
+	Payload   []byte `db:"payload"`
 }
 
 func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.BuddyData, error) {
@@ -50,10 +79,7 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 
 	cdcTable := tableName + "__cdc"
 
-	var cdcRows []struct {
-		Id       int64 `db:"id"`
-		RecordId int64 `db:"record_id"`
-	}
+	var cdcRows []cdcRow
 
 	// fetch limit 100
 	err := s.db.Collection(cdcTable).Find(db.Cond{"id >": sinceCdcId}).Limit(100).OrderBy("id").All(&cdcRows)
@@ -69,32 +95,63 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 		}, nil
 	}
 
-	uniqueRecordIds := make(map[int64]struct{})
-	var recordIds []int64
+	// rowid => index
+	uniqueRecordIds := make(map[int64]int)
+	recordIds := make([]int64, 0, len(cdcRows))
 	maxCdcId := sinceCdcId
 
-	for _, row := range cdcRows {
-		if _, ok := uniqueRecordIds[row.RecordId]; !ok {
-			uniqueRecordIds[row.RecordId] = struct{}{}
-			recordIds = append(recordIds, row.RecordId)
+	for idx, cdcRow := range cdcRows {
+
+		existingEntry, ok := uniqueRecordIds[cdcRow.RecordId]
+		if ok {
+			if cdcRows[existingEntry].Id > cdcRow.Id {
+				continue
+			}
 		}
 
-		if row.Id > maxCdcId {
-			maxCdcId = row.Id
+		uniqueRecordIds[cdcRow.RecordId] = idx
+		recordIds = append(recordIds, cdcRow.RecordId)
+
+		if cdcRow.Id > maxCdcId {
+			maxCdcId = cdcRow.Id
 		}
 	}
 
-	records, err := s.GetTableRecords(tableId, recordIds)
+	datas, err := s.GetTableRecords(tableId, recordIds)
 	if err != nil {
 		return nil, err
 	}
 
-	qq.Println(records)
+	records := make([]lazytypes.Record, 0, len(datas))
 
-	// fixme
+	for _, data := range datas {
+		rowidAny, ok := data["rowid"]
+		if !ok {
+			continue
+		}
+
+		rowid, ok := rowidAny.(int64)
+		if !ok {
+			continue
+		}
+
+		cdcRow := cdcRows[uniqueRecordIds[rowid]]
+
+		payload, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, lazytypes.Record{
+			RecordId:    rowid,
+			Operation:   cdcRow.Operation,
+			LinkedCDCId: cdcRow.Id,
+			Payload:     payload,
+		})
+	}
 
 	return &lazytypes.BuddyData{
-		Records:       nil,
+		Records:       records,
 		TableCDCIndex: map[int64]int64{tableId: maxCdcId},
 		SyncTillId:    maxCdcId,
 	}, nil
@@ -102,7 +159,7 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 
 //
 
-func (s *SelfCDCSyncer) GetTableRecordsSerial(tblId int64, offset int64, limit int64) (map[int64]map[string]any, error) {
+func (s *SelfCDCSyncer) GetTableRecordsSerial(tblId int64, offset int64, limit int64) ([]map[string]any, error) {
 	tableName := s.getTableName(tblId)
 	if tableName == "" {
 		return nil, ErrTableNotFound
@@ -115,25 +172,10 @@ func (s *SelfCDCSyncer) GetTableRecordsSerial(tblId int64, offset int64, limit i
 		return nil, err
 	}
 
-	final := make(map[int64]map[string]any, len(records))
-	for _, record := range records {
-		rowidAny, ok := record["rowid"]
-		if !ok {
-			continue
-		}
-
-		rowid, ok := rowidAny.(int64)
-		if !ok {
-			continue
-		}
-
-		final[rowid] = record
-	}
-
-	return final, nil
+	return records, nil
 }
 
-func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) (map[int64]map[string]any, error) {
+func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) ([]map[string]any, error) {
 	tableName := s.getTableName(tableId)
 	if tableName == "" {
 		return nil, ErrTableNotFound
@@ -146,20 +188,5 @@ func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) (map[int64]m
 		return nil, err
 	}
 
-	final := make(map[int64]map[string]any, len(records))
-	for _, record := range records {
-		rowidAny, ok := record["rowid"]
-		if !ok {
-			continue
-		}
-
-		rowid, ok := rowidAny.(int64)
-		if !ok {
-			continue
-		}
-
-		final[rowid] = record
-	}
-
-	return final, nil
+	return records, nil
 }
