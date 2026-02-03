@@ -34,8 +34,6 @@ func getDatabase() db.Session {
 		panic(fmt.Errorf("failed to open database: %w", err))
 	}
 
-	defer db.Close()
-
 	sqlconn := db.Driver().(*sql.DB)
 
 	schemaTxt := schema.Get()
@@ -57,8 +55,9 @@ func main() {
 	defer os.RemoveAll(tmpFolder)
 
 	db := getDatabase()
+	defer db.Close()
 
-	ls := lazysyncer.New(lazysyncer.Options{
+	ls := lazysyncer.NewTest(lazysyncer.Options{
 		DbSession:     db,
 		IsSelfEnabled: true,
 		Buddies:       []string{"buddy1"},

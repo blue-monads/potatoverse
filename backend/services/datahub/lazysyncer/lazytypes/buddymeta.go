@@ -1,7 +1,7 @@
 package lazytypes
 
 type BuddyCDCMeta struct {
-	Id            int64  `json:"id" db:"id"`
+	Id            int64  `json:"id" db:"id,omitempty"`
 	PubKey        string `json:"pubkey" db:"pubkey"`
 	RemoteTableID int64  `json:"remote_table_id" db:"remote_table_id"`
 	TableName     string `json:"table_name" db:"table_name"`

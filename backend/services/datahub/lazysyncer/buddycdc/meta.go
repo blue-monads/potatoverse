@@ -126,7 +126,7 @@ func (b *BuddyCDC) getMetaForTables() ([]*lazytypes.BuddyCDCMeta, error) {
 }
 
 func (b *BuddyCDC) buddyMetaTable() db.Collection {
-	return b.dbSession.Collection("BuddyCDCMeta")
+	return b.mainDb.Collection("BuddyCDCMeta")
 }
 
 func buddyTable(tableId int64) string {
