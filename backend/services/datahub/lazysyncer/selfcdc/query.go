@@ -78,9 +78,8 @@ func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytyp
 	qq.Println("@sending_with_max_rowid", maxRowId)
 
 	return &lazytypes.BuddyData{
-		Records:       records,
-		TableCDCIndex: map[int64]int64{tableId: maxRowId},
-		SyncTillId:    maxRowId,
+		Records:    records,
+		SyncTillId: maxRowId,
 	}, nil
 }
 
@@ -109,9 +108,8 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 
 	if len(cdcRows) == 0 {
 		return &lazytypes.BuddyData{
-			Records:       nil,
-			TableCDCIndex: map[int64]int64{tableId: sinceCdcId},
-			SyncTillId:    sinceCdcId,
+			Records:    nil,
+			SyncTillId: sinceCdcId,
 		}, nil
 	}
 
@@ -194,9 +192,8 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 	})
 
 	return &lazytypes.BuddyData{
-		Records:       records,
-		TableCDCIndex: map[int64]int64{tableId: maxCdcId},
-		SyncTillId:    maxCdcId,
+		Records:    records,
+		SyncTillId: maxCdcId,
 	}, nil
 }
 

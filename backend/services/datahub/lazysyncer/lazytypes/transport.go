@@ -1,9 +1,8 @@
 package lazytypes
 
 type BuddyData struct {
-	Records       []Record        `json:"records"`
-	TableCDCIndex map[int64]int64 `json:"table_cdc_index"`
-	SyncTillId    int64           `json:"sync_till_id"`
+	Records    []Record `json:"records"`
+	SyncTillId int64    `json:"sync_till_id"`
 }
 
 type Record struct {
