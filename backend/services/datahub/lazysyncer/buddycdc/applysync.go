@@ -45,27 +45,33 @@ func (b *BuddyCDC) evLoop() {
 			}
 
 			// 1. Sync Serial Data First (Historical data before CDC was enabled)
-			for localMeta.SyncedRowID < remoteTableMeta.MaxRowID {
-				data, err := b.transport.GetDataSerial(localMeta.RemoteTableID, localMeta.SyncedRowID)
-				if err != nil {
-					break
-				}
-				if data == nil || len(data.Records) == 0 {
-					break
+
+			if localMeta.SyncedRowID < remoteTableMeta.StartRowID {
+				for localMeta.SyncedRowID < remoteTableMeta.MaxRowID {
+					data, err := b.transport.GetDataSerial(localMeta.RemoteTableID, localMeta.SyncedRowID)
+					if err != nil {
+						break
+					}
+					if data == nil || len(data.Records) == 0 {
+						break
+					}
+
+					if err := b.saveRecords(localMeta.TableName, data.Records); err != nil {
+						break
+					}
+
+					if err := b.updateMeta(localMeta.Id, map[string]any{
+						"synced_row_id": data.SyncTillId,
+						"start_row_id":  remoteTableMeta.StartRowID,
+					}); err != nil {
+						break
+					}
+
+					localMeta.SyncedRowID = data.SyncTillId
 				}
 
-				if err := b.saveRecords(localMeta.TableName, data.Records); err != nil {
-					break
-				}
+				continue
 
-				if err := b.updateMeta(localMeta.Id, map[string]any{
-					"synced_row_id": data.SyncTillId,
-					"start_row_id":  remoteTableMeta.StartRowID,
-				}); err != nil {
-					break
-				}
-
-				localMeta.SyncedRowID = data.SyncTillId
 			}
 
 			// 2. Sync CDC Data (Incremental updates)
@@ -95,7 +101,6 @@ func (b *BuddyCDC) evLoop() {
 
 					err = b.updateMeta(localMeta.Id, map[string]any{
 						"synced_cdc_id": data.SyncTillId,
-						"synced_row_id": remoteTableMeta.MaxRowID,
 					})
 					if err != nil {
 						break
@@ -103,6 +108,8 @@ func (b *BuddyCDC) evLoop() {
 
 					localMeta.SyncedCDCID = data.SyncTillId
 				}
+
+				continue
 			}
 
 			qq.Println("@end_poll_table_stat", remoteTableMeta.TableName)
