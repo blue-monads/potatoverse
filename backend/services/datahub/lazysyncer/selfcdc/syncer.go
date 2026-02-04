@@ -204,7 +204,7 @@ func (s *SelfCDCSyncer) GetCDCCache() map[int64]int64 {
 			continue
 		}
 
-		cache[id] = cmeta.CurrentCDCID
+		cache[id] = cmeta.CurrentMaxCDCID
 	}
 
 	return cache
@@ -233,11 +233,9 @@ func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	}
 
 	newData := map[string]any{
-		"current_cdc_id":     maxRowid,
 		"current_max_cdc_id": maxRowid,
 	}
 
-	// update current_cdc_id in CDCMeta table
 	err = s.selfcdcTable().Find(db.Cond{"table_name": tableName}).Update(newData)
 	if err != nil {
 		return 0, err

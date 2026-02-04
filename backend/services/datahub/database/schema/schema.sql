@@ -256,7 +256,6 @@ CREATE TABLE IF NOT EXISTS SelfCDCMeta (
   
   start_row_id INTEGER NOT NULL DEFAULT 0,
   current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
-  current_cdc_id INTEGER NOT NULL DEFAULT 0,
 
   gc_max_records INTEGER NOT NULL DEFAULT 0,
   last_gc_at INTEGER NOT NULL DEFAULT 0,
@@ -278,8 +277,6 @@ CREATE TABLE IF NOT EXISTS BuddyCDCMeta (
   current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
   synced_cdc_id INTEGER NOT NULL DEFAULT 0,
 
-
-  current_cdc_id INTEGER NOT NULL DEFAULT 0,
   current_schema_hash TEXT NOT NULL DEFAULT '',
   is_deleted BOOLEAN NOT NULL DEFAULT 0,
   extrameta JSON NOT NULL DEFAULT '{}'
