@@ -1,8 +1,10 @@
 package buddycdc
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
@@ -63,7 +65,7 @@ func (b *BuddyCDC) evLoop() {
 					break
 				}
 
-				if err := b.saveRecords(localMeta.TableName, data.Records); err != nil {
+				if err := b.saveRecords(localMeta.Id, data.Records); err != nil {
 					break
 				}
 
@@ -81,6 +83,30 @@ func (b *BuddyCDC) evLoop() {
 		}
 	}
 
+}
+
+func (b *BuddyCDC) saveRecords(tableId int64, records []lazytypes.Record) error {
+	tbl := b.dbSession.Collection(fmt.Sprintf("zz_B_%d", tableId))
+
+	for _, record := range records {
+
+		data := map[string]any{
+			"record_id":     record.RecordId,
+			"linked_cdc_id": record.LinkedCDCId,
+			"operation":     record.Operation,
+		}
+
+		if record.Payload != nil {
+			data["payload"] = record.Payload
+		}
+
+		_, err := tbl.Insert(data)
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
 }
 
 func (b *BuddyCDC) updateMeta(tid int64, data map[string]any) error {
