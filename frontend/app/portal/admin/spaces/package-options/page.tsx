@@ -10,7 +10,11 @@ import {
     Layers,
     Search,
     Info,
-    BookOpen
+    BookOpen,
+    Key,
+    User,
+    ShieldCheck,
+    CloudLightning
 } from 'lucide-react';
 
 const packageInfo = {
@@ -25,11 +29,18 @@ const packageInfo = {
     isLatest: true,
 }
 
+
 const tabs = [
     { name: 'Overview', icon: Info },
     { name: 'Versions', icon: History },
+    { name: 'Spaces', icon: Layers },
+    { name: 'KV', icon: Key },
+    { name: 'Users', icon: User },
     { name: 'Files', icon: Folder, active: true },
-    { name: 'Spec', icon: BookOpen, },
+    { name: 'Capabilities', icon: ShieldCheck },
+    { name: 'Events', icon: CloudLightning },
+    { name: 'Spec', icon: BookOpen },
+
 ]
 
 

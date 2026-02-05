@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useGApp } from "@/hooks";
-import { HelpCircleIcon, LogOut, MessageCircleIcon, Search } from "lucide-react";
+import { HelpCircleIcon, Layers, LogOut, MessageCircleIcon, Search } from "lucide-react";
 import useUserNotification from "@/hooks/useUserNotification";
 import MessagePanel from "@/contain/MessagePanel/MessagePanel";
 import Link from "next/link";
@@ -29,9 +29,9 @@ export default function PortalLayout({
             {children}
           </div>
 
-          <MessagePanel 
-            isOpen={isMessagePanelOpen} 
-            onClose={() => setIsMessagePanelOpen(false)} 
+          <MessagePanel
+            isOpen={isMessagePanelOpen}
+            onClose={() => setIsMessagePanelOpen(false)}
           />
 
         </div>
@@ -115,37 +115,37 @@ const Sidebar = ({ onMessageClick }: { onMessageClick: () => void }) => {
                 {mounted && gapp.loaded && gapp.isAuthenticated && gapp.userInfo && (
                   <>
 
-                  <li>
-                    <button 
-                    className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group p-2"
-                    onClick={onMessageClick}
-                    title="Notifications"
-                    >
-                      <MessageCircleIcon className="w-6 h-6" />
-                      { notifier.unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
-                      )}
-                      {notifier.unreadCount > 9 && (
-                        <span className="absolute top-0 right-0 text-[10px] font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center border border-white">
-                          {notifier.unreadCount > 99 ? '99+' : notifier.unreadCount}
-                        </span>
-                      )}
-                    </button>
-                  </li>
+                    <li>
+                      <button
+                        className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group p-2"
+                        onClick={onMessageClick}
+                        title="Notifications"
+                      >
+                        <MessageCircleIcon className="w-6 h-6" />
+                        {notifier.unreadCount > 0 && (
+                          <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                        )}
+                        {notifier.unreadCount > 9 && (
+                          <span className="absolute top-0 right-0 text-[10px] font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center border border-white">
+                            {notifier.unreadCount > 99 ? '99+' : notifier.unreadCount}
+                          </span>
+                        )}
+                      </button>
+                    </li>
 
-                  <li>
-
-
-                    <Link
-                      href="/portal/admin/profile"
-                      title="Profile"
-                      className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
-                    >
-                      <img src={`/zz/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
-                    </Link>
+                    <li>
 
 
-                  </li>
+                      <Link
+                        href="/portal/admin/profile"
+                        title="Profile"
+                        className="relative flex items-center justify-center text-gray-600 rounded-lg  hover:bg-gray-50 active:bg-gray-100 duration-150 group"
+                      >
+                        <img src={`/zz/profileImage/11/${(gapp.userInfo.name)}`} alt="profile" className="w-8 h-8 rounded-full" />
+                      </Link>
+
+
+                    </li>
                   </>
                 )}
 
@@ -190,20 +190,7 @@ const navigation = [
     href: "/portal/admin/spaces",
     name: "Spaces",
     icon: (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-        className="w-6 h-6"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3"
-        />
-      </svg>
+      <Layers className="w-6 h-6" />
     ),
   },
   {
