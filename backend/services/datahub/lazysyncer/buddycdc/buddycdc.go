@@ -13,9 +13,7 @@ type BuddyCDC struct {
 	buddyPubKey string
 	mainDb      db.Session
 	dbSession   db.Session
-	state       map[int64]int64
-
-	transport lazytypes.RemoteBuddyTransport
+	transport   lazytypes.RemoteBuddyTransport
 }
 
 type Options struct {
@@ -38,7 +36,6 @@ func NewBuddyCDC(opts Options) (*BuddyCDC, error) {
 		mainDb:      opts.MainDb,
 		buddyPubKey: opts.BuddyPubKey,
 		dbSession:   dbSession,
-		state:       make(map[int64]int64),
 		transport:   opts.Transport,
 	}
 

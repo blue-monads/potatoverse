@@ -68,11 +68,8 @@ func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecordSerial(ctx *gin.Context) 
 		return
 	}
 
-	tableCDCIndex := b.selfcdc.GetCDCCache()
-
 	ctx.JSON(http.StatusOK, gin.H{
-		"records":         records,
-		"table_cdc_index": tableCDCIndex,
+		"records": records,
 	})
 
 }

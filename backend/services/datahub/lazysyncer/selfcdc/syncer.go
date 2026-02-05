@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
@@ -19,10 +18,6 @@ type SelfCDCSyncer struct {
 	db            db.Session
 	isEnabled     bool
 	ontableChange chan string
-
-	cdcIdIndex map[int64]string
-	stateCache map[string]*lazytypes.SelfCDCMeta
-	mu         sync.RWMutex
 }
 
 func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
@@ -30,9 +25,6 @@ func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
 		db:            db,
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
-		cdcIdIndex:    make(map[int64]string),
-		stateCache:    make(map[string]*lazytypes.SelfCDCMeta),
-		mu:            sync.RWMutex{},
 	}
 }
 
@@ -48,37 +40,11 @@ func (s *SelfCDCSyncer) Start() error {
 		}
 	}
 
-	if err := s.updateStateCache(); err != nil {
-		return err
-	}
-
 	if NotifyMode {
 		go s.notifySyncLoop()
 	} else {
 		go s.pollSyncLoop()
 	}
-
-	return nil
-}
-
-func (s *SelfCDCSyncer) updateStateCache() error {
-	cmetas, err := s.GetAllCdcMeta()
-	if err != nil {
-		return err
-	}
-
-	cdcIdIndex := make(map[int64]string)
-	stateCache := make(map[string]*lazytypes.SelfCDCMeta)
-
-	for _, cmeta := range cmetas {
-		cdcIdIndex[cmeta.Id] = cmeta.TableName
-		stateCache[cmeta.TableName] = cmeta
-	}
-
-	s.mu.Lock()
-	s.cdcIdIndex = cdcIdIndex
-	s.stateCache = stateCache
-	s.mu.Unlock()
 
 	return nil
 }
@@ -89,10 +55,6 @@ func (s *SelfCDCSyncer) AttachMissingTables() error {
 	}
 
 	if err := s.ApplyCDC(); err != nil {
-		return err
-	}
-
-	if err := s.updateStateCache(); err != nil {
 		return err
 	}
 
@@ -180,36 +142,6 @@ func (s *SelfCDCSyncer) GetAllCdcMeta() ([]*lazytypes.SelfCDCMeta, error) {
 	return cdcMeta, nil
 }
 
-func (s *SelfCDCSyncer) getTableName(tblId int64) string {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	tableName, ok := s.cdcIdIndex[tblId]
-	if !ok {
-		return ""
-	}
-
-	return tableName
-}
-
-func (s *SelfCDCSyncer) GetCDCCache() map[int64]int64 {
-	cache := make(map[int64]int64)
-
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	for id, tableName := range s.cdcIdIndex {
-		cmeta, ok := s.stateCache[tableName]
-		if !ok {
-			continue
-		}
-
-		cache[id] = cmeta.CurrentMaxCDCID
-	}
-
-	return cache
-}
-
 func (s *SelfCDCSyncer) tableMaxId(tableName, idColumn string) (int64, error) {
 	row, err := s.db.SQL().QueryRow(fmt.Sprintf("SELECT MAX(%s) FROM %s", idColumn, tableName))
 	if err != nil {
@@ -240,15 +172,6 @@ func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	cmeta, err := s.GetCDCMeta(tableName)
-	if err != nil {
-		return 0, err
-	}
-
-	s.mu.Lock()
-	s.stateCache[tableName] = cmeta
-	s.mu.Unlock()
 
 	return maxRowid, nil
 }
