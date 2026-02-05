@@ -50,17 +50,18 @@ const Page = () => {
                     )}
                 </div>
 
-                <div className="flex items-center gap-2 text-base text-gray-600">
+                <div className="flex flex-col md:flex-row items-center gap-4 text-base text-gray-600">
 
                     <div className='flex items-center gap-1'>
                         <div>License</div>
+                        <span className="text-gray-700">•</span>
                         <span className="text-gray-400 text-sm ">{packageInfo.license}</span>
                     </div>
 
-                    <span className="text-gray-700">•</span>
 
                     <div className='flex items-center gap-1'>
                         <div>Published</div>
+                        <span className="text-gray-700">•</span>
                         <span className="text-gray-400 text-sm ">
                             {packageInfo.publishedAt}  ({packageInfo.version})
                         </span>
@@ -68,15 +69,15 @@ const Page = () => {
 
                     </div>
 
-                    <span className="text-gray-700">•</span>
+
 
                     <div className='flex items-center gap-1'>
                         <div>Author</div>
+                        <span className="text-gray-700">•</span>
                         <span className="text-gray-400 text-sm ">{packageInfo.author}</span>
 
                     </div>
 
-                    <span className="text-gray-700">•</span>
 
 
 
