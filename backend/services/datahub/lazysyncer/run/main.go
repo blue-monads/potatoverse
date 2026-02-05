@@ -81,7 +81,11 @@ func main() {
 		panic(fmt.Errorf("failed to start syncer: %w", err))
 	}
 
+	counter := 0
+
 	for {
+
+		counter = counter + 1
 
 		time.Sleep(10 * time.Second)
 
@@ -97,6 +101,21 @@ func main() {
 		}
 
 		fmt.Println("average row size:", avgSize)
+
+		if counter == 5 {
+			alterstmt := `ALTER TABLE test ADD COLUMN bio TEXT`
+			_, err = sqlconn.Exec(alterstmt)
+			if err != nil {
+				panic(fmt.Errorf("failed to alter table: %w", err))
+			}
+
+			err := ls.GetSelfCDCSyncer().ApplySchemaChange("test")
+			if err != nil {
+				panic(fmt.Errorf("failed to apply schema change: %w", err))
+			}
+
+		}
+
 	}
 
 }

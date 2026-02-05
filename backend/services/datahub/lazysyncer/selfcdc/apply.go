@@ -48,6 +48,36 @@ func (c *SelfCDCSyncer) ApplyCDC() error {
 
 }
 
+func (c *SelfCDCSyncer) ApplySchemaChange(tableName string) error {
+	if !c.isEnabled {
+		return nil
+	}
+
+	meta, err := c.GetCDCMeta(tableName)
+	if err != nil {
+		return fmt.Errorf("failed to get cdc meta for table %s after insert: %w", tableName, err)
+	}
+
+	tinfo, err := c.getTableInfo(tableName)
+	if err != nil {
+		return fmt.Errorf("failed to get table info for table %s: %w", tableName, err)
+	}
+
+	shash := hashTableSchema(tinfo.Sql)
+
+	if meta.CurrentSchemaHash == shash {
+		return nil
+	}
+
+	err = c.setHash(tableName, tinfo.Sql, shash, meta.CurrentSchemaHash == "")
+	if err != nil {
+		return fmt.Errorf("failed to set initial schema for table %s: %w", tableName, err)
+	}
+
+	return nil
+
+}
+
 func (c *SelfCDCSyncer) ensureCDC(tableName string) error {
 	cdcTable := tableName + "__cdc"
 
