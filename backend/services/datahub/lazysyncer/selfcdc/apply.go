@@ -91,16 +91,9 @@ func (c *SelfCDCSyncer) ensureCDC(tableName string) error {
 	if err != nil {
 		if err == db.ErrNoMoreRows {
 			// create meta
-
-			maxRowid, err := c.tableMaxId(tableName, pkColumn)
-			if err != nil {
-				return fmt.Errorf("failed to get max rowid for table %s: %w", tableName, err)
-			}
-
 			_, err = c.selfcdcTable().Insert(map[string]any{
 				"table_name":          tableName,
 				"current_schema_hash": "",
-				"start_row_id":        maxRowid,
 				"primary_key":         pkColumn,
 			})
 			if err != nil {
@@ -110,6 +103,20 @@ func (c *SelfCDCSyncer) ensureCDC(tableName string) error {
 			if err != nil {
 				return fmt.Errorf("failed to get cdc meta for table %s after insert: %w", tableName, err)
 			}
+
+			// First, insert schema record into CDC table (operation = 3 for schema_init)
+			err := c.setHash(tableName, tinfo.Sql, shash, true)
+			if err != nil {
+				return fmt.Errorf("failed to set initial schema for table %s: %w", tableName, err)
+			}
+
+			// Then, insert all existing records into CDC table as INSERT operations
+			if err := c.insertExistingRecordsIntoCDC(tableName, pkColumn); err != nil {
+				return fmt.Errorf("failed to insert existing records into CDC for table %s: %w", tableName, err)
+			}
+
+			// Return early - we've already set the schema hash
+			return nil
 		} else {
 			return fmt.Errorf("failed to get cdc meta for table %s: %w", tableName, err)
 		}
@@ -164,6 +171,25 @@ func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazytypes.SelfCDCMeta, er
 	}
 
 	return &cdcMeta, nil
+}
+
+func (c *SelfCDCSyncer) insertExistingRecordsIntoCDC(tableName, pkColumn string) error {
+	cdcTable := tableName + "__cdc"
+
+	// Use a single INSERT INTO ... SELECT statement to copy all existing records
+	// This is much faster and avoids database locking issues
+	sqlconn := c.db.Driver().(*sql.DB)
+	query := fmt.Sprintf(
+		"INSERT INTO %s (record_id, operation, payload) SELECT %s, 0, '' FROM %s",
+		cdcTable, pkColumn, tableName,
+	)
+
+	_, err := sqlconn.Exec(query)
+	if err != nil {
+		return fmt.Errorf("failed to insert existing records into CDC: %w", err)
+	}
+
+	return nil
 }
 
 // private

@@ -44,72 +44,37 @@ func (b *BuddyCDC) evLoop() {
 				continue
 			}
 
-			// 1. Sync Serial Data First (Historical data before CDC was enabled)
-
-			if localMeta.SyncedRowID < remoteTableMeta.StartRowID {
-				for localMeta.SyncedRowID < remoteTableMeta.MaxRowID {
-					data, err := b.transport.GetDataSerial(localMeta.RemoteTableID, localMeta.SyncedRowID)
-					if err != nil {
-						break
-					}
-					if data == nil || len(data.Records) == 0 {
-						break
-					}
-
-					if err := b.saveRecords(localMeta.TableName, data.Records); err != nil {
-						break
-					}
-
-					if err := b.updateMeta(localMeta.Id, map[string]any{
-						"synced_row_id": data.SyncTillId,
-						"start_row_id":  remoteTableMeta.StartRowID,
-					}); err != nil {
-						break
-					}
-
-					localMeta.SyncedRowID = data.SyncTillId
+			// Sync CDC Data (All data now goes through CDC)
+			for localMeta.SyncedCDCID < remoteTableMeta.CurrentMaxCDCID {
+				data, err := b.transport.GetDataCDC(localMeta.RemoteTableID, localMeta.SyncedCDCID)
+				if err != nil {
+					break
 				}
-
-				continue
-
-			}
-
-			// 2. Sync CDC Data (Incremental updates)
-			// Only start CDC sync if we are caught up with serial sync (or if there was no serial sync needed)
-			if localMeta.SyncedRowID >= localMeta.StartRowID {
-				for localMeta.SyncedCDCID < remoteTableMeta.CurrentMaxCDCID {
-					data, err := b.transport.GetDataCDC(localMeta.RemoteTableID, localMeta.SyncedCDCID)
-					if err != nil {
-						break
-					}
-					if data == nil || len(data.Records) == 0 {
-						if data != nil && data.SyncTillId > localMeta.SyncedCDCID {
-							err = b.updateMeta(localMeta.Id, map[string]any{
-								"synced_cdc_id": data.SyncTillId,
-							})
-							if err == nil {
-								localMeta.SyncedCDCID = data.SyncTillId
-							}
-							continue
+				if data == nil || len(data.Records) == 0 {
+					if data != nil && data.SyncTillId > localMeta.SyncedCDCID {
+						err = b.updateMeta(localMeta.Id, map[string]any{
+							"synced_cdc_id": data.SyncTillId,
+						})
+						if err == nil {
+							localMeta.SyncedCDCID = data.SyncTillId
 						}
-						break
+						continue
 					}
-
-					if err := b.saveRecords(localMeta.TableName, data.Records); err != nil {
-						break
-					}
-
-					err = b.updateMeta(localMeta.Id, map[string]any{
-						"synced_cdc_id": data.SyncTillId,
-					})
-					if err != nil {
-						break
-					}
-
-					localMeta.SyncedCDCID = data.SyncTillId
+					break
 				}
 
-				continue
+				if err := b.saveRecords(localMeta.TableName, data.Records); err != nil {
+					break
+				}
+
+				err = b.updateMeta(localMeta.Id, map[string]any{
+					"synced_cdc_id": data.SyncTillId,
+				})
+				if err != nil {
+					break
+				}
+
+				localMeta.SyncedCDCID = data.SyncTillId
 			}
 
 			qq.Println("@end_poll_table_stat", remoteTableMeta.TableName)

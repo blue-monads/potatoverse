@@ -252,9 +252,7 @@ CREATE TABLE IF NOT EXISTS SelfCDCMeta (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   table_name TEXT NOT NULL,
   primary_key TEXT NOT NULL,
-  -- start_row_id rowid of the first record in the table, all records before this id has to be synced before syncing from cdc
   
-  start_row_id INTEGER NOT NULL DEFAULT 0,
   current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
 
   gc_max_records INTEGER NOT NULL DEFAULT 0,
@@ -270,9 +268,6 @@ CREATE TABLE IF NOT EXISTS BuddyCDCMeta (
   pubkey TEXT NOT NULL,
   remote_table_id INTEGER NOT NULL,
   table_name TEXT NOT NULL,
-
-  start_row_id INTEGER NOT NULL DEFAULT 0,
-  synced_row_id INTEGER NOT NULL DEFAULT 0,
 
   current_max_cdc_id INTEGER NOT NULL DEFAULT 0,
   synced_cdc_id INTEGER NOT NULL DEFAULT 0,

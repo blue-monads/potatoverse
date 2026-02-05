@@ -45,8 +45,6 @@ func (b *BuddyCDC) applyTablesMeta(tables []*lazytypes.SelfCDCMeta) error {
 					PubKey:          b.buddyPubKey,
 					RemoteTableID:   tableMeta.Id,
 					TableName:       tableMeta.TableName,
-					StartRowID:      tableMeta.StartRowID,
-					SyncedRowID:     0,
 					CurrentMaxCDCID: 0,
 					SyncedCDCID:     0,
 				}

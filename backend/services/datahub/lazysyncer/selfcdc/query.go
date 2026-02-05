@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -20,67 +19,7 @@ func (s *SelfCDCSyncer) GetMeta() ([]*lazytypes.SelfCDCMeta, error) {
 		return nil, err
 	}
 
-	for _, meta := range metas {
-		maxRowId, err := s.tableMaxId(meta.TableName, meta.PrimaryKey)
-		if err != nil {
-			continue
-		}
-
-		qq.Println("@setting_max_row_id", meta.TableName, maxRowId)
-		meta.MaxRowID = maxRowId
-	}
-
 	return metas, nil
-}
-func (s *SelfCDCSyncer) GetDataSerial(tableId int64, sinceRowId int64) (*lazytypes.BuddyData, error) {
-
-	datas, err := s.GetTableRecordsSerial(tableId, sinceRowId, 100)
-	if err != nil {
-		return nil, err
-	}
-
-	records := make([]lazytypes.Record, 0, len(datas))
-
-	maxRowId := int64(sinceRowId)
-	for _, data := range datas {
-		rowidAny, ok := data["rowid"]
-		if !ok {
-			rowidAny, ok = data["id"]
-		}
-
-		if !ok {
-			continue
-		}
-
-		rowid, ok := rowidAny.(int64)
-		if !ok {
-			continue
-		}
-
-		if rowid > maxRowId {
-			maxRowId = rowid
-		}
-
-		payload, err := json.Marshal(data)
-		if err != nil {
-			return nil, err
-		}
-
-		records = append(records, lazytypes.Record{
-			RecordId:    rowid,
-			Operation:   0,
-			LinkedCDCId: 0,
-			Payload:     payload,
-		})
-
-	}
-
-	qq.Println("@sending_with_max_rowid", maxRowId)
-
-	return &lazytypes.BuddyData{
-		Records:    records,
-		SyncTillId: maxRowId,
-	}, nil
 }
 
 type cdcRow struct {

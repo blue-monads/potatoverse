@@ -14,6 +14,5 @@ type Record struct {
 
 type RemoteBuddyTransport interface {
 	GetMeta() ([]*SelfCDCMeta, error)
-	GetDataSerial(tableId int64, sinceRowId int64) (*BuddyData, error)
 	GetDataCDC(tableId int64, sinceCdcId int64) (*BuddyData, error)
 }
