@@ -11,7 +11,7 @@ import (
 	"github.com/upper/db/v4"
 )
 
-const CACHE_INTERVAL = 2 * time.Second
+const CACHE_INTERVAL = 30 * time.Second
 const NotifyMode = false
 
 type SelfCDCSyncer struct {
