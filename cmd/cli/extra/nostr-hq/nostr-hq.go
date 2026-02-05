@@ -3,6 +3,8 @@ package nostrhq
 import (
 	"context"
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/blue-monads/potatoverse/cmd/cli"
 	"github.com/fiatjaf/relayer/v2"
@@ -17,6 +19,16 @@ func init() {
 func Run(ctx context.Context) error {
 
 	port := 7447
+
+	portStr := os.Getenv("POTATO_HQ_PORT")
+	if portStr != "" {
+		porti, err := strconv.Atoi(portStr)
+		if err != nil {
+			log.Fatalf("failed to parse port: %v", err)
+		}
+
+		port = porti
+	}
 
 	r := Relay{}
 
