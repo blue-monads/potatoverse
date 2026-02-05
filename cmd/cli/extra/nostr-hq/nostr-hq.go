@@ -36,6 +36,9 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}
+
+	log.Printf("Starting server on port %d", port)
+
 	if err := server.Start("0.0.0.0", port); err != nil {
 		log.Fatalf("server terminated: %v", err)
 	}
