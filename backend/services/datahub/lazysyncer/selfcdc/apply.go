@@ -176,11 +176,9 @@ func (s *SelfCDCSyncer) GetCDCMeta(tableName string) (*lazytypes.SelfCDCMeta, er
 func (c *SelfCDCSyncer) insertExistingRecordsIntoCDC(tableName, pkColumn string) error {
 	cdcTable := tableName + "__cdc"
 
-	// Use a single INSERT INTO ... SELECT statement to copy all existing records
-	// This is much faster and avoids database locking issues
 	sqlconn := c.db.Driver().(*sql.DB)
 	query := fmt.Sprintf(
-		"INSERT INTO %s (record_id, operation, payload) SELECT %s, 0, '' FROM %s",
+		"INSERT INTO %s (record_id, operation) SELECT %s, 0 FROM %s",
 		cdcTable, pkColumn, tableName,
 	)
 

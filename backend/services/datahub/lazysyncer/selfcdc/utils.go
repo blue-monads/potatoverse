@@ -92,3 +92,69 @@ func (c *SelfCDCSyncer) getTableInfo(tableName string) (*dbmodels.TableInfo, err
 
 	return info, nil
 }
+
+/*
+
+SELECT AVG(
+    (length(column1) + length(column2) + length(column3))
+) AS average_row_size
+FROM your_table_name;
+
+*/
+
+func (c *SelfCDCSyncer) getColumns(tableName string) ([]string, error) {
+	quotedTableName := fmt.Sprintf(`"%s"`, strings.ReplaceAll(tableName, `"`, `""`))
+	rows, err := c.db.SQL().Query(fmt.Sprintf("PRAGMA table_info(%s)", quotedTableName))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var columns []string
+	for rows.Next() {
+		var cid int
+		var name string
+		var dataType string
+		var notNull int
+		var defaultValue interface{}
+		var pk int
+
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &pk); err != nil {
+			return nil, err
+		}
+		columns = append(columns, name)
+	}
+	return columns, nil
+}
+
+func (c *SelfCDCSyncer) GetAverageRowSize(tableName string) (int64, error) {
+
+	columns, err := c.getColumns(tableName)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(columns) == 0 {
+		return 0, nil
+	}
+
+	var colSumParts []string
+	for _, col := range columns {
+		quotedCol := fmt.Sprintf(`"%s"`, strings.ReplaceAll(col, `"`, `""`))
+		colSumParts = append(colSumParts, fmt.Sprintf("IFNULL(length(%s), 0)", quotedCol))
+	}
+
+	query := fmt.Sprintf("SELECT AVG(%s) FROM \"%s\"", strings.Join(colSumParts, " + "), strings.ReplaceAll(tableName, `"`, `""`))
+
+	row, err := c.db.SQL().QueryRow(query)
+	if err != nil {
+		return 0, err
+	}
+
+	var avgSize float64
+	if err := row.Scan(&avgSize); err != nil {
+		return 0, nil // Likely no rows
+	}
+
+	return int64(avgSize), nil
+}

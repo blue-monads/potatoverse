@@ -85,11 +85,18 @@ func main() {
 
 		time.Sleep(10 * time.Second)
 
-		_, err = sqlconn.Exec("INSERT INTO test (name) VALUES ('Alice')")
+		_, err = sqlconn.Exec(fmt.Sprintf("INSERT INTO test (name) VALUES ('EEEEEEEEEEEEEEEEEEEEEE Alice%d')", time.Now().Unix()))
 		if err != nil {
 			panic(fmt.Errorf("failed to insert user: %w", err))
 		}
 
+		avgSize, err := ls.GetSelfCDCSyncer().GetAverageRowSize("test")
+		if err != nil {
+			fmt.Println("failed to get average row size:", err)
+			continue
+		}
+
+		fmt.Println("average row size:", avgSize)
 	}
 
 }
