@@ -159,7 +159,7 @@ func (s *SelfCDCSyncer) tableMaxId(tableName, idColumn string) (int64, error) {
 
 func (s *SelfCDCSyncer) UpdateCurrentCdcId(tableName string) (int64, error) {
 
-	maxRowid, err := s.tableMaxId(tableName+"__log", "id")
+	maxRowid, err := s.tableMaxId(tableName+"__cdc", "id")
 	if err != nil {
 		return 0, err
 	}

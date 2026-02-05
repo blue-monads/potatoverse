@@ -172,7 +172,7 @@ func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) ([]map[strin
 
 func (s *SelfCDCSyncer) getTableName(tblId int64) string {
 	var meta lazytypes.SelfCDCMeta
-	err := s.selfcdcTable().Find(db.Cond{"id": tblId}).Select("name").One(&meta)
+	err := s.selfcdcTable().Find(db.Cond{"id": tblId}).Select("table_name").One(&meta)
 	if err != nil {
 		return ""
 	}
