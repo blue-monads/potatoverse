@@ -3,58 +3,9 @@ import { deriveHost } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
+import { deriveHostAndIframeSrc } from './hostSrc';
 
 // /portal/admin/exec?nskey=test&space_id=1
-
-const buildIframeSrc = (nskey: string, host: string) => {
-
-    let src = `/zz/space/${nskey}`;
-
-    if (host) {
-        // Clean the host - remove any protocol, paths, or leading/trailing slashes
-        let cleanHost = host.trim();
-        
-        // Remove protocol if present
-        cleanHost = cleanHost.replace(/^https?:\/\//, '');
-        
-        // Remove any path that might be included (take only the hostname part)
-        // This prevents issues like "hostname/path" becoming part of the URL
-        cleanHost = cleanHost.split('/')[0];
-        
-        // Remove trailing slashes
-        cleanHost = cleanHost.replace(/\/+$/, '');
-        
-        // Determine protocol and port from current origin
-        const origin = window.location.origin;
-        const isSecure = origin.startsWith("https://");
-        
-        // Extract port from current origin (needed for localhost development)
-        let port = '';
-        try {
-            const url = new URL(origin);
-            const originPort = url.port;
-            // Only include port if it's non-standard (not 80 for http, not 443 for https)
-            if (originPort && originPort !== '' && 
-                ((!isSecure && originPort !== '80') || (isSecure && originPort !== '443'))) {
-                port = `:${originPort}`;
-            }
-        } catch (e) {
-            // Fallback: try to extract port manually if URL parsing fails
-            const portMatch = origin.match(/:(\d+)$/);
-            if (portMatch) {
-                const originPort = portMatch[1];
-                if ((!isSecure && originPort !== '80') || (isSecure && originPort !== '443')) {
-                    port = `:${originPort}`;
-                }
-            }
-        }
-        
-        // Build the URL - preserve port from current origin for localhost development
-        src = `${isSecure ? "https://" : "http://"}${cleanHost}${port}/zz/space/${nskey}`;
-    } 
-
-    return src;
-}
 
 
 export default function Page() {
@@ -65,34 +16,37 @@ export default function Page() {
     const [isLoading, setIsLoading] = useState(true);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const [iframeSrc, setIframeSrc] = useState('');
+    const [errmsg, setErrmsg] = useState<string>();
 
     const loadHost = async () => {
-        if (!nskey) {
+        if (!nskey || !space_id) {
+            setErrmsg("invalid link or unknown error")
             return;
         }
 
-        setIsLoading(true);        
-
+        
         try {
 
+            setIsLoading(true);
+
+
             const startTime = Date.now();
-            const resp = await deriveHost(nskey, space_id || undefined);
-            if (resp.status !== 200) {
-                console.error("failed to derive host");
-                return;
-            }
-     
+            const hostsrc = await deriveHostAndIframeSrc(nskey, space_id)
             const endTime = Date.now();
 
             const duration = endTime - startTime;
             console.log(`deriveHost took ${duration}ms`);
+            if (!hostsrc) {
+                setErrmsg("Error building src")
+                return
+            }
 
-            
-            setIframeSrc(buildIframeSrc(nskey, resp.data.host));
+
+            setIframeSrc(hostsrc);
 
             setTimeout(() => {
                 setIsLoading(false);
-            }, Math.min( Math.max(200, duration), 10000))
+            }, Math.min(Math.max(200, duration), 10000))
 
         } catch (error) {
             console.error(error);
@@ -101,15 +55,18 @@ export default function Page() {
 
     }
 
+    console.log("@", {
+        isLoading,
+        iframeSrc,
+        errmsg
+    })
+
 
 
     useEffect(() => {
-        if (!nskey || !space_id) {
-            return;
-        }
-
-        loadHost();
         
+        loadHost();
+
     }, [nskey, space_id]);
 
     console.log(iframeSrc);
@@ -123,6 +80,12 @@ export default function Page() {
                         <Loader2 className='w-12 h-12 animate-spin my-20' />
                     </div>
                 )}
+
+                {errmsg && (<>
+                    <div className='flex items-center justify-center h-full'>
+                        <p className="text-red-500">{errmsg}</p>
+                    </div>
+                </>)}
 
                 {iframeSrc && (<>
                     <iframe
