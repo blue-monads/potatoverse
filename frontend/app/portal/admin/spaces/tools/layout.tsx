@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User } from 'lucide-react';
+import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getInstalledPackageInfo, InstalledPackageInfo } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
@@ -52,11 +52,18 @@ const navItems = [
         icon: CloudLightning,
     },
     {
+        label: 'Envs',
+        value: 'env-vars',
+        url: '/portal/admin/spaces/tools/env-vars',
+        icon: Settings,
+    },
+    {
         label: 'Spec',
         value: 'docs',
         url: '/portal/admin/spaces/tools/docs',
         icon: BookOpen,
     },
+
 ];
 
 interface PropsType {
