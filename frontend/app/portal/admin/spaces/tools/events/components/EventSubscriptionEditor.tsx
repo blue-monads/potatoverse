@@ -2,12 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Zap, Pencil, Target, Clock, ArrowLeft, List } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import { EventSubscription, getSpaceSpec } from '@/lib';
+import { EventSubscription, getSpaceSpec, listInstalledSpaces, Space } from '@/lib';
 import RuleEditor, { Rule } from './RuleEditor';
 
 interface SpaceSpec {
     space_specs: Record<string, {
         events_outputs: Array<{
+            name: string;
+            description: string;
+            schema?: any;
+        }>;
+        event_slots: Array<{
             name: string;
             description: string;
             schema?: any;
@@ -73,6 +78,12 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData, i
     const [showEventsDropdown, setShowEventsDropdown] = useState(false);
     const [availableEvents, setAvailableEvents] = useState<Array<{name: string; description: string}>>([]);
     const [loadingEvents, setLoadingEvents] = useState(false);
+    const [availableSpaces, setAvailableSpaces] = useState<Space[]>([]);
+    const [showSpacesDropdown, setShowSpacesDropdown] = useState(false);
+    const [loadingSpaces, setLoadingSpaces] = useState(false);
+    const [showEventSlotsDropdown, setShowEventSlotsDropdown] = useState(false);
+    const [availableEventSlots, setAvailableEventSlots] = useState<Array<{name: string; description: string}>>([]);
+    const [loadingEventSlots, setLoadingEventSlots] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -143,8 +154,68 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData, i
     useEffect(() => {
         if (installId) {
             fetchAvailableEvents();
+            fetchAvailableSpaces();
         }
     }, [installId]);
+
+    useEffect(() => {
+        // When spaces are loaded and we have a targetSpaceId, fetch event slots
+        if (availableSpaces.length > 0 && target.targetSpaceId) {
+            fetchEventSlotsForSpace(target.targetSpaceId);
+        }
+    }, [availableSpaces, target.targetSpaceId]);
+
+    const fetchAvailableSpaces = async () => {
+        if (!installId) return;
+        
+        setLoadingSpaces(true);
+        try {
+            const response = await listInstalledSpaces();
+            // Filter spaces that belong to the same install or all spaces if user has access
+            const spaces = response.data.spaces || [];
+            console.log('Loaded spaces:', spaces);
+            setAvailableSpaces(spaces);
+        } catch (error) {
+            console.error('Error fetching available spaces:', error);
+        } finally {
+            setLoadingSpaces(false);
+        }
+    };
+
+    const fetchEventSlotsForSpace = async (spaceId: number) => {
+        if (!spaceId) return;
+        
+        setLoadingEventSlots(true);
+        try {
+            // Get the install_id for the selected space
+            const space = availableSpaces.find(s => s.id === spaceId);
+            if (!space) {
+                throw new Error('Space not found');
+            }
+            
+            const response = await getSpaceSpec(space.install_id);
+            const specData: SpaceSpec = response.data;
+            
+            const eventSlots: Array<{name: string; description: string}> = [];
+            Object.values(specData.space_specs || {}).forEach(spaceSpec => {
+                if (spaceSpec.event_slots) {
+                    spaceSpec.event_slots.forEach(eventSlot => {
+                        eventSlots.push({
+                            name: eventSlot.name,
+                            description: eventSlot.description
+                        });
+                    });
+                }
+            });
+            
+            setAvailableEventSlots(eventSlots);
+        } catch (error) {
+            console.error('Error fetching event slots:', error);
+            setAvailableEventSlots([]);
+        } finally {
+            setLoadingEventSlots(false);
+        }
+    };
 
     const fetchAvailableEvents = async () => {
         if (!installId) return;
@@ -177,6 +248,19 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData, i
     const selectEvent = (eventName: string) => {
         setEventKey(eventName);
         setShowEventsDropdown(false);
+    };
+
+    const selectSpace = (spaceId: number) => {
+        console.log('Selecting space:', spaceId);
+        updateTarget({ targetSpaceId: spaceId, endpoint: '' });
+        setShowSpacesDropdown(false);
+        // Fetch event slots for the selected space
+        fetchEventSlotsForSpace(spaceId);
+    };
+
+    const selectEventSlot = (eventSlotName: string) => {
+        updateTarget({ endpoint: eventSlotName });
+        setShowEventSlotsDropdown(false);
     };
 
     const handleSave = async () => {
@@ -480,27 +564,94 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData, i
 
                                 <div className='flex flex-col gap-2'>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Space</label>
-                                    <div className='flex gap-2'>
-                                        <input
-                                            type="number"
-                                            placeholder="space_id"
-                                            value={target.targetSpaceId}
-                                            onChange={(e) => updateTarget({ targetSpaceId: parseInt(e.target.value) })}
-                                            className="w-11/12 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        <button className='w-1/12 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-gray-400 text-gray-00 hover:text-white'>
-                                            Pick
-                                        </button>
+                                    <div className="relative">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Select a space"
+                                                value={target.targetSpaceId ? availableSpaces.find(s => s.id === target.targetSpaceId)?.name || `Space ID: ${target.targetSpaceId}` : ''}
+                                                readOnly
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer"
+                                                onClick={() => setShowSpacesDropdown(!showSpacesDropdown)}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowSpacesDropdown(!showSpacesDropdown)}
+                                                disabled={loadingSpaces}
+                                                className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            >
+                                                <List className="w-4 h-4" />
+                                                {loadingSpaces ? '...' : 'Spaces'}
+                                            </button>
+                                        </div>
+                                        
+                                        {showSpacesDropdown && availableSpaces.length > 0 && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                {availableSpaces.map((space) => (
+                                                    <button
+                                                        key={space.id}
+                                                        type="button"
+                                                        onClick={() => selectSpace(space.id)}
+                                                        className="w-full px-4 py-2 text-left hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                    >
+                                                        <div className="font-medium text-gray-900">{space.name}</div>
+                                                        <div className="text-sm text-gray-500">ID: {space.id} • {space.namespace_key}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        {showSpacesDropdown && availableSpaces.length === 0 && !loadingSpaces && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-2 text-gray-500">
+                                                No spaces available
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Event Name</label>
-                                    <input
-                                        type="text"
-                                        value={target.endpoint}
-                                        onChange={(e) => updateTarget({ endpoint: e.target.value })}
-                                        placeholder="notify_x_changed"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Event Slot</label>
+                                    <div className="relative">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder={target.targetSpaceId ? "Enter event slot name or pick from list" : "Select a space first"}
+                                                value={target.endpoint || ''}
+                                                onChange={(e) => updateTarget({ endpoint: e.target.value })}
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                                                disabled={!target.targetSpaceId}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowEventSlotsDropdown(!showEventSlotsDropdown)}
+                                                disabled={!target.targetSpaceId || loadingEventSlots}
+                                                className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                            >
+                                                <List className="w-4 h-4" />
+                                                {loadingEventSlots ? '...' : 'Events'}
+                                            </button>
+                                        </div>
+                                        
+                                        {showEventSlotsDropdown && availableEventSlots.length > 0 && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                {availableEventSlots.map((eventSlot, index) => (
+                                                    <button
+                                                        key={index}
+                                                        type="button"
+                                                        onClick={() => selectEventSlot(eventSlot.name)}
+                                                        className="w-full px-4 py-2 text-left hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                                    >
+                                                        <div className="font-medium text-gray-900">{eventSlot.name}</div>
+                                                        <div className="text-sm text-gray-500">{eventSlot.description}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        {showEventSlotsDropdown && availableEventSlots.length === 0 && !loadingEventSlots && (
+                                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-2 text-gray-500">
+                                                No event slots available
+                                            </div>
+                                        )}
+                                    </div>
 
                                 </div>
 
