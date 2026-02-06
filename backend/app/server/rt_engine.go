@@ -50,7 +50,7 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	if err != nil {
 		return nil, err
 	}
-	ipackage, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
+	ipackage, err := a.ctrl.InstallPackageByFile(claim.UserId, "", tempFile.Name())
 	if err != nil {
 		return nil, err
 	}

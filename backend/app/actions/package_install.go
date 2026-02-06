@@ -40,7 +40,7 @@ func (c *Controller) InstallPackageByUrl(userId int64, url string) (*InstallPack
 
 	file := tmpFile.Name()
 
-	return c.InstallPackageByFile(userId, file)
+	return c.InstallPackageByFile(userId, "", file)
 
 }
 
@@ -59,11 +59,11 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 
 	defer os.Remove(file)
 
-	return c.InstallPackageByFile(userId, file)
+	return c.InstallPackageByFile(userId, repoSlug, file)
 }
 
-func (c *Controller) InstallPackageByFile(userId int64, file string) (*InstallPackageResult, error) {
-	id, err := installPackageByFile(c.database, c.logger, userId, "embed", file)
+func (c *Controller) InstallPackageByFile(userId int64, repo, file string) (*InstallPackageResult, error) {
+	id, err := installPackageByFile(c.database, c.logger, userId, repo, file)
 	if err != nil {
 		return nil, err
 	}
