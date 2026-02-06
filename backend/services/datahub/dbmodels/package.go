@@ -4,11 +4,13 @@ import "time"
 
 type InstalledPackage struct {
 	ID              int64      `json:"id" db:"id,omitempty"`
+	Slug            string     `json:"slug" db:"slug"`
 	Name            string     `json:"name" db:"name"`
 	InstallRepo     string     `json:"install_repo" db:"install_repo"`
 	CanonicalUrl    string     `json:"canonical_url" db:"canonical_url,omitempty"`
 	StorageType     string     `json:"storage_type" db:"storage_type"`
 	ActiveInstallID int64      `json:"active_install_id" db:"active_install_id"`
+	EnvVars         string     `json:"env_vars" db:"env_vars"`
 	InstalledBy     int64      `json:"installed_by" db:"installed_by"`
 	InstalledAt     *time.Time `json:"installed_at" db:"installed_at,omitempty"`
 	DevToken        string     `json:"dev_token" db:"dev_token"`

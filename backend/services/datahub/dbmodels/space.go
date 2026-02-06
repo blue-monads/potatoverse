@@ -16,7 +16,6 @@ type Space struct {
 	DevMode bool `json:"dev_mode" db:"dev_mode,omitempty"`
 
 	ModOverlayScript string `json:"mod_overlay_script" db:"mod_overlay_script,omitempty"`
-	ModEnvVars       string `json:"mod_env_vars" db:"mod_env_vars,omitempty"`
 
 	OwnerID      int64  `json:"owned_by" db:"owned_by"`
 	ExtraMeta    string `json:"extrameta" db:"extrameta,omitempty"`

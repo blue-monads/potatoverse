@@ -100,11 +100,13 @@ CREATE TABLE IF NOT EXISTS UserMessages(
 
 CREATE TABLE IF NOT EXISTS PackageInstalls (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL DEFAULT '',  
+  name TEXT NOT NULL DEFAULT '',
+  slug TEXT NOT NULL,
   install_repo TEXT NOT NULL DEFAULT '',
   canonical_url TEXT NOT NULL DEFAULT '',
   storage_type TEXT NOT NULL DEFAULT 'db', -- db, file-open, file-zip etc.
   active_install_id INTEGER NOT NULL DEFAULT 0,
+  env_vars TEXT NOT NULL DEFAULT '{}',
   installed_by INTEGER NOT NULL DEFAULT 0,
   installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   is_active BOOLEAN NOT NULL DEFAULT FALSE,
@@ -145,7 +147,6 @@ CREATE TABLE IF NOT EXISTS Spaces (
   owned_by INTEGER NOT NULL, 
 
   mod_overlay_script TEXT NOT NULL DEFAULT '',
-  mod_env_vars JSON NOT NULL DEFAULT '{}',
 
 
   extrameta JSON NOT NULL DEFAULT '{}', 

@@ -35,6 +35,7 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 	// Create InstalledPackage record
 	installedPackage := &dbmodels.InstalledPackage{
 		Name:            pkgManifest.Name,
+		Slug:            pkgManifest.Slug,
 		InstallRepo:     repo,
 		ActiveInstallID: userId,
 		InstalledBy:     userId,
