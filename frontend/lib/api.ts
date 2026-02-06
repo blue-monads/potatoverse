@@ -205,6 +205,14 @@ export interface InstallPackageResult {
     init_page: string;
 }
 
+/** Response from package upgrade (repo or zip). When update_page is set, show Configure after upgrade. */
+export interface UpgradePackageResult {
+    package_version_id: number;
+    update_page: string;
+    key_space: string;
+    root_space_id: number;
+}
+
 
 export const installPackage = async (url: string) => {
     return iaxios.post<InstallPackageResult>(`/core/package/install`, { url });
@@ -219,7 +227,7 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
 }
 
 export const upgradePackageZipDirectly = async (packageId: number, zip: ArrayBuffer) => {
-    return iaxios.post<InstallPackageResult>(`/core/package/upgrade/${packageId}/zip`, zip, {
+    return iaxios.post<UpgradePackageResult>(`/core/package/upgrade/${packageId}/zip`, zip, {
         headers: {
             "Content-Type": "application/zip",
         },
@@ -243,9 +251,9 @@ export interface UpgradePackageFromRepoRequest {
     version: string;
 }
 
-/** Upgrade package to a specific version from repo. Returns new package_version_id (number). */
+/** Upgrade package to a specific version from repo. Returns UpgradePackageResult (update_page when set shows Configure). */
 export const upgradePackageFromRepo = async (packageId: number, req: UpgradePackageFromRepoRequest) => {
-    return iaxios.post<number>(`/core/package/${packageId}/upgrade/repo`, req);
+    return iaxios.post<UpgradePackageResult>(`/core/package/${packageId}/upgrade/repo`, req);
 }
 
 export const installPackageEmbed = async (name: string, repoSlug?: string) => {

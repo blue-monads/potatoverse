@@ -12,11 +12,19 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, installedId int64) (int64, error) {
+// UpgradePackageResult is returned from upgrade operations, similar to InstallPackageResult for new installs.
+type UpgradePackageResult struct {
+	PackageVersionId int64  `json:"package_version_id"`
+	UpdatePage       string `json:"update_page"`
+	KeySpace         string `json:"key_space"`
+	RootSpaceId      int64  `json:"root_space_id"`
+}
+
+func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, installedId int64) (*UpgradePackageResult, error) {
 
 	pkg, err := c.database.GetPackageInstallOps().GetPackage(installedId)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	packageSlug := pkg.Slug
@@ -24,7 +32,7 @@ func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, 
 	rhub := c.engine.GetRepoHub()
 	file, err := rhub.ZipPackage(repoSlug, packageSlug, version)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	defer os.Remove(file)
@@ -33,27 +41,27 @@ func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, 
 
 }
 
-func (c *Controller) UpgradePackage(userId int64, file string, installedId int64, recreateArtifacts bool) (int64, error) {
+func (c *Controller) UpgradePackage(userId int64, file string, installedId int64, recreateArtifacts bool) (*UpgradePackageResult, error) {
 
 	pvid, err := c.database.GetPackageInstallOps().UpdatePackage(installedId, file)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	rawPkg, err := xutils.GetPackageManifest(file)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	pkg := &models.PotatoPackage{}
 	err = json.Unmarshal(rawPkg, pkg)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	oldSpaces, err := c.database.GetSpaceOps().ListSpacesByPackageId(installedId)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
@@ -70,7 +78,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		space := models.ArtifactSpace{}
 		err = json.Unmarshal(kosher.Byte(artifact.Raw), &space)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 
 		for i, oldSpace := range oldSpaces {
@@ -81,13 +89,13 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		}
 
 		if space.Namespace == "" {
-			return 0, errors.New("space namespace is required")
+			return nil, errors.New("space namespace is required")
 		}
 
 		if currentArtifactIndex == -1 {
 			spaceId, err := installArtifactSpace(c.database, userId, installedId, &space)
 			if err != nil {
-				return 0, err
+				return nil, err
 			}
 
 			c.logger.Info("space installed", "space_id", spaceId)
@@ -99,7 +107,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 
 				routeOptions, err := json.Marshal(space.RouteOptions)
 				if err != nil {
-					return 0, err
+					return nil, err
 				}
 
 				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
@@ -115,7 +123,7 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					"install_id": installedId,
 				})
 				if err != nil {
-					return 0, err
+					return nil, err
 				}
 
 			}
@@ -125,19 +133,16 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 	}
 
 	pops := c.database.GetPackageInstallOps()
-	if err != nil {
-		return 0, err
-	}
 	err = pops.UpdateActiveInstallId(installedId, pvid)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	// delete old versions, keeping 3 latest versions
 
 	allPVersions, err := pops.ListPackageVersionsByPackageId(installedId)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	if len(allPVersions) > 3 {
@@ -156,6 +161,19 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 
 	c.engine.LoadRoutingIndexForPackages(installedId)
 
-	return pvid, nil
+	rootSpaceId := int64(0)
+	for _, s := range oldSpaces {
+		if s.NamespaceKey == pkg.Slug {
+			rootSpaceId = s.ID
+			break
+		}
+	}
+
+	return &UpgradePackageResult{
+		PackageVersionId: pvid,
+		UpdatePage:       pkg.UpdatePage,
+		KeySpace:         pkg.Slug,
+		RootSpaceId:      rootSpaceId,
+	}, nil
 
 }

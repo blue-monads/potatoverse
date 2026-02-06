@@ -35,7 +35,7 @@ import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { useGApp } from '@/hooks';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
-import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo, generatePackageDevToken, listPackageAvailableVersions, upgradePackageFromRepo, upgradePackageZipDirectly, AvailableVersionsResponse } from '@/lib';
+import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo, generatePackageDevToken, listPackageAvailableVersions, upgradePackageFromRepo, upgradePackageZipDirectly, AvailableVersionsResponse, UpgradePackageResult } from '@/lib';
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -545,8 +545,10 @@ interface UpgradeFromZipModalProps {
 }
 
 const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFromZipModalProps) => {
+    const router = useRouter();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
+    const [upgradeResult, setUpgradeResult] = useState<UpgradePackageResult | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -557,16 +559,50 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
     const handleUpgrade = async () => {
         if (!selectedFile) return;
         setUploading(true);
+        setUpgradeResult(null);
         try {
             const buffer = await selectedFile.arrayBuffer();
-            await upgradePackageZipDirectly(packageId, buffer);
-            onUpdated();
+            const res = await upgradePackageZipDirectly(packageId, buffer);
+            const result = res.data;
+            if (result?.update_page) {
+                setUpgradeResult(result);
+            } else {
+                onUpdated();
+                modal.closeModal();
+            }
         } catch (err: any) {
             alert(err?.response?.data?.message || err?.message || 'Upgrade failed');
         } finally {
             setUploading(false);
         }
     };
+
+    const handleConfigure = () => {
+        if (!upgradeResult?.update_page) return;
+        const fragment = new URLSearchParams();
+        fragment.set('nskey', upgradeResult.key_space);
+        fragment.set('space_id', upgradeResult.root_space_id.toString());
+        fragment.set('load_page', upgradeResult.update_page);
+        router.push(`/portal/admin/exec?${fragment.toString()}`);
+        onUpdated();
+        modal.closeModal();
+    };
+
+    if (upgradeResult?.update_page) {
+        return (
+            <div className="space-y-4">
+                <p className="text-sm text-gray-600">Upgrade completed. You can configure the package or close.</p>
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button onClick={() => { onUpdated(); modal.closeModal(); }} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                        Close
+                    </button>
+                    <button onClick={handleConfigure} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium">
+                        Configure
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -619,11 +655,13 @@ interface CheckForUpdateModalProps {
 }
 
 const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }: CheckForUpdateModalProps) => {
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<AvailableVersionsResponse | null>(null);
     const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
     const [updating, setUpdating] = useState(false);
+    const [upgradeResult, setUpgradeResult] = useState<UpgradePackageResult | null>(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -650,18 +688,36 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
     const handleUpdate = async () => {
         if (!data || !selectedVersion) return;
         setUpdating(true);
+        setUpgradeResult(null);
         try {
-            await upgradePackageFromRepo(packageId, {
+            const res = await upgradePackageFromRepo(packageId, {
                 repo_slug: data.repo_slug,
                 name: data.name,
                 version: selectedVersion,
             });
-            onUpdated();
+            const result = res.data;
+            if (result?.update_page) {
+                setUpgradeResult(result);
+            } else {
+                onUpdated();
+                modal.closeModal();
+            }
         } catch (err: any) {
             alert(err?.response?.data?.message || err?.message || 'Update failed');
         } finally {
             setUpdating(false);
         }
+    };
+
+    const handleConfigure = () => {
+        if (!upgradeResult?.update_page) return;
+        const fragment = new URLSearchParams();
+        fragment.set('nskey', upgradeResult.key_space);
+        fragment.set('space_id', upgradeResult.root_space_id.toString());
+        fragment.set('load_page', upgradeResult.update_page);
+        router.push(`/portal/admin/exec?${fragment.toString()}`);
+        onUpdated();
+        modal.closeModal();
     };
 
     if (loading) {
@@ -691,6 +747,22 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
                 </p>
                 <div className="flex justify-end">
                     <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Close</button>
+                </div>
+            </div>
+        );
+    }
+
+    if (upgradeResult?.update_page) {
+        return (
+            <div className="space-y-4">
+                <p className="text-sm text-gray-600">Update completed. You can configure the package or close.</p>
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button onClick={() => { onUpdated(); modal.closeModal(); }} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                        Close
+                    </button>
+                    <button onClick={handleConfigure} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium">
+                        Configure
+                    </button>
                 </div>
             </div>
         );
