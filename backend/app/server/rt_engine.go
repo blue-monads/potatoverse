@@ -111,6 +111,32 @@ func (a *Server) GetPackageAvailableVersions(claim *signer.AccessClaim, ctx *gin
 	return a.ctrl.ListPackageAvailableVersions(packageId)
 }
 
+func (a *Server) GetPackageEnvs(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return a.ctrl.GetEnvs(packageId)
+}
+
+func (a *Server) UpdatePackageEnvs(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	var envs map[string]string
+	if err := ctx.ShouldBindJSON(&envs); err != nil {
+		return nil, err
+	}
+	if envs == nil {
+		envs = make(map[string]string)
+	}
+	if err := a.ctrl.UpdateEnvs(packageId, envs); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
 type InstallRequest struct {
 	Name     string `json:"name"`
 	RepoSlug string `json:"repo_slug,omitempty"`

@@ -141,6 +141,10 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int
 
 }
 
+func (d *PackageInstallOperations) UpdatePackageData(id int64, data map[string]any) error {
+	return d.installedPackagesTable().Find(db.Cond{"id": id}).Update(data)
+}
+
 func (d *PackageInstallOperations) UpdateActiveInstallId(id int64, installId int64) error {
 	return d.installedPackagesTable().Find(db.Cond{"id": id}).Update(map[string]any{
 		"active_install_id": installId,

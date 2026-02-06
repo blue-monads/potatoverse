@@ -127,6 +127,9 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/package/:id/upgrade/repo", a.withAccessTokenFn(a.UpgradePackageRepo))
 	coreApi.GET("/package/:id/versions", a.withAccessTokenFn(a.GetPackageAvailableVersions))
 
+	coreApi.GET("/package/:id/envs", a.withAccessTokenFn(a.GetPackageEnvs))
+	coreApi.PUT("/package/:id/envs", a.withAccessTokenFn(a.UpdatePackageEnvs))
+
 	coreApi.DELETE("/package/:id", a.withAccessTokenFn(a.DeletePackage))
 	coreApi.POST("/package/:id/dev-token", a.withAccessTokenFn(a.GeneratePackageDevToken))
 

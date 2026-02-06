@@ -370,6 +370,15 @@ export const getInstalledPackageInfo = async (packageId: number) => {
     return iaxios.get<InstalledPackageInfo>(`/core/package/${packageId}/info`);
 }
 
+/** Package env vars: flat JSON object key -> value (single-level only). */
+export const getPackageEnvs = async (packageId: number) => {
+    return iaxios.get<Record<string, string>>(`/core/package/${packageId}/envs`);
+}
+
+export const updatePackageEnvs = async (packageId: number, envs: Record<string, string>) => {
+    return iaxios.put(`/core/package/${packageId}/envs`, envs);
+}
+
 
 export type FormattedSpace = {
     space_id: number;

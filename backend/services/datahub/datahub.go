@@ -96,6 +96,8 @@ type PackageInstallOps interface {
 	GetPackage(id int64) (*dbmodels.InstalledPackage, error)
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, file string) (int64, error)
+
+	UpdatePackageData(id int64, data map[string]any) error
 	UpdateActiveInstallId(id int64, installId int64) error
 	UpdatePackageDevToken(id int64, devToken string) error
 
