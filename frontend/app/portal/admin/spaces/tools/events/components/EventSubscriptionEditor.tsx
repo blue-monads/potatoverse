@@ -232,6 +232,7 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             Icon={Zap}
             name="Event Subscription"
             description={initialData ? 'Edit event subscription' : 'Create new event subscription'}
+            variant="none"
         >
             <div className="max-w-4xl mx-auto px-6 py-8 w-full space-y-6">
                 {/* Event Name Section */}

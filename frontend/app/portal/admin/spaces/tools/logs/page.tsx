@@ -11,7 +11,7 @@ export default function Page() {
             Icon={Terminal}
             name="Logs"
             description="View package logs"
-            variant="slim"
+            variant="none"
         >
             <div className="p-6">
                 <div>Logs</div>
