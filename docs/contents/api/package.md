@@ -74,7 +74,7 @@ Get installed package info.
 
 **Response:** Package info object
 
-### GET /zz/api/core/package/:id/available-versions
+### GET /zz/api/core/package/:id/versions
 
 List versions available in the repo for this package (only for packages installed from a repo).
 

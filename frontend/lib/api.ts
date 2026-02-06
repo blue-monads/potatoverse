@@ -234,7 +234,7 @@ export interface AvailableVersionsResponse {
 }
 
 export const listPackageAvailableVersions = async (packageId: number) => {
-    return iaxios.get<AvailableVersionsResponse>(`/core/package/${packageId}/available-versions`);
+    return iaxios.get<AvailableVersionsResponse>(`/core/package/${packageId}/versions`);
 }
 
 export interface UpgradePackageFromRepoRequest {

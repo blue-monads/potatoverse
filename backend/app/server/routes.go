@@ -125,7 +125,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/package/install/repo", a.withAccessTokenFn(a.InstallPackageRepo))
 	coreApi.POST("/package/:id/upgrade/zip", a.withAccessTokenFn(a.UpgradePackageZip))
 	coreApi.POST("/package/:id/upgrade/repo", a.withAccessTokenFn(a.UpgradePackageRepo))
-	coreApi.GET("/package/:id/available-versions", a.withAccessTokenFn(a.GetPackageAvailableVersions))
+	coreApi.GET("/package/:id/versions", a.withAccessTokenFn(a.GetPackageAvailableVersions))
 
 	coreApi.DELETE("/package/:id", a.withAccessTokenFn(a.DeletePackage))
 	coreApi.POST("/package/:id/dev-token", a.withAccessTokenFn(a.GeneratePackageDevToken))
