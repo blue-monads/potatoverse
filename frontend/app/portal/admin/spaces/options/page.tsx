@@ -44,7 +44,7 @@ const tabs = [
 ]
 
 
-const Page = () => {
+const NewLayoutExample = () => {
     return (
         <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full">
             {/* Header Section */}
@@ -127,4 +127,4 @@ const Page = () => {
     );
 };
 
-export default Page;
+export default NewLayoutExample;

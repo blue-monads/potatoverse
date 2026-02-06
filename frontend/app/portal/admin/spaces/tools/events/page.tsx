@@ -1,13 +1,13 @@
 "use client";
 import React, { useState } from 'react';
-import { Zap, Filter, Edit, Trash2, Plus } from 'lucide-react';
+import { Zap, Filter, Edit, Trash2, Plus, CloudLightning } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
-import { 
-    listEventSubscriptions, 
-    EventSubscription, 
+import {
+    listEventSubscriptions,
+    EventSubscription,
     deleteEventSubscription,
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
@@ -16,13 +16,13 @@ export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
-    
+
     if (!installId) {
         return <div>Install ID not provided</div>;
     }
 
-    return <EventSubscriptionsListingPage 
-        installId={parseInt(installId)} 
+    return <EventSubscriptionsListingPage
+        installId={parseInt(installId)}
         spaceId={spaceId ? parseInt(spaceId) : undefined}
     />;
 }
@@ -34,7 +34,7 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
     const loader = useSimpleDataLoader<EventSubscription[]>({
         loader: () => {
             const params: { space_id?: number } = {};
-            
+
             return listEventSubscriptions(installId, params.space_id);
         },
         ready: true,
@@ -43,11 +43,11 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
 
     // Filter data based on search term
     const filteredData = loader.data?.filter(sub => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             sub.event_key.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sub.target_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sub.target_endpoint.toLowerCase().includes(searchTerm.toLowerCase());
-        
+
         return matchesSearch;
     }) || [];
 
@@ -78,23 +78,24 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
 
     return (
         <WithAdminBodyLayout
-            Icon={Zap}
+            Icon={CloudLightning}
             name="Event Subscriptions"
             description="Subscribe events from other spaces and execute actions"
-            rightContent={
-                <AddButton
-                    name="+ New Subscription"
-                    onClick={handleNew}
-                />
-            }
+            variant="none"
         >
             <BigSearchBar
                 searchText={searchTerm}
                 setSearchText={setSearchTerm}
+                rightContent={
+                    <AddButton
+                        name="+ New Subscription"
+                        onClick={handleNew}
+                    />
+                }
             />
 
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">
-                
+
 
                 {/* Table */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -157,20 +158,18 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    sub.space_id === 0 
-                                                        ? 'bg-purple-100 text-purple-800' 
-                                                        : 'bg-green-100 text-green-800'
-                                                }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${sub.space_id === 0
+                                                    ? 'bg-purple-100 text-purple-800'
+                                                    : 'bg-green-100 text-green-800'
+                                                    }`}>
                                                     {sub.space_id === 0 ? 'Package (Root)' : `Space ${sub.space_id}`}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    sub.disabled 
-                                                        ? 'bg-red-100 text-red-800' 
-                                                        : 'bg-green-100 text-green-800'
-                                                }`}>
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${sub.disabled
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-green-100 text-green-800'
+                                                    }`}>
                                                     {sub.disabled ? 'Disabled' : 'Active'}
                                                 </span>
                                             </td>

@@ -2,10 +2,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 
+import { Terminal } from 'lucide-react';
+import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
+
 export default function Page() {
-    return (<>
-        <div>Logs</div>
-    </>)
+    return (
+        <WithAdminBodyLayout
+            Icon={Terminal}
+            name="Logs"
+            description="View package logs"
+            variant="slim"
+        >
+            <div className="p-6">
+                <div>Logs</div>
+            </div>
+        </WithAdminBodyLayout>
+    );
 }
 
 

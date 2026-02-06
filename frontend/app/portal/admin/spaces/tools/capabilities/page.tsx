@@ -1,6 +1,12 @@
 "use client";
 import React, { useState } from 'react';
-import { Filter, Edit, Trash2, Package, Layers, Settings, Bug } from 'lucide-react';
+import {
+    Filter, Edit, Trash2, Package, Layers, Settings,
+    Plus,
+    Search,
+    ShieldCheck,
+    Bug
+} from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -138,19 +144,20 @@ const CapabilitiesListingPage = ({ installId, spaceId }: { installId: number; sp
 
     return (
         <WithAdminBodyLayout
-            Icon={Settings}
+            Icon={ShieldCheck}
             name="Space Capabilities"
             description="Manage capabilities for this package or space"
-            rightContent={
-                <AddButton
-                    name="+ Add Capability"
-                    onClick={handleCreateClick}
-                />
-            }
+            variant="none"
         >
             <BigSearchBar
                 searchText={searchTerm}
                 setSearchText={setSearchTerm}
+                rightContent={
+                    <AddButton
+                        name="+ Add Capability"
+                        onClick={handleCreateClick}
+                    />
+                }
             />
 
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">

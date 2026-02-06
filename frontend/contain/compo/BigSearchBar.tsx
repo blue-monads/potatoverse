@@ -6,14 +6,15 @@ interface PropsType {
     onSearchButtonClick?: () => void;
     placeholder?: string;
     className?: string;
+    rightContent?: React.ReactNode;
 }
 
 const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
 
     return (
         <div className={`bg-white border-b border-gray-200 px-6 py-4 ${props.className}`}>
-            <div className="max-w-7xl mx-auto">
-                <div className="relative">
+            <div className="max-w-7xl mx-auto flex items-center gap-4">
+                <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
@@ -22,13 +23,18 @@ const BigSearchBar: React.FC<PropsType> = (props: PropsType) => {
                         value={props.searchText}
                         onChange={(e) => props.setSearchText(e.target.value)}
                     />
-                    <button 
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors"
-                    onClick={props.onSearchButtonClick}
+                    <button
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 cursor-pointer hover:bg-gray-100 rounded-full transition-colors"
+                        onClick={props.onSearchButtonClick}
                     >
                         <Zap className="w-5 h-5 text-gray-400" />
                     </button>
                 </div>
+                {props.rightContent && (
+                    <div className="flex-shrink-0">
+                        {props.rightContent}
+                    </div>
+                )}
             </div>
         </div>
     );
