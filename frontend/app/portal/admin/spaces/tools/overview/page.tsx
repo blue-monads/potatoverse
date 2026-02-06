@@ -38,20 +38,18 @@ export default function Page() {
 
     if (!installId) {
         return (
-            <WithAdminBodyLayout Icon={PackageIcon} name="Package About" description="Select a package to view details">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <PackageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No package selected</p>
-                        <button
-                            onClick={() => router.back()}
-                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                        >
-                            Go Back
-                        </button>
-                    </div>
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <PackageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No package selected</p>
+                    <button
+                        onClick={() => router.back()}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    >
+                        Go Back
+                    </button>
                 </div>
-            </WithAdminBodyLayout>
+            </div>
         );
     }
 
@@ -79,27 +77,18 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
 
     if (loader.loading) {
         return (
-            <WithAdminBodyLayout Icon={PackageIcon} name="Package About" description="Loading package details...">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p className="text-gray-500">Loading package information...</p>
-                    </div>
-                </div>
-            </WithAdminBodyLayout>
+            <p className="text-gray-500">Loading package information...</p>
         );
     }
 
     if (!packageData) {
         return (
-            <WithAdminBodyLayout Icon={PackageIcon} name="Package About" description="Package not found">
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-center">
-                        <PackageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">Package not found</p>
-                    </div>
+            <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                    <PackageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Package not found</p>
                 </div>
-            </WithAdminBodyLayout>
+            </div>
         );
     }
 
