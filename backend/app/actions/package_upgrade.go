@@ -3,6 +3,7 @@ package actions
 import (
 	"encoding/json"
 	"errors"
+	"os"
 	"sort"
 
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
@@ -10,6 +11,27 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/tidwall/gjson"
 )
+
+func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, installedId int64) (int64, error) {
+
+	pkg, err := c.database.GetPackageInstallOps().GetPackage(installedId)
+	if err != nil {
+		return 0, err
+	}
+
+	packageSlug := pkg.Slug
+
+	rhub := c.engine.GetRepoHub()
+	file, err := rhub.ZipPackage(repoSlug, packageSlug, version)
+	if err != nil {
+		return 0, err
+	}
+
+	defer os.Remove(file)
+
+	return c.UpgradePackage(userId, file, installedId, true)
+
+}
 
 func (c *Controller) UpgradePackage(userId int64, file string, installedId int64, recreateArtifacts bool) (int64, error) {
 

@@ -58,18 +58,72 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	return ipackage, nil
 }
 
-type InstallPackageEmbedRequest struct {
-	Name     string `json:"name"`
-	RepoSlug string `json:"repo_slug,omitempty"`
+func (a *Server) UpgradePackageZip(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	tempFile, err := os.CreateTemp("", "upgrade-potato-*.zip")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(tempFile.Name())
+
+	_, err = io.Copy(tempFile, ctx.Request.Body)
+	if err != nil {
+		return nil, err
+	}
+	ipackage, err := a.ctrl.UpgradePackage(claim.UserId, tempFile.Name(), packageId, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return ipackage, nil
 }
 
-func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	var req InstallPackageEmbedRequest
+func (a *Server) UpgradePackageRepo(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	var req InstallRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return nil, err
 	}
 
-	ipackage, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	ipackage, err := a.ctrl.UpgradePackageRepo(claim.UserId, req.RepoSlug, req.Version, packageId)
+	if err != nil {
+		return nil, err
+	}
+
+	return ipackage, nil
+
+}
+
+func (a *Server) GetPackageAvailableVersions(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return a.ctrl.ListPackageAvailableVersions(packageId)
+}
+
+type InstallRequest struct {
+	Name     string `json:"name"`
+	RepoSlug string `json:"repo_slug,omitempty"`
+	Version  string `json:"version,omitempty"`
+}
+
+func (a *Server) InstallPackageRepo(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	var req InstallRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		return nil, err
+	}
+
+	ipackage, err := a.ctrl.InstallPackageRepo(claim.UserId, req.Name, req.RepoSlug)
 	if err != nil {
 		return nil, err
 	}

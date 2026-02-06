@@ -122,11 +122,17 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	coreApi.POST("/package/install", a.withAccessTokenFn(a.InstallPackage))
 	coreApi.POST("/package/install/zip", a.withAccessTokenFn(a.InstallPackageZip))
-	coreApi.POST("/package/install/embed", a.withAccessTokenFn(a.InstallPackageEmbed))
+	coreApi.POST("/package/install/repo", a.withAccessTokenFn(a.InstallPackageRepo))
+	coreApi.POST("/package/:id/upgrade/zip", a.withAccessTokenFn(a.UpgradePackageZip))
+	coreApi.POST("/package/:id/upgrade/repo", a.withAccessTokenFn(a.UpgradePackageRepo))
+	coreApi.GET("/package/:id/available-versions", a.withAccessTokenFn(a.GetPackageAvailableVersions))
+
 	coreApi.DELETE("/package/:id", a.withAccessTokenFn(a.DeletePackage))
 	coreApi.POST("/package/:id/dev-token", a.withAccessTokenFn(a.GeneratePackageDevToken))
+
 	coreApi.POST("/package/push", a.PushPackage)
 	coreApi.GET("/package/list", a.withAccessTokenFn(a.ListEPackages))
+
 	coreApi.GET("/repo/list", a.withAccessTokenFn(a.ListRepos))
 	coreApi.GET("/space/installed", a.withAccessTokenFn(a.ListInstalledSpaces))
 	coreApi.POST("/space/authorize/:space_key", a.withAccessTokenFn(a.AuthorizeSpace))

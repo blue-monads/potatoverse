@@ -25,14 +25,17 @@ import {
     Check,
     Clock,
     Edit,
-    Copy
+    Copy,
+    RefreshCw,
+    Upload,
+    ChevronDown
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { useGApp } from '@/hooks';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
-import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo, generatePackageDevToken } from '@/lib';
+import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo, generatePackageDevToken, listPackageAvailableVersions, upgradePackageFromRepo, upgradePackageZipDirectly, AvailableVersionsResponse } from '@/lib';
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -63,8 +66,20 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
     const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [generatingToken, setGeneratingToken] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const gapp = useGApp();
     const { modal } = gapp;
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const close = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('click', close);
+        return () => document.removeEventListener('click', close);
+    }, []);
 
     const loader = useSimpleDataLoader<InstalledPackageInfo>({
         loader: () => getInstalledPackageInfo(packageId),
@@ -78,6 +93,41 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
         modal.openModal({
             title: "Development Token",
             content: <DevTokenModalContent packageId={packageId} modal={modal} />,
+            size: "sm"
+        });
+    };
+
+    const handleCheckForUpdate = () => {
+        modal.openModal({
+            title: "Check for update",
+            content: (
+                <CheckForUpdateModalContent
+                    packageId={packageId}
+                    packageName={packageData?.name}
+                    modal={modal}
+                    onUpdated={() => {
+                        loader.reload();
+                        modal.closeModal();
+                    }}
+                />
+            ),
+            size: "md"
+        });
+    };
+
+    const handleUpgradeFromZip = () => {
+        modal.openModal({
+            title: "Upgrade from ZIP",
+            content: (
+                <UpgradeFromZipModalContent
+                    packageId={packageId}
+                    modal={modal}
+                    onUpdated={() => {
+                        loader.reload();
+                        modal.closeModal();
+                    }}
+                />
+            ),
             size: "sm"
         });
     };
@@ -115,13 +165,51 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
                 setSearchText={setSearchTerm}
                 placeholder="Search versions..."
                 rightContent={
-                    <button
-                        onClick={handleGenerateDevToken}
-                        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm font-semibold transition-all"
-                    >
-                        <Key className="w-4 h-4 text-blue-500" />
-                        Dev Token
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleCheckForUpdate}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm font-semibold transition-all"
+                        >
+                            <RefreshCw className="w-4 h-4 text-green-600" />
+                            Update
+                        </button>
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setDropdownOpen((o) => !o)}
+                                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm font-semibold transition-all"
+                            >
+                                More
+                                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            {dropdownOpen && (
+                                <div className="absolute right-0 top-full mt-1 py-1 min-w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setDropdownOpen(false);
+                                            handleUpgradeFromZip();
+                                        }}
+                                        className="w-full flex items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                    >
+                                        <Upload className="w-4 h-4 text-amber-600 shrink-0" />
+                                        Upgrade from ZIP
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setDropdownOpen(false);
+                                            handleGenerateDevToken();
+                                        }}
+                                        className="w-full flex items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                    >
+                                        <Key className="w-4 h-4 text-blue-500 shrink-0" />
+                                        Dev Token
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 }
             />
 
@@ -448,6 +536,205 @@ const formatFileSize = (bytes: number) => {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+interface UpgradeFromZipModalProps {
+    packageId: number;
+    modal: any;
+    onUpdated: () => void;
+}
+
+const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFromZipModalProps) => {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const f = e.target.files?.[0];
+        if (f) setSelectedFile(f);
+    };
+
+    const handleUpgrade = async () => {
+        if (!selectedFile) return;
+        setUploading(true);
+        try {
+            const buffer = await selectedFile.arrayBuffer();
+            await upgradePackageZipDirectly(packageId, buffer);
+            onUpdated();
+        } catch (err: any) {
+            alert(err?.response?.data?.message || err?.message || 'Upgrade failed');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+                Upload a package ZIP file to upgrade this installation. The ZIP must contain a valid potato package.
+            </p>
+            <div className="flex items-center gap-3">
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".zip"
+                    onChange={handleFileChange}
+                    className="hidden"
+                />
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-all"
+                >
+                    <Upload className="w-4 h-4" />
+                    Choose ZIP file
+                </button>
+                {selectedFile && (
+                    <span className="text-sm text-gray-600 truncate max-w-[200px]" title={selectedFile.name}>
+                        {selectedFile.name}
+                    </span>
+                )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                    Cancel
+                </button>
+                <button
+                    onClick={handleUpgrade}
+                    disabled={!selectedFile || uploading}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                    {uploading ? 'Upgrading…' : 'Upgrade'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+interface CheckForUpdateModalProps {
+    packageId: number;
+    packageName?: string;
+    modal: any;
+    onUpdated: () => void;
+}
+
+const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }: CheckForUpdateModalProps) => {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [data, setData] = useState<AvailableVersionsResponse | null>(null);
+    const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
+    const [updating, setUpdating] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
+        listPackageAvailableVersions(packageId)
+            .then((res) => {
+                if (!cancelled) {
+                    setData(res.data);
+                    setSelectedVersion(null);
+                }
+            })
+            .catch((err) => {
+                if (!cancelled) {
+                    setError(err?.response?.data?.message || err?.message || 'Failed to load versions');
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, [packageId]);
+
+    const handleUpdate = async () => {
+        if (!data || !selectedVersion) return;
+        setUpdating(true);
+        try {
+            await upgradePackageFromRepo(packageId, {
+                repo_slug: data.repo_slug,
+                name: data.name,
+                version: selectedVersion,
+            });
+            onUpdated();
+        } catch (err: any) {
+            alert(err?.response?.data?.message || err?.message || 'Update failed');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            </div>
+        );
+    }
+    if (error) {
+        return (
+            <div className="space-y-4">
+                <p className="text-sm text-red-600">{error}</p>
+                <div className="flex justify-end">
+                    <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Close</button>
+                </div>
+            </div>
+        );
+    }
+    if (!data?.versions?.length) {
+        return (
+            <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                    {data?.repo_slug
+                        ? `No versions found in repo for ${packageName || data.name}.`
+                        : 'This package was not installed from a repo. Use a ZIP upload to update.'}
+                </p>
+                <div className="flex justify-end">
+                    <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">Close</button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+                Select a version to install. Current: <strong>{data.current_version || '—'}</strong>
+            </p>
+            <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                {data.versions.map((v) => (
+                    <label
+                        key={v}
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 ${selectedVersion === v ? 'bg-blue-50' : ''}`}
+                    >
+                        <input
+                            type="radio"
+                            name="version"
+                            checked={selectedVersion === v}
+                            onChange={() => setSelectedVersion(v)}
+                            className="text-blue-600"
+                        />
+                        <span className="font-medium">v{v}</span>
+                        {v === data.current_version && (
+                            <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">Current</span>
+                        )}
+                    </label>
+                ))}
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                    Cancel
+                </button>
+                <button
+                    onClick={handleUpdate}
+                    disabled={!selectedVersion || updating}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                    {updating ? 'Updating…' : 'Update'}
+                </button>
+            </div>
+        </div>
+    );
 };
 
 interface DevTokenModalProps {

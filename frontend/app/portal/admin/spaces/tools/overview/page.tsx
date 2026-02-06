@@ -29,13 +29,7 @@ export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
-    const namespaceKey = searchParams.get('namespace_key');
-    const packageVersionId = searchParams.get('package_version_id');
-
-
-
-    const gapp = useGApp();
-
+   
     if (!installId) {
         return (
             <div className="flex items-center justify-center h-64">

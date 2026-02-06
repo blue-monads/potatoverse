@@ -11,7 +11,7 @@ export const initHttpClient = () => {
 
     const data = getLoginData();
 
-    
+
 
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -179,8 +179,8 @@ export const deleteUserGroup = async (name: string) => {
 
 
 export interface AdminPortalData {
-    popular_keywords: string[] 
-    favorite_projects: any[]    
+    popular_keywords: string[]
+    favorite_projects: any[]
 }
 
 
@@ -218,8 +218,38 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
     });
 }
 
+export const upgradePackageZipDirectly = async (packageId: number, zip: ArrayBuffer) => {
+    return iaxios.post<InstallPackageResult>(`/core/package/upgrade/${packageId}/zip`, zip, {
+        headers: {
+            "Content-Type": "application/zip",
+        },
+    });
+}
+
+export interface AvailableVersionsResponse {
+    versions: string[];
+    repo_slug: string;
+    name: string;
+    current_version?: string;
+}
+
+export const listPackageAvailableVersions = async (packageId: number) => {
+    return iaxios.get<AvailableVersionsResponse>(`/core/package/${packageId}/available-versions`);
+}
+
+export interface UpgradePackageFromRepoRequest {
+    repo_slug: string;
+    name: string;
+    version: string;
+}
+
+/** Upgrade package to a specific version from repo. Returns new package_version_id (number). */
+export const upgradePackageFromRepo = async (packageId: number, req: UpgradePackageFromRepoRequest) => {
+    return iaxios.post<number>(`/core/package/${packageId}/upgrade/repo`, req);
+}
+
 export const installPackageEmbed = async (name: string, repoSlug?: string) => {
-    return iaxios.post<InstallPackageResult>(`/core/package/install/embed`, { 
+    return iaxios.post<InstallPackageResult>(`/core/package/install/embed`, {
         name,
         repo_slug: repoSlug
     });
@@ -347,7 +377,7 @@ export type FormattedSpace = {
     namespace_key: string;
     package_name: string;
     package_info: string;
-    package_version_id: number;    
+    package_version_id: number;
     package_version: string;
     gradient: string;
 
@@ -436,7 +466,7 @@ export interface PackageFile {
 
 
 
-export const listPackageFiles = async (packageId: number, path: string = '' ) => {
+export const listPackageFiles = async (packageId: number, path: string = '') => {
     return iaxios.get<PackageFile[]>(`/core/vpackage/${packageId}/files`, {
         params: {
             path,
@@ -462,7 +492,7 @@ export const uploadPackageFile = async (packageId: number, file: File, path: str
     const formData = new FormData();
     formData.append('file', file);
     formData.append('path', path);
-    
+
     return iaxios.post(`/core/vpackage/${packageId}/files/upload`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -470,19 +500,21 @@ export const uploadPackageFile = async (packageId: number, file: File, path: str
     });
 }
 
+
+
 export const updatePackageFileContent = async (packageId: number, fileId: number, content: string, fileName: string, path: string = '') => {
     // Delete the old file first
     await deletePackageFile(packageId, fileId);
-    
+
     // Create a blob from the content string
     const blob = new Blob([content], { type: 'text/plain' });
     const file = new File([blob], fileName, { type: 'text/plain' });
-    
+
     // Upload the new file with the same path and name
     const formData = new FormData();
     formData.append('file', file);
     formData.append('path', path);
-    
+
     return iaxios.post(`/core/vpackage/${packageId}/files/upload`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -569,7 +601,7 @@ export const uploadSpaceFile = async (installId: number, file: File, path: strin
     const formData = new FormData();
     formData.append('file', file);
     formData.append('path', path);
-    
+
     return iaxios.post(`/core/space/${installId}/files/upload`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -580,16 +612,16 @@ export const uploadSpaceFile = async (installId: number, file: File, path: strin
 export const updateSpaceFileContent = async (installId: number, fileId: number, content: string, fileName: string, path: string = '') => {
     // Delete the old file first
     await deleteSpaceFile(installId, fileId);
-    
+
     // Create a blob from the content string
     const blob = new Blob([content], { type: 'text/plain' });
     const file = new File([blob], fileName, { type: 'text/plain' });
-    
+
     // Upload the new file with the same path and name
     const formData = new FormData();
     formData.append('file', file);
     formData.append('path', path);
-    
+
     return iaxios.post(`/core/space/${installId}/files/upload`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -622,7 +654,7 @@ export const createPresignedUploadURL = async (installId: number, fileName: stri
 export const uploadFileWithPresignedToken = async (presignedKey: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return axios.post(`/zz/file/upload-presigned?presigned-key=${presignedKey}`, formData, {
         headers: {
             'Content-Type': 'multipart/form-data',
@@ -805,7 +837,7 @@ export const createEventSubscription = async (installId: number, data: {
         ...(data.extrameta && { extrameta: typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta) }),
         ...(data.disabled !== undefined && { disabled: data.disabled }),
     };
-    
+
     return iaxios.post<EventSubscription>(`/core/space/${installId}/events`, payload);
 }
 
@@ -825,7 +857,7 @@ export const updateEventSubscription = async (installId: number, subscriptionId:
     if (data.max_retries !== undefined) payload.max_retries = data.max_retries;
     if (data.extrameta !== undefined) payload.extrameta = typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta);
     if (data.disabled !== undefined) payload.disabled = data.disabled;
-    
+
     return iaxios.put<EventSubscription>(`/core/space/${installId}/events/${subscriptionId}`, payload);
 }
 

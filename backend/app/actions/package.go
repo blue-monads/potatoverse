@@ -117,3 +117,62 @@ func (c *Controller) GetInstalledPackageInfo(packageId int64) (*InstalledPackage
 		PackageVersions:  pversions,
 	}, nil
 }
+
+// AvailableVersionsResponse is returned by ListPackageAvailableVersions.
+type AvailableVersionsResponse struct {
+	Versions       []string `json:"versions"`
+	RepoSlug       string   `json:"repo_slug"`
+	Name           string   `json:"name"`
+	CurrentVersion string   `json:"current_version,omitempty"`
+}
+
+// ListPackageAvailableVersions returns versions available in the repo for the given installed package.
+// The package must have been installed from a repo (install_repo set).
+func (c *Controller) ListPackageAvailableVersions(packageId int64) (*AvailableVersionsResponse, error) {
+	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
+	if err != nil {
+		return nil, err
+	}
+	if pkg.InstallRepo == "" {
+		return &AvailableVersionsResponse{
+			Versions:       nil,
+			RepoSlug:       "",
+			Name:           pkg.Name,
+			CurrentVersion: "",
+		}, nil
+	}
+
+	packages, err := c.engine.GetRepoHub().ListPackages(pkg.InstallRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	var repoPkg *repotypes.PotatoPackage
+	for i := range packages {
+		if packages[i].Slug == pkg.Slug {
+			repoPkg = &packages[i]
+			break
+		}
+	}
+	if repoPkg == nil || len(repoPkg.Versions) == 0 {
+		return &AvailableVersionsResponse{
+			Versions:       nil,
+			RepoSlug:       pkg.InstallRepo,
+			Name:           pkg.Name,
+			CurrentVersion: "",
+		}, nil
+	}
+
+	currentVersion := ""
+	activeVer, err := c.database.GetPackageInstallOps().GetPackageVersion(pkg.ActiveInstallID)
+	if err == nil && activeVer != nil {
+		currentVersion = activeVer.Version
+	}
+
+	return &AvailableVersionsResponse{
+		Versions:       repoPkg.Versions,
+		RepoSlug:       pkg.InstallRepo,
+		Name:           pkg.Name,
+		CurrentVersion: currentVersion,
+	}, nil
+}

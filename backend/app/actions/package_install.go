@@ -44,9 +44,7 @@ func (c *Controller) InstallPackageByUrl(userId int64, url string) (*InstallPack
 
 }
 
-// updatePackageFromRepo
-
-func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug string) (*InstallPackageResult, error) {
+func (c *Controller) InstallPackageRepo(userId int64, name string, repoSlug string) (*InstallPackageResult, error) {
 	var file string
 	var err error
 

@@ -23,9 +23,9 @@ Install package from ZIP file.
 
 **Response:** InstallPackageResult object
 
-### POST /zz/api/core/package/install/embed
+### POST /zz/api/core/package/install/repo
 
-Install embedded package.
+Install repo package.
 
 **Request:**
 - `name` (string) - Package name
@@ -73,6 +73,27 @@ List packages.
 Get installed package info.
 
 **Response:** Package info object
+
+### GET /zz/api/core/package/:id/available-versions
+
+List versions available in the repo for this package (only for packages installed from a repo).
+
+**Response:**
+- `versions` (string[]) - Available versions in the repo
+- `repo_slug` (string) - Repo slug
+- `name` (string) - Package name
+- `current_version` (string, optional) - Currently active version
+
+### POST /zz/api/core/package/:id/upgrade/repo
+
+Upgrade package to a specific version from a repo.
+
+**Request:**
+- `repo_slug` (string) - Repo slug
+- `name` (string) - Package name
+- `version` (string) - Version to install
+
+**Response:** New package version ID (number)
 
 ## Package Files
 
