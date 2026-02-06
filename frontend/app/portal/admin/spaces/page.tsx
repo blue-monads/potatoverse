@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2 } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2, BoltIcon } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -12,6 +12,7 @@ import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
 import useFavorites from '@/hooks/useFavorites/useFavorites';
+import { deriveHostAndIframeSrc } from '../exec/hostSrc';
 
 
 
@@ -156,6 +157,23 @@ const SpacesDirectory = () => {
                                     const namespaceKey = space.namespace_key;
                                     const packageVersionId = space.package_version_id;
 
+                                    if (action === "run") {
+                                        if (!spaceId) {
+                                            return
+                                        }
+
+                                        const hostsrc = await deriveHostAndIframeSrc(namespaceKey, String(spaceId))
+                                        if (!hostsrc) {
+                                            return
+                                        }
+
+                                        console.log("@hostsrc", hostsrc)
+
+                                        window.open(hostsrc, '_blank');
+                                        return
+                                    }
+
+
 
                                     const params = new URLSearchParams();
                                     params.set("install_id", installId.toString());
@@ -165,6 +183,7 @@ const SpacesDirectory = () => {
                                     params.set("package_version_id", packageVersionId.toString());
 
                                     console.log("params", params.toString());
+
 
 
 
