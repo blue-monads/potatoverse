@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Pencil, Target, Clock } from 'lucide-react';
+import { Zap, Pencil, Target, Clock, ArrowLeft } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import { EventSubscription } from '@/lib';
 import RuleEditor, { Rule } from './RuleEditor';
@@ -235,6 +235,13 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             variant="none"
         >
             <div className="max-w-4xl mx-auto px-6 py-8 w-full space-y-6">
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-2"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Back to Events</span>
+                </button>
                 {/* Event Name Section */}
                 <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center gap-2 mb-4">
