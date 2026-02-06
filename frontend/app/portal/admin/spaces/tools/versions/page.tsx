@@ -24,14 +24,15 @@ import {
     Info,
     Check,
     Clock,
-    Edit
+    Edit,
+    Copy
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { useGApp } from '@/hooks';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
-import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo } from '@/lib';
+import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo, generatePackageDevToken } from '@/lib';
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -61,7 +62,9 @@ interface VersionsManagerProps {
 const VersionsManager = ({ packageId }: VersionsManagerProps) => {
     const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [generatingToken, setGeneratingToken] = useState(false);
     const gapp = useGApp();
+    const { modal } = gapp;
 
     const loader = useSimpleDataLoader<InstalledPackageInfo>({
         loader: () => getInstalledPackageInfo(packageId),
@@ -70,6 +73,14 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
 
     const packageVersions = loader.data?.package_versions || [];
     const packageData = loader.data?.installed_package;
+
+    const handleGenerateDevToken = async () => {
+        modal.openModal({
+            title: "Development Token",
+            content: <DevTokenModalContent packageId={packageId} modal={modal} />,
+            size: "sm"
+        });
+    };
 
     if (loader.loading) {
         return (
@@ -103,6 +114,15 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
                 searchText={searchTerm}
                 setSearchText={setSearchTerm}
                 placeholder="Search versions..."
+                rightContent={
+                    <button
+                        onClick={handleGenerateDevToken}
+                        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm font-semibold transition-all"
+                    >
+                        <Key className="w-4 h-4 text-blue-500" />
+                        Dev Token
+                    </button>
+                }
             />
 
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">
@@ -428,4 +448,97 @@ const formatFileSize = (bytes: number) => {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+interface DevTokenModalProps {
+    packageId: number;
+    modal: any;
+}
+
+const DevTokenModalContent = ({ packageId, modal }: DevTokenModalProps) => {
+    const [devToken, setDevToken] = useState<string>('');
+    const [copied, setCopied] = useState(false);
+    const [generatingToken, setGeneratingToken] = useState(false);
+
+    const handleGenerateDevToken = async () => {
+        try {
+            setGeneratingToken(true);
+            const response = await generatePackageDevToken(packageId);
+            setDevToken(response.data.token);
+        } catch (error) {
+            console.error('Failed to generate dev token:', error);
+            alert('Failed to generate dev token. Please try again.');
+        } finally {
+            setGeneratingToken(false);
+        }
+    };
+
+    const handleCopyToken = () => {
+        if (devToken) {
+            navigator.clipboard.writeText(devToken);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+                Generate a development token for CLI package push operations.
+                This token allows you to update this package from the command line.
+            </p>
+
+            {!devToken ? (
+                <button
+                    onClick={handleGenerateDevToken}
+                    disabled={generatingToken}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-bold transition-all shadow-sm"
+                >
+                    <Key className="w-5 h-5" />
+                    {generatingToken ? 'Generating...' : 'Generate New Dev Token'}
+                </button>
+            ) : (
+                <div className="space-y-4">
+                    <div className="relative group">
+                        <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 font-mono text-xs break-all pr-12 min-h-[80px] flex items-center">
+                            {devToken}
+                        </div>
+                        <button
+                            onClick={handleCopyToken}
+                            className="absolute top-2 right-2 p-2 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-all shadow-sm"
+                            title="Copy to clipboard"
+                        >
+                            {copied ? (
+                                <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                                <Copy className="w-4 h-4 text-gray-400" />
+                            )}
+                        </button>
+                    </div>
+                    {copied && (
+                        <p className="text-xs text-green-600 font-bold flex items-center gap-1 justify-center">
+                            <Check className="w-3 h-3" />
+                            Token copied to clipboard!
+                        </p>
+                    )}
+                    <button
+                        onClick={handleGenerateDevToken}
+                        disabled={generatingToken}
+                        className="w-full text-sm text-blue-500 hover:text-blue-600 font-bold py-2 border border-blue-100 rounded-lg hover:bg-blue-50 transition-all"
+                    >
+                        Generate Different Token
+                    </button>
+                </div>
+            )}
+
+            <div className="pt-4 border-t border-gray-100 flex justify-end">
+                <button
+                    onClick={() => modal.closeModal()}
+                    className="px-4 py-2 text-gray-500 hover:text-gray-700 font-bold"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    );
 };

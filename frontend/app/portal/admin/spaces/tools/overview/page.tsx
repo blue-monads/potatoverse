@@ -65,9 +65,6 @@ interface PackageAboutProps {
 
 const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
     const gapp = useGApp();
-    const [devToken, setDevToken] = useState<string>('');
-    const [copied, setCopied] = useState(false);
-    const [generatingToken, setGeneratingToken] = useState(false);
 
     const loader = useSimpleDataLoader<InstalledPackageInfo>({
         loader: () => getInstalledPackageInfo(packageId),
@@ -79,34 +76,6 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
     const packageSpaces = loader.data?.spaces || [];
     const activeVersion = packageData ? packageVersions.find(v => v.id === packageData.active_install_id) : null;
 
-    const handleGenerateDevToken = async () => {
-        try {
-            setGeneratingToken(true);
-            const response = await generatePackageDevToken(packageId);
-            setDevToken(response.data.token);
-        } catch (error) {
-            console.error('Failed to generate dev token:', error);
-            gapp.modal.openModal({
-                title: "Error",
-                content: (
-                    <div className="text-red-600">
-                        Failed to generate dev token. Please try again.
-                    </div>
-                ),
-                size: "sm"
-            });
-        } finally {
-            setGeneratingToken(false);
-        }
-    };
-
-    const handleCopyToken = () => {
-        if (devToken) {
-            navigator.clipboard.writeText(devToken);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
 
     if (loader.loading) {
         return (
@@ -216,61 +185,6 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
                         )}
                     </div>
 
-                    {/* Dev Token Section */}
-                    <div className="border-t pt-6">
-                        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                            <Key className="w-6 h-6" />
-                            Development Token
-                        </h2>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-sm text-gray-600 mb-4">
-                                Generate a development token for CLI package push operations.
-                                This token allows you to update this package from the command line.
-                            </p>
-
-                            {!devToken ? (
-                                <button
-                                    onClick={handleGenerateDevToken}
-                                    disabled={generatingToken}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Key className="w-4 h-4" />
-                                    {generatingToken ? 'Generating...' : 'Generate Dev Token'}
-                                </button>
-                            ) : (
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 bg-white border border-gray-300 rounded-lg p-3 font-mono text-sm break-all">
-                                            {devToken}
-                                        </div>
-                                        <button
-                                            onClick={handleCopyToken}
-                                            className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                                        >
-                                            {copied ? (
-                                                <>
-                                                    <Check className="w-4 h-4 text-green-600" />
-                                                    <span>Copied!</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Copy className="w-4 h-4" />
-                                                    <span>Copy</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                    <button
-                                        onClick={handleGenerateDevToken}
-                                        disabled={generatingToken}
-                                        className="text-sm text-blue-500 hover:text-blue-600 disabled:opacity-50"
-                                    >
-                                        Generate New Token
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
                 </div>
             </div>
         </WithAdminBodyLayout>
