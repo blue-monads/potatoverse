@@ -18,57 +18,69 @@ const (
 )
 
 var (
-	DefaultServers = []string{
-		"wss://relay.nostrich.de",
-		"wss://relay.snort.social",
-		"wss://nos.lol",
-	}
 	ErrNoBuddyInfo = errors.New("no buddy info found")
 )
 
 type HQ struct {
+	opts Options
+
 	hexPrivateKey string
 	hexPublicKey  string
 	logger        *slog.Logger
 	relays        []*nostr.Relay
 }
 
-func New(privateKey, publicKey string, logger *slog.Logger) (*HQ, error) {
+type Options struct {
+	Servers    []string
+	PrivateKey string
+	PublicKey  string
+	Logger     *slog.Logger
+}
+
+func New(opt Options) (*HQ, error) {
 	// Decode keys if they're nip19 encoded
-	hexPrivKey, err := nostrutils.DecodeKeyToHex(privateKey)
+	hexPrivKey, err := nostrutils.DecodeKeyToHex(opt.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	hexPubKey, err := nostrutils.DecodeKeyToHex(publicKey)
+	hexPubKey, err := nostrutils.DecodeKeyToHex(opt.PublicKey)
 	if err != nil {
 		return nil, err
 	}
 
 	hq := &HQ{
+		opts: opt,
+
 		hexPrivateKey: hexPrivKey,
 		hexPublicKey:  hexPubKey,
-		logger:        logger,
+		logger:        opt.Logger,
 		relays:        make([]*nostr.Relay, 0),
 	}
 
+	return hq, nil
+}
+
+func (hq *HQ) Start() error {
+
 	// Connect to relays
 	ctx := context.Background()
-	for _, relayURL := range DefaultServers {
+	for _, relayURL := range hq.opts.Servers {
 		relay, err := nostr.RelayConnect(ctx, relayURL)
 		if err != nil {
-			logger.Warn("Failed to connect to relay", "relay", relayURL, "err", err)
+			hq.opts.Logger.Warn("Failed to connect to relay", "relay", relayURL, "err", err)
 			continue
 		}
 		hq.relays = append(hq.relays, relay)
-		logger.Info("Connected to relay", "relay", relayURL)
+		hq.opts.Logger.Info("Connected to relay", "relay", relayURL)
 	}
 
 	if len(hq.relays) == 0 {
-		return nil, errors.New("failed to connect to any relay")
+		return errors.New("failed to connect to any relay")
 	}
 
-	return hq, nil
+	return nil
+
 }
 
 func (h *HQ) PublishSelfAddress(info *SelfInfo) error {
