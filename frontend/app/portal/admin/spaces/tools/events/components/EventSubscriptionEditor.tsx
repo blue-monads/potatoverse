@@ -1,9 +1,19 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Zap, Pencil, Target, Clock, ArrowLeft } from 'lucide-react';
+import { Zap, Pencil, Target, Clock, ArrowLeft, List } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import { EventSubscription } from '@/lib';
+import { EventSubscription, getSpaceSpec } from '@/lib';
 import RuleEditor, { Rule } from './RuleEditor';
+
+interface SpaceSpec {
+    space_specs: Record<string, {
+        events_outputs: Array<{
+            name: string;
+            description: string;
+            schema?: any;
+        }>;
+    }>;
+}
 
 interface TargetState {
     type: string;
@@ -37,9 +47,10 @@ interface EventSubscriptionEditorProps {
     onSave: (data: any) => Promise<void>;
     onBack: () => void;
     initialData: EventSubscription | null;
+    installId?: number;
 }
 
-export default function EventSubscriptionEditor({ onSave, onBack, initialData }: EventSubscriptionEditorProps) {
+export default function EventSubscriptionEditor({ onSave, onBack, initialData, installId }: EventSubscriptionEditorProps) {
     const [eventKey, setEventKey] = useState(initialData?.event_key || '');
     const [rules, setRules] = useState<Rule[]>([]);
     const [target, setTarget] = useState<TargetState>({
@@ -59,6 +70,9 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
     const [retryDelay, setRetryDelay] = useState(initialData?.retry_delay || 0);
     const [maxRetries, setMaxRetries] = useState(initialData?.max_retries || 0);
     const [saving, setSaving] = useState(false);
+    const [showEventsDropdown, setShowEventsDropdown] = useState(false);
+    const [availableEvents, setAvailableEvents] = useState<Array<{name: string; description: string}>>([]);
+    const [loadingEvents, setLoadingEvents] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -125,6 +139,45 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
             setMaxRetries(initialData.max_retries || 0);
         }
     }, [initialData]);
+
+    useEffect(() => {
+        if (installId) {
+            fetchAvailableEvents();
+        }
+    }, [installId]);
+
+    const fetchAvailableEvents = async () => {
+        if (!installId) return;
+        
+        setLoadingEvents(true);
+        try {
+            const response = await getSpaceSpec(installId);
+            const specData: SpaceSpec = response.data;
+            
+            const events: Array<{name: string; description: string}> = [];
+            Object.values(specData.space_specs || {}).forEach(spaceSpec => {
+                if (spaceSpec.events_outputs) {
+                    spaceSpec.events_outputs.forEach(event => {
+                        events.push({
+                            name: event.name,
+                            description: event.description
+                        });
+                    });
+                }
+            });
+            
+            setAvailableEvents(events);
+        } catch (error) {
+            console.error('Error fetching available events:', error);
+        } finally {
+            setLoadingEvents(false);
+        }
+    };
+
+    const selectEvent = (eventName: string) => {
+        setEventKey(eventName);
+        setShowEventsDropdown(false);
+    };
 
     const handleSave = async () => {
         if (!eventKey.trim()) {
@@ -248,13 +301,48 @@ export default function EventSubscriptionEditor({ onSave, onBack, initialData }:
                         <Pencil className="w-5 h-5 text-gray-500" />
                         <h3 className="text-lg font-semibold text-gray-900">Event Name</h3>
                     </div>
-                    <input
-                        type="text"
-                        value={eventKey}
-                        onChange={(e) => setEventKey(e.target.value)}
-                        placeholder="e.g., Record edited"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="relative">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={eventKey}
+                                onChange={(e) => setEventKey(e.target.value)}
+                                placeholder="e.g., Record edited"
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowEventsDropdown(!showEventsDropdown)}
+                                disabled={!installId || loadingEvents}
+                                className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <List className="w-4 h-4" />
+                                {loadingEvents ? '...' : 'Events'}
+                            </button>
+                        </div>
+                        
+                        {showEventsDropdown && availableEvents.length > 0 && (
+                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {availableEvents.map((event, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => selectEvent(event.name)}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        <div className="font-medium text-gray-900">{event.name}</div>
+                                        <div className="text-sm text-gray-500">{event.description}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {showEventsDropdown && availableEvents.length === 0 && !loadingEvents && (
+                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg px-4 py-2 text-gray-500">
+                                No events available
+                            </div>
+                        )}
+                    </div>
                     {eventKey && (
                         <p className="mt-2 text-sm text-gray-500">{eventKey}</p>
                     )}

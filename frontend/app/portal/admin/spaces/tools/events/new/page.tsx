@@ -43,6 +43,7 @@ export default function Page() {
             onSave={handleSave}
             onBack={handleBack}
             initialData={null}
+            installId={parseInt(installId)}
         />
     );
 }
