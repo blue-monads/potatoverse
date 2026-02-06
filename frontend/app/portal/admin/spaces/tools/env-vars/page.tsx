@@ -376,39 +376,7 @@ const CreateEnvVarModal = ({ onClose, onSubmit }: { onClose: () => void; onSubmi
                             required
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <input
-                            type="text"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Environment</label>
-                        <select
-                            value={formData.environment}
-                            onChange={(e) => setFormData({ ...formData, environment: e.target.value as any })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="development">Development</option>
-                            <option value="staging">Staging</option>
-                            <option value="production">Production</option>
-                        </select>
-                    </div>
-                    <div className="flex items-center">
-                        <input
-                            type="checkbox"
-                            id="isSecret"
-                            checked={formData.isSecret}
-                            onChange={(e) => setFormData({ ...formData, isSecret: e.target.checked })}
-                            className="mr-2"
-                        />
-                        <label htmlFor="isSecret" className="text-sm font-medium text-gray-700">
-                            Mark as secret (hide value by default)
-                        </label>
-                    </div>
+
                     <div className="flex gap-3 justify-end">
                         <button
                             type="button"
