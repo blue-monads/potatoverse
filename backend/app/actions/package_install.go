@@ -64,7 +64,7 @@ func (c *Controller) InstallPackageEmbed(userId int64, name string, repoSlug str
 }
 
 func (c *Controller) InstallPackageByFile(userId int64, file string) (*InstallPackageResult, error) {
-	id, err := InstallPackageByFile(c.database, c.logger, userId, "embed", file)
+	id, err := installPackageByFile(c.database, c.logger, userId, "embed", file)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ type InstallPackageResult struct {
 	InitPage    string `json:"init_page"`
 }
 
-func InstallPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, repo, file string) (*InstallPackageResult, error) {
+func installPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, repo, file string) (*InstallPackageResult, error) {
 
 	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, repo, file)
 	if err != nil {
