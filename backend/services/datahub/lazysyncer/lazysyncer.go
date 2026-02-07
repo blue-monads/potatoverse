@@ -3,6 +3,7 @@ package lazysyncer
 import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/buddycdc"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 
 	"github.com/upper/db/v4"
 )
@@ -12,11 +13,13 @@ type Options struct {
 	IsSelfEnabled bool
 	Buddies       []string
 	BasePath      string
+	Transport     xtypes.BuddyTransport
 }
 
 type LazySyncer struct {
 	cdcSyncer    *selfcdc.SelfCDCSyncer
 	buddySyncers map[string]*buddycdc.BuddyCDC
+	transport    xtypes.BuddyTransport
 }
 
 func New(opts Options) *LazySyncer {
@@ -33,7 +36,7 @@ func New(opts Options) *LazySyncer {
 			MainDb:      opts.DbSession,
 			BasePath:    opts.BasePath,
 			BuddyPubKey: buddyId,
-			Transport:   nil,
+			Transport:   NewBuddyAdapter(ls, buddyId),
 		})
 		if err != nil {
 			return nil
