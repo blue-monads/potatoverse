@@ -3,6 +3,7 @@ package rtbuddy
 import (
 	"net/http"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,19 +11,7 @@ const (
 	MaxLazyCDCBatchSize = 100
 )
 
-func (b *BuddyRouteServer) handleBuddyLazyCDCInit(ctx *gin.Context) {
-	b.handleBuddyLazyCDCSyncMeta(ctx)
-}
-
-/*
-
-todo => encrypt tablename and records
-
-
-
-*/
-
-func (b *BuddyRouteServer) handleBuddyLazyCDCSyncMeta(ctx *gin.Context) {
+func (b *BuddyRouteServer) handleBuddyLazySyncMeta(ctx *gin.Context) {
 	_, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
@@ -38,20 +27,14 @@ func (b *BuddyRouteServer) handleBuddyLazyCDCSyncMeta(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"tables": tables})
 }
 
-type SyncRequest struct {
-	TableId      int64 `json:"table_id"`
-	LastSyncedId int64 `json:"last_synced_id"`
-	Limit        int64 `json:"limit"`
-}
-
-func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecordSerial(ctx *gin.Context) {
+func (b *BuddyRouteServer) handleBuddyLazySyncData(ctx *gin.Context) {
 	_, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	var req SyncRequest
+	var req lazysyncer.SyncRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,9 +54,5 @@ func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecordSerial(ctx *gin.Context) 
 	ctx.JSON(http.StatusOK, gin.H{
 		"records": records,
 	})
-
-}
-
-func (b *BuddyRouteServer) handleBuddyLazyCDCSyncRecordCDC(ctx *gin.Context) {
 
 }

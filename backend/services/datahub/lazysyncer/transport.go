@@ -1,6 +1,7 @@
 package lazysyncer
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -53,8 +54,24 @@ func (b *BuddyAdapter) GetMeta() ([]*lazytypes.SelfCDCMeta, error) {
 	return meta, nil
 }
 
+type SyncRequest struct {
+	TableId      int64 `json:"table_id"`
+	LastSyncedId int64 `json:"last_synced_id"`
+	Limit        int64 `json:"limit"`
+}
+
 func (b *BuddyAdapter) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.BuddyData, error) {
-	req, err := http.NewRequest("GET", "/zz/buddy/lazycdc/sync/data", nil)
+
+	body, err := json.Marshal(SyncRequest{
+		TableId:      tableId,
+		LastSyncedId: sinceCdcId,
+		Limit:        100,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", "/zz/buddy/lazycdc/sync/data", bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +83,7 @@ func (b *BuddyAdapter) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.B
 
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
