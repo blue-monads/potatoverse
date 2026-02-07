@@ -1,7 +1,7 @@
 package buddyhub
 
 import (
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/funnel"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )

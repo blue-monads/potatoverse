@@ -1,16 +1,40 @@
-package main
+package funnelhq
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/cmd/cli"
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
+func init() {
+	cli.RegisterExtraCommand("nostr-hq", func(args []string) error {
+		return Run(context.Background())
+	})
+}
 
-	qq.Println("@main/1")
+func Run(ctx context.Context) error {
+
+	port := 7447
+
+	portStr := os.Getenv("POTATO_HQ_PORT")
+	if portStr != "" {
+		porti, err := strconv.Atoi(portStr)
+		if err != nil {
+			log.Fatalf("failed to parse port: %v", err)
+		}
+
+		port = porti
+	}
+
+	// start funnel server
 
 	funnel := funnel.New()
 	gin.SetMode(gin.TestMode)
@@ -48,5 +72,7 @@ func main() {
 
 	qq.Println("@main/4")
 
-	router.Run(":8080")
+	router.Run(fmt.Sprintf(":%d", port))
+
+	return nil
 }
