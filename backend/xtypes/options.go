@@ -44,6 +44,7 @@ type BuddyHubOptions struct {
 }
 
 type BuddyInfo struct {
+	Name            string     `json:"name"`
 	Pubkey          string     `json:"pubkey"`
 	URLs            []BuddyUrl `json:"urls"`
 	AllowStorage    bool       `json:"allow_storage"`

@@ -3,8 +3,6 @@ package nostrout
 import (
 	"context"
 	"errors"
-	"math/rand"
-	"slices"
 	"sync"
 	"time"
 
@@ -56,15 +54,16 @@ var (
 	}
 
 	DefaultServers = []string{
-		//		"wss://proxy.nostr-relay.app/ac0805e2c2d5ad533d76967da021440d3f9da5308692c8ab78b5f90995740305",
-		NoStrServerList[9],
-		NoStrServerList[10],
-		NoStrServerList[4],
+		"ws://localhost:7447",
+		// //		"wss://proxy.nostr-relay.app/ac0805e2c2d5ad533d76967da021440d3f9da5308692c8ab78b5f90995740305",
+		// NoStrServerList[9],
+		// NoStrServerList[10],
+		// NoStrServerList[4],
 	}
 )
 
 const (
-	KindPotato = nostr.KindHTTPAuth + 2
+	KindPotato = nostr.KindDirectMessage
 )
 
 type NostrRout struct {
@@ -135,15 +134,17 @@ func (o *NostrRout) runLoop() error {
 		},
 	}}
 
-	selectedServers := make([]string, 0, 7)
-	selectedServers = append(selectedServers, DefaultServers...)
+	// selectedServers := make([]string, 0, 7)
+	// selectedServers = append(selectedServers, DefaultServers...)
 
-	for len(selectedServers) < 5 {
-		server := NoStrServerList[rand.Intn(len(NoStrServerList))]
-		if !slices.Contains(selectedServers, server) {
-			selectedServers = append(selectedServers, server)
-		}
-	}
+	selectedServers := DefaultServers
+
+	// for len(selectedServers) < 5 {
+	// 	server := NoStrServerList[rand.Intn(len(NoStrServerList))]
+	// 	if !slices.Contains(selectedServers, server) {
+	// 		selectedServers = append(selectedServers, server)
+	// 	}
+	// }
 
 	relays := make([]*RelayInfo, 0, len(selectedServers))
 

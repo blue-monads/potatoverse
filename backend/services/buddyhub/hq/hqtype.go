@@ -7,6 +7,6 @@ type SelfInfo struct {
 }
 
 type AddressInfo struct {
-	AddrType string `json:"addr_type"`
-	Addr     string `json:"addr"`
+	Type string `json:"type"`
+	Addr string `json:"addr"`
 }
