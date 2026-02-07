@@ -21,7 +21,6 @@ type BuddyHub struct {
 	funnelHQ *funnel.FunnelClient
 
 	logger *slog.Logger
-	app    xtypes.App
 
 	baseBuddyDir string
 
@@ -35,20 +34,18 @@ const (
 	DefaultFunnelHQ = "ws://localhost:7447"
 )
 
-func NewBuddyHub(opt Options) *BuddyHub {
+func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 
-	config := opt.App.Config().(*xtypes.AppOptions)
 	port := config.Port
 
 	pubkey, pk, err := nostrutils.GenerateKeyPair(config.MasterSecret)
 	if err != nil {
-		opt.Logger.Error("Failed to generate key pair", "err", err)
+		logger.Error("Failed to generate key pair", "err", err)
 		panic(err)
 	}
 
 	bh := &BuddyHub{
-		logger:        opt.Logger,
-		app:           opt.App,
+		logger:        logger,
 		funnelHQ:      nil,
 		baseBuddyDir:  path.Join(config.WorkingDir, "buddy"),
 		pubkey:        pubkey,

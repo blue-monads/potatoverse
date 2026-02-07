@@ -10,6 +10,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/engine"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/mailer"
@@ -24,6 +25,7 @@ type Option struct {
 	Signer   *signer.Signer
 	AppOpts  *xtypes.AppOptions
 	Mailer   mailer.Mailer
+	BuddyHub *buddyhub.BuddyHub
 
 	WorkingFolderBase string
 }
@@ -88,6 +90,7 @@ func New(opt Option) *App {
 		LocalSocket: opt.AppOpts.SocketFile,
 		SiteName:    opt.AppOpts.Name,
 		CoreHub:     happ.coreHub,
+		BuddyHub:    opt.BuddyHub,
 	})
 
 	happ.server = server

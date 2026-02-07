@@ -76,7 +76,7 @@ func main() {
 		panic(fmt.Errorf("failed to insert user: %w", err))
 	}
 
-	err = ls.Start()
+	err = ls.Start(nil)
 	if err != nil {
 		panic(fmt.Errorf("failed to start syncer: %w", err))
 	}

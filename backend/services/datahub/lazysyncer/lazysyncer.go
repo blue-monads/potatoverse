@@ -1,9 +1,9 @@
 package lazysyncer
 
 import (
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/buddycdc"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
-	"github.com/blue-monads/potatoverse/backend/xtypes"
 
 	"github.com/upper/db/v4"
 )
@@ -13,13 +13,13 @@ type Options struct {
 	IsSelfEnabled bool
 	Buddies       []string
 	BasePath      string
-	Transport     xtypes.BuddyTransport
+	Transport     datahub.BuddyTransport
 }
 
 type LazySyncer struct {
 	cdcSyncer    *selfcdc.SelfCDCSyncer
 	buddySyncers map[string]*buddycdc.BuddyCDC
-	transport    xtypes.BuddyTransport
+	transport    datahub.BuddyTransport
 }
 
 func New(opts Options) *LazySyncer {
@@ -78,7 +78,10 @@ func NewTest(opts Options) *LazySyncer {
 	return ls
 }
 
-func (l *LazySyncer) Start() error {
+func (l *LazySyncer) Start(transport datahub.BuddyTransport) error {
+
+	l.transport = transport
+
 	err := l.cdcSyncer.Start()
 	if err != nil {
 		return err

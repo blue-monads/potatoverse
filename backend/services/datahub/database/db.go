@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
@@ -154,9 +155,9 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 	}, nil
 }
 
-func (db *DB) Init() error {
+func (db *DB) Init(transport datahub.BuddyTransport) error {
 
-	if err := db.lazySyncer.Start(); err != nil {
+	if err := db.lazySyncer.Start(transport); err != nil {
 		return err
 	}
 
@@ -203,8 +204,6 @@ func (db *DB) HasTable(name string) (bool, error) {
 func (db *DB) Table(name string) db.Collection {
 	return db.sess.Collection(name)
 }
-
-const ErrText = "upper: no more rows in this result set"
 
 func (db *DB) IsEmptyRowsError(err error) bool {
 	return errors.Is(err, upperdb.ErrNoMoreRows)

@@ -3,11 +3,16 @@ package datahub
 import (
 	"io"
 	"io/fs"
+	"net/http"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/gin-gonic/gin"
 	"github.com/upper/db/v4"
 )
+
+type BuddyTransport interface {
+	SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error)
+}
 
 type Database interface {
 	Core
@@ -31,7 +36,7 @@ type Core interface {
 	Table(name string) db.Collection
 	GetSession() db.Session
 	RunDDL(ddl string) error
-	Init() error
+	Init(transport BuddyTransport) error
 	Close() error
 	Vender() string
 	HasTable(name string) (bool, error)
