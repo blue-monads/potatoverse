@@ -8,6 +8,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/gin-gonic/gin"
 )
 
 type Options struct {
@@ -96,4 +97,10 @@ func (bh *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
 
 func (bh *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
 	return nil, nil
+}
+
+func (bh *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
+
+	// fixme run emebed funnel server
+
 }
