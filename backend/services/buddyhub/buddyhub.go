@@ -1,6 +1,7 @@
 package buddyhub
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"path"
@@ -96,7 +97,31 @@ func (bh *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
 }
 
 func (bh *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
-	return nil, nil
+
+	buddyInfo, exists := bh.staticBuddies[buddyPubkey]
+	if !exists {
+		return nil, fmt.Errorf("buddy not found: %s", buddyPubkey)
+	}
+
+	for _, url := range buddyInfo.URLs {
+		provider := url.Provider
+		if provider != "http" {
+			continue
+		}
+
+		req.URL.Host = fmt.Sprintf("%s:%s", url.Host, url.Port)
+		req.URL.Scheme = "http"
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp, nil
+
+	}
+
+	return nil, fmt.Errorf("no provider found for buddy: %s", buddyPubkey)
 }
 
 func (bh *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
