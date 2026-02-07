@@ -5,25 +5,18 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (c *SelfCDCSyncer) getTableNames() ([]string, error) {
 
-	qq.Println("@getTableNames/1")
-
-	tableNames := []string{}
-
-	qq.Println("@getTableNames/2")
-
-	rows, err := c.db.SQL().Query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
+	rows, err := c.db.SQL().Query(
+		"SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND (sql IS NULL OR sql NOT LIKE 'CREATE VIRTUAL TABLE%')")
 	if err != nil {
 		return nil, err
 	}
-
-	qq.Println("@getTableNames/3")
-
 	defer rows.Close()
+
+	tableNames := []string{}
 
 	for rows.Next() {
 		var name string
