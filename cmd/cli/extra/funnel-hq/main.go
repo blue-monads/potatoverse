@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	cli.RegisterExtraCommand("nostr-hq", func(args []string) error {
+	cli.RegisterExtraCommand("funnel-hq", func(args []string) error {
 		return Run(context.Background())
 	})
 }
