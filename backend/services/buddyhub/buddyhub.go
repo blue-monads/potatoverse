@@ -86,11 +86,12 @@ func (bh *BuddyHub) GetPrivkey() string {
 }
 
 func (bh *BuddyHub) ListBuddies() ([]*xtypes.BuddyInfo, error) {
-	return nil, nil
-}
+	result := make([]*xtypes.BuddyInfo, 0, len(bh.staticBuddies))
+	for _, buddyInfo := range bh.staticBuddies {
+		result = append(result, buddyInfo)
+	}
 
-func (bh *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
-	return true, nil
+	return result, nil
 }
 
 func (bh *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
