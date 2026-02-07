@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/app/server/rt_buddy/webdav"
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
@@ -40,7 +40,6 @@ func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRoute
 func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
 	g.POST("/buddy/ping", a.handleBuddyPing)
 	g.Any("/buddy/route", a.handleBuddyRoute)
-	g.Any("/buddy/webdav/*path", a.handleBuddyWebdav)
 
 	// lazysync
 	g.POST("/buddy/lazycdc/sync/data", a.handleBuddyLazySyncData)
