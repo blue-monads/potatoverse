@@ -12,6 +12,9 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
+// this is a testing harness for eventhub/eslayer (meaning Event slayer) (kind a like job processering serveice)
+// eslayer should be robost, handle various senariao
+
 func main() {
 
 	tmpFolder := os.TempDir()
