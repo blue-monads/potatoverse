@@ -155,7 +155,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 }
 
 const (
-	CDC_ENABLED = true
+	CDC_ENABLED = false
 )
 
 func (db *DB) Init() error {

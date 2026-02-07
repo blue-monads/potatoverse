@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/blue-monads/potatoverse/backend/services/buddyhub/hq"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub-poc/buddyhub_attempt_2/hq"
 	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
