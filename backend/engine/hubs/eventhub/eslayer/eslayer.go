@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
-	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
 )
 
 type ESLayer struct {
@@ -21,9 +21,7 @@ type ESLayer struct {
 	wg     sync.WaitGroup
 }
 
-func NewESLayer(app xtypes.App) *ESLayer {
-
-	db := app.Database()
+func NewESLayer(db datahub.Database, handlers map[string]evtype.Handler) *ESLayer {
 
 	ctx, cancel := context.WithCancel(context.Background())
 

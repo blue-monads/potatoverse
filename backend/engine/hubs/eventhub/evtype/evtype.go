@@ -13,7 +13,7 @@ type TExecution struct {
 	RetryAble    bool
 }
 
-type Handler func(ex TExecution) error
+type Handler func(ex *TExecution) error
 
 type Builder func(app xtypes.App) Handler
 
