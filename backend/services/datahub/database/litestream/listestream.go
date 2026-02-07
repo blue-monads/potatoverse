@@ -1,4 +1,4 @@
-package database
+package litestream
 
 import (
 	"context"
@@ -8,10 +8,6 @@ import (
 	"github.com/ncruces/litestream"
 	"github.com/ncruces/litestream/webdav"
 )
-
-func (db *DB) StartLitestream() error {
-	return StartLitestream("todo")
-}
 
 func StartLitestream(filepath string) error {
 
