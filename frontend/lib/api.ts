@@ -257,7 +257,7 @@ export const upgradePackageFromRepo = async (packageId: number, req: UpgradePack
 }
 
 export const installPackageEmbed = async (name: string, repoSlug?: string) => {
-    return iaxios.post<InstallPackageResult>(`/core/package/install/embed`, {
+    return iaxios.post<InstallPackageResult>(`/core/package/install/repo`, {
         name,
         repo_slug: repoSlug
     });
