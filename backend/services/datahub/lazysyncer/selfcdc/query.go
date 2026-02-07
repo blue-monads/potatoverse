@@ -136,24 +136,6 @@ func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.
 	}, nil
 }
 
-//
-
-func (s *SelfCDCSyncer) GetTableRecordsSerial(tblId int64, offset int64, limit int64) ([]map[string]any, error) {
-	tableName := s.getTableName(tblId)
-	if tableName == "" {
-		return nil, ErrTableNotFound
-	}
-
-	table := s.db.Collection(tableName)
-	var records []map[string]any
-	err := table.Find(db.Cond{"rowid >": offset}).Select("rowid", "*").Limit(int(limit)).All(&records)
-	if err != nil {
-		return nil, err
-	}
-
-	return records, nil
-}
-
 func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) ([]map[string]any, error) {
 	tableName := s.getTableName(tableId)
 	if tableName == "" {

@@ -45,14 +45,12 @@ func (b *BuddyRouteServer) handleBuddyLazySyncData(ctx *gin.Context) {
 		limit = MaxLazyCDCBatchSize
 	}
 
-	records, err := b.selfcdc.GetTableRecordsSerial(req.TableId, req.LastSyncedId, int64(limit))
+	bdata, err := b.selfcdc.GetDataCDC(req.TableId, req.LastSyncedId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"records": records,
-	})
+	ctx.JSON(http.StatusOK, bdata)
 
 }
