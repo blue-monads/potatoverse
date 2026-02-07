@@ -28,10 +28,13 @@ type BuddyHub struct {
 	privkey       string
 	port          int
 	staticBuddies map[string]*xtypes.BuddyInfo
+
+	embeddedFunnel *funnel.Funnel
 }
 
 const (
-	DefaultFunnelHQ = "ws://localhost:7447"
+	DefaultFunnelHQ      = "ws://localhost:7447"
+	EnableEmbeddedFunnel = true
 )
 
 func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
@@ -70,7 +73,16 @@ func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 }
 
 func (bh *BuddyHub) Start() error {
-	return bh.funnelHQ.Start(bh.pubkey)
+	err := bh.funnelHQ.Start(bh.pubkey)
+	if err != nil {
+		return err
+	}
+
+	if EnableEmbeddedFunnel {
+		bh.embeddedFunnel = funnel.New()
+	}
+
+	return nil
 }
 
 func (bh *BuddyHub) Stop() error {
@@ -123,7 +135,18 @@ func (bh *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Resp
 }
 
 func (bh *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
+	if bh.embeddedFunnel == nil {
+		return
+	}
 
-	// fixme run emebed funnel server
+	bh.embeddedFunnel.HandleServerWebSocket(buddyPubkey, ctx)
 
+}
+
+func (bh *BuddyHub) HandleFunnelRegisterNode(buddyPubkey string, ctx *gin.Context) {
+	if bh.embeddedFunnel == nil {
+		return
+	}
+
+	bh.embeddedFunnel.HandleServerWebSocket(buddyPubkey, ctx)
 }

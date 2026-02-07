@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/publicsuffix"
@@ -112,6 +113,25 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW(ctx *gin.Context) {
 func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
 	extractedPubkey := strings.Split(subdomain, "buddy")[1]
 	a.buddyhub.HandleFunnelRoute(fmt.Sprintf("npub%s", extractedPubkey), ctx)
+}
+
+func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
+
+	token := ctx.Query("token")
+
+	if token == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "token is required"})
+		return
+	}
+
+	pubkey, err := nostrutils.DecodeKeyToHex(token)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	a.buddyhub.HandleFunnelRegisterNode(fmt.Sprintf("npub%s", pubkey), ctx)
+
 }
 
 // private

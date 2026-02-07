@@ -40,6 +40,7 @@ func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRoute
 func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
 	g.POST("/buddy/ping", a.handleBuddyPing)
 	g.Any("/buddy/route", a.handleBuddyRoute)
+	g.GET("/buddy/register", a.registerBuddyNode)
 
 	// lazysync
 	g.POST("/buddy/lazycdc/sync/data", a.handleBuddyLazySyncData)
