@@ -11,8 +11,8 @@ import (
 	"github.com/gobwas/ws"
 )
 
-func (f *Funnel) handleServerWebSocket(serverId string, c *gin.Context) {
-	qq.Println("@Funnel/handleServerWebSocket/1{SERVER_ID}", serverId)
+func (f *Funnel) handleServerWebSocket(nodeId string, c *gin.Context) {
+	qq.Println("@Funnel/handleServerWebSocket/1{SERVER_ID}", nodeId)
 	// Upgrade to websocket
 	conn, _, _, err := ws.UpgradeHTTP(c.Request, c.Writer)
 	if err != nil {
@@ -24,18 +24,18 @@ func (f *Funnel) handleServerWebSocket(serverId string, c *gin.Context) {
 	qq.Println("@Funnel/handleServerWebSocket/2{CONN}")
 
 	// Register the server connection
-	f.registerServer(serverId, conn)
+	f.registerServer(nodeId, conn)
 }
 
-func (f *Funnel) registerServer(serverId string, conn net.Conn) {
-	qq.Println("@Funnel/registerServer/1{SERVER_ID}", serverId)
+func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
+	qq.Println("@Funnel/registerServer/1{SERVER_ID}", nodeId)
 	f.scLock.Lock()
 
 	swchan := make(chan *ServerWrite)
 
-	existIng := f.serverConnections[serverId]
+	existIng := f.serverConnections[nodeId]
 
-	f.serverConnections[serverId] = &ServerHandle{
+	f.serverConnections[nodeId] = &ServerHandle{
 		conn:      conn,
 		writeChan: swchan,
 	}
@@ -46,18 +46,18 @@ func (f *Funnel) registerServer(serverId string, conn net.Conn) {
 	}
 
 	// Start goroutine to handle incoming responses from this server
-	go f.handleServerConnection(serverId, swchan, conn)
+	go f.handleServerConnection(nodeId, swchan, conn)
 }
 
 // handleServerConnection handles incoming packets from a server connection
-func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrite, conn net.Conn) {
-	qq.Println("@handleServerConnection/1", serverId)
+func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite, conn net.Conn) {
+	qq.Println("@handleServerConnection/1", nodeId)
 	defer func() {
 		conn.Close()
 
-		qq.Println("@handleServerConnection/2", serverId)
+		qq.Println("@handleServerConnection/2", nodeId)
 		f.scLock.Lock()
-		delete(f.serverConnections, serverId)
+		delete(f.serverConnections, nodeId)
 		f.scLock.Unlock()
 	}()
 
@@ -82,7 +82,7 @@ func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrit
 		reqIdBuf := make([]byte, 16)
 		_, err := io.ReadFull(conn, reqIdBuf)
 		if err != nil {
-			qq.Println("@handleServerConnection/3", serverId, err)
+			qq.Println("@handleServerConnection/3", nodeId, err)
 			break
 		}
 
@@ -92,7 +92,7 @@ func (f *Funnel) handleServerConnection(serverId string, swchan chan *ServerWrit
 
 		packet, err := packetwire.ReadPacket(conn)
 		if err != nil {
-			qq.Println("@handleServerConnection/3", serverId, err)
+			qq.Println("@handleServerConnection/3", nodeId, err)
 			break
 		}
 

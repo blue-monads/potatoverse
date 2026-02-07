@@ -159,7 +159,7 @@ func TestFunnel_HTTP_GetRequest(t *testing.T) {
 	client := NewFunnelClient(FunnelClientOptions{
 		LocalHttpPort:   localPort,
 		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
-		ServerId:        "test-server",
+		NodeId:          "test-server",
 	})
 	defer client.Stop()
 
@@ -221,7 +221,7 @@ func TestFunnel_HTTP_PostRequest(t *testing.T) {
 	client := NewFunnelClient(FunnelClientOptions{
 		LocalHttpPort:   localPort,
 		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
-		ServerId:        "test-server",
+		NodeId:          "test-server",
 	})
 	defer client.Stop()
 
@@ -287,7 +287,7 @@ func TestFunnel_WebSocket(t *testing.T) {
 	client := NewFunnelClient(FunnelClientOptions{
 		LocalHttpPort:   localPort,
 		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
-		ServerId:        "test-server",
+		NodeId:          "test-server",
 	})
 	defer client.Stop()
 
@@ -361,7 +361,7 @@ func TestFunnel_MultipleWebSocket(t *testing.T) {
 	client := NewFunnelClient(FunnelClientOptions{
 		LocalHttpPort:   localPort,
 		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
-		ServerId:        "test-server",
+		NodeId:          "test-server",
 	})
 	defer client.Stop()
 
@@ -455,7 +455,7 @@ func TestFunnel_MultipleRequests(t *testing.T) {
 	client := NewFunnelClient(FunnelClientOptions{
 		LocalHttpPort:   localPort,
 		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
-		ServerId:        "test-server",
+		NodeId:          "test-server",
 	})
 	defer client.Stop()
 

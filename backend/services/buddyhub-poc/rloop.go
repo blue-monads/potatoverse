@@ -21,7 +21,7 @@ func (h *BuddyHub) rLoopHandle(rendezvousUrl *xtypes.RendezvousUrl) {
 	client := funnel.NewFunnelClient(funnel.FunnelClientOptions{
 		LocalHttpPort:   h.port,
 		RemoteFunnelUrl: rendezvousUrl.URL,
-		ServerId:        h.pubkey,
+		NodeId:          h.pubkey,
 	})
 
 	token, err := nostrutils.GenerateNostrAuthToken(h.privkey, rendezvousUrl.URL, "GET")

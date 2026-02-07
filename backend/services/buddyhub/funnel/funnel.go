@@ -40,18 +40,18 @@ func New() *Funnel {
 	}
 }
 
-func (f *Funnel) HandleServerWebSocket(serverId string, c *gin.Context) {
-	qq.Println("@Funnel/HandleServerWebSocket/1{SERVER_ID}", serverId)
+func (f *Funnel) HandleServerWebSocket(nodeId string, c *gin.Context) {
+	qq.Println("@Funnel/HandleServerWebSocket/1{NODE_ID}", nodeId)
 
-	f.handleServerWebSocket(serverId, c)
+	f.handleServerWebSocket(nodeId, c)
 }
 
-func (f *Funnel) HandleRoute(serverId string, c *gin.Context) {
+func (f *Funnel) HandleRoute(nodeId string, c *gin.Context) {
 
 	if c.Request.Header.Get("Upgrade") == "websocket" {
-		f.routeWS(serverId, c)
+		f.routeWS(nodeId, c)
 		return
 	}
 
-	f.routeHttp(serverId, c)
+	f.routeHttp(nodeId, c)
 }
