@@ -25,8 +25,10 @@ func (e *ESLayer) rootEventWatcher() {
 	fallbackTimer := time.NewTimer(time.Second * 30)
 	defer fallbackTimer.Stop()
 
+	sink := e.datahandle.GetMQSynk()
+
 	checkForEvents := func() {
-		events, err := e.sink.QueryNewEvents()
+		events, err := sink.QueryNewEvents()
 		if err != nil {
 			qq.Println("@rootEventWatcher/checkForEvents/error", err)
 		} else {
@@ -41,7 +43,7 @@ func (e *ESLayer) rootEventWatcher() {
 	}
 
 	checkForTargets := func() {
-		targets, err := e.sink.QueryNewEventTargets()
+		targets, err := sink.QueryNewEventTargets()
 		if err != nil {
 			qq.Println("@rootEventWatcher/QueryNewEventTargets/error", err)
 		} else {
@@ -56,7 +58,7 @@ func (e *ESLayer) rootEventWatcher() {
 	}
 
 	checkForDelayedTargets := func() {
-		targets, err := e.sink.QueryDelayExpiredTargets()
+		targets, err := sink.QueryDelayExpiredTargets()
 		if err != nil {
 			qq.Println("@rootEventWatcher/QueryDelayExpiredTargets/error", err)
 		} else {
@@ -94,6 +96,8 @@ func (e *ESLayer) eventProcessLoop() {
 	e.wg.Add(1)
 	defer e.wg.Done()
 
+	sink := e.datahandle.GetMQSynk()
+
 	for {
 		select {
 		case <-e.ctx.Done():
@@ -106,7 +110,7 @@ func (e *ESLayer) eventProcessLoop() {
 				continue
 			}
 
-			evt, err := e.sink.GetEvent(eventId)
+			evt, err := sink.GetEvent(eventId)
 			if err != nil {
 				qq.Println("@eventProcessLoop/GetEvent/error", err)
 				continue
@@ -117,13 +121,13 @@ func (e *ESLayer) eventProcessLoop() {
 				continue
 			}
 
-			targets, err := e.sink.CreateEventTargets(eventId)
+			targets, err := sink.CreateEventTargets(eventId)
 			if err != nil {
 				qq.Println("@eventProcessLoop/CreateEventTargets/error", err)
 				continue
 			}
 
-			err = e.sink.UpdateEvent(eventId, map[string]any{
+			err = sink.UpdateEvent(eventId, map[string]any{
 				"status": "scheduled",
 			})
 

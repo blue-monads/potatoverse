@@ -9,11 +9,9 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/utils/kosher"
-	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type TargetExecution struct {
-	App          xtypes.App
 	Subscription *dbmodels.MQSubscription
 	Target       *dbmodels.MQEventTarget
 	Event        *dbmodels.MQEvent

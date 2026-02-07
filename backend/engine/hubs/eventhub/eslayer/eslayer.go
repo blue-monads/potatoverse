@@ -4,14 +4,14 @@ import (
 	"context"
 	"sync"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
 type ESLayer struct {
-	app  xtypes.App
-	sink datahub.MQSynk
-	db   datahub.Database
+	datahandle evtype.DataHandle
+
+	handlers map[string]evtype.Handler
 
 	eventProcessChan       chan int64
 	eventTargetProcessChan chan int64
@@ -24,14 +24,11 @@ type ESLayer struct {
 func NewESLayer(app xtypes.App) *ESLayer {
 
 	db := app.Database()
-	sink := db.GetMQSynk()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &ESLayer{
-		app:                    app,
-		sink:                   sink,
-		db:                     db,
+		datahandle:             db,
 		eventProcessChan:       make(chan int64, 13),
 		eventTargetProcessChan: make(chan int64, 27),
 		ctx:                    ctx,
