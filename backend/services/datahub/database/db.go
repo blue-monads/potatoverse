@@ -6,15 +6,11 @@ import (
 	_ "embed"
 	"errors"
 	"log/slog"
-	"strconv"
 	"strings"
-
-	"github.com/blue-monads/potatoverse/backend/services/datahub"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/database/low"
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
@@ -42,6 +38,10 @@ type DB struct {
 
 const (
 	ScopeOwner = "owner"
+)
+
+const (
+	CDC_ENABLED = true
 )
 
 var (
@@ -154,10 +154,6 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 	}, nil
 }
 
-const (
-	CDC_ENABLED = true
-)
-
 func (db *DB) Init() error {
 
 	if err := db.lazySyncer.Start(); err != nil {
@@ -211,49 +207,5 @@ func (db *DB) Table(name string) db.Collection {
 const ErrText = "upper: no more rows in this result set"
 
 func (db *DB) IsEmptyRowsError(err error) bool {
-	return err.Error() == ErrText
-}
-
-func (db *DB) GetGlobalOps() datahub.GlobalOps {
-	return db.globalOps
-}
-
-func (db *DB) GetUserOps() datahub.UserOps {
-	return db.userOps
-}
-
-func (db *DB) GetSpaceOps() datahub.SpaceOps {
-	return db.spaceOps
-}
-
-func (db *DB) GetSpaceKVOps() datahub.SpaceKVOps {
-	return db.spaceOps
-}
-
-func (db *DB) GetPackageInstallOps() datahub.PackageInstallOps {
-	return db.packageInstallOps
-}
-
-func (db *DB) GetFileOps() datahub.FileOps {
-	return db.fileOps
-}
-
-func (db *DB) GetPackageFileOps() datahub.FileOps {
-	return db.packageFileOps
-}
-
-func (db *DB) GetLowDBOps(ownerType string, ownerID string) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, ownerType, ownerID)
-}
-
-func (db *DB) GetLowPackageDBOps(installId int64) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, "P", strconv.FormatInt(installId, 10))
-}
-
-func (db *DB) GetLowCapabilityDBOps(capabilityId int64) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, "C", strconv.FormatInt(capabilityId, 10))
-}
-
-func (db *DB) GetMQSynk() datahub.MQSynk {
-	return db.eventOps
+	return errors.Is(err, upperdb.ErrNoMoreRows)
 }
