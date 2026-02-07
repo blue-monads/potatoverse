@@ -27,6 +27,7 @@ func NewESLayer(db datahub.Database, handlers map[string]evtype.Handler) *ESLaye
 
 	return &ESLayer{
 		datahandle:             db,
+		handlers:               handlers,
 		eventProcessChan:       make(chan int64, 13),
 		eventTargetProcessChan: make(chan int64, 27),
 		ctx:                    ctx,
