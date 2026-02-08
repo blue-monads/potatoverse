@@ -29,7 +29,6 @@ func PerformScriptTargetExecution(app xtypes.App) evtype.Handler {
 		panic(err)
 	}
 
-	// Lru grabage Collect not used
 	executors := make(map[string]*Exec)
 	elock := sync.RWMutex{}
 
@@ -37,6 +36,7 @@ func PerformScriptTargetExecution(app xtypes.App) evtype.Handler {
 
 	cleanup := func() {
 		// Clean up executors older than 1 hour
+		// fixme => may be make it a LRU in future
 		cutoff := time.Now().Add(-1 * time.Hour)
 
 		elock.Lock()
