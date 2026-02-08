@@ -6,57 +6,49 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/rengine"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	qq "github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (e *ESLayer) targetProcessor(targetId int64) error {
-
-	qq.Println("targetProcessor/1")
+	qq.Println("@targetProcessor: processing target", targetId)
 
 	sink := e.datahandle.GetMQSynk()
 	sops := e.datahandle.GetSpaceOps()
 
-	qq.Println("targetProcessor/2")
-
 	target, err := sink.TransitionTargetStart(targetId)
 	if err != nil {
-		qq.Println("targetProcessor/3", err)
+		qq.Println("@targetProcessor/TransitionTargetStart/error", err)
 		return err
 	}
-
-	qq.Println("targetProcessor/4")
 
 	event, err := sink.GetEvent(target.EventID)
 	if err != nil {
-		qq.Println("targetProcessor/5", err)
+		qq.Println("@targetProcessor/GetEvent/error", err)
 		return err
 	}
-
-	qq.Println("targetProcessor/6")
 
 	sub, err := sops.GetEventSubscription(event.InstallID, target.SubscriptionID)
 	if err != nil {
-		qq.Println("targetProcessor/7", err)
+		qq.Println("@targetProcessor/GetEventSubscription/error", err)
 		return err
 	}
-
-	qq.Println("targetProcessor/8", sub)
 
 	ok, err := rengine.RuleEngine(sub.Rules, event.Payload)
 	if err != nil {
-		qq.Println("targetProcessor/9", err)
 		sink.TransitionTargetFail(event.ID, targetId, err.Error())
+		qq.Println("@targetProcessor/RuleEngine/error", err)
 		return err
 	}
 	if !ok {
-		qq.Println("targetProcessor/10", "rules not matched")
+		qq.Println("@targetProcessor/RuleEngine: no match")
 		return nil
 	}
 
 	handler, ok := e.handlers[sub.TargetType]
 	if !ok {
-		qq.Println("targetProcessor/11", "handler not found", sub.TargetType)
-		return fmt.Errorf("handler not found: %s", sub.TargetType)
+		err = fmt.Errorf("handler not found: %s", sub.TargetType)
+		qq.Println("@targetProcessor/handler-not-found", err)
+		return err
 	}
 
 	ectx := &evtype.TExecution{
@@ -66,24 +58,46 @@ func (e *ESLayer) targetProcessor(targetId int64) error {
 	}
 
 	if sub.DelayStart > 0 && target.Status != "start_delayed" {
-		delayStart := time.Now().Unix() + sub.DelayStart*1000
+		delayStart := time.Now().Unix() + int64(sub.DelayStart)
 		err = sink.TransitionTargetStartDelayed(targetId, event.ID, delayStart)
 		if err != nil {
-			qq.Println("targetProcessor/11", err)
 			sink.TransitionTargetFail(event.ID, targetId, err.Error())
+			qq.Println("@targetProcessor/TransitionTargetStartDelayed/error", err)
 			return err
 		}
-
-		qq.Println("targetProcessor/12", "delayed for", sub.DelayStart, "seconds")
+		qq.Println("@targetProcessor: target", targetId, "delayed until", delayStart)
 		return nil
 	}
 
+	qq.Println("@targetProcessor: calling handler for target", targetId)
 	err = handler(ectx)
 	if err != nil {
-		qq.Println("targetProcessor/12", err)
+		qq.Println("@targetProcessor/handler/error", err)
+		// Check if this is a retryable error
+		if ectx.RetryAble && sub.MaxRetries > 0 && target.RetryCount < sub.MaxRetries {
+			newRetryCount := target.RetryCount + 1
+			delayUntil := time.Now().Unix() + int64(sub.RetryDelay)
+
+			err = sink.TransitionTargetDelay(targetId, event.ID, delayUntil, newRetryCount)
+			if err != nil {
+				sink.TransitionTargetFail(event.ID, targetId, err.Error())
+				return err
+			}
+			qq.Println("@targetProcessor: target", targetId, "retried, new count", newRetryCount)
+			return nil
+		}
 
 		sink.TransitionTargetFail(event.ID, targetId, err.Error())
 		return err
 	}
+
+	// Mark target as completed
+	err = sink.TransitionTargetComplete(event.ID, targetId)
+	if err != nil {
+		qq.Println("@targetProcessor/TransitionTargetComplete/error", err)
+		return err
+	}
+
+	qq.Println("@targetProcessor: target", targetId, "completed")
 	return nil
 }

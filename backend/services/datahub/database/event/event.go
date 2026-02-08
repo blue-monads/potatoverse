@@ -127,7 +127,7 @@ func (d *EventOperations) QueryDelayExpiredTargets() ([]int64, error) {
 	now := time.Now().Unix()
 	entityIds := make([]dbmodels.EntityId, 0)
 	err := d.eventTargetTable().Find(db.Cond{
-		"status":           "delayed",
+		"status IN":        []string{"delayed", "start_delayed"},
 		"delayed_until <=": now,
 	}).Select("id").All(&entityIds)
 	if err != nil {

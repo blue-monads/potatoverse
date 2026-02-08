@@ -6,6 +6,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	qq "github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 type ESLayer struct {
@@ -28,8 +29,8 @@ func NewESLayer(db datahub.Database, handlers map[string]evtype.Handler) *ESLaye
 	return &ESLayer{
 		datahandle:             db,
 		handlers:               handlers,
-		eventProcessChan:       make(chan int64, 13),
-		eventTargetProcessChan: make(chan int64, 27),
+		eventProcessChan:       make(chan int64, 20),
+		eventTargetProcessChan: make(chan int64, 20),
 		ctx:                    ctx,
 		cancel:                 cancel,
 		wg:                     sync.WaitGroup{},
@@ -47,5 +48,11 @@ func (e *ESLayer) Stop() {
 }
 
 func (e *ESLayer) NotifyNewEvent(eventId int64) {
-
+	qq.Println("@NotifyNewEvent: called with event", eventId)
+	select {
+	case e.eventProcessChan <- eventId:
+		qq.Println("@NotifyNewEvent: sent event", eventId)
+	case <-e.ctx.Done():
+		qq.Println("@NotifyNewEvent: context done")
+	}
 }

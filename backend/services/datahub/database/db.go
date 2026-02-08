@@ -42,7 +42,7 @@ const (
 )
 
 const (
-	CDC_ENABLED = true
+	CDC_ENABLED = false
 )
 
 var (
@@ -53,6 +53,10 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
 	var settings = sqlite.ConnectionURL{
 		Database: file,
+		Options: map[string]string{
+			"_journal_mode": "WAL",
+			"_busy_timeout": "10000", // 10 second busy timeout
+		},
 	}
 
 	sess, err := sqlite.Open(settings)
@@ -157,8 +161,10 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 
 func (db *DB) Init(transport datahub.BuddyTransport) error {
 
-	if err := db.lazySyncer.Start(transport); err != nil {
-		return err
+	if db.lazySyncer != nil {
+		if err := db.lazySyncer.Start(transport); err != nil {
+			return err
+		}
 	}
 
 	return nil

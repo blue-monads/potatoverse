@@ -22,7 +22,7 @@ func (e *ESLayer) rootEventWatcher() {
 	e.wg.Add(1)
 	defer e.wg.Done()
 
-	fallbackTimer := time.NewTimer(time.Second * 30)
+	fallbackTimer := time.NewTimer(time.Second * 2)
 	defer fallbackTimer.Stop()
 
 	sink := e.datahandle.GetMQSynk()
@@ -32,9 +32,11 @@ func (e *ESLayer) rootEventWatcher() {
 		if err != nil {
 			qq.Println("@rootEventWatcher/checkForEvents/error", err)
 		} else {
+			qq.Println("@rootEventWatcher/checkForEvents: found", len(events), "new events")
 			for _, event := range events {
 				select {
 				case e.eventProcessChan <- event:
+					qq.Println("@rootEventWatcher/checkForEvents: sent event", event)
 				case <-e.ctx.Done():
 					return
 				}
@@ -74,7 +76,7 @@ func (e *ESLayer) rootEventWatcher() {
 
 	for {
 		// Reset timer for next iteration
-		fallbackTimer.Reset(time.Second * 30)
+		fallbackTimer.Reset(time.Second * 2)
 
 		select {
 		case <-e.ctx.Done():
@@ -109,6 +111,7 @@ func (e *ESLayer) eventProcessLoop() {
 			if eventId == 0 {
 				continue
 			}
+			qq.Println("@eventProcessLoop: received event", eventId)
 
 			evt, err := sink.GetEvent(eventId)
 			if err != nil {
@@ -121,6 +124,7 @@ func (e *ESLayer) eventProcessLoop() {
 				continue
 			}
 
+			qq.Println("@eventProcessLoop: creating targets for event", eventId)
 			targets, err := sink.CreateEventTargets(eventId)
 			if err != nil {
 				qq.Println("@eventProcessLoop/CreateEventTargets/error", err)
@@ -136,9 +140,11 @@ func (e *ESLayer) eventProcessLoop() {
 				continue
 			}
 
+			qq.Println("@eventProcessLoop: created", len(targets), "targets for event", eventId)
 			for _, targetId := range targets {
 				select {
 				case e.eventTargetProcessChan <- targetId:
+					qq.Println("@eventProcessLoop: sent target", targetId)
 				case <-e.ctx.Done():
 					return
 				}

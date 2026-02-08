@@ -82,7 +82,7 @@ func (tr *TestResults) print() {
 
 func main() {
 
-	qq.Enabled = false
+	qq.Enabled = true
 
 	tmpFolder, err := os.MkdirTemp("", "estest_*")
 	if err != nil {
@@ -298,6 +298,7 @@ func main() {
 			Show("Failed to add event", evt.name, "err", err)
 		} else {
 			Show(fmt.Sprintf("✓ Added event: %s (ID: %d)", evt.name, eventID))
+			eslayer.NotifyNewEvent(eventID)
 		}
 	}
 
