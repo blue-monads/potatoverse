@@ -21,6 +21,68 @@ type MigratorCapability struct {
 	db           datahub.DBLowOps
 }
 
+func (m *MigratorCapability) Handle(ctx *gin.Context) {}
+
+func (m *MigratorCapability) ListActions() ([]string, error) {
+	return []string{"run_migrations", "list_migrations"}, nil
+}
+
+func (m *MigratorCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+	switch name {
+	case "run_migrations":
+		if err := m.performMigration(); err != nil {
+			return nil, fmt.Errorf("migration failed: %w", err)
+		}
+		return map[string]any{"status": "success", "message": "migrations completed"}, nil
+
+	case "list_migrations":
+		executed, err := m.getExecutedMigrations()
+		if err != nil {
+			return nil, err
+		}
+
+		pkgFileOps := m.builder.app.Database().GetPackageFileOps()
+		files, err := pkgFileOps.ListFiles(m.installId, m.folder)
+		if err != nil {
+			return nil, err
+		}
+
+		migrations := []map[string]any{}
+		for _, file := range files {
+			if !file.IsFolder && strings.HasSuffix(strings.ToLower(file.Name), ".sql") {
+				migrationKey := m.getMigrationKey(file)
+				migrations = append(migrations, map[string]any{
+					"file_name":     file.Name,
+					"path":          file.Path,
+					"executed":      executed[migrationKey],
+					"migration_key": migrationKey,
+				})
+			}
+		}
+
+		return map[string]any{"migrations": migrations}, nil
+
+	default:
+		return nil, fmt.Errorf("invalid action: %s", name)
+	}
+}
+
+func (m *MigratorCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
+
+	return &MigratorCapability{
+		folder:       m.folder,
+		builder:      m.builder,
+		installId:    m.installId,
+		spaceId:      m.spaceId,
+		capabilityId: m.capabilityId,
+		db:           m.db,
+	}, nil
+}
+
+func (m *MigratorCapability) Close() error {
+	return nil
+}
+
 func (m *MigratorCapability) performMigration() error {
 
 	pkgFileOps := m.builder.app.Database().GetPackageFileOps()
@@ -134,66 +196,4 @@ func (m *MigratorCapability) getMigrationKey(file dbmodels.FileMeta) string {
 		path = m.folder
 	}
 	return fmt.Sprintf("%s/%s", path, file.Name)
-}
-
-func (m *MigratorCapability) Handle(ctx *gin.Context) {}
-
-func (m *MigratorCapability) ListActions() ([]string, error) {
-	return []string{"run_migrations", "list_migrations"}, nil
-}
-
-func (m *MigratorCapability) Execute(name string, params lazydata.LazyData) (any, error) {
-	switch name {
-	case "run_migrations":
-		if err := m.performMigration(); err != nil {
-			return nil, fmt.Errorf("migration failed: %w", err)
-		}
-		return map[string]any{"status": "success", "message": "migrations completed"}, nil
-
-	case "list_migrations":
-		executed, err := m.getExecutedMigrations()
-		if err != nil {
-			return nil, err
-		}
-
-		pkgFileOps := m.builder.app.Database().GetPackageFileOps()
-		files, err := pkgFileOps.ListFiles(m.installId, m.folder)
-		if err != nil {
-			return nil, err
-		}
-
-		migrations := []map[string]any{}
-		for _, file := range files {
-			if !file.IsFolder && strings.HasSuffix(strings.ToLower(file.Name), ".sql") {
-				migrationKey := m.getMigrationKey(file)
-				migrations = append(migrations, map[string]any{
-					"file_name":     file.Name,
-					"path":          file.Path,
-					"executed":      executed[migrationKey],
-					"migration_key": migrationKey,
-				})
-			}
-		}
-
-		return map[string]any{"migrations": migrations}, nil
-
-	default:
-		return nil, fmt.Errorf("invalid action: %s", name)
-	}
-}
-
-func (m *MigratorCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
-
-	return &MigratorCapability{
-		folder:       m.folder,
-		builder:      m.builder,
-		installId:    m.installId,
-		spaceId:      m.spaceId,
-		capabilityId: m.capabilityId,
-		db:           m.db,
-	}, nil
-}
-
-func (m *MigratorCapability) Close() error {
-	return nil
 }
