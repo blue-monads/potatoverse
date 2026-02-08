@@ -39,7 +39,7 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 
 	source := Code
 
-	if opt.CodeLoader != nil {
+	if opt.CodeLoader == nil {
 		if !ByPassPackageCode {
 			sOps := b.app.Database().GetSpaceOps()
 			s, err := sOps.GetSpace(opt.SpaceId)
