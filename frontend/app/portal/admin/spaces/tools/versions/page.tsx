@@ -551,6 +551,8 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
     const [upgradeResult, setUpgradeResult] = useState<UpgradePackageResult | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
         if (f) setSelectedFile(f);
@@ -564,7 +566,12 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
             const buffer = await selectedFile.arrayBuffer();
             const res = await upgradePackageZipDirectly(packageId, buffer);
             const result = res.data;
-            if (result?.update_page) {
+
+            const update_page = (result?.special_pages || {})["update_page"]
+
+
+
+            if (update_page) {
                 setUpgradeResult(result);
             } else {
                 onUpdated();
@@ -578,17 +585,19 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
     };
 
     const handleConfigure = () => {
-        if (!upgradeResult?.update_page) return;
+        if (!upgradeResult) return;
+        const update_page = (upgradeResult.special_pages || {})["update_page"];
+        if (!update_page) return;
         const fragment = new URLSearchParams();
         fragment.set('nskey', upgradeResult.key_space);
         fragment.set('space_id', upgradeResult.root_space_id.toString());
-        fragment.set('load_page', upgradeResult.update_page);
+        fragment.set('load_page', update_page);
         router.push(`/portal/admin/exec?${fragment.toString()}`);
         onUpdated();
         modal.closeModal();
     };
 
-    if (upgradeResult?.update_page) {
+    if (upgradeResult && (upgradeResult.special_pages || {})["update_page"]) {
         return (
             <div className="space-y-4">
                 <p className="text-sm text-gray-600">Upgrade completed. You can configure the package or close.</p>
@@ -696,7 +705,7 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
                 version: selectedVersion,
             });
             const result = res.data;
-            if (result?.update_page) {
+            if ((result?.special_pages || {})["update_page"]) {
                 setUpgradeResult(result);
             } else {
                 onUpdated();
@@ -710,11 +719,13 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
     };
 
     const handleConfigure = () => {
-        if (!upgradeResult?.update_page) return;
+        if (!upgradeResult) return;
+        const update_page = (upgradeResult.special_pages || {})["update_page"];
+        if (!update_page) return;
         const fragment = new URLSearchParams();
         fragment.set('nskey', upgradeResult.key_space);
         fragment.set('space_id', upgradeResult.root_space_id.toString());
-        fragment.set('load_page', upgradeResult.update_page);
+        fragment.set('load_page', update_page);
         router.push(`/portal/admin/exec?${fragment.toString()}`);
         onUpdated();
         modal.closeModal();
@@ -752,7 +763,7 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
         );
     }
 
-    if (upgradeResult?.update_page) {
+    if (upgradeResult && (upgradeResult.special_pages || {})["update_page"]) {
         return (
             <div className="space-y-4">
                 <p className="text-sm text-gray-600">Update completed. You can configure the package or close.</p>

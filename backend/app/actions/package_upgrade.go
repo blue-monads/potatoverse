@@ -14,10 +14,10 @@ import (
 
 // UpgradePackageResult is returned from upgrade operations, similar to InstallPackageResult for new installs.
 type UpgradePackageResult struct {
-	PackageVersionId int64  `json:"package_version_id"`
-	UpdatePage       string `json:"update_page"`
-	KeySpace         string `json:"key_space"`
-	RootSpaceId      int64  `json:"root_space_id"`
+	PackageVersionId int64             `json:"package_version_id"`
+	SpecialPages     map[string]string `json:"special_pages"`
+	KeySpace         string            `json:"key_space"`
+	RootSpaceId      int64             `json:"root_space_id"`
 }
 
 func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, installedId int64) (*UpgradePackageResult, error) {
@@ -169,9 +169,20 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		}
 	}
 
+	pversion, err := pops.GetPackageVersion(pvid)
+	if err != nil {
+		return nil, err
+	}
+
+	specialPages := map[string]string{}
+	err = json.Unmarshal([]byte(pversion.SpecialPages), &specialPages)
+	if err != nil {
+		return nil, err
+	}
+
 	return &UpgradePackageResult{
 		PackageVersionId: pvid,
-		UpdatePage:       pkg.UpdatePage,
+		SpecialPages:     specialPages,
 		KeySpace:         pkg.Slug,
 		RootSpaceId:      rootSpaceId,
 	}, nil

@@ -17,6 +17,8 @@ type PotatoPackage struct {
 	InitPage      string           `json:"init_page" toml:"init_page"`
 	UpdatePage    string           `json:"update_page" toml:"update_page"`
 
+	SpecialPages map[string]string `json:"special_pages" toml:"special_pages,omitempty"`
+
 	// for local dev
 	Developer *DeveloperOptions `json:"developer,omitempty" toml:"developer,omitempty"`
 }

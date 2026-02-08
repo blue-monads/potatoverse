@@ -202,13 +202,13 @@ export interface InstallPackageResult {
     installed_id: number;
     root_space_id: number;
     key_space: string;
-    init_page: string;
+    special_pages: Record<string, string>;
 }
 
-/** Response from package upgrade (repo or zip). When update_page is set, show Configure after upgrade. */
+/** Response from package upgrade (repo or zip). When special_pages contains an update page, show Configure after upgrade. */
 export interface UpgradePackageResult {
     package_version_id: number;
-    update_page: string;
+    special_pages: Record<string, string>;
     key_space: string;
     root_space_id: number;
 }

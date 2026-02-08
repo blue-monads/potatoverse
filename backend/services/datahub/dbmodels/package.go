@@ -30,6 +30,5 @@ type PackageVersion struct {
 	SourceCode    string `json:"source_code" db:"source_code"`
 	License       string `json:"license" db:"license"`
 	Version       string `json:"version" db:"version"`
-	InitPage      string `json:"init_page" db:"init_page,omitempty"`
-	UpdatePage    string `json:"update_page" db:"update_page,omitempty"`
+	SpecialPages  string `json:"special_pages" db:"special_pages,omitempty"`
 }

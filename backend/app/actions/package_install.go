@@ -73,15 +73,17 @@ func (c *Controller) InstallPackageByFile(userId int64, repo, file string) (*Ins
 }
 
 type InstallPackageResult struct {
-	InstalledId int64  `json:"installed_id"`
-	RootSpaceId int64  `json:"root_space_id"`
-	KeySpace    string `json:"key_space"`
-	InitPage    string `json:"init_page"`
+	InstalledId  int64             `json:"installed_id"`
+	RootSpaceId  int64             `json:"root_space_id"`
+	KeySpace     string            `json:"key_space"`
+	SpecialPages map[string]string `json:"special_pages"`
 }
 
 func installPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, repo, file string) (*InstallPackageResult, error) {
 
-	installedId, err := database.GetPackageInstallOps().InstallPackage(userId, repo, file)
+	pkgops := database.GetPackageInstallOps()
+
+	installedId, err := pkgops.InstallPackage(userId, repo, file)
 	if err != nil {
 		return nil, err
 	}
@@ -211,11 +213,27 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 
 	}
 
+	ipkg, err := pkgops.GetPackage(installedId)
+	if err != nil {
+		return nil, err
+	}
+
+	vpkg, err := pkgops.GetPackageVersion(ipkg.ActiveInstallID)
+	if err != nil {
+		return nil, err
+	}
+
+	specialPages := map[string]string{}
+	err = json.Unmarshal([]byte(vpkg.SpecialPages), &specialPages)
+	if err != nil {
+		return nil, err
+	}
+
 	return &InstallPackageResult{
-		InstalledId: installedId,
-		RootSpaceId: rootSpaceId,
-		KeySpace:    keySpace,
-		InitPage:    pkg.InitPage,
+		InstalledId:  installedId,
+		RootSpaceId:  rootSpaceId,
+		KeySpace:     keySpace,
+		SpecialPages: specialPages,
 	}, nil
 }
 

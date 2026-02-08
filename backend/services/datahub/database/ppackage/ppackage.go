@@ -1,6 +1,7 @@
 package ppackage
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,6 +52,32 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 
 	installId := result.ID().(int64)
 
+	specialPages := "{}"
+
+	if pkgManifest.UpdatePage != "" {
+		if pkgManifest.SpecialPages == nil {
+			pkgManifest.SpecialPages = map[string]string{}
+		}
+
+		pkgManifest.SpecialPages["update_page"] = pkgManifest.UpdatePage
+	}
+
+	if pkgManifest.InitPage != "" {
+		if pkgManifest.SpecialPages == nil {
+			pkgManifest.SpecialPages = map[string]string{}
+		}
+
+		pkgManifest.SpecialPages["init_page"] = pkgManifest.InitPage
+	}
+
+	if len(pkgManifest.SpecialPages) != 0 {
+		out, err := json.Marshal(pkgManifest.SpecialPages)
+		if err != nil {
+			return 0, err
+		}
+		specialPages = string(out)
+	}
+
 	// Create a version entry
 	version := &dbmodels.PackageVersion{
 		InstallId:     installId,
@@ -65,8 +92,7 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 		AuthorSite:    pkgManifest.AuthorSite,
 		SourceCode:    pkgManifest.SourceCode,
 		License:       pkgManifest.License,
-		InitPage:      pkgManifest.InitPage,
-		UpdatePage:    pkgManifest.UpdatePage,
+		SpecialPages:  specialPages,
 	}
 
 	versionResult, err := d.packageVersionsTable().Insert(version)
