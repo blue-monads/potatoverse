@@ -19,11 +19,6 @@ func (e *ESLayer) eventLoop() {
 }
 
 func (e *ESLayer) rootEventWatcher() {
-	e.wg.Add(1)
-	defer e.wg.Done()
-
-	fallbackTimer := time.NewTimer(time.Second * 2)
-	defer fallbackTimer.Stop()
 
 	sink := e.datahandle.GetMQSynk()
 
@@ -74,7 +69,15 @@ func (e *ESLayer) rootEventWatcher() {
 		}
 	}
 
+	fallbackTimer := time.NewTimer(time.Second * 2)
+	defer fallbackTimer.Stop()
+
+	counter := 0
+
 	for {
+
+		qq.Println("@couner/start", counter)
+
 		// Reset timer for next iteration
 		fallbackTimer.Reset(time.Second * 2)
 
@@ -82,11 +85,21 @@ func (e *ESLayer) rootEventWatcher() {
 		case <-e.ctx.Done():
 			return
 		case <-fallbackTimer.C:
+
+			qq.Println("@checkForEvents")
 			checkForEvents()
+
+			qq.Println("@checkForTargets")
 			checkForTargets()
+
+			qq.Println("@checkForDelayedTargets")
 			checkForDelayedTargets()
 
 		}
+
+		qq.Println("@couner/end", counter)
+
+		counter = counter + 1
 
 	}
 

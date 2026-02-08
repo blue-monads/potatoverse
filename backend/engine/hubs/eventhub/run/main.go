@@ -1,11 +1,11 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
+	"log"
 	"os"
-	"path"
 	"sync"
 	"time"
 
@@ -93,12 +93,19 @@ func main() {
 
 	defer os.RemoveAll(tmpFolder)
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	db, err := database.NewDB(path.Join(tmpFolder, "test.db"), logger)
+	sdb, err := sql.Open("sqlite3", fmt.Sprintf("file:%s/main1.db?mode=rwc&_journal_mode=WAL&_busy_timeout=1000", tmpFolder))
 	if err != nil {
-		Show("Failed to create database", "err", err)
-		return
+		log.Fatal(err)
+	}
+	defer sdb.Close()
+
+	sdb.SetMaxOpenConns(1)
+
+	// logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	db, err := database.FromSqlHandle(sdb)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	results := &TestResults{
