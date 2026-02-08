@@ -15,9 +15,10 @@ type Capability interface {
 }
 
 type CapabilityBuilderFactory struct {
-	Name         string
-	Icon         string
-	OptionFields []CapabilityOptionField
+	Name             string
+	Icon             string
+	FreeFieldOptions bool
+	OptionFields     []CapabilityOptionField
 
 	Builder func(app any) (CapabilityBuilder, error)
 }
