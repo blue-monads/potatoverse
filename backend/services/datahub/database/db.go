@@ -214,3 +214,8 @@ func (db *DB) Table(name string) db.Collection {
 func (db *DB) IsEmptyRowsError(err error) bool {
 	return errors.Is(err, upperdb.ErrNoMoreRows)
 }
+
+func (db *DB) GetDbStates() (map[string]any, error) {
+	driver := db.sess.Driver().(*sql.DB)
+	return GetDbStates(driver)
+}
