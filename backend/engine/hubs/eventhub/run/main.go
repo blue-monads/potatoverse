@@ -13,6 +13,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	_ "github.com/blue-monads/potatoverse/backend/services/datahub/provider/ncruces"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/k0kubun/pp"
 )
@@ -80,6 +81,10 @@ func (tr *TestResults) print() {
 	Show("===================")
 }
 
+var (
+	FLAGS = "mode=rwc&_journal_mode=WAL&_busy_timeout=1000&_synchronous=NORMAL&_cache_size=-64000&_txlock=immediate"
+)
+
 func main() {
 
 	qq.Enabled = true
@@ -93,13 +98,37 @@ func main() {
 
 	defer os.RemoveAll(tmpFolder)
 
-	sdb, err := sql.Open("sqlite3", fmt.Sprintf("file:%s/main1.db?mode=rwc&_journal_mode=WAL&_busy_timeout=1000", tmpFolder))
+	sdb, err := sql.Open("sqlite3", fmt.Sprintf("file:%s/main1.db?%s", tmpFolder, FLAGS))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer sdb.Close()
 
-	sdb.SetMaxOpenConns(1)
+	err = sdb.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sdb.SetMaxOpenConns(10)
+
+	var journalMode string
+	err = sdb.QueryRow("PRAGMA journal_mode").Scan(&journalMode)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Journal mode after connect:", journalMode)
+
+	// Ensure journal mode is WAL (explicitly set it)
+	_, err = sdb.Exec("PRAGMA journal_mode = WAL")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = sdb.QueryRow("PRAGMA journal_mode").Scan(&journalMode)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Journal mode after set:", journalMode) // Should now print "wal"
 
 	// logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 

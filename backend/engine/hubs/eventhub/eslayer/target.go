@@ -57,16 +57,29 @@ func (e *ESLayer) targetProcessor(targetId int64) error {
 		Event:        event,
 	}
 
-	if sub.DelayStart > 0 && target.Status != "start_delayed" {
-		delayStart := time.Now().Unix() + int64(sub.DelayStart)
-		err = sink.TransitionTargetStartDelayed(targetId, event.ID, delayStart)
-		if err != nil {
-			sink.TransitionTargetFail(event.ID, targetId, err.Error())
-			qq.Println("@targetProcessor/TransitionTargetStartDelayed/error", err)
-			return err
+	if sub.DelayStart > 0 {
+		// Check if we have a delayed until time
+		if target.DelayedUntil == 0 {
+			// First time processing, set delay
+			delayStart := time.Now().Unix() + int64(sub.DelayStart)
+			err = sink.TransitionTargetStartDelayed(targetId, event.ID, delayStart)
+			if err != nil {
+				sink.TransitionTargetFail(event.ID, targetId, err.Error())
+				qq.Println("@targetProcessor/TransitionTargetStartDelayed/error", err)
+				return err
+			}
+			qq.Println("@targetProcessor: target", targetId, "delayed until", delayStart)
+			return nil
+		} else {
+			// Check if delay has expired
+			now := time.Now().Unix()
+			if target.DelayedUntil > now {
+				// Delay not expired yet, return and wait for next check
+				qq.Println("@targetProcessor: target", targetId, "delay not expired, delayed until", target.DelayedUntil)
+				return nil
+			}
+			// Delay has expired, proceed to call handler
 		}
-		qq.Println("@targetProcessor: target", targetId, "delayed until", delayStart)
-		return nil
 	}
 
 	qq.Println("@targetProcessor: calling handler for target", targetId)
