@@ -3,7 +3,7 @@ package easyws
 import (
 	"fmt"
 
-	"github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws/room"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xEasyWS/room"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/easyaction"

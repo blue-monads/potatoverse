@@ -1,4 +1,4 @@
-package curruser
+package xctxuser
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	Name         = "curruser"
+	Name         = "xCtxUser"
 	Icon         = ""
 	OptionFields = []xcapability.CapabilityOptionField{}
 )

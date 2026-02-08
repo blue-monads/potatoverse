@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/blue-monads/potatoverse/backend/engine/capabilities/websocket/easyws/room"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xEasyWS/room"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 )
 
