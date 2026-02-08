@@ -11,5 +11,4 @@ func PerformScriptTargetExecution(app xtypes.App) func(execution *evtype.TExecut
 		return nil
 	}
 
-	return nil
 }
