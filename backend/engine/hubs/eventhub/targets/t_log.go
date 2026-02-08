@@ -1,4 +1,4 @@
-package eslayer
+package targets
 
 import (
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
@@ -7,7 +7,7 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-func PerformLogTargetExecution(app xtypes.App) func(ectx *evtype.TExecution) error {
+func PerformLogTargetExecution(app xtypes.App) evtype.Handler {
 
 	return func(ectx *evtype.TExecution) error {
 		qq.Println("PerformLogTargetExecution", ectx.Event.Payload)

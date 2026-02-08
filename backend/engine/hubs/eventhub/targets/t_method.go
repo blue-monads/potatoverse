@@ -1,4 +1,4 @@
-package eslayer
+package targets
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/easyaction"
 )
 
-func PerformSpaceMethodTargetExecution(app xtypes.App) func(execution *evtype.TExecution) error {
+func PerformSpaceMethodTargetExecution(app xtypes.App) evtype.Handler {
 
 	engine := app.Engine().(*engine.Engine)
 

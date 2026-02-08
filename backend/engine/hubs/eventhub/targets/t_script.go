@@ -1,4 +1,4 @@
-package eslayer
+package targets
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type Exec struct {
 	createdAt int64
 }
 
-func PerformScriptTargetExecution(app xtypes.App) func(execution *evtype.TExecution) error {
+func PerformScriptTargetExecution(app xtypes.App) evtype.Handler {
 
 	sops := app.Database().GetSpaceOps()
 	pkgOps := app.Database().GetPackageInstallOps()

@@ -1,4 +1,4 @@
-package eslayer
+package targets
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
-func PerformWebhookTargetExecution(app xtypes.App) func(ectx *evtype.TExecution) error {
+func PerformWebhookTargetExecution(app xtypes.App) evtype.Handler {
 
 	return func(ectx *evtype.TExecution) error {
 		url := ectx.Subscription.TargetEndpoint
