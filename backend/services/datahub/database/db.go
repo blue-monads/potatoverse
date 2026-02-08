@@ -17,6 +17,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
@@ -114,6 +115,13 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 
 func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 
+	sdb := sess.Driver().(*sql.DB)
+
+	_, err := sdb.Exec("PRAGMA journal_mode = WAL")
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize operations
 	globalOps := global.NewGlobalOperations(sess)
 	spaceOps := space.NewSpaceOperations(sess)
@@ -160,6 +168,13 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 }
 
 func (db *DB) Init(transport datahub.BuddyTransport) error {
+
+	debugInfo, err := db.GetDbStates()
+	if err != nil {
+		return err
+	}
+
+	qq.Println("@db_debug_info", debugInfo)
 
 	if db.lazySyncer != nil {
 		if err := db.lazySyncer.Start(transport); err != nil {

@@ -18,11 +18,16 @@ func GetDbStates(db *sql.DB) (map[string]any, error) {
 	}
 	states["wal_autocheckpoint"] = walAutoCheckpoint
 
-	var walCheckpointMode string
-	if err := db.QueryRow("PRAGMA wal_checkpoint").Scan(&walCheckpointMode); err != nil {
+	// wal_checkpoint returns (busy, log, checkpointed) - not a single value
+	var busy, log, checkpointed int
+	if err := db.QueryRow("PRAGMA wal_checkpoint").Scan(&busy, &log, &checkpointed); err != nil {
 		return nil, err
 	}
-	states["wal_checkpoint"] = walCheckpointMode
+	states["wal_checkpoint"] = map[string]int{
+		"busy":         busy,
+		"log":          log,
+		"checkpointed": checkpointed,
+	}
 
 	// Database file and page related pragmas
 	var pageSize int
