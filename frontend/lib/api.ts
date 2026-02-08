@@ -372,6 +372,7 @@ export interface PackageVersion {
     source_code: string;
     license: string;
     version: string;
+    special_pages: string;
 }
 
 export const getInstalledPackageInfo = async (packageId: number) => {

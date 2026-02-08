@@ -57,6 +57,7 @@ interface PackageAboutProps {
 
 const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
     const gapp = useGApp();
+    const router = useRouter();
 
     const loader = useSimpleDataLoader<InstalledPackageInfo>({
         loader: () => getInstalledPackageInfo(packageId),
@@ -67,7 +68,23 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
     const packageVersions = loader.data?.package_versions || [];
     const packageSpaces = loader.data?.spaces || [];
     const activeVersion = packageData ? packageVersions.find(v => v.id === packageData.active_install_id) : null;
+    
+    // Parse special pages
+    const specialPages: Record<string, string> = activeVersion?.special_pages 
+        ? JSON.parse(activeVersion.special_pages || '{}') 
+        : {};
 
+    const handleSpecialPageClick = (pageKey: string, pagePath: string) => {
+        const rootSpace = packageSpaces.find(space => space.namespace_key === activeVersion?.slug);
+        if (rootSpace) {
+            const params = new URLSearchParams({
+                nskey: rootSpace.namespace_key,
+                space_id: rootSpace.id.toString(),
+                load_page: pagePath
+            });
+            router.push(`/portal/admin/exec?${params.toString()}`);
+        }
+    };
 
     if (loader.loading) {
         return (
@@ -136,6 +153,31 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
                                         value={`${activeVersion.author_name}${activeVersion.author_email ? ` (${activeVersion.author_email})` : ''}`}
                                     />
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Special Pages Section */}
+                    {Object.keys(specialPages).length > 0 && (
+                        <div className="border-t pt-6">
+                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <FileIcon className="w-6 h-6" />
+                                Special Pages ({Object.keys(specialPages).length})
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.entries(specialPages).map(([key, value]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => handleSpecialPageClick(key, value)}
+                                        className="bg-gray-50 hover:bg-gray-100 rounded-lg p-4 text-left transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium text-gray-900 capitalize">{key.replace('_', ' ')}</span>
+                                            <ExternalLink className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-1">{value}</p>
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     )}
