@@ -112,10 +112,17 @@ func (a *Server) GetPackageAvailableVersions(claim *signer.AccessClaim, ctx *gin
 }
 
 func (a *Server) GetPackageEnvs(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
 	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
+
+	err = a.ctrl.IsUserPackageAdmin(claim.UserId, packageId)
+	if err != nil {
+		return nil, err
+	}
+
 	return a.ctrl.GetEnvs(packageId)
 }
 
@@ -124,6 +131,12 @@ func (a *Server) UpdatePackageEnvs(claim *signer.AccessClaim, ctx *gin.Context) 
 	if err != nil {
 		return nil, err
 	}
+
+	err = a.ctrl.IsUserPackageAdmin(claim.UserId, packageId)
+	if err != nil {
+		return nil, err
+	}
+
 	var envs map[string]string
 	if err := ctx.ShouldBindJSON(&envs); err != nil {
 		return nil, err
@@ -188,12 +201,12 @@ func (a *Server) ListInstalledSpaces(claim *signer.AccessClaim, ctx *gin.Context
 
 func (a *Server) AuthorizeSpace(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 
-	data := &actions.SpaceAuth{}
-	if err := ctx.ShouldBindJSON(data); err != nil {
+	data := actions.SpaceAuth{}
+	if err := ctx.ShouldBindJSON(&data); err != nil {
 		return nil, err
 	}
 
-	token, err := a.ctrl.AuthorizeSpace(claim.UserId, *data)
+	token, err := a.ctrl.AuthorizeSpace(claim.UserId, data)
 	if err != nil {
 		return nil, err
 	}

@@ -94,23 +94,80 @@ func (c *Controller) DeletePackage(userId int64, packageId int64) error {
 
 }
 
+var (
+	ErrUserNotAllowed = errors.New("you are not authorized to perform this action")
+)
+
+func (c *Controller) IsUserPackageAdmin(userId, installId int64) error {
+	uops := c.database.GetUserOps()
+	pkgOps := c.database.GetPackageInstallOps()
+	sops := c.database.GetSpaceOps()
+
+	user, err := uops.GetUser(userId)
+	if err != nil {
+		return err
+	}
+
+	pkg, err := pkgOps.GetPackage(installId)
+
+	if user.Ugroup != "admin" && pkg.InstalledBy != userId {
+
+		users, err := sops.QuerySpaceUsers(pkg.ID, map[any]any{
+			"user_id": userId,
+		})
+
+		if err != nil {
+			return nil
+		}
+
+		if len(users) == 0 {
+			return ErrUserNotAllowed
+		}
+
+		currUser := users[0]
+
+		if currUser.Scope != "core.admin" && currUser.Scope != "*" {
+			return ErrUserNotAllowed
+		}
+
+	}
+
+	return nil
+
+}
+
 type SpaceAuth struct {
-	PackageId int64 `json:"package_id"`
-	SpaceId   int64 `json:"space_id"`
+	SpaceId int64 `json:"space_id"`
 }
 
 func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error) {
+	uops := c.database.GetUserOps()
+	sops := c.database.GetSpaceOps()
 
-	space, err := c.database.GetSpaceOps().GetSpace(req.SpaceId)
+	user, err := uops.GetUser(userId)
 	if err != nil {
 		return "", err
 	}
 
-	if space.OwnerID != userId {
-		_, err := c.database.GetSpaceOps().GetSpaceUserScope(userId, req.SpaceId)
+	space, err := sops.GetSpace(req.SpaceId)
+	if err != nil {
+		return "", err
+	}
+
+	if user.Ugroup != "admin" && space.OwnerID != userId {
+
+		users, err := sops.QuerySpaceUsers(space.InstalledId, map[any]any{
+			"user_id": userId,
+		})
+
 		if err != nil {
-			return "", errors.New("you are not authorized to access this space")
+			return "", nil
 		}
+
+		if len(users) == 0 {
+			return "", ErrUserNotAllowed
+		}
+
 	}
 
 	return c.signer.SignSpace(&signer.SpaceClaim{
