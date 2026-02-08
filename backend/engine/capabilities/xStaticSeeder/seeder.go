@@ -22,13 +22,19 @@ type StaticSeederCapability struct {
 	db           datahub.DBLowOps
 }
 
-func (s *StaticSeederCapability) performSeed() error {
+func (s *StaticSeederCapability) performSeed(folder string) error {
 	pkgFileOps := s.builder.app.Database().GetPackageFileOps()
 
+	seedFolder := s.seedFolder
+
+	if seedFolder != "" {
+		seedFolder = folder
+	}
+
 	// List all files in the seed folder
-	files, err := pkgFileOps.ListFiles(s.installId, s.seedFolder)
+	files, err := pkgFileOps.ListFiles(s.installId, seedFolder)
 	if err != nil {
-		return fmt.Errorf("failed to list files in seed folder %s: %w", s.seedFolder, err)
+		return fmt.Errorf("failed to list files in seed folder %s: %w", seedFolder, err)
 	}
 
 	if len(files) == 0 {
@@ -107,7 +113,9 @@ func (s *StaticSeederCapability) ListActions() ([]string, error) {
 func (s *StaticSeederCapability) Execute(name string, params lazydata.LazyData) (any, error) {
 	switch name {
 	case "seed":
-		if err := s.performSeed(); err != nil {
+		folder := params.GetFieldAsString("seed_folder")
+
+		if err := s.performSeed(folder); err != nil {
 			return nil, fmt.Errorf("seeding failed: %w", err)
 		}
 		return map[string]any{"status": "success", "message": "seeding completed"}, nil

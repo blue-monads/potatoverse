@@ -1,6 +1,6 @@
 package staticseeder
 
 type StaticSeederStruct struct {
-	TableName string
-	Data      []map[string]any
+	TableName string           `json:"table_name"`
+	Data      []map[string]any `json:"data"`
 }

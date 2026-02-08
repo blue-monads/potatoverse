@@ -73,11 +73,6 @@ func (b *MigratorBuilder) Build(handle xcapability.XCapabilityHandle) (xcapabili
 		db:           db,
 	}
 
-	// Run migrations automatically on build
-	if err := capability.performMigration(); err != nil {
-		return nil, fmt.Errorf("failed to run initial migrations: %w", err)
-	}
-
 	return capability, nil
 }
 

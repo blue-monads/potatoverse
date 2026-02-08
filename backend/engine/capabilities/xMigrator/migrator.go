@@ -30,7 +30,10 @@ func (m *MigratorCapability) ListActions() ([]string, error) {
 func (m *MigratorCapability) Execute(name string, params lazydata.LazyData) (any, error) {
 	switch name {
 	case "run_migrations":
-		if err := m.performMigration(); err != nil {
+
+		folder := params.GetFieldAsString("folder")
+
+		if err := m.performMigration(folder); err != nil {
 			return nil, fmt.Errorf("migration failed: %w", err)
 		}
 		return map[string]any{"status": "success", "message": "migrations completed"}, nil
@@ -41,8 +44,14 @@ func (m *MigratorCapability) Execute(name string, params lazydata.LazyData) (any
 			return nil, err
 		}
 
+		folder := params.GetFieldAsString("folder")
+
+		if folder == "" {
+			folder = m.folder
+		}
+
 		pkgFileOps := m.builder.app.Database().GetPackageFileOps()
-		files, err := pkgFileOps.ListFiles(m.installId, m.folder)
+		files, err := pkgFileOps.ListFiles(m.installId, folder)
 		if err != nil {
 			return nil, err
 		}
@@ -50,7 +59,8 @@ func (m *MigratorCapability) Execute(name string, params lazydata.LazyData) (any
 		migrations := []map[string]any{}
 		for _, file := range files {
 			if !file.IsFolder && strings.HasSuffix(strings.ToLower(file.Name), ".sql") {
-				migrationKey := m.getMigrationKey(file)
+
+				migrationKey := getMigrationKey(folder, file)
 				migrations = append(migrations, map[string]any{
 					"file_name":     file.Name,
 					"path":          file.Path,
@@ -83,11 +93,17 @@ func (m *MigratorCapability) Close() error {
 	return nil
 }
 
-func (m *MigratorCapability) performMigration() error {
+func (m *MigratorCapability) performMigration(folder string) error {
+
+	migFolder := m.folder
+
+	if migFolder == "" {
+		migFolder = folder
+	}
 
 	pkgFileOps := m.builder.app.Database().GetPackageFileOps()
 
-	files, err := pkgFileOps.ListFiles(m.installId, m.folder)
+	files, err := pkgFileOps.ListFiles(m.installId, migFolder)
 	if err != nil {
 		return err
 	}
@@ -121,7 +137,7 @@ func (m *MigratorCapability) performMigration() error {
 
 	// Execute each migration that hasn't been run yet
 	for _, file := range sqlFiles {
-		migrationKey := m.getMigrationKey(file)
+		migrationKey := getMigrationKey(migFolder, file)
 
 		// Skip if already executed
 		if executedMigrations[migrationKey] {
@@ -189,11 +205,11 @@ func (m *MigratorCapability) markMigrationExecuted(migrationKey, fileName string
 	return nil
 }
 
-func (m *MigratorCapability) getMigrationKey(file dbmodels.FileMeta) string {
+func getMigrationKey(migFolder string, file dbmodels.FileMeta) string {
 	// Use a combination of path and filename as the unique key
 	path := file.Path
 	if path == "" {
-		path = m.folder
+		path = migFolder
 	}
 	return fmt.Sprintf("%s/%s", path, file.Name)
 }
