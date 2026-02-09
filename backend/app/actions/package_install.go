@@ -13,10 +13,8 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
-	"github.com/blue-monads/potatoverse/backend/utils/kosher"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
-	"github.com/tidwall/gjson"
 )
 
 func (c *Controller) InstallPackageByUrl(userId int64, url string) (*InstallPackageResult, error) {
@@ -107,25 +105,10 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	rootSpaceId := int64(0)
 	keySpace := pkg.Slug
 
-	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
-
 	spaceMap := make(map[string]int64)
-
 	foundRootSpace := false
 
-	for index, artifact := range artifacts {
-		kind := &pkg.Artifacts[index]
-
-		if kind.Kind != "space" {
-			continue
-		}
-
-		space := models.ArtifactSpace{}
-		err = json.Unmarshal(kosher.Byte(artifact.Raw), &space)
-		if err != nil {
-			return nil, err
-		}
-
+	for _, space := range pkg.Spaces {
 		if space.Namespace == "" {
 			return nil, errors.New("space namespace is required")
 		}
@@ -134,7 +117,6 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 			if foundRootSpace {
 				return nil, errors.New("multiple root spaces found")
 			}
-
 			foundRootSpace = true
 		} else {
 			if !strings.HasPrefix(space.Namespace, pkg.Slug) {
@@ -168,49 +150,31 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		}
 
 		logger.Info("space installed", "space_id", spaceId)
-
 	}
 
 	qq.Println("@InstallPackageByFile/1", spaceMap)
 
-	for index, artifact := range artifacts {
-		kind := &pkg.Artifacts[index]
+	for _, capability := range pkg.Capabilities {
+		qq.Println("@InstallPackageByFile/2", capability.Spaces)
 
-		switch kind.Kind {
-		case "capability":
-
-			capability := models.ArtifactCapability{}
-			err = json.Unmarshal(kosher.Byte(artifact.Raw), &capability)
-			if err != nil {
-				return nil, err
-			}
-
-			qq.Println("@InstallPackageByFile/2", capability.Spaces)
-
-			if len(capability.Spaces) != 0 {
-				for _, space := range capability.Spaces {
-					spaceId, ok := spaceMap[space]
-					if !ok {
-						return nil, errors.New("space not found")
-					}
-
-					err = installCapability(database, installedId, spaceId, capability)
-					if err != nil {
-						return nil, err
-					}
+		if len(capability.Spaces) != 0 {
+			for _, space := range capability.Spaces {
+				spaceId, ok := spaceMap[space]
+				if !ok {
+					return nil, errors.New("space not found")
 				}
-			} else {
-				err = installCapability(database, installedId, 0, capability)
+
+				err = installCapability(database, installedId, spaceId, capability)
 				if err != nil {
 					return nil, err
 				}
 			}
-
-		default:
-			logger.Info("artifact is not a space", "artifact", artifact)
-			continue
+		} else {
+			err = installCapability(database, installedId, 0, capability)
+			if err != nil {
+				return nil, err
+			}
 		}
-
 	}
 
 	ipkg, err := pkgops.GetPackage(installedId)
@@ -237,7 +201,7 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 	}, nil
 }
 
-func installCapability(database datahub.Database, installedId, spaceId int64, capability models.ArtifactCapability) error {
+func installCapability(database datahub.Database, installedId, spaceId int64, capability models.PotatoCapability) error {
 
 	spaceOps := database.GetSpaceOps()
 
@@ -256,7 +220,7 @@ func installCapability(database datahub.Database, installedId, spaceId int64, ca
 	})
 }
 
-func installArtifactSpace(database datahub.Database, userId, installedId int64, artifact *models.ArtifactSpace) (int64, error) {
+func installArtifactSpace(database datahub.Database, userId, installedId int64, artifact *models.PotatoSpace) (int64, error) {
 	routeOptions, err := json.Marshal(artifact.RouteOptions)
 	if err != nil {
 		return 0, err

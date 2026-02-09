@@ -1,21 +1,38 @@
 {
     "name": "Simple Todo",
-    "info": "Todo list app to manage your tasks.",
     "slug": "simple-todo",
-    "tags": ["todo"],
-    "format_version": "0.0.1",
+    "info": "Todo list app to manage your tasks.",
+    "special_pages": {},
+    "spaces": [
+        {
+            "namespace": "simple-todo",
+            "executor_type": "luaz",
+            "executor_sub_type": "",
+            "server_file": "server.lua",
+            "route_options": {
+                "router_type": "",
+                "serve_folder": "public",
+                "force_html_extension": false,
+                "force_index_html_file": true,
+                "on_not_found_file": "",
+                "trim_path_prefix": "",
+                "template_folder": "",
+                "routes": null
+            },
+            "dev_serve_port": 0,
+            "is_default": true
+        }
+    ],
+    "capabilities": [],
+    "canonical_url": "",
+    "format_version": "0.0.2",
     "author_name": "Bornjre",
     "author_email": "bornjre@gmail.com",
     "author_site": "https://github.com/bornjre",
+    "source_code": "",
     "license": "MIT",
     "version": "0.0.1",
-    "artifacts": [
-        {
-            "namespace": "simple-todo",
-            "kind": "space",
-            "executor_type": "luaz",
-            "server_file": "server.lua",
-            "route_options": { "serve_folder": "public", "force_html_extension": false, "force_index_html_file": true }
-        }
+    "tags": [
+        "todo"
     ]
 }

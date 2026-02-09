@@ -7,9 +7,7 @@ import (
 	"sort"
 
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
-	"github.com/blue-monads/potatoverse/backend/utils/kosher"
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
-	"github.com/tidwall/gjson"
 )
 
 // UpgradePackageResult is returned from upgrade operations, similar to InstallPackageResult for new installs.
@@ -64,22 +62,8 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return nil, err
 	}
 
-	artifacts := gjson.GetBytes(rawPkg, "artifacts").Array()
-
-	for index, artifact := range artifacts {
-		kind := &pkg.Artifacts[index]
-
-		if kind.Kind != "space" {
-			continue
-		}
-
+	for _, space := range pkg.Spaces {
 		currentArtifactIndex := -1
-
-		space := models.ArtifactSpace{}
-		err = json.Unmarshal(kosher.Byte(artifact.Raw), &space)
-		if err != nil {
-			return nil, err
-		}
 
 		for i, oldSpace := range oldSpaces {
 			if oldSpace.NamespaceKey == space.Namespace {

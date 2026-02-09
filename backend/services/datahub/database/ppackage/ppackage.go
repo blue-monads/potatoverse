@@ -54,22 +54,6 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 
 	specialPages := "{}"
 
-	if pkgManifest.UpdatePage != "" {
-		if pkgManifest.SpecialPages == nil {
-			pkgManifest.SpecialPages = map[string]string{}
-		}
-
-		pkgManifest.SpecialPages["update_page"] = pkgManifest.UpdatePage
-	}
-
-	if pkgManifest.InitPage != "" {
-		if pkgManifest.SpecialPages == nil {
-			pkgManifest.SpecialPages = map[string]string{}
-		}
-
-		pkgManifest.SpecialPages["init_page"] = pkgManifest.InitPage
-	}
-
 	if len(pkgManifest.SpecialPages) != 0 {
 		out, err := json.Marshal(pkgManifest.SpecialPages)
 		if err != nil {
