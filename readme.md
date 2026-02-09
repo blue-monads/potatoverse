@@ -23,10 +23,8 @@ https://github.com/user-attachments/assets/120b826e-c5f9-4e1f-829e-816e7d2982ea
 ## Quick Install
 
 
-```
-
+```bash
 curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/main/contrib/installer.sh | bash
-
 ```
 
 

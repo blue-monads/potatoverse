@@ -153,7 +153,7 @@ main() {
     check_path
     
     echo ""
-    print_info "Run 'potatoverse --version' to verify installation"
+    print_info "Run 'potatoverse --help' to verify installation"
     
     # Ask if user wants to run it now
     read -p "Do you want to run potatoverse now? (y/N) " -n 1 -r
