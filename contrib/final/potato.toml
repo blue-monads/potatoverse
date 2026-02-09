@@ -34,3 +34,16 @@ server_url = 'http://localhost:7777'
 token = 'xxxx'
 token_env = 'POTATO_DEV_TOKEN'
 build_command = ''
+[packaging]
+output_zip_file="simple-todo.zip"
+include_files = [
+    "public/**/*",
+    "server.lua",
+    "spec.json"
+]
+exclude_files = [
+    "public/node_modules/**/*",
+    "public/package-lock.json",
+    "public/package.json",
+    "public/package-lock.json",
+]
