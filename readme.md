@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/120b826e-c5f9-4e1f-829e-816e7d2982ea
 
 ```
 
-curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/mj-wd-008/contrib/installer.sh | bash
+curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/main/contrib/installer.sh | bash
 
 ```
 
