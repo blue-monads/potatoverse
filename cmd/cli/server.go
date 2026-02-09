@@ -35,9 +35,21 @@ type ServerInitCmd struct {
 	MasterSecretEnv string `name:"master-secret-env" help:"Master secret environment variable of node."`
 	Debug           bool   `name:"debug" help:"Debug mode of node." default:"false"`
 	WorkingDir      string `name:"working-dir" help:"Working dir of node."`
+	Force           bool   `name:"force" short:"f" help:"Force initialization even if server is already initialized."`
 }
 
 func (c *ServerInitCmd) Run(ctx *kong.Context) error {
+
+	// Check if already initialized
+	if _, err := os.Stat("./config.toml"); err == nil && !c.Force {
+		// Configuration file exists, check if we should just start the server
+		if len(ctx.Args) > 0 && ctx.Args[1] == "init-and-start" {
+			qq.Println("Server already initialized, starting without reinitialization")
+			return RunServerStartCommand("./config.toml", true)
+		}
+		qq.Println("Server already initialized. Use --force to reinitialize")
+		return nil
+	}
 
 	config := xtypes.AppOptions{}
 
