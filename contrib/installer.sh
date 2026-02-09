@@ -161,6 +161,8 @@ main() {
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         print_info "Executing potatoverse..."
         "${INSTALL_DIR}/potatoverse" server init-and-start
+    else
+        print_info "You can run potatoverse later with: ${INSTALL_DIR}/potatoverse server init-and-start"
     fi
 }
 
