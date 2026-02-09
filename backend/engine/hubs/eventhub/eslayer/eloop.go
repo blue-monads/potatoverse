@@ -69,7 +69,7 @@ func (e *ESLayer) rootEventWatcher() {
 		}
 	}
 
-	fallbackTimer := time.NewTimer(time.Second * 2)
+	fallbackTimer := time.NewTimer(time.Second * 20)
 	defer fallbackTimer.Stop()
 
 	counter := 0
@@ -79,7 +79,7 @@ func (e *ESLayer) rootEventWatcher() {
 		qq.Println("@couner/start", counter)
 
 		// Reset timer for next iteration
-		fallbackTimer.Reset(time.Second * 2)
+		fallbackTimer.Reset(time.Second * 20)
 
 		select {
 		case <-e.ctx.Done():

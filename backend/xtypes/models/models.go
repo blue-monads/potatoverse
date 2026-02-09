@@ -1,23 +1,23 @@
 package models
 
 type PotatoPackage struct {
-	Name          string           `json:"name" toml:"name"`
-	Slug          string           `json:"slug" toml:"slug"`
-	Info          string           `json:"info" toml:"info"`
-	CanonicalUrl  string           `json:"canonical_url" toml:"canonical_url"`
-	Tags          []string         `json:"tags" toml:"tags"`
-	FormatVersion string           `json:"format_version" toml:"format_version"`
-	AuthorName    string           `json:"author_name" toml:"author_name"`
-	AuthorEmail   string           `json:"author_email" toml:"author_email"`
-	AuthorSite    string           `json:"author_site" toml:"author_site"`
-	SourceCode    string           `json:"source_code" toml:"source_code"`
-	License       string           `json:"license" toml:"license"`
-	Version       string           `json:"version" toml:"version"`
-	Artifacts     []PotatoArtifact `json:"artifacts" toml:"artifacts"`
-	InitPage      string           `json:"init_page" toml:"init_page"`
-	UpdatePage    string           `json:"update_page" toml:"update_page"`
+	Name         string             `json:"name" toml:"name"`
+	Slug         string             `json:"slug" toml:"slug"`
+	Info         string             `json:"info" toml:"info"`
+	SpecialPages map[string]string  `json:"special_pages" toml:"special_pages,omitempty"`
+	Spaces       []PotatoSpace      `json:"spaces" toml:"spaces,omitempty"`
+	Capabilities []PotatoCapability `json:"capabilities" toml:"capabilities,omitempty"`
+	CanonicalUrl string             `json:"canonical_url" toml:"canonical_url"`
 
-	SpecialPages map[string]string `json:"special_pages" toml:"special_pages,omitempty"`
+	FormatVersion string `json:"format_version" toml:"format_version"`
+	AuthorName    string `json:"author_name" toml:"author_name"`
+	AuthorEmail   string `json:"author_email" toml:"author_email"`
+	AuthorSite    string `json:"author_site" toml:"author_site"`
+	SourceCode    string `json:"source_code" toml:"source_code"`
+	License       string `json:"license" toml:"license"`
+	Version       string `json:"version" toml:"version"`
+
+	Tags []string `json:"tags" toml:"tags"`
 
 	// for local dev
 	Developer *DeveloperOptions `json:"developer,omitempty" toml:"developer,omitempty"`
@@ -33,26 +33,21 @@ type DeveloperOptions struct {
 	BuildCommand  string   `json:"build_command" toml:"build_command"`
 }
 
-type PotatoArtifact struct {
-	Kind string `json:"kind" toml:"kind"`
-}
-
-type ArtifactCapability struct {
-	Kind    string         `json:"kind" toml:"kind"`
+type PotatoCapability struct {
 	Name    string         `json:"name" toml:"name"`
 	Type    string         `json:"type" toml:"type"`
 	Options map[string]any `json:"options" toml:"options"`
 	Spaces  []string       `json:"spaces" toml:"spaces"`
 }
 
-type ArtifactSpace struct {
+type PotatoSpace struct {
 	Namespace       string             `json:"namespace" toml:"namespace"`
-	Kind            string             `json:"kind" toml:"kind"`
 	ExecutorType    string             `json:"executor_type" toml:"executor_type"`
 	ExecutorSubType string             `json:"executor_sub_type" toml:"executor_sub_type"`
 	ServerFile      string             `json:"server_file" toml:"server_file"`
 	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
 	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
+	IsDefault       bool               `json:"is_default" toml:"is_default"`
 }
 
 type PotatoRouteOptions struct {
@@ -77,47 +72,4 @@ type PotatoRoute struct {
 type PotatoDevOptions struct {
 	ServerUrl string `json:"server_url" toml:"server_url"`
 	Token     string `json:"token" toml:"token"`
-}
-
-// V2 format (future)
-
-type PotatoPackageV2 struct {
-	Name         string               `json:"name" toml:"name"`
-	Slug         string               `json:"slug" toml:"slug"`
-	Info         string               `json:"info" toml:"info"`
-	SpecialPages map[string]string    `json:"special_pages" toml:"special_pages,omitempty"`
-	Spaces       []PotatoSpaceV2      `json:"spaces" toml:"spaces,omitempty"`
-	Capabilities []PotatoCapabilityV2 `json:"capabilities" toml:"capabilities,omitempty"`
-	CanonicalUrl string               `json:"canonical_url" toml:"canonical_url"`
-
-	FormatVersion string `json:"format_version" toml:"format_version"`
-	AuthorName    string `json:"author_name" toml:"author_name"`
-	AuthorEmail   string `json:"author_email" toml:"author_email"`
-	AuthorSite    string `json:"author_site" toml:"author_site"`
-	SourceCode    string `json:"source_code" toml:"source_code"`
-	License       string `json:"license" toml:"license"`
-	Version       string `json:"version" toml:"version"`
-
-	Tags []string `json:"tags" toml:"tags"`
-
-	// for local dev
-	Developer *DeveloperOptions `json:"developer,omitempty" toml:"developer,omitempty"`
-}
-
-type PotatoCapabilityV2 struct {
-	Name    string         `json:"name" toml:"name"`
-	Type    string         `json:"type" toml:"type"`
-	Options map[string]any `json:"options" toml:"options"`
-	Spaces  []string       `json:"spaces" toml:"spaces"`
-}
-
-type PotatoSpaceV2 struct {
-	Namespace       string             `json:"namespace" toml:"namespace"`
-	Kind            string             `json:"kind" toml:"kind"`
-	ExecutorType    string             `json:"executor_type" toml:"executor_type"`
-	ExecutorSubType string             `json:"executor_sub_type" toml:"executor_sub_type"`
-	ServerFile      string             `json:"server_file" toml:"server_file"`
-	RouteOptions    PotatoRouteOptions `json:"route_options" toml:"route_options"`
-	DevServePort    int                `json:"dev_serve_port" toml:"dev_serve_port"`
-	IsDefault       bool               `json:"is_default" toml:"is_default"`
 }
