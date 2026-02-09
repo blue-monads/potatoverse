@@ -2,6 +2,7 @@ package selfcdc
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -18,13 +19,15 @@ type SelfCDCSyncer struct {
 	db            db.Session
 	isEnabled     bool
 	ontableChange chan string
+	logger        *slog.Logger
 }
 
-func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
+func NewSelfCDCSyncer(db db.Session, logger *slog.Logger, isEnabled bool) *SelfCDCSyncer {
 	return &SelfCDCSyncer{
 		db:            db,
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
+		logger:        logger,
 	}
 }
 

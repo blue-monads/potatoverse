@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -69,6 +70,7 @@ func main() {
 		IsSelfEnabled: true,
 		Buddies:       []string{"buddy1"},
 		BasePath:      tmpFolder,
+		Logger:        slog.Default(),
 	})
 
 	_, err := sqlconn.Exec("INSERT INTO test2 (name) VALUES ('Alice')")

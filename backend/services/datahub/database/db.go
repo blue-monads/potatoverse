@@ -66,7 +66,7 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 		return nil, err
 	}
 
-	return fromSqlHandle(sess)
+	return fromSqlHandle(sess, logger)
 }
 
 func AutoMigrate(sess upperdb.Session) error {
@@ -104,16 +104,20 @@ func AutoMigrate(sess upperdb.Session) error {
 	return nil
 }
 
-func FromSqlHandle(sdb *sql.DB) (*DB, error) {
+func FromSqlHandle(sdb *sql.DB, logger *slog.Logger) (*DB, error) {
 	sess, err := sqlite.New(sdb)
 	if err != nil {
 		return nil, err
 	}
 
-	return fromSqlHandle(sess)
+	if logger == nil {
+		logger = slog.Default()
+	}
+
+	return fromSqlHandle(sess, logger)
 }
 
-func fromSqlHandle(sess upperdb.Session) (*DB, error) {
+func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 
 	sdb := sess.Driver().(*sql.DB)
 
@@ -151,6 +155,7 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		IsSelfEnabled: CDC_ENABLED,
 		Buddies:       []string{},
 		BasePath:      "./buddies",
+		Logger:        logger,
 	})
 
 	return &DB{

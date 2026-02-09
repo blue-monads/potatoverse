@@ -1,6 +1,8 @@
 package lazysyncer
 
 import (
+	"log/slog"
+
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/buddycdc"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
@@ -14,16 +16,19 @@ type Options struct {
 	Buddies       []string
 	BasePath      string
 	Transport     datahub.BuddyTransport
+	Logger        *slog.Logger
 }
 
 type LazySyncer struct {
 	cdcSyncer    *selfcdc.SelfCDCSyncer
 	buddySyncers map[string]*buddycdc.BuddyCDC
 	transport    datahub.BuddyTransport
+	logger       *slog.Logger
 }
 
 func New(opts Options) *LazySyncer {
-	cdcSyncer := selfcdc.NewSelfCDCSyncer(opts.DbSession, opts.IsSelfEnabled)
+	selfLogger := opts.Logger.With("module", "selfsyncer")
+	cdcSyncer := selfcdc.NewSelfCDCSyncer(opts.DbSession, selfLogger, opts.IsSelfEnabled)
 
 	ls := &LazySyncer{
 		cdcSyncer: cdcSyncer,
@@ -37,6 +42,7 @@ func New(opts Options) *LazySyncer {
 			BasePath:    opts.BasePath,
 			BuddyPubKey: buddyId,
 			Transport:   NewBuddyAdapter(ls, buddyId),
+			Logger:      opts.Logger.With("module", "buddysyncer"),
 		})
 		if err != nil {
 			return nil
@@ -51,7 +57,9 @@ func New(opts Options) *LazySyncer {
 }
 
 func NewTest(opts Options) *LazySyncer {
-	cdcSyncer := selfcdc.NewSelfCDCSyncer(opts.DbSession, opts.IsSelfEnabled)
+
+	selfLogger := opts.Logger.With("module", "selfsyncer")
+	cdcSyncer := selfcdc.NewSelfCDCSyncer(opts.DbSession, selfLogger, opts.IsSelfEnabled)
 
 	ls := &LazySyncer{
 		cdcSyncer: cdcSyncer,
@@ -65,6 +73,7 @@ func NewTest(opts Options) *LazySyncer {
 			BasePath:    opts.BasePath,
 			BuddyPubKey: buddyId,
 			Transport:   cdcSyncer,
+			Logger:      opts.Logger.With("module", "buddysyncer"),
 		})
 		if err != nil {
 			return nil
