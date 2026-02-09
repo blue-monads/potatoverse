@@ -32,6 +32,7 @@ func New(opts Options) *LazySyncer {
 
 	ls := &LazySyncer{
 		cdcSyncer: cdcSyncer,
+		logger:    opts.Logger,
 	}
 
 	buddySyncers := make(map[string]*buddycdc.BuddyCDC)
@@ -63,6 +64,7 @@ func NewTest(opts Options) *LazySyncer {
 
 	ls := &LazySyncer{
 		cdcSyncer: cdcSyncer,
+		logger:    opts.Logger,
 	}
 
 	buddySyncers := make(map[string]*buddycdc.BuddyCDC)

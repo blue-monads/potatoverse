@@ -40,6 +40,7 @@ func NewBuddyCDC(opts Options) (*BuddyCDC, error) {
 		buddyPubKey: opts.BuddyPubKey,
 		dbSession:   dbSession,
 		transport:   opts.Transport,
+		logger:      opts.Logger,
 	}
 
 	return buddyCDC, nil
