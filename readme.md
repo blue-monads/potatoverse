@@ -20,7 +20,7 @@ https://github.com/user-attachments/assets/120b826e-c5f9-4e1f-829e-816e7d2982ea
 - 🎨 **Frontend**: Next.js/React admin portal
 - ⚡ **CLI**: Package management, server operations, backups
 
-## Install
+## Quick Install
 
 
 ```
