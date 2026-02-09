@@ -132,7 +132,7 @@ func main() {
 
 	// logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	db, err := database.FromSqlHandle(sdb)
+	db, err := database.FromSqlHandle(sdb, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

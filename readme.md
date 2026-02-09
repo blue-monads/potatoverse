@@ -20,8 +20,18 @@ https://github.com/user-attachments/assets/120b826e-c5f9-4e1f-829e-816e7d2982ea
 - 🎨 **Frontend**: Next.js/React admin portal
 - ⚡ **CLI**: Package management, server operations, backups
 
+## Install
+
+
+```
+
+curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/mj-wd-008/contrib/installer.sh | bash
+
+```
+
+
 ## Future features
-- [ ] Buddy backup (backup your maindb.sqlite file through litestream and webdav; there's a POC in code but not integrated)
+- [ ] Buddy backup
 - [ ] WASM executor (current lua runtime is much easier for testing APIs and ideas)
 
 ## Terminologies

@@ -1,0 +1,6 @@
+
+
+database
+- layzysyncer
+- buddysyncer
+- selfsyncer

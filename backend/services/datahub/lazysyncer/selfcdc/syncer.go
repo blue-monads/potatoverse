@@ -2,12 +2,12 @@ package selfcdc
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -18,13 +18,15 @@ type SelfCDCSyncer struct {
 	db            db.Session
 	isEnabled     bool
 	ontableChange chan string
+	logger        *slog.Logger
 }
 
-func NewSelfCDCSyncer(db db.Session, isEnabled bool) *SelfCDCSyncer {
+func NewSelfCDCSyncer(db db.Session, logger *slog.Logger, isEnabled bool) *SelfCDCSyncer {
 	return &SelfCDCSyncer{
 		db:            db,
 		isEnabled:     isEnabled,
 		ontableChange: make(chan string, 100),
+		logger:        logger,
 	}
 }
 
@@ -73,7 +75,7 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 
 		for _, tableName := range alltables {
 
-			qq.Println("@start_poll_table_stat", tableName)
+			s.logger.Info("@start_poll_table_stat", "table_name", tableName)
 
 			if slices.Contains(lazytypes.SkipTables, tableName) {
 				continue
@@ -88,7 +90,7 @@ func (s *SelfCDCSyncer) pollSyncLoop() {
 				continue
 			}
 
-			qq.Println("@end_poll_table_stat", tableName, currentCdcId)
+			s.logger.Info("@end_poll_table_stat", "table_name", tableName, "current_cdc_id", currentCdcId)
 
 		}
 

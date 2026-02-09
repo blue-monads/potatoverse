@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 )
 
@@ -39,7 +38,7 @@ func (b *BuddyCDC) evLoop() {
 
 		for _, remoteTableMeta := range tables {
 
-			qq.Println("@start_poll_table_stat")
+			b.logger.Info("@start_poll_table_stat")
 
 			localMeta, err := b.getMetaForTableId(remoteTableMeta.Id)
 			if err != nil {
@@ -79,7 +78,7 @@ func (b *BuddyCDC) evLoop() {
 				localMeta.SyncedCDCID = data.SyncTillId
 			}
 
-			qq.Println("@end_poll_table_stat", remoteTableMeta.TableName)
+			b.logger.Info("@end_poll_table_stat", "table_name", remoteTableMeta.TableName)
 		}
 	}
 

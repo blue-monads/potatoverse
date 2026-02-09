@@ -2,6 +2,7 @@ package buddycdc
 
 import (
 	"fmt"
+	"log/slog"
 	"path/filepath"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
@@ -14,6 +15,7 @@ type BuddyCDC struct {
 	mainDb      db.Session
 	dbSession   db.Session
 	transport   lazytypes.RemoteBuddyTransport
+	logger      *slog.Logger
 }
 
 type Options struct {
@@ -21,6 +23,7 @@ type Options struct {
 	BasePath    string
 	BuddyPubKey string
 	Transport   lazytypes.RemoteBuddyTransport
+	Logger      *slog.Logger
 }
 
 func NewBuddyCDC(opts Options) (*BuddyCDC, error) {
@@ -37,6 +40,7 @@ func NewBuddyCDC(opts Options) (*BuddyCDC, error) {
 		buddyPubKey: opts.BuddyPubKey,
 		dbSession:   dbSession,
 		transport:   opts.Transport,
+		logger:      opts.Logger,
 	}
 
 	return buddyCDC, nil
