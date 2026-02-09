@@ -99,7 +99,10 @@ func (l *LazySyncer) Start(transport datahub.BuddyTransport) error {
 	}
 
 	for _, buddyCDC := range l.buddySyncers {
-		buddyCDC.Start()
+		err = buddyCDC.Start()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
