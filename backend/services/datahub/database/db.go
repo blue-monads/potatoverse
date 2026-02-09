@@ -12,17 +12,16 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/database/low"
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
-
-//go:embed schema.sql
-var schema string
 
 type DB struct {
 	sess                 upperdb.Session
@@ -35,10 +34,16 @@ type DB struct {
 	packageFileOps    *fileops.FileOperations
 	packageInstallOps *ppackage.PackageInstallOperations
 	eventOps          *event.EventOperations
+
+	lazySyncer *lazysyncer.LazySyncer
 }
 
 const (
 	ScopeOwner = "owner"
+)
+
+const (
+	CDC_ENABLED = false
 )
 
 var (
@@ -49,6 +54,10 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
 	var settings = sqlite.ConnectionURL{
 		Database: file,
+		Options: map[string]string{
+			"_journal_mode": "WAL",
+			"_busy_timeout": "10000", // 10 second busy timeout
+		},
 	}
 
 	sess, err := sqlite.Open(settings)
@@ -72,6 +81,8 @@ func AutoMigrate(sess upperdb.Session) error {
 		pschema := strings.Replace(fileops.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
 		pschema = strings.Replace(pschema, "FileBlob", "PFileBlob", 1)
 		pschema = strings.Replace(pschema, "FileShares", "PFileShares", 1)
+
+		schema := schema.Get()
 
 		buf.WriteString(schema)
 		buf.WriteString("\n")
@@ -104,6 +115,13 @@ func FromSqlHandle(sdb *sql.DB) (*DB, error) {
 
 func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 
+	sdb := sess.Driver().(*sql.DB)
+
+	_, err := sdb.Exec("PRAGMA journal_mode = WAL")
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize operations
 	globalOps := global.NewGlobalOperations(sess)
 	spaceOps := space.NewSpaceOperations(sess)
@@ -128,6 +146,13 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		return nil, err
 	}
 
+	lazySyncer := lazysyncer.New(lazysyncer.Options{
+		DbSession:     sess,
+		IsSelfEnabled: CDC_ENABLED,
+		Buddies:       []string{},
+		BasePath:      "./buddies",
+	})
+
 	return &DB{
 		sess:                 sess,
 		minFileMultiPartSize: 1024 * 1024 * 8,
@@ -138,10 +163,24 @@ func fromSqlHandle(sess upperdb.Session) (*DB, error) {
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
 		eventOps:             eventOps,
+		lazySyncer:           lazySyncer,
 	}, nil
 }
 
-func (db *DB) Init() error {
+func (db *DB) Init(transport datahub.BuddyTransport) error {
+
+	debugInfo, err := db.GetDbStates()
+	if err != nil {
+		return err
+	}
+
+	qq.Println("@db_debug_info", debugInfo)
+
+	if db.lazySyncer != nil {
+		if err := db.lazySyncer.Start(transport); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -187,52 +226,11 @@ func (db *DB) Table(name string) db.Collection {
 	return db.sess.Collection(name)
 }
 
-const ErrText = "upper: no more rows in this result set"
-
 func (db *DB) IsEmptyRowsError(err error) bool {
-	return err.Error() == ErrText
+	return errors.Is(err, upperdb.ErrNoMoreRows)
 }
 
-func (db *DB) GetGlobalOps() datahub.GlobalOps {
-	return db.globalOps
-}
-
-func (db *DB) GetUserOps() datahub.UserOps {
-	return db.userOps
-}
-
-func (db *DB) GetSpaceOps() datahub.SpaceOps {
-	return db.spaceOps
-}
-
-func (db *DB) GetSpaceKVOps() datahub.SpaceKVOps {
-	return db.spaceOps
-}
-
-func (db *DB) GetPackageInstallOps() datahub.PackageInstallOps {
-	return db.packageInstallOps
-}
-
-func (db *DB) GetFileOps() datahub.FileOps {
-	return db.fileOps
-}
-
-func (db *DB) GetPackageFileOps() datahub.FileOps {
-	return db.packageFileOps
-}
-
-func (db *DB) GetLowDBOps(ownerType string, ownerID string) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, ownerType, ownerID)
-}
-
-func (db *DB) GetLowPackageDBOps(ownerID string) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, "P", ownerID)
-}
-
-func (db *DB) GetLowCapabilityDBOps(ownerID string) datahub.DBLowOps {
-	return low.NewLowDB(db.sess, "C", ownerID)
-}
-
-func (db *DB) GetMQSynk() datahub.MQSynk {
-	return db.eventOps
+func (db *DB) GetDbStates() (map[string]any, error) {
+	driver := db.sess.Driver().(*sql.DB)
+	return GetDbStates(driver)
 }

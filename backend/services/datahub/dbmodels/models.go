@@ -10,3 +10,9 @@ type GlobalConfig struct {
 type EntityId struct {
 	Id int64 `db:"id" json:"id"`
 }
+
+type TableInfo struct {
+	Name string `json:"name" db:"name"`
+	Type string `json:"type" db:"type"`
+	Sql  string `json:"sql" db:"sql"`
+}

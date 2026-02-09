@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
-import { 
+import {
     createSpaceCapability,
     listCapabilityTypes,
     CapabilityDefinition
@@ -59,6 +59,7 @@ export default function Page() {
             Icon={ArrowLeft}
             name="Create Capability"
             description="Add a new capability to this package or space"
+            variant="none"
             rightContent={
                 <button
                     onClick={handleBack}
@@ -70,6 +71,13 @@ export default function Page() {
             }
         >
             <div className="max-w-4xl mx-auto px-6 py-8 w-full">
+                <button
+                    onClick={handleBack}
+                    className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors mb-6"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="text-sm font-semibold">Back to Capabilities</span>
+                </button>
                 {capabilityTypesLoader.loading ? (
                     <div className="flex items-center justify-center h-64">
                         <div className="text-center">

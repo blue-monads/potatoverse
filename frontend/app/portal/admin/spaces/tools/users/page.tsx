@@ -1,16 +1,16 @@
 "use client";
 import React, { useState } from 'react';
-import { Search, Filter, Edit, Trash2, Users, Package, Layers, UserPlus } from 'lucide-react';
+import { Search, Filter, Edit, Trash2, Users, Package, Layers, UserPlus, User as UserIcon } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { useGApp } from '@/hooks';
-import { 
-    listSpaceUsers, 
-    SpaceUser, 
-    createSpaceUser, 
-    updateSpaceUser, 
+import {
+    listSpaceUsers,
+    SpaceUser,
+    createSpaceUser,
+    updateSpaceUser,
     deleteSpaceUser,
     getUsers,
     User
@@ -21,13 +21,13 @@ export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
     const spaceId = searchParams.get('space_id');
-    
+
     if (!installId) {
         return <div>Install ID not provided</div>;
     }
 
-    return <SpaceUsersListingPage 
-        installId={parseInt(installId)} 
+    return <SpaceUsersListingPage
+        installId={parseInt(installId)}
         spaceId={spaceId ? parseInt(spaceId) : undefined}
     />;
 }
@@ -61,13 +61,13 @@ const SpaceUsersListingPage = ({ installId, spaceId }: { installId: number; spac
     // Filter data based on search term
     const filteredData = loader.data?.filter(su => {
         const user = usersLoader.data?.find(u => u.id === su.user_id);
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             (user?.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (user?.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
             su.scope.toLowerCase().includes(searchTerm.toLowerCase()) ||
             String(su.user_id).includes(searchTerm) ||
             String(su.space_id).includes(searchTerm);
-        
+
         return matchesSearch;
     }) || [];
 
@@ -115,19 +115,20 @@ const SpaceUsersListingPage = ({ installId, spaceId }: { installId: number; spac
 
     return (
         <WithAdminBodyLayout
-            Icon={Users}
+            Icon={UserIcon}
             name="Space Users"
             description="Manage users assigned to this package or space"
-            rightContent={
-                <AddButton
-                    name="+ Add User"
-                    onClick={() => setIsCreateModalOpen(true)}
-                />
-            }
+            variant="none"
         >
             <BigSearchBar
                 searchText={searchTerm}
                 setSearchText={setSearchTerm}
+                rightContent={
+                    <AddButton
+                        name="+ Add User"
+                        onClick={() => setIsCreateModalOpen(true)}
+                    />
+                }
             />
 
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">
@@ -197,9 +198,9 @@ const SpaceUsersListingPage = ({ installId, spaceId }: { installId: number; spac
                                             <tr key={su.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="flex items-center gap-3">
-                                                        <img 
-                                                            src={`/zz/profileImage/${su.user_id}/${user?.name || 'User'}`} 
-                                                            alt="profile" 
+                                                        <img
+                                                            src={`/zz/profileImage/${su.user_id}/${user?.name || 'User'}`}
+                                                            alt="profile"
                                                             className="w-8 h-8 rounded-full"
                                                         />
                                                         <div>
@@ -213,11 +214,10 @@ const SpaceUsersListingPage = ({ installId, spaceId }: { installId: number; spac
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        su.space_id === 0 
-                                                            ? 'bg-purple-100 text-purple-800' 
-                                                            : 'bg-blue-100 text-blue-800'
-                                                    }`}>
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${su.space_id === 0
+                                                        ? 'bg-purple-100 text-purple-800'
+                                                        : 'bg-blue-100 text-blue-800'
+                                                        }`}>
                                                         {su.space_id === 0 ? 'Package (Root)' : 'Space'}
                                                     </span>
                                                 </td>
@@ -283,15 +283,15 @@ const SpaceUsersListingPage = ({ installId, spaceId }: { installId: number; spac
     );
 };
 
-const CreateSpaceUserModal = ({ 
-    users, 
-    spaceId, 
-    onClose, 
-    onSubmit 
-}: { 
-    users: User[]; 
+const CreateSpaceUserModal = ({
+    users,
+    spaceId,
+    onClose,
+    onSubmit
+}: {
+    users: User[];
     spaceId?: number;
-    onClose: () => void; 
+    onClose: () => void;
     onSubmit: (data: any) => void;
 }) => {
     const [formData, setFormData] = useState({
@@ -372,13 +372,13 @@ const CreateSpaceUserModal = ({
     );
 };
 
-const EditSpaceUserModal = ({ 
-    spaceUser, 
-    onClose, 
-    onSubmit 
-}: { 
-    spaceUser: SpaceUser; 
-    onClose: () => void; 
+const EditSpaceUserModal = ({
+    spaceUser,
+    onClose,
+    onSubmit
+}: {
+    spaceUser: SpaceUser;
+    onClose: () => void;
     onSubmit: (data: any) => void;
 }) => {
     const [formData, setFormData] = useState({

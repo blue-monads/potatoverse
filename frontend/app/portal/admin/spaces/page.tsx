@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2 } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2, BoltIcon } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -12,6 +12,7 @@ import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
 import useFavorites from '@/hooks/useFavorites/useFavorites';
+import { deriveHostAndIframeSrc } from '../exec/hostSrc';
 
 
 
@@ -131,12 +132,12 @@ const SpacesDirectory = () => {
                         </div>
                     </div>
 
-                    {loader.data?.spaces.length === 0 && <EmptySpacesState /> }
+                    {loader.data?.spaces.length === 0 && <EmptySpacesState />}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
 
-                        
+
+
                         {formattedSpaces.map((space) => {
 
                             return <SpaceCard
@@ -155,16 +156,35 @@ const SpacesDirectory = () => {
                                     const spaceId = space.space_id;
                                     const namespaceKey = space.namespace_key;
                                     const packageVersionId = space.package_version_id;
-                                    
+
+                                    if (action === "run") {
+                                        if (!spaceId) {
+                                            return
+                                        }
+
+                                        const hostsrc = await deriveHostAndIframeSrc(namespaceKey, String(spaceId))
+                                        if (!hostsrc) {
+                                            return
+                                        }
+
+                                        console.log("@hostsrc", hostsrc)
+
+                                        window.open(hostsrc, '_blank');
+                                        return
+                                    }
+
+
 
                                     const params = new URLSearchParams();
                                     params.set("install_id", installId.toString());
                                     params.set("space_id", spaceId.toString());
                                     params.set("namespace_key", namespaceKey);
                                     params.set("nskey", namespaceKey);
-                                    params.set("package_version_id", packageVersionId.toString());                   
+                                    params.set("package_version_id", packageVersionId.toString());
 
                                     console.log("params", params.toString());
+
+
 
 
                                     if (action === "delete") {
@@ -186,7 +206,7 @@ const SpacesDirectory = () => {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="bg-gray-50 p-4 rounded-lg">
                                                         <div className="flex items-center gap-3">
                                                             <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${space.gradient} flex items-center justify-center text-white text-sm font-semibold`}>
@@ -226,12 +246,12 @@ const SpacesDirectory = () => {
                                             ),
                                             size: "md"
                                         });
-                                    } else if (action === "run") {                                
+                                    } else if (action === "run") {
                                         router.push(`/portal/admin/exec?${params.toString()}`);
                                     } else if (action === "tools") {
-                                        router.push(`/portal/admin/spaces/tools/about?${params.toString()}`);
+                                        router.push(`/portal/admin/spaces/tools/overview?${params.toString()}`);
                                     }
-                                    
+
                                 }}
 
                                 space={{
@@ -285,8 +305,8 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
                                 }}
                                 className="flex items-center gap-1 text-xs hover:scale-110 transition-transform cursor-pointer"
                             >
-                                <Heart 
-                                    className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white/80'}`} 
+                                <Heart
+                                    className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white/80'}`}
                                 />
                             </button>
                         </div>
@@ -339,12 +359,12 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
 
 
 const actionsOptions = [
-    { id: "run", label: "Run in dev mode", icon: <Bolt className="w-4 h-4" /> },
+    { id: "run", label: "Run in new tab", icon: <Bolt className="w-4 h-4" /> },
     // { id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
     // { id: "package-files", label: "Package Files", icon: <FileCode2 className="w-4 h-4" /> },
     // { id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
     // { id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
-    { id: "tools", label: "Tools", icon: <Box className="w-4 h-4" /> },
+    { id: "tools", label: "Options", icon: <Box className="w-4 h-4" /> },
     // { id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
     // { id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
     { id: "delete", label: "Delete", icon: <Trash2Icon className="w-4 h-4" /> }
@@ -452,7 +472,7 @@ const ActionDropdown = (props: ActionDropdownProps) => {
 
 const EmptySpacesState = () => {
     const router = useRouter();
-    
+
     return (
         <div className="flex flex-col items-center justify-center py-16 px-6">
             <div className="mb-8">
@@ -468,13 +488,13 @@ const EmptySpacesState = () => {
                     <circle cx="50" cy="40" r="3" fill="#e5e7eb" opacity="0.5" />
                     <circle cx="150" cy="30" r="2" fill="#e5e7eb" opacity="0.3" />
                     <circle cx="170" cy="60" r="2.5" fill="#e5e7eb" opacity="0.4" />
-                    
+
                     {/* Box/package icon */}
                     <rect x="70" y="50" width="60" height="60" rx="4" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="2" />
                     <rect x="80" y="60" width="40" height="30" rx="2" fill="#e5e7eb" opacity="0.5" />
                     <line x1="100" y1="50" x2="100" y2="110" stroke="#e5e7eb" strokeWidth="2" />
                     <line x1="70" y1="80" x2="130" y2="80" stroke="#e5e7eb" strokeWidth="2" />
-                    
+
                     {/* Decorative stars */}
                     <g className="animate-bounce" style={{ animationDelay: '0.5s' }}>
                         <path d="M65 25l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z" fill="#fbbf24" />
@@ -498,7 +518,7 @@ const EmptySpacesState = () => {
                 </p>
 
                 <div className="flex justify-center">
-                    <button 
+                    <button
                         className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
                         onClick={() => router.push("/portal/admin/store")}
                     >

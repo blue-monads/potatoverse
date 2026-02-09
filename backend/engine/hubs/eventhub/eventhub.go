@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/eslayer"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -43,7 +44,13 @@ func (e *EventHub) Start() error {
 		return err
 	}
 
-	e.eslayer = eslayer.NewESLayer(e.app)
+	builders := evtype.GetTargetBuilders()
+	handlers := make(map[string]evtype.Handler)
+	for name, builder := range builders {
+		handlers[name] = builder(e.app)
+	}
+
+	e.eslayer = eslayer.NewESLayer(e.db, handlers)
 	err = e.eslayer.Start()
 	if err != nil {
 		qq.Println("@Start/eslayer.Start/error", err)

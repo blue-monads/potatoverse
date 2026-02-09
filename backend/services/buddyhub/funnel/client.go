@@ -22,7 +22,7 @@ import (
 type FunnelClientOptions struct {
 	LocalHttpPort   int
 	RemoteFunnelUrl string
-	ServerId        string
+	NodeId          string
 }
 
 type FunnelClient struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/gin-gonic/gin"
 	"github.com/nbd-wtf/go-nostr"
 )
@@ -15,7 +15,7 @@ func verifyNostrAuthCtx(ctx *gin.Context, expiry time.Duration) (*nostr.Event, e
 		return nil, fmt.Errorf("Unauthorized")
 	}
 
-	event, err := xutils.VerifyNostrAuth(authHeader)
+	event, err := nostrutils.VerifyNostrAuth(authHeader)
 	if err != nil {
 		return nil, err
 	}

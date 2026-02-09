@@ -1,6 +1,7 @@
 package ppackage
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,6 +36,7 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 	// Create InstalledPackage record
 	installedPackage := &dbmodels.InstalledPackage{
 		Name:            pkgManifest.Name,
+		Slug:            pkgManifest.Slug,
 		InstallRepo:     repo,
 		ActiveInstallID: userId,
 		InstalledBy:     userId,
@@ -50,6 +52,32 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 
 	installId := result.ID().(int64)
 
+	specialPages := "{}"
+
+	if pkgManifest.UpdatePage != "" {
+		if pkgManifest.SpecialPages == nil {
+			pkgManifest.SpecialPages = map[string]string{}
+		}
+
+		pkgManifest.SpecialPages["update_page"] = pkgManifest.UpdatePage
+	}
+
+	if pkgManifest.InitPage != "" {
+		if pkgManifest.SpecialPages == nil {
+			pkgManifest.SpecialPages = map[string]string{}
+		}
+
+		pkgManifest.SpecialPages["init_page"] = pkgManifest.InitPage
+	}
+
+	if len(pkgManifest.SpecialPages) != 0 {
+		out, err := json.Marshal(pkgManifest.SpecialPages)
+		if err != nil {
+			return 0, err
+		}
+		specialPages = string(out)
+	}
+
 	// Create a version entry
 	version := &dbmodels.PackageVersion{
 		InstallId:     installId,
@@ -64,8 +92,7 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 		AuthorSite:    pkgManifest.AuthorSite,
 		SourceCode:    pkgManifest.SourceCode,
 		License:       pkgManifest.License,
-		InitPage:      pkgManifest.InitPage,
-		UpdatePage:    pkgManifest.UpdatePage,
+		SpecialPages:  specialPages,
 	}
 
 	versionResult, err := d.packageVersionsTable().Insert(version)
@@ -138,6 +165,10 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int
 
 	return versionId, nil
 
+}
+
+func (d *PackageInstallOperations) UpdatePackageData(id int64, data map[string]any) error {
+	return d.installedPackagesTable().Find(db.Cond{"id": id}).Update(data)
 }
 
 func (d *PackageInstallOperations) UpdateActiveInstallId(id int64, installId int64) error {
@@ -243,7 +274,7 @@ func (d *PackageInstallOperations) AddPackageVersion(installId int64, filePath s
 // Private helper methods
 
 func (d *PackageInstallOperations) installedPackagesTable() db.Collection {
-	return d.db.Collection("InstalledPackages")
+	return d.db.Collection("PackageInstalls")
 }
 
 func (d *PackageInstallOperations) packageVersionsTable() db.Collection {

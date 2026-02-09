@@ -12,12 +12,12 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
-func (f *Funnel) routeWS(serverId string, c *gin.Context) {
+func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 
-	qq.Println("@routeWS/1", serverId)
+	qq.Println("@routeWS/1", nodeId)
 
 	f.scLock.RLock()
-	serverConn, exists := f.serverConnections[serverId]
+	serverConn, exists := f.serverConnections[nodeId]
 	f.scLock.RUnlock()
 
 	if !exists {

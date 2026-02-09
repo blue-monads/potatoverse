@@ -4,14 +4,15 @@ import (
 	"context"
 	"sync"
 
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
-	"github.com/blue-monads/potatoverse/backend/xtypes"
+	qq "github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 type ESLayer struct {
-	app  xtypes.App
-	sink datahub.MQSynk
-	db   datahub.Database
+	datahandle evtype.DataHandle
+
+	handlers map[string]evtype.Handler
 
 	eventProcessChan       chan int64
 	eventTargetProcessChan chan int64
@@ -21,19 +22,15 @@ type ESLayer struct {
 	wg     sync.WaitGroup
 }
 
-func NewESLayer(app xtypes.App) *ESLayer {
-
-	db := app.Database()
-	sink := db.GetMQSynk()
+func NewESLayer(db datahub.Database, handlers map[string]evtype.Handler) *ESLayer {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &ESLayer{
-		app:                    app,
-		sink:                   sink,
-		db:                     db,
-		eventProcessChan:       make(chan int64, 13),
-		eventTargetProcessChan: make(chan int64, 27),
+		datahandle:             db,
+		handlers:               handlers,
+		eventProcessChan:       make(chan int64, 20),
+		eventTargetProcessChan: make(chan int64, 20),
 		ctx:                    ctx,
 		cancel:                 cancel,
 		wg:                     sync.WaitGroup{},
@@ -51,5 +48,11 @@ func (e *ESLayer) Stop() {
 }
 
 func (e *ESLayer) NotifyNewEvent(eventId int64) {
-
+	qq.Println("@NotifyNewEvent: called with event", eventId)
+	select {
+	case e.eventProcessChan <- eventId:
+		qq.Println("@NotifyNewEvent: sent event", eventId)
+	case <-e.ctx.Done():
+		qq.Println("@NotifyNewEvent: context done")
+	}
 }

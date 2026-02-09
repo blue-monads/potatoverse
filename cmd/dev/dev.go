@@ -26,6 +26,13 @@ func main() {
 		Mailer: xtypes.MailerOptions{
 			Type: "stdio",
 		},
+		BuddyOptions: &xtypes.BuddyHubOptions{
+			StaticBuddies: []*xtypes.BuddyInfo{
+				{
+					Pubkey: "npub1qs3d4qh0w68lg80yyl3ucqsmraufaztt2kyw0zrw042f90cl9h8s38azs5",
+				},
+			},
+		},
 	}, true)
 
 	if err != nil {

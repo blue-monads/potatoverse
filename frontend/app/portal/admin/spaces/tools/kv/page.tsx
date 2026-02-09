@@ -13,7 +13,7 @@ const PAGE_LIMIT = 100;
 export default function Page() {
     const searchParams = useSearchParams();
     const installId = searchParams.get('install_id');
-    
+
     if (!installId) {
         return <div>Install ID not provided</div>;
     }
@@ -28,7 +28,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
     const [selectedGroup, setSelectedGroup] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    
+
     // Get offset from URL params, default to 0
     const offset = parseInt(searchParams.get('offset') || '0', 10);
     const currentOffset = isNaN(offset) || offset < 0 ? 0 : offset;
@@ -40,32 +40,32 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
 
     // Filter data based on search term and group (exclude value from search)
     const filteredData = loader.data?.filter(kv => {
-        const matchesSearch = searchTerm === '' || 
+        const matchesSearch = searchTerm === '' ||
             kv.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
             kv.group.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (kv.tag1 && kv.tag1.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (kv.tag2 && kv.tag2.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (kv.tag3 && kv.tag3.toLowerCase().includes(searchTerm.toLowerCase()));
-        
+
         const matchesGroup = selectedGroup === '' || kv.group === selectedGroup;
-        
+
         return matchesSearch && matchesGroup;
     }) || [];
 
     // Get unique groups for filter dropdown
     const uniqueGroups = Array.from(new Set(loader.data?.map(kv => kv.group) || []));
-    
+
     // Check if there might be more results (simple approach: if we got exactly the limit, there might be more)
     const hasNext = loader.data?.length === PAGE_LIMIT;
     const hasPrevious = currentOffset > 0;
-    
+
     const handleNext = () => {
         const newOffset = currentOffset + PAGE_LIMIT;
         const params = new URLSearchParams(searchParams.toString());
         params.set('offset', newOffset.toString());
         router.push(`?${params.toString()}`);
     };
-    
+
     const handlePrevious = () => {
         const newOffset = Math.max(0, currentOffset - PAGE_LIMIT);
         const params = new URLSearchParams(searchParams.toString());
@@ -76,7 +76,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
         }
         router.push(`?${params.toString()}`);
     };
-    
+
     // Reset offset when filters change
     useEffect(() => {
         if (currentOffset > 0 && (searchTerm || selectedGroup)) {
@@ -135,16 +135,17 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
             Icon={Grid2x2Plus}
             name="Space KV Store"
             description="Key-Value storage for this space"
-            rightContent={
-                <AddButton
-                    name="+ Add KV"
-                    onClick={() => setIsCreateModalOpen(true)}
-                />
-            }
+            variant="none"
         >
             <BigSearchBar
                 searchText={searchTerm}
                 setSearchText={setSearchTerm}
+                rightContent={
+                    <AddButton
+                        name="+ Add KV"
+                        onClick={() => setIsCreateModalOpen(true)}
+                    />
+                }
             />
 
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">
@@ -210,8 +211,8 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                     </tr>
                                 ) : (
                                     filteredData.map((kv) => (
-                                        <tr 
-                                            key={kv.id} 
+                                        <tr
+                                            key={kv.id}
                                             className="hover:bg-gray-50 cursor-pointer"
                                             onClick={(e) => {
                                                 // Don't trigger row click if clicking on action buttons
@@ -279,7 +280,7 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                             </tbody>
                         </table>
                     </div>
-                    
+
                     {/* Pagination Controls */}
                     {(hasPrevious || hasNext) && (
                         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
@@ -290,11 +291,10 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                 <button
                                     onClick={handlePrevious}
                                     disabled={!hasPrevious || loader.loading}
-                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                        hasPrevious && !loader.loading
-                                            ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    }`}
+                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${hasPrevious && !loader.loading
+                                        ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        }`}
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                     Previous
@@ -302,11 +302,10 @@ const KVListingPage = ({ spaceId }: { spaceId: number }) => {
                                 <button
                                     onClick={handleNext}
                                     disabled={!hasNext || loader.loading}
-                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                        hasNext && !loader.loading
-                                            ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    }`}
+                                    className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${hasNext && !loader.loading
+                                        ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        }`}
                                 >
                                     Next
                                     <ChevronRight className="w-4 h-4" />

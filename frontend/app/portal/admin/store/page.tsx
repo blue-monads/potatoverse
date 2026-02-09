@@ -572,14 +572,17 @@ const PostInstallButtons = (props: PostInstallButtonsProps) => {
     return (
         <div className="flex gap-2 justify-center">
 
-            {props.installResult.init_page ? (
+            {(props.installResult.special_pages || {})["init_page"] ? (
                 <button
                     onClick={() => {
+
+                        const initpage = (props.installResult.special_pages || {})["init_page"]
+
 
                         const fragment = new URLSearchParams();
                         fragment.set('nskey', props.installResult.key_space);
                         fragment.set('space_id', props.installResult.root_space_id.toString());
-                        fragment.set('load_page', props.installResult.init_page);
+                        fragment.set('load_page', initpage);
 
                         router.push(`/portal/admin/exec?${fragment.toString()}`);
 

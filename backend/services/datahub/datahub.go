@@ -3,11 +3,16 @@ package datahub
 import (
 	"io"
 	"io/fs"
+	"net/http"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/gin-gonic/gin"
 	"github.com/upper/db/v4"
 )
+
+type BuddyTransport interface {
+	SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error)
+}
 
 type Database interface {
 	Core
@@ -23,15 +28,15 @@ type Database interface {
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
 
-	GetLowPackageDBOps(ownerID string) DBLowOps
-	GetLowCapabilityDBOps(ownerID string) DBLowOps
+	GetLowPackageDBOps(installId int64) DBLowOps
+	GetLowCapabilityDBOps(capabilityId int64) DBLowOps
 }
 
 type Core interface {
 	Table(name string) db.Collection
 	GetSession() db.Session
 	RunDDL(ddl string) error
-	Init() error
+	Init(transport BuddyTransport) error
 	Close() error
 	Vender() string
 	HasTable(name string) (bool, error)
@@ -96,6 +101,8 @@ type PackageInstallOps interface {
 	GetPackage(id int64) (*dbmodels.InstalledPackage, error)
 	DeletePackage(id int64) error
 	UpdatePackage(id int64, file string) (int64, error)
+
+	UpdatePackageData(id int64, data map[string]any) error
 	UpdateActiveInstallId(id int64, installId int64) error
 	UpdatePackageDevToken(id int64, devToken string) error
 

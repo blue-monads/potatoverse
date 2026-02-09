@@ -17,6 +17,7 @@ import {
     Check
 } from 'lucide-react';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
+import BigSearchBar from '@/contain/compo/BigSearchBar';
 
 type SpecType = 'models' | 'scopes' | 'events_outputs' | 'event_slots' | 'apis' | 'blocks';
 
@@ -290,48 +291,49 @@ export default function Page() {
     // Available spec types with counts - always show all types, even if empty
     const availableTypes = useMemo(() => {
         const types: Array<{ type: SpecType; label: string; icon: any; count: number }> = [
-            { 
-                type: 'models', 
-                label: 'Models', 
-                icon: Layers, 
-                count: spec?.models?.length || 0 
+            {
+                type: 'models',
+                label: 'Models',
+                icon: Layers,
+                count: spec?.models?.length || 0
             },
-            { 
-                type: 'scopes', 
-                label: 'Scopes', 
-                icon: Box, 
-                count: spaceSpec?.scopes?.length || 0 
+            {
+                type: 'scopes',
+                label: 'Scopes',
+                icon: Box,
+                count: spaceSpec?.scopes?.length || 0
             },
-            { 
-                type: 'events_outputs', 
-                label: 'Event Outputs', 
-                icon: Zap, 
-                count: spaceSpec?.events_outputs?.length || 0 
+            {
+                type: 'events_outputs',
+                label: 'Event Outputs',
+                icon: Zap,
+                count: spaceSpec?.events_outputs?.length || 0
             },
-            { 
-                type: 'event_slots', 
-                label: 'Event Slots', 
-                icon: Code, 
-                count: spaceSpec?.event_slots?.length || 0 
+            {
+                type: 'event_slots',
+                label: 'Event Slots',
+                icon: Code,
+                count: spaceSpec?.event_slots?.length || 0
             },
-            { 
-                type: 'apis', 
-                label: 'APIs', 
-                icon: Code, 
-                count: spaceSpec?.APIs?.length || 0 
+            {
+                type: 'apis',
+                label: 'APIs',
+                icon: Code,
+                count: spaceSpec?.APIs?.length || 0
             },
-            { 
-                type: 'blocks', 
-                label: 'Blocks', 
-                icon: Box, 
-                count: spaceSpec?.blocks?.length || 0 
+            {
+                type: 'blocks',
+                label: 'Blocks',
+                icon: Box,
+                count: spaceSpec?.blocks?.length || 0
             },
         ];
-        
+
         return types;
     }, [spec, spaceSpec]);
 
     const [selectedType, setSelectedType] = useState<SpecType | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
     const initializedRef = useRef(false);
 
     // Update selectedType when availableTypes changes (only set initial value)
@@ -359,7 +361,7 @@ export default function Page() {
     // Now handle conditional rendering after all hooks
     if (!installId) {
         return (
-            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification">
+            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification" variant="none">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -372,7 +374,7 @@ export default function Page() {
 
     if (loader.loading) {
         return (
-            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification">
+            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification" variant="none">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -385,7 +387,7 @@ export default function Page() {
 
     if (loader.error) {
         return (
-            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification">
+            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification" variant="none">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <p className="text-red-500 mb-4">Error loading specification</p>
@@ -398,7 +400,7 @@ export default function Page() {
 
     if (!spec) {
         return (
-            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification">
+            <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification" variant="none">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <p className="text-gray-500">No specification data available</p>
@@ -562,72 +564,77 @@ export default function Page() {
     };
 
     return (
-        <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification">
-            <div className="flex flex-1 w-full min-h-0">
-                {/* Sidebar */}
-                <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
-                    <div className="p-4 border-b border-gray-200">
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Spec Types</h3>
-                    </div>
-                    <nav className="p-2 flex-1 overflow-y-auto">
-                        {availableTypes.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = selectedType === item.type;
-                            const isEmpty = item.count === 0;
-                            return (
-                                <button
-                                    key={item.type}
-                                    onClick={() => setSelectedType(item.type)}
-                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-colors ${
-                                        isActive
-                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                            : isEmpty
-                                            ? 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
-                                            : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Icon className={`w-4 h-4 ${
-                                            isActive 
-                                                ? 'text-blue-600' 
-                                                : isEmpty 
-                                                ? 'text-gray-300' 
-                                                : 'text-gray-500'
-                                        }`} />
-                                        <span className={`text-sm font-medium ${isEmpty ? 'opacity-60' : ''}`}>
-                                            {item.label}
-                                        </span>
-                                    </div>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                        isActive 
-                                            ? 'bg-blue-100 text-blue-700' 
-                                            : isEmpty 
-                                            ? 'bg-gray-50 text-gray-400' 
-                                            : 'bg-gray-100 text-gray-600'
-                                    }`}>
-                                        {item.count}
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </nav>
-                    {spaceSpecKeys.length > 0 && (
-                        <div className="p-4 border-t border-gray-200">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <Box className="w-4 h-4 text-blue-600" />
-                                    <span className="text-xs font-semibold text-blue-900">Space</span>
-                                </div>
-                                <p className="text-xs text-blue-700 font-medium">{firstSpaceKey}</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+        <WithAdminBodyLayout Icon={BookOpen} name="Spec Documentation" description="View space specification" variant="none">
+            <BigSearchBar
+                searchText={searchTerm}
+                setSearchText={setSearchTerm}
+                placeholder="Search documentation..."
+            />
 
-                {/* Main Content */}
-                <div className="flex-1 overflow-y-auto min-w-0">
-                    <div className="w-full max-w-none px-8 py-8">
-                        {renderContent()}
+            <div className="max-w-7xl mx-auto px-6 py-8 w-full flex flex-col gap-6">
+                <div className="flex flex-1 w-full min-h-[600px] bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    {/* Sidebar */}
+                    <div className="w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0 flex flex-col">
+                        <div className="p-4 border-b border-gray-200 bg-white">
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Spec Types</h3>
+                        </div>
+                        <nav className="p-2 flex-1 overflow-y-auto">
+                            {availableTypes.map((item) => {
+                                const Icon = item.icon;
+                                const isActive = selectedType === item.type;
+                                const isEmpty = item.count === 0;
+                                return (
+                                    <button
+                                        key={item.type}
+                                        onClick={() => setSelectedType(item.type)}
+                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-all ${isActive
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : isEmpty
+                                                ? 'text-gray-400 hover:bg-gray-100'
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon className={`w-4 h-4 ${isActive
+                                                ? 'text-white'
+                                                : isEmpty
+                                                    ? 'text-gray-300'
+                                                    : 'text-gray-500'
+                                                }`} />
+                                            <span className="text-sm font-semibold">
+                                                {item.label}
+                                            </span>
+                                        </div>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive
+                                            ? 'bg-blue-500 text-white'
+                                            : isEmpty
+                                                ? 'bg-gray-100 text-gray-400'
+                                                : 'bg-gray-200 text-gray-600'
+                                            }`}>
+                                            {item.count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                        {spaceSpecKeys.length > 0 && (
+                            <div className="p-4 border-t border-gray-200 bg-white">
+                                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Box className="w-3.5 h-3.5 text-blue-600" />
+                                        <span className="text-[10px] font-bold text-blue-900 uppercase tracking-tight">Active Space</span>
+                                    </div>
+                                    <p className="text-xs text-blue-700 font-bold truncate">{firstSpaceKey}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 overflow-y-auto min-w-0 bg-white">
+                        <div className="w-full max-w-none px-8 py-8">
+                            {renderContent()}
+                        </div>
                     </div>
                 </div>
             </div>

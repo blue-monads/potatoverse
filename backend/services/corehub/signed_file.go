@@ -27,6 +27,19 @@ func SignFileId(signer *signer.Signer, fid int64) (string, error) {
 	return signer.SignAlt(Salt, strconv.FormatInt(fid, 10))
 }
 
+func (c *CoreHub) DecodeSpaceFileId(id string) (int64, error) {
+	originalId, _, err := c.signer.VerifyAlt(Salt, id)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseInt(originalId, 10, 64)
+}
+
+func (c *CoreHub) EncodeSpaceFileId(fid int64) (string, error) {
+	return c.signer.SignAlt(Salt, strconv.FormatInt(fid, 10))
+}
+
 func (c *CoreHub) ListSpaceFilesSigned(installId int64, path string) ([]FileMeta, error) {
 	files, err := c.db.GetFileOps().ListFiles(installId, path)
 	if err != nil {

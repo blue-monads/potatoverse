@@ -1,0 +1,163 @@
+package selfcdc
+
+import (
+	"encoding/json"
+	"fmt"
+	"slices"
+
+	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/lazytypes"
+	"github.com/upper/db/v4"
+)
+
+var (
+	ErrTableNotFound = fmt.Errorf("table not found")
+)
+
+func (s *SelfCDCSyncer) GetMeta() ([]*lazytypes.SelfCDCMeta, error) {
+	metas, err := s.GetAllCdcMeta()
+	if err != nil {
+		return nil, err
+	}
+
+	return metas, nil
+}
+
+type cdcRow struct {
+	Id        int64  `db:"id"`
+	RecordId  int64  `db:"record_id"`
+	Operation int64  `db:"operation"`
+	Payload   []byte `db:"payload"`
+}
+
+func (s *SelfCDCSyncer) GetDataCDC(tableId int64, sinceCdcId int64) (*lazytypes.BuddyData, error) {
+	tableName := s.getTableName(tableId)
+	if tableName == "" {
+		return nil, ErrTableNotFound
+	}
+
+	cdcTable := tableName + "__cdc"
+
+	var cdcRows []cdcRow
+
+	// fetch limit 100
+	err := s.db.Collection(cdcTable).Find(db.Cond{"id >": sinceCdcId}).Limit(100).OrderBy("id").All(&cdcRows)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(cdcRows) == 0 {
+		return &lazytypes.BuddyData{
+			Records:    nil,
+			SyncTillId: sinceCdcId,
+		}, nil
+	}
+
+	// rowid => index
+	uniqueRecordIds := make(map[int64]int)
+	recordIds := make([]int64, 0, len(cdcRows))
+	maxCdcId := sinceCdcId
+	records := make([]lazytypes.Record, 0)
+
+	for idx, cdcRow := range cdcRows {
+
+		if cdcRow.Operation == 3 || cdcRow.Operation == 4 {
+
+			records = append(records, lazytypes.Record{
+				RecordId:    cdcRow.RecordId,
+				Operation:   cdcRow.Operation,
+				LinkedCDCId: cdcRow.Id,
+				Payload:     cdcRow.Payload,
+			})
+
+			if cdcRow.Id > maxCdcId {
+				maxCdcId = cdcRow.Id
+			}
+
+			continue
+		}
+
+		existingEntry, ok := uniqueRecordIds[cdcRow.RecordId]
+		if ok {
+			if cdcRows[existingEntry].Id > cdcRow.Id {
+				continue
+			}
+		}
+
+		uniqueRecordIds[cdcRow.RecordId] = idx
+		recordIds = append(recordIds, cdcRow.RecordId)
+
+		if cdcRow.Id > maxCdcId {
+			maxCdcId = cdcRow.Id
+		}
+	}
+
+	datas, err := s.GetTableRecords(tableId, recordIds)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, data := range datas {
+		rowidAny, ok := data["rowid"]
+		if !ok {
+			rowidAny, ok = data["id"]
+		}
+
+		if !ok {
+			continue
+		}
+
+		rowid, ok := rowidAny.(int64)
+		if !ok {
+			continue
+		}
+
+		cdcRow := cdcRows[uniqueRecordIds[rowid]]
+
+		payload, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, lazytypes.Record{
+			RecordId:    rowid,
+			Operation:   cdcRow.Operation,
+			LinkedCDCId: cdcRow.Id,
+			Payload:     payload,
+		})
+	}
+
+	slices.SortFunc(records, func(a, b lazytypes.Record) int {
+		return int(a.LinkedCDCId - b.LinkedCDCId)
+	})
+
+	return &lazytypes.BuddyData{
+		Records:    records,
+		SyncTillId: maxCdcId,
+	}, nil
+}
+
+func (s *SelfCDCSyncer) GetTableRecords(tableId int64, ids []int64) ([]map[string]any, error) {
+	tableName := s.getTableName(tableId)
+	if tableName == "" {
+		return nil, ErrTableNotFound
+	}
+
+	table := s.db.Collection(tableName)
+	var records []map[string]any
+	err := table.Find(db.Cond{"rowid": ids}).Select("rowid", "*").All(&records)
+	if err != nil {
+		return nil, err
+	}
+
+	return records, nil
+}
+
+func (s *SelfCDCSyncer) getTableName(tblId int64) string {
+	var meta lazytypes.SelfCDCMeta
+	err := s.selfcdcTable().Find(db.Cond{"id": tblId}).Select("table_name").One(&meta)
+	if err != nil {
+		return ""
+	}
+
+	return meta.TableName
+}

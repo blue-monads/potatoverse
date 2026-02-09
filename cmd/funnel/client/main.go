@@ -16,7 +16,7 @@ func main() {
 	client := funnel.NewFunnelClient(funnel.FunnelClientOptions{
 		LocalHttpPort:   8000,
 		RemoteFunnelUrl: "http://test.localhost:8080/funnel/register/test",
-		ServerId:        "test",
+		NodeId:          "test",
 	})
 	defer client.Stop()
 

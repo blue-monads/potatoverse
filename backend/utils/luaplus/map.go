@@ -20,50 +20,40 @@ func TableToMap(L *lua.LState, table *lua.LTable) map[string]any {
 	result := make(map[string]any)
 
 	table.ForEach(func(key, value lua.LValue) {
-		switch value.Type() {
-		case lua.LTString:
-			result[key.String()] = value.String()
-		case lua.LTNumber:
-			result[key.String()] = float64(value.(lua.LNumber))
-		case lua.LTBool:
-			result[key.String()] = bool(value.(lua.LBool))
-		case lua.LTTable:
-			isArray := isArray(value.(*lua.LTable))
-			if isArray {
-				result[key.String()] = tableToArray(value.(*lua.LTable))
-			} else {
-				result[key.String()] = TableToMap(L, value.(*lua.LTable))
-			}
-		default:
-			result[key.String()] = value.String()
-		}
+		result[key.String()] = LuaToAny(L, value)
 	})
 
 	return result
+}
+
+func LuaToAny(L *lua.LState, value lua.LValue) any {
+	switch value.Type() {
+	case lua.LTString:
+		return value.String()
+	case lua.LTNumber:
+		return float64(value.(lua.LNumber))
+	case lua.LTBool:
+		return bool(value.(lua.LBool))
+	case lua.LTTable:
+		tbl := value.(*lua.LTable)
+		isArray := isArray(tbl)
+		if isArray {
+			return tableToArray(tbl)
+		} else {
+			return TableToMap(L, tbl)
+		}
+
+	default:
+		return value.String()
+	}
+
 }
 
 func TableToMapAny(L *lua.LState, table *lua.LTable) map[any]any {
 	result := make(map[any]any)
 
 	table.ForEach(func(key, value lua.LValue) {
-		switch value.Type() {
-		case lua.LTString:
-			result[key.String()] = value.String()
-		case lua.LTNumber:
-			result[key.String()] = float64(value.(lua.LNumber))
-		case lua.LTBool:
-			result[key.String()] = bool(value.(lua.LBool))
-		case lua.LTTable:
-			isArray := isArray(value.(*lua.LTable))
-			if isArray {
-				result[key.String()] = tableToArray(value.(*lua.LTable))
-			} else {
-				result[key.String()] = TableToMap(L, value.(*lua.LTable))
-			}
-
-		default:
-			result[key.String()] = value.String()
-		}
+		result[key.String()] = LuaToAny(L, value)
 	})
 
 	return result

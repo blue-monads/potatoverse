@@ -66,6 +66,8 @@ type ExecutorBuilderOption struct {
 	PackageVersionId int64
 	InstalledId      int64
 	FsRoot           *os.Root
+
+	CodeLoader func() (string, error)
 }
 
 type ExecutorBuilderFactory func(app App) (ExecutorBuilder, error)

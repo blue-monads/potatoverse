@@ -1,158 +1,152 @@
 package buddyhub
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"path"
 
-	buddy "github.com/blue-monads/potatoverse/backend/services/buddyhub/buddytypes"
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	_ buddy.BuddyHub = (*BuddyHub)(nil)
-)
-
-type Configuration struct {
-	allowAllBuddies bool
-
-	allbuddyAllowStorage bool
-	allbuddyMaxStorage   int64
-
-	buddyWebFunnelMode      string // funnel_mode (all, local, none)
-	allbuddyMaxTrafficLimit int64
-
-	rendezvousUrls []xtypes.RendezvousUrl
+type Options struct {
+	Logger *slog.Logger
+	App    xtypes.App
 }
 
 type BuddyHub struct {
-	logger       *slog.Logger
-	app          xtypes.App
+	funnelHQ *funnel.FunnelClient
+
+	logger *slog.Logger
+
 	baseBuddyDir string
 
-	configuration Configuration
-
+	pubkey        string
+	privkey       string
+	port          int
 	staticBuddies map[string]*xtypes.BuddyInfo
 
-	funnel *funnel.Funnel
-
-	pubkey  string
-	privkey string
-	port    int
+	embeddedFunnel *funnel.Funnel
 }
 
-type Options struct {
-	Logger             *slog.Logger
-	App                xtypes.App
-	DisableNostrServer bool
-}
+const (
+	DefaultFunnelHQ      = "ws://localhost:7447"
+	EnableEmbeddedFunnel = true
+)
 
-func NewBuddyHub(opt Options) *BuddyHub {
-
-	config := opt.App.Config().(*xtypes.AppOptions)
+func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 
 	port := config.Port
 
-	buddyDir := path.Join(config.WorkingDir, "buddy")
-	b := &BuddyHub{
-		logger:       opt.Logger,
-		app:          opt.App,
-		baseBuddyDir: buddyDir,
+	pubkey, pk, err := nostrutils.GenerateKeyPair(config.MasterSecret)
+	if err != nil {
+		logger.Error("Failed to generate key pair", "err", err)
+		panic(err)
+	}
 
-		configuration: Configuration{
-			allowAllBuddies:         false,
-			allbuddyAllowStorage:    false,
-			allbuddyMaxStorage:      0,
-			buddyWebFunnelMode:      "none",
-			allbuddyMaxTrafficLimit: 0,
-		},
-
+	bh := &BuddyHub{
+		logger:        logger,
+		funnelHQ:      nil,
+		baseBuddyDir:  path.Join(config.WorkingDir, "buddy"),
+		pubkey:        pubkey,
+		privkey:       pk,
+		port:          port,
 		staticBuddies: make(map[string]*xtypes.BuddyInfo),
 	}
 
-	pubkey, pk, err := xutils.GenerateKeyPair(config.MasterSecret)
-	if err != nil {
-		b.logger.Error("Failed to generate key pair", "err", err)
-		panic(err)
+	if config.BuddyOptions != nil {
+		for _, buddyInfo := range config.BuddyOptions.StaticBuddies {
+			bh.staticBuddies[buddyInfo.Pubkey] = buddyInfo
+		}
 	}
 
-	b.pubkey = pubkey
-	b.privkey = pk
-	b.port = port
+	bh.funnelHQ = funnel.NewFunnelClient(funnel.FunnelClientOptions{
+		LocalHttpPort:   port,
+		RemoteFunnelUrl: DefaultFunnelHQ,
+		NodeId:          pubkey,
+	})
 
-	b.funnel = funnel.New()
+	return bh
+}
 
-	err = b.configure(config)
+func (bh *BuddyHub) Start() error {
+	err := bh.funnelHQ.Start(bh.pubkey)
 	if err != nil {
-		b.logger.Error("Failed to configure buddy hub", "err", err)
-		panic(err)
+		return err
 	}
 
-	b.startRloop()
+	if EnableEmbeddedFunnel {
+		bh.embeddedFunnel = funnel.New()
+	}
 
-	qq.Println("@pubkey", pubkey)
-
-	return b
+	return nil
 }
 
-func (h *BuddyHub) GetPubkey() string {
-	return h.pubkey
+func (bh *BuddyHub) Stop() error {
+	return nil
 }
 
-func (h *BuddyHub) GetPrivkey() string {
-	return h.privkey
+func (bh *BuddyHub) GetPubkey() string {
+	return bh.pubkey
 }
 
-func (h *BuddyHub) ListBuddies() ([]*xtypes.BuddyInfo, error) {
+func (bh *BuddyHub) GetPrivkey() string {
+	return bh.privkey
+}
 
-	result := make([]*xtypes.BuddyInfo, 0, len(h.staticBuddies))
-
-	for _, buddyInfo := range h.staticBuddies {
+func (bh *BuddyHub) ListBuddies() ([]*xtypes.BuddyInfo, error) {
+	result := make([]*xtypes.BuddyInfo, 0, len(bh.staticBuddies))
+	for _, buddyInfo := range bh.staticBuddies {
 		result = append(result, buddyInfo)
 	}
 
 	return result, nil
 }
 
-func (h *BuddyHub) PingBuddy(buddyPubkey string) (bool, error) {
-	return true, nil
-}
+func (bh *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
 
-func (h *BuddyHub) SendBuddy(buddyPubkey string, req *http.Request) (*http.Response, error) {
-	return nil, nil
-}
-
-func (h *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
-
-	buddyInfo, exists := h.staticBuddies[buddyPubkey]
+	buddyInfo, exists := bh.staticBuddies[buddyPubkey]
 	if !exists {
+		return nil, fmt.Errorf("buddy not found: %s", buddyPubkey)
+	}
+
+	for _, url := range buddyInfo.URLs {
+		provider := url.Provider
+		if provider != "http" {
+			continue
+		}
+
+		req.URL.Host = fmt.Sprintf("%s:%s", url.Host, url.Port)
+		req.URL.Scheme = "http"
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp, nil
+
+	}
+
+	return nil, fmt.Errorf("no provider found for buddy: %s", buddyPubkey)
+}
+
+func (bh *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
+	if bh.embeddedFunnel == nil {
 		return
 	}
 
-	if !buddyInfo.AllowWebFunnel {
+	bh.embeddedFunnel.HandleServerWebSocket(buddyPubkey, ctx)
+
+}
+
+func (bh *BuddyHub) HandleFunnelRegisterNode(buddyPubkey string, ctx *gin.Context) {
+	if bh.embeddedFunnel == nil {
 		return
 	}
 
-	h.funnel.HandleServerWebSocket(buddyPubkey, ctx)
-}
-
-func (h *BuddyHub) RouteToBuddy(buddyPubkey string, ctx *gin.Context) {
-	h.funnel.HandleRoute(buddyPubkey, ctx)
-}
-
-func (h *BuddyHub) GetBuddyRoot(buddyPubkey string) (*os.Root, error) {
-	return nil, nil
-}
-
-func (h *BuddyHub) GetRendezvousUrls() []xtypes.RendezvousUrl {
-	return nil
-}
-
-func (h *BuddyHub) RegisterHandler(msgType string, handler func(buddyPubkey string, data []byte) error) error {
-	return nil
+	bh.embeddedFunnel.HandleServerWebSocket(buddyPubkey, ctx)
 }

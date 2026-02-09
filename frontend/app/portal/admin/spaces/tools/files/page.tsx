@@ -11,7 +11,11 @@ import {
     Grid3X3,
     List,
     Plus,
-    Edit
+    Edit,
+    ChevronRight,
+    ChevronLeft,
+    Key,
+    Check
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
@@ -78,8 +82,6 @@ const FileManager = ({ installId }: FileManagerProps) => {
     const folders = filteredFiles.filter(file => file.is_folder);
     const fileItems = filteredFiles.filter(file => !file.is_folder);
 
-    const breadcrumbs = currentPath.split('/').filter(Boolean);
-
     const handleFolderClick = (folder: SpaceFile) => {
         const newPath = currentPath ? `${currentPath}/${folder.name}` : folder.name;
         setCurrentPath(newPath);
@@ -120,18 +122,12 @@ const FileManager = ({ installId }: FileManagerProps) => {
 
     const handleFileEdit = async (file: SpaceFile) => {
         try {
-            // Download file content
             const response = await downloadSpaceFile(installId, file.id);
-            
-            // Ensure we're getting a blob response
             if (!(response.data instanceof Blob)) {
                 throw new Error('Expected blob response but got something else');
             }
-            
             let content = await response.data.text();
-            
 
-            // Open modal with editor
             modal.openModal({
                 title: `Edit ${file.name}`,
                 content: (
@@ -151,13 +147,12 @@ const FileManager = ({ installId }: FileManagerProps) => {
             });
         } catch (error) {
             console.error('Failed to load file for editing:', error);
-            alert('Failed to load file for editing. The file might be too large, not a text file, or corrupted.');
+            alert('Failed to load file for editing. The file might be too large or not a text file.');
         }
     };
 
     const handleCreateFolder = async (folderName: string) => {
         if (!folderName.trim()) return;
-
         try {
             await createSpaceFolder(installId, folderName.trim(), currentPath);
             modal.closeModal();
@@ -167,688 +162,431 @@ const FileManager = ({ installId }: FileManagerProps) => {
         }
     };
 
-    const CreateFolderModalContent = () => {
-        const [folderName, setFolderName] = useState('');
-
-        return (
-            <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Folder Name
-                    </label>
-                    <input
-                        type="text"
-                        value={folderName}
-                        onChange={(e) => setFolderName(e.target.value)}
-                        placeholder="Enter folder name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        autoFocus
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && folderName.trim()) {
-                                handleCreateFolder(folderName);
-                            } else if (e.key === 'Escape') {
-                                modal.closeModal();
-                            }
-                        }}
-                    />
-                </div>
-                <div className="flex justify-end gap-2">
-                    <button
-                        onClick={() => modal.closeModal()}
-                        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => handleCreateFolder(folderName)}
-                        disabled={!folderName.trim()}
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
-                    >
-                        Create Folder
-                    </button>
-                </div>
-            </div>
-        );
-    };
-
-    const UploadModalContent = () => {
-        const [uploadMode, setUploadMode] = useState<'regular' | 'presigned'>('regular');
-        const [presignedFileName, setPresignedFileName] = useState('');
-        const [presignedData, setPresignedData] = useState<PresignedUploadResponse | null>(null);
-        const [exampleTab, setExampleTab] = useState<'curl' | 'javascript' | 'python' | 'browser'>('curl');
-
-        const handleGeneratePresignedURL = async () => {
-            if (!presignedFileName.trim()) return;
-
-            try {
-                const response = await createPresignedUploadURL(installId, presignedFileName.trim(), currentPath, 3600);
-                setPresignedData(response.data);
-            } catch (error) {
-                console.error('Generate presigned URL failed:', error);
-            }
-        };
-
-        return (
-            <div className="space-y-4">
-                {/* Upload Mode Selection */}
-                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
-                    <button
-                        onClick={() => setUploadMode('regular')}
-                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                            uploadMode === 'regular'
-                                ? 'bg-white text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                        Regular Upload
-                    </button>
-                    <button
-                        onClick={() => setUploadMode('presigned')}
-                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                            uploadMode === 'presigned'
-                                ? 'bg-white text-purple-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                        Presigned Upload
-                    </button>
-                </div>
-
-                    {/* Regular Upload Mode */}
-                    {uploadMode === 'regular' && (
-                        <div className="space-y-4">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <h3 className="font-semibold text-blue-900 mb-2">Regular Upload</h3>
-                                <p className="text-sm text-blue-800">
-                                    Upload files directly from your device. Files will be uploaded immediately to the current directory.
-                                </p>
-                            </div>
-
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
-                                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-600 mb-2">Click to select files or drag and drop</p>
-                                <p className="text-xs text-gray-500">Multiple files supported</p>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    onChange={async (e) => {
-                                        const files = e.target.files;
-                                        if (!files || files.length === 0) return;
-
-                                        setUploading(true);
-                                        try {
-                                            for (const file of Array.from(files)) {
-                                                await uploadSpaceFile(installId, file, currentPath);
-                                            }
-                                            loader.reload();
-                                            modal.closeModal();
-                                        } catch (error) {
-                                            console.error('Upload failed:', error);
-                                            alert('Upload failed: ' + error);
-                                        } finally {
-                                            setUploading(false);
-                                            if (fileInputRef.current) {
-                                                fileInputRef.current.value = '';
-                                            }
-                                        }
-                                    }}
-                                    className="hidden"
-                                />
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={uploading}
-                                    className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                                >
-                                    {uploading ? 'Uploading...' : 'Select Files'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Presigned Upload Mode */}
-                    {uploadMode === 'presigned' && (
-                        <div className="space-y-4">
-                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                                <h3 className="font-semibold text-purple-900 mb-2">Presigned Upload</h3>
-                                <p className="text-sm text-purple-800">
-                                    Generate a temporary token that can be used to upload files without authentication. 
-                                    Perfect for third-party integrations, CLI tools, or sharing upload capabilities securely.
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    File Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={presignedFileName}
-                                    onChange={(e) => setPresignedFileName(e.target.value)}
-                                    placeholder="e.g., document.pdf"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                    The uploaded file must match this exact filename
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={handleGeneratePresignedURL}
-                                disabled={!presignedFileName.trim()}
-                                className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
-                            >
-                                Generate Presigned Token
-                            </button>
-
-                            {presignedData && (
-                                <div className="space-y-4 pt-4 border-t border-gray-200">
-                                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                                        <p className="text-sm text-green-800 font-medium">
-                                            ✓ Token generated successfully! Expires in {presignedData.expiry} seconds
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Presigned Token
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={presignedData.presigned_token}
-                                                readOnly
-                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg font-mono text-xs"
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(presignedData.presigned_token);
-                                                }}
-                                                className="absolute right-2 top-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
-                                            >
-                                                Copy
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Upload URL
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={`${window.location.origin}${presignedData.upload_url}`}
-                                                readOnly
-                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg font-mono text-xs"
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(`${window.location.origin}${presignedData.upload_url}`);
-                                                }}
-                                                className="absolute right-2 top-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
-                                            >
-                                                Copy
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-gray-50 rounded-lg p-4">
-                                        <h4 className="font-semibold text-gray-900 mb-3">Upload Examples</h4>
-                                        
-                                        {/* Example Tabs */}
-                                        <div className="flex gap-1 mb-3 overflow-x-auto">
-                                            <button
-                                                onClick={() => setExampleTab('curl')}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                                                    exampleTab === 'curl'
-                                                        ? 'bg-gray-900 text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                }`}
-                                            >
-                                                cURL
-                                            </button>
-                                            <button
-                                                onClick={() => setExampleTab('javascript')}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                                                    exampleTab === 'javascript'
-                                                        ? 'bg-gray-900 text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                }`}
-                                            >
-                                                JavaScript
-                                            </button>
-                                            <button
-                                                onClick={() => setExampleTab('python')}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                                                    exampleTab === 'python'
-                                                        ? 'bg-gray-900 text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                }`}
-                                            >
-                                                Python
-                                            </button>
-                                            <button
-                                                onClick={() => setExampleTab('browser')}
-                                                className={`px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
-                                                    exampleTab === 'browser'
-                                                        ? 'bg-gray-900 text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                }`}
-                                            >
-                                                Browser
-                                            </button>
-                                        </div>
-
-                                        {/* Example Content */}
-                                        <div>
-                                            {exampleTab === 'curl' && (
-                                                <div>
-                                                    <pre className="bg-gray-900 text-green-400 p-3 rounded-lg text-xs overflow-x-auto">
-{`curl -X POST \\
-  "${window.location.origin}${presignedData.upload_url}" \\
-  -F "file=@${presignedFileName}"`}
-                                                    </pre>
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(`curl -X POST "${window.location.origin}${presignedData.upload_url}" -F "file=@${presignedFileName}"`);
-                                                        }}
-                                                        className="mt-2 text-xs text-purple-600 hover:text-purple-800"
-                                                    >
-                                                        Copy Command
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {exampleTab === 'javascript' && (
-                                                <div>
-                                                    <pre className="bg-gray-900 text-green-400 p-3 rounded-lg text-xs overflow-x-auto">
-{`const formData = new FormData();
-formData.append('file', fileInput.files[0]);
-
-fetch('${window.location.origin}${presignedData.upload_url}', {
-  method: 'POST',
-  body: formData
-}).then(res => res.json())
-  .then(data => console.log(data));`}
-                                                    </pre>
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(`const formData = new FormData();\nformData.append('file', fileInput.files[0]);\n\nfetch('${window.location.origin}${presignedData.upload_url}', {\n  method: 'POST',\n  body: formData\n}).then(res => res.json())\n  .then(data => console.log(data));`);
-                                                        }}
-                                                        className="mt-2 text-xs text-purple-600 hover:text-purple-800"
-                                                    >
-                                                        Copy Code
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {exampleTab === 'python' && (
-                                                <div>
-                                                    <pre className="bg-gray-900 text-green-400 p-3 rounded-lg text-xs overflow-x-auto">
-{`import requests
-
-with open('${presignedFileName}', 'rb') as f:
-    files = {'file': f}
-    response = requests.post(
-        '${window.location.origin}${presignedData.upload_url}',
-        files=files
-    )
-print(response.json())`}
-                                                    </pre>
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(`import requests\n\nwith open('${presignedFileName}', 'rb') as f:\n    files = {'file': f}\n    response = requests.post(\n        '${window.location.origin}${presignedData.upload_url}',\n        files=files\n    )\nprint(response.json())`);
-                                                        }}
-                                                        className="mt-2 text-xs text-purple-600 hover:text-purple-800"
-                                                    >
-                                                        Copy Code
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {exampleTab === 'browser' && (
-                                                <div className="space-y-3">
-                                                    <p className="text-sm text-gray-600">
-                                                        Share this link with users to upload via web browser:
-                                                    </p>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="text"
-                                                            value={`${window.location.origin}/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`}
-                                                            readOnly
-                                                            className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg font-mono text-xs"
-                                                        />
-                                                        <button
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(`${window.location.origin}/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`);
-                                                            }}
-                                                            className="absolute right-2 top-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
-                                                        >
-                                                            Copy
-                                                        </button>
-                                                    </div>
-                                                    <a
-                                                        href={`/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-block text-xs text-purple-600 hover:text-purple-800"
-                                                    >
-                                                        Open Upload Page →
-                                                    </a>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
-                    <button
-                        onClick={() => {
-                            modal.closeModal();
-                            setPresignedFileName('');
-                            setPresignedData(null);
-                        }}
-                        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-                    >
-                        Close
-                    </button>
-                </div>
-            </div>
-        );
-    };
-
-    const showUploadModal = () => {
-        modal.openModal({
-            title: "Upload Files",
-            content: <UploadModalContent />,
-            size: "lg",
-        });
-    };
-
     return (
         <WithAdminBodyLayout
             Icon={Folder}
-            name="Space Files"
-            description={`Managing files for spaces`}
-            rightContent={
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => {
-                            modal.openModal({
-                                title: "Create New Folder",
-                                content: <CreateFolderModalContent />,
-                                size: "md",
-                            });
-                        }}
-                        className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Folder
-                    </button>
-                    <button
-                        onClick={showUploadModal}
-                        disabled={uploading}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                    >
-                        <Upload className="w-4 h-4" />
-                        {uploading ? 'Uploading...' : 'Upload Files'}
-                    </button>
-                </div>
-            }
+            name="Files"
+            description={`Managing source files for spaces`}
+            variant="none"
         >
-
-            <div className="card m-4 p-4 flex flex-col gap-4">
-
-                {/* Search and View Controls */}
-                <div className="flex items-center justify-between bg-white">
-
-                    <div className='flex w-full'>
-                        <BigSearchBar
-                            searchText={searchTerm}
-                            setSearchText={setSearchTerm}
-                            placeholder="Search files..."
-                            onSearchButtonClick={() => loader.reload()}
-                            className="w-full"
-                        />
-
+            <BigSearchBar
+                searchText={searchTerm}
+                setSearchText={setSearchTerm}
+                placeholder="Search files..."
+                onSearchButtonClick={() => loader.reload()}
+                rightContent={
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                modal.openModal({
+                                    title: "Create New Folder",
+                                    content: <CreateFolderModalContent handleCreateFolder={handleCreateFolder} modal={modal} />,
+                                    size: "md",
+                                });
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 shadow-sm font-semibold transition-all"
+                        >
+                            <Plus className="w-4 h-4 text-green-500" />
+                            New Folder
+                        </button>
+                        <button
+                            onClick={() => {
+                                modal.openModal({
+                                    title: "Upload Files",
+                                    content: <UploadModalContent installId={installId} currentPath={currentPath} loader={loader} modal={modal} fileInputRef={fileInputRef} setUploading={setUploading} uploading={uploading} />,
+                                    size: "lg",
+                                });
+                            }}
+                            disabled={uploading}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 shadow-sm font-semibold transition-all"
+                        >
+                            <Upload className="w-4 h-4" />
+                            {uploading ? 'Uploading...' : 'Upload'}
+                        </button>
                     </div>
+                }
+            />
 
+            <div className="max-w-7xl mx-auto px-6 py-8 w-full flex flex-col gap-6">
+                {/* Reference UI Title Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <Folder className="w-4 h-4" />
+                            <span>Files</span>
+                        </div>
+                    </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
+                            className={`p-2 rounded-lg border transition-all ${viewMode === 'list' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50'}`}
                         >
                             <List className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400'}`}
+                            className={`p-2 rounded-lg border transition-all ${viewMode === 'grid' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50'}`}
                         >
                             <Grid3X3 className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
 
-                {/* Breadcrumbs */}
-                <nav className="flex items-center space-x-2 text-sm rounded-lg bg-white p-4 border border-gray-200">
-                    <button
-                        onClick={() => setCurrentPath('')}
-                        className="text-blue-500 hover:text-blue-700"
-                    >
-                        Root
-                    </button>
-                    {breadcrumbs.map((crumb, index) => (
-                        <React.Fragment key={index}>
-                            <span className="text-gray-400">/</span>
-                            <button
-                                onClick={() => {
-                                    const path = breadcrumbs.slice(0, index + 1).join('/');
-                                    setCurrentPath(path);
-                                }}
-                                className="text-blue-500 hover:text-blue-700"
-                            >
-                                {crumb}
-                            </button>
-                        </React.Fragment>
-                    ))}
-                </nav>
-
-                {/* Back Button */}
-                {currentPath && (
-                    <div className="mb-4">
-                        <button
-                            onClick={handleBackClick}
-                            className="flex items-center gap-2 text-blue-500 hover:text-blue-700"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Back
-                        </button>
-                    </div>
-                )}
-
-                {/* File List */}
-                {loader.loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                            <p className="text-gray-500">Loading files...</p>
+                {/* Explorer Container */}
+                <div className={`${viewMode === 'grid' ? '' : 'bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200'}`}>
+                    {viewMode === 'list' && (
+                        <div className="bg-gray-50 px-6 py-4 flex items-center gap-3 border-b border-gray-200">
+                            <div className="w-8 h-8 bg-blue-50 rounded flex items-center justify-center">
+                                <Folder className="w-4 h-4 text-blue-500" />
+                            </div>
+                            <h2 className="text-gray-900 font-bold tracking-wide">
+                                {currentPath ? `Root / ${currentPath.split('/').join(' / ')}` : 'Root'}
+                            </h2>
                         </div>
-                    </div>
-                ) : filteredFiles.length === 0 ? (
-                    <div className="flex items-center justify-center h-64">
-                        <div className="text-center">
-                            <Folder className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500">No files found</p>
+                    )}
+                    {viewMode === 'grid' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {currentPath && (
+                                <div
+                                    onClick={handleBackClick}
+                                    className="p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 cursor-pointer flex items-center gap-3 transition-all"
+                                >
+                                    <div className="w-10 h-10 bg-gray-50 rounded flex items-center justify-center">
+                                        <ArrowLeft className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                    <span className="font-semibold text-gray-500">Go Back</span>
+                                </div>
+                            )}
+                            {[...folders, ...fileItems].map((file) => (
+                                <div
+                                    key={file.id}
+                                    className="p-4 border border-gray-200 rounded-xl bg-white hover:border-blue-400 hover:shadow-md cursor-pointer group relative transition-all"
+                                    onClick={() => file.is_folder ? handleFolderClick(file) : handleFileDownload(file)}
+                                >
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="w-12 h-12 mb-3 flex items-center justify-center">
+                                            {file.is_folder ? (
+                                                <Folder className="w-10 h-10 text-blue-500" />
+                                            ) : (
+                                                <File className="w-10 h-10 text-gray-400" />
+                                            )}
+                                        </div>
+                                        <h3 className="text-sm font-bold text-gray-900 truncate w-full">{file.name}</h3>
+                                        <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 mt-1">
+                                            {file.is_folder ? 'Folder' : formatFileSize(file.size)}
+                                        </p>
+                                    </div>
+
+                                    {/* Grid Actions */}
+                                    <div className="absolute top-2 right-2 hidden group-hover:flex gap-1.5">
+                                        {!file.is_folder && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleFileEdit(file); }}
+                                                className="p-1.5 bg-white border border-gray-200 rounded shadow-sm hover:bg-blue-50 text-gray-500 hover:text-blue-600 transition-all"
+                                            >
+                                                <Edit className="w-3 h-3" />
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleFileDelete(file); }}
+                                            className="p-1.5 bg-white border border-gray-200 rounded shadow-sm hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    </div>
-                ) : (
-                    <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4' : 'space-y-2'}>
-                        {/* Folders */}
-                        {folders.map((folder) => (
-                            <FileItem
-                                key={folder.id}
-                                file={folder}
-                                viewMode={viewMode}
-                                onDoubleClick={() => handleFolderClick(folder)}
-                                onDownload={() => { }}
-                                onEdit={() => { }}
-                                onDelete={() => handleFileDelete(folder)}
-                            />
-                        ))}
-
-                        {/* Files */}
-                        {fileItems.map((file) => (
-                            <FileItem
-                                key={file.id}
-                                file={file}
-                                viewMode={viewMode}
-                                onDoubleClick={() => handleFileDownload(file)}
-                                onDownload={() => handleFileDownload(file)}
-                                onEdit={() => handleFileEdit(file)}
-                                onDelete={() => handleFileDelete(file)}
-                            />
-                        ))}
-                    </div>
-                )}
-
+                    ) : (
+                        <div className="divide-y divide-gray-100">
+                            {loader.loading ? (
+                                <div className="p-20 text-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                    <p className="text-gray-500 text-sm">Loading source files...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {currentPath && (
+                                        <div
+                                            onClick={handleBackClick}
+                                            className="px-6 py-4 hover:bg-gray-50 cursor-pointer group flex items-center transition-colors"
+                                        >
+                                            <div className="w-6 h-6 mr-4 flex items-center justify-center">
+                                                <ChevronLeft className="w-4 h-4 text-gray-400 group-hover:text-blue-500" />
+                                            </div>
+                                            <span className="text-gray-500 group-hover:text-blue-600 text-sm font-medium">.. (Parent directory)</span>
+                                        </div>
+                                    )}
+                                    {[...folders, ...fileItems].map(file => (
+                                        <div
+                                            key={file.id}
+                                            className="px-6 py-4 hover:bg-gray-50 cursor-pointer group flex items-center transition-colors"
+                                            onClick={() => file.is_folder ? handleFolderClick(file) : handleFileDownload(file)}
+                                        >
+                                            <div className="w-6 h-6 mr-4 flex items-center justify-center">
+                                                {file.is_folder ? (
+                                                    <Folder className="w-4 h-4 text-blue-400 group-hover:text-blue-500" />
+                                                ) : (
+                                                    <File className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
+                                                )}
+                                            </div>
+                                            <span className={`flex-1 text-sm font-medium ${file.is_folder ? 'text-gray-700 group-hover:text-blue-600' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                                                {file.name}
+                                            </span>
+                                            <div className="flex items-center gap-6">
+                                                {/* List Actions */}
+                                                <div className="hidden group-hover:flex items-center gap-2 mr-2">
+                                                    {!file.is_folder && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleFileEdit(file); }}
+                                                            className="p-1.5 bg-white border border-gray-200 rounded hover:bg-blue-50 hover:border-blue-200 text-gray-500 hover:text-blue-600 transition-all"
+                                                            title="Edit file"
+                                                        >
+                                                            <Edit className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleFileDownload(file); }}
+                                                        className="p-1.5 bg-white border border-gray-200 rounded hover:bg-blue-50 hover:border-blue-200 text-gray-500 hover:text-blue-600 transition-all"
+                                                        title="Download"
+                                                    >
+                                                        <Download className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleFileDelete(file); }}
+                                                        className="p-1.5 bg-white border border-gray-200 rounded hover:bg-red-50 hover:border-red-200 text-gray-400 hover:text-red-600 transition-all"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                                <span className="text-gray-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block">
+                                                    {file.is_folder ? 'Folder' : formatFileSize(file.size)}
+                                                </span>
+                                                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {filteredFiles.length === 0 && !loader.loading && (
+                                        <div className="p-20 text-center">
+                                            <Folder className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                                            <p className="text-gray-400">Empty directory</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
-
         </WithAdminBodyLayout>
     );
 };
 
-interface FileItemProps {
-    file: SpaceFile;
-    viewMode: 'list' | 'grid';
-    onDoubleClick: () => void;
-    onDownload: () => void;
-    onEdit: () => void;
-    onDelete: () => void;
+interface CreateFolderModalProps {
+    handleCreateFolder: (name: string) => void;
+    modal: any;
 }
 
-const FileItem = ({ file, viewMode, onDoubleClick, onDownload, onEdit, onDelete }: FileItemProps) => {
-    const [showActions, setShowActions] = useState(false);
-
-    if (viewMode === 'grid') {
-        return (
-            <div
-                className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer group relative"
-                onDoubleClick={onDoubleClick}
-                onMouseEnter={() => setShowActions(true)}
-                onMouseLeave={() => setShowActions(false)}
-            >
-                <div className="flex flex-col items-center text-center">
-                    <div className="w-12 h-12 mb-2 flex items-center justify-center">
-                        {file.is_folder ? (
-                            <Folder className="w-8 h-8 text-blue-500" />
-                        ) : (
-                            <File className="w-8 h-8 text-gray-500" />
-                        )}
-                    </div>
-                    <h3 className="text-sm font-medium text-gray-900 truncate w-full">{file.name}</h3>
-                    <p className="text-xs text-gray-500">
-                        {file.is_folder ? 'Folder' : formatFileSize(file.size)}
-                    </p>
-                </div>
-
-                {showActions && !file.is_folder && (
-                    <div className="absolute top-2 right-2 flex gap-1">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onEdit();
-                            }}
-                            className="p-1 bg-white rounded shadow-sm hover:bg-gray-100"
-                            title="Edit file"
-                        >
-                            <Edit className="w-3 h-3" />
-                        </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDownload();
-                            }}
-                            className="p-1 bg-white rounded shadow-sm hover:bg-gray-100"
-                            title="Download file"
-                        >
-                            <Download className="w-3 h-3" />
-                        </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete();
-                            }}
-                            className="p-1 bg-white rounded shadow-sm hover:bg-gray-100 text-red-500"
-                            title="Delete file"
-                        >
-                            <Trash2 className="w-3 h-3" />
-                        </button>
-                    </div>
-                )}
+const CreateFolderModalContent = ({ handleCreateFolder, modal }: CreateFolderModalProps) => {
+    const [folderName, setFolderName] = useState('');
+    return (
+        <div className="space-y-4">
+            <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Folder Name</label>
+                <input
+                    type="text"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
+                    placeholder="Enter folder name"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    autoFocus
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && folderName.trim()) handleCreateFolder(folderName);
+                        else if (e.key === 'Escape') modal.closeModal();
+                    }}
+                />
             </div>
-        );
-    }
+            <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 font-semibold transition-all">Cancel</button>
+                <button
+                    onClick={() => handleCreateFolder(folderName)}
+                    disabled={!folderName.trim()}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 font-semibold shadow-sm transition-all"
+                >
+                    Create Folder
+                </button>
+            </div>
+        </div>
+    );
+};
+
+interface UploadModalProps {
+    installId: number;
+    currentPath: string;
+    loader: any;
+    modal: any;
+    fileInputRef: React.RefObject<HTMLInputElement | null>;
+    setUploading: (u: boolean) => void;
+    uploading: boolean;
+}
+
+const UploadModalContent = ({ installId, currentPath, loader, modal, fileInputRef, setUploading, uploading }: UploadModalProps) => {
+    const [uploadMode, setUploadMode] = useState<'regular' | 'presigned'>('regular');
+    const [presignedFileName, setPresignedFileName] = useState('');
+    const [presignedData, setPresignedData] = useState<PresignedUploadResponse | null>(null);
+    const [exampleTab, setExampleTab] = useState<'curl' | 'javascript' | 'python' | 'browser'>('curl');
+
+    const handleGeneratePresignedURL = async () => {
+        if (!presignedFileName.trim()) return;
+        try {
+            const response = await createPresignedUploadURL(installId, presignedFileName.trim(), currentPath, 3600);
+            setPresignedData(response.data);
+        } catch (error) {
+            console.error('Generate presigned URL failed:', error);
+        }
+    };
 
     return (
-        <div
-            className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer group"
-            onDoubleClick={onDoubleClick}
-            onMouseEnter={() => setShowActions(true)}
-            onMouseLeave={() => setShowActions(false)}
-        >
-            <div className="flex-shrink-0 mr-3">
-                {file.is_folder ? (
-                    <Folder className="w-5 h-5 text-blue-500" />
-                ) : (
-                    <File className="w-5 h-5 text-gray-500" />
-                )}
+        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                <button
+                    onClick={() => setUploadMode('regular')}
+                    className={`flex-1 px-4 py-2 rounded-lg font-bold text-sm transition-all ${uploadMode === 'regular' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Regular Upload
+                </button>
+                <button
+                    onClick={() => setUploadMode('presigned')}
+                    className={`flex-1 px-4 py-2 rounded-lg font-bold text-sm transition-all ${uploadMode === 'presigned' ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                    Presigned Upload
+                </button>
             </div>
 
-            <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-gray-900 truncate">{file.name}</h3>
-                <p className="text-xs text-gray-500">
-                    {file.is_folder ? 'Folder' : `${formatFileSize(file.size)} • ${formatDate(file.created_at)}`}
-                </p>
-            </div>
+            {uploadMode === 'regular' ? (
+                <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                        <h3 className="font-bold text-blue-900 text-sm mb-1 flex items-center gap-2">
+                            <Upload className="w-4 h-4" />
+                            Direct Upload
+                        </h3>
+                        <p className="text-xs text-blue-700 leading-relaxed font-medium">
+                            Upload files directly to the current directory. Supports multi-selection.
+                        </p>
+                    </div>
 
-            {showActions && !file.is_folder && (
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit();
-                        }}
-                        className="p-1 hover:bg-gray-200 rounded"
-                        title="Edit file"
-                    >
-                        <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDownload();
-                        }}
-                        className="p-1 hover:bg-gray-200 rounded"
-                        title="Download file"
-                    >
-                        <Download className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                        className="p-1 hover:bg-gray-200 rounded text-red-500"
-                        title="Delete file"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl p-10 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-all group">
+                        <Upload className="w-12 h-12 text-gray-300 mx-auto mb-4 group-hover:text-blue-400 transition-colors" />
+                        <p className="text-sm font-bold text-gray-700 mb-1">Select files to upload</p>
+                        <p className="text-xs font-semibold text-gray-400">Drag and drop also supported</p>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            onChange={async (e) => {
+                                const files = e.target.files;
+                                if (!files || files.length === 0) return;
+                                setUploading(true);
+                                try {
+                                    for (const file of Array.from(files)) {
+                                        await uploadSpaceFile(installId, file, currentPath);
+                                    }
+                                    loader.reload();
+                                    modal.closeModal();
+                                } catch (error) {
+                                    alert('Upload failed: ' + error);
+                                } finally {
+                                    setUploading(false);
+                                }
+                            }}
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 font-bold shadow-md shadow-blue-500/20 transition-all"
+                        >
+                            {uploading ? 'Uploading...' : 'Choose Files'}
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                        <h3 className="font-bold text-purple-900 text-sm mb-1 flex items-center gap-2">
+                            <Key className="w-4 h-4" />
+                            Secure Pre-signed Access
+                        </h3>
+                        <p className="text-xs text-purple-700 leading-relaxed font-medium">
+                            Generate a 1-hour valid upload token for programmatic or third-party access.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4 bg-gray-50 rounded-xl p-5 border border-gray-200">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Target Filename</label>
+                            <input
+                                type="text"
+                                value={presignedFileName}
+                                onChange={(e) => setPresignedFileName(e.target.value)}
+                                placeholder="e.g., source-code.zip"
+                                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium transition-all"
+                            />
+                        </div>
+                        <button
+                            onClick={handleGeneratePresignedURL}
+                            disabled={!presignedFileName.trim()}
+                            className="w-full py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 font-bold shadow-md shadow-purple-500/20 transition-all"
+                        >
+                            Generate Access Token
+                        </button>
+                    </div>
+
+                    {presignedData && (
+                        <div className="space-y-4 border-t border-gray-200 pt-4">
+                            <div className="flex items-center gap-2 text-green-600 text-xs font-bold">
+                                <Check className="w-4 h-4" />
+                                Token valid for 3600s
+                            </div>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Presigned Token</label>
+                                    <div className="relative">
+                                        <input type="text" value={presignedData.presigned_token} readOnly className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-mono text-[10px] text-gray-600 pr-16" />
+                                        <button onClick={() => navigator.clipboard.writeText(presignedData.presigned_token)} className="absolute right-1 top-1 px-2 py-1 text-[10px] bg-gray-100 hover:bg-gray-200 rounded font-bold transition-all">Copy</button>
+                                    </div>
+                                </div>
+                                <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-4 shadow-sm">
+                                    <div className="flex gap-2 overflow-x-auto pb-1">
+                                        {['curl', 'javascript', 'python', 'browser'].map(t => (
+                                            <button
+                                                key={t}
+                                                onClick={() => setExampleTab(t as any)}
+                                                className={`px-3 py-1 text-[10px] font-bold rounded uppercase tracking-wider transition-all ${exampleTab === t ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                            >
+                                                {t}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="bg-gray-900 rounded-lg p-3 overflow-hidden">
+                                        <pre className="text-[10px] text-green-400 font-mono leading-relaxed overflow-x-auto">
+                                            {exampleTab === 'curl' && `curl -X POST \\\n  "${window.location.origin}${presignedData.upload_url}" \\\n  -F "file=@${presignedFileName}"`}
+                                            {exampleTab === 'javascript' && `const formData = new FormData();\nformData.append('file', file);\n\nfetch('${window.location.origin}${presignedData.upload_url}', {\n  method: 'POST',\n  body: formData\n});`}
+                                            {exampleTab === 'python' && `import requests\nfiles = {'file': open('${presignedFileName}', 'rb')}\nrequests.post('${window.location.origin}${presignedData.upload_url}', files=files)`}
+                                            {exampleTab === 'browser' && `${window.location.origin}/zz/pages/presigned/file?presigned-key=${presignedData.presigned_token}`}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
+
+            <div className="flex justify-end pt-2">
+                <button onClick={() => modal.closeModal()} className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 font-bold transition-all">Close</button>
+            </div>
         </div>
     );
 };
@@ -859,10 +597,6 @@ const formatFileSize = (bytes: number) => {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
 };
 
 interface FileEditorProps {

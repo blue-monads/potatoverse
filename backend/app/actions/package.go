@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"encoding/json"
+
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/repotypes"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -116,4 +118,91 @@ func (c *Controller) GetInstalledPackageInfo(packageId int64) (*InstalledPackage
 		Spaces:           spaces,
 		PackageVersions:  pversions,
 	}, nil
+}
+
+// AvailableVersionsResponse is returned by ListPackageAvailableVersions.
+type AvailableVersionsResponse struct {
+	Versions       []string `json:"versions"`
+	RepoSlug       string   `json:"repo_slug"`
+	Name           string   `json:"name"`
+	CurrentVersion string   `json:"current_version,omitempty"`
+}
+
+// ListPackageAvailableVersions returns versions available in the repo for the given installed package.
+// The package must have been installed from a repo (install_repo set).
+func (c *Controller) ListPackageAvailableVersions(packageId int64) (*AvailableVersionsResponse, error) {
+	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
+	if err != nil {
+		return nil, err
+	}
+	if pkg.InstallRepo == "" {
+		return &AvailableVersionsResponse{
+			Versions:       nil,
+			RepoSlug:       "",
+			Name:           pkg.Name,
+			CurrentVersion: "",
+		}, nil
+	}
+
+	packages, err := c.engine.GetRepoHub().ListPackages(pkg.InstallRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	var repoPkg *repotypes.PotatoPackage
+	for i := range packages {
+		if packages[i].Slug == pkg.Slug {
+			repoPkg = &packages[i]
+			break
+		}
+	}
+	if repoPkg == nil || len(repoPkg.Versions) == 0 {
+		return &AvailableVersionsResponse{
+			Versions:       nil,
+			RepoSlug:       pkg.InstallRepo,
+			Name:           pkg.Name,
+			CurrentVersion: "",
+		}, nil
+	}
+
+	currentVersion := ""
+	activeVer, err := c.database.GetPackageInstallOps().GetPackageVersion(pkg.ActiveInstallID)
+	if err == nil && activeVer != nil {
+		currentVersion = activeVer.Version
+	}
+
+	return &AvailableVersionsResponse{
+		Versions:       repoPkg.Versions,
+		RepoSlug:       pkg.InstallRepo,
+		Name:           pkg.Name,
+		CurrentVersion: currentVersion,
+	}, nil
+}
+
+// GetEnvs returns package env vars as a flat JSON object (key -> value, single-level).
+// Invalid or empty stored JSON returns an empty map.
+func (c *Controller) GetEnvs(packageId int64) (map[string]string, error) {
+	pkg, err := c.database.GetPackageInstallOps().GetPackage(packageId)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]string)
+	if pkg.EnvVars == "" {
+		return out, nil
+	}
+	if err := json.Unmarshal([]byte(pkg.EnvVars), &out); err != nil {
+		return out, nil
+	}
+	return out, nil
+}
+
+// UpdateEnvs sets package env vars from a flat JSON object (key -> value, single-level only).
+func (c *Controller) UpdateEnvs(packageId int64, envs map[string]string) error {
+	raw, err := json.Marshal(envs)
+	if err != nil {
+		return err
+	}
+	return c.database.GetPackageInstallOps().UpdatePackageData(packageId, map[string]any{
+		"env_vars": string(raw),
+	})
 }

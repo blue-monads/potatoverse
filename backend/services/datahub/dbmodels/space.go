@@ -15,11 +15,12 @@ type Space struct {
 
 	DevMode bool `json:"dev_mode" db:"dev_mode,omitempty"`
 
-	OverlayForSpaceID int64  `json:"overlay_for_space_id" db:"overlay_for_space_id,omitempty"`
-	OwnerID           int64  `json:"owned_by" db:"owned_by"`
-	ExtraMeta         string `json:"extrameta" db:"extrameta,omitempty"`
-	IsInitilized      bool   `json:"is_initilized" db:"is_initilized,omitempty"`
-	IsPublic          bool   `json:"is_public" db:"is_public,omitempty"`
+	ModOverlayScript string `json:"mod_overlay_script" db:"mod_overlay_script,omitempty"`
+
+	OwnerID      int64  `json:"owned_by" db:"owned_by"`
+	ExtraMeta    string `json:"extrameta" db:"extrameta,omitempty"`
+	IsInitilized bool   `json:"is_initilized" db:"is_initilized,omitempty"`
+	IsPublic     bool   `json:"is_public" db:"is_public,omitempty"`
 }
 
 type SpaceUser struct {

@@ -18,12 +18,12 @@ import (
 )
 
 // Route routes an HTTP request to the specified server and writes the response back to gin.Context
-func (f *Funnel) routeHttp(serverId string, c *gin.Context) {
-	qq.Println("@routeHttp/1", serverId)
+func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
+	qq.Println("@routeHttp/1", nodeId)
 
 	// Get server connection
 	f.scLock.RLock()
-	serverConn, exists := f.serverConnections[serverId]
+	serverConn, exists := f.serverConnections[nodeId]
 	f.scLock.RUnlock()
 
 	qq.Println("@routeHttp/2")

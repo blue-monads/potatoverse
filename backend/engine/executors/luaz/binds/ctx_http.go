@@ -29,8 +29,6 @@ func registerHttpRequestContextType(L *lua.LState) {
 }
 
 func NewHttpRequestContext(L *lua.LState, app xtypes.App, spaceId int64, ctx *gin.Context) *lua.LUserData {
-	// Always ensure the metatable is registered and has __index set
-	// L.NewTypeMetatable will return existing metatable if it exists
 	registerHttpRequestContextType(L)
 	mt := L.GetTypeMetatable(luaHttpRequestContextTypeName)
 
@@ -435,8 +433,8 @@ func reqRemoteIP(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 
 func reqJSON(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 	code := L.CheckInt(1)
-	jsonTbl := L.CheckTable(2)
-	jsonObj := luaplus.TableToMap(L, jsonTbl)
+	jsonTbl := L.CheckAny(2)
+	jsonObj := luaplus.LuaToAny(L, jsonTbl)
 	reqCtx.ctx.JSON(code, jsonObj)
 	return 0
 }

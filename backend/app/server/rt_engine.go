@@ -50,7 +50,7 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	if err != nil {
 		return nil, err
 	}
-	ipackage, err := a.ctrl.InstallPackageByFile(claim.UserId, tempFile.Name())
+	ipackage, err := a.ctrl.InstallPackageByFile(claim.UserId, "", tempFile.Name())
 	if err != nil {
 		return nil, err
 	}
@@ -58,18 +58,111 @@ func (a *Server) InstallPackageZip(claim *signer.AccessClaim, ctx *gin.Context) 
 	return ipackage, nil
 }
 
-type InstallPackageEmbedRequest struct {
-	Name     string `json:"name"`
-	RepoSlug string `json:"repo_slug,omitempty"`
+func (a *Server) UpgradePackageZip(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	tempFile, err := os.CreateTemp("", "upgrade-potato-*.zip")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(tempFile.Name())
+
+	_, err = io.Copy(tempFile, ctx.Request.Body)
+	if err != nil {
+		return nil, err
+	}
+	ipackage, err := a.ctrl.UpgradePackage(claim.UserId, tempFile.Name(), packageId, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return ipackage, nil
 }
 
-func (a *Server) InstallPackageEmbed(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
-	var req InstallPackageEmbedRequest
+func (a *Server) UpgradePackageRepo(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	var req InstallRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		return nil, err
 	}
 
-	ipackage, err := a.ctrl.InstallPackageEmbed(claim.UserId, req.Name, req.RepoSlug)
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	ipackage, err := a.ctrl.UpgradePackageRepo(claim.UserId, req.RepoSlug, req.Version, packageId)
+	if err != nil {
+		return nil, err
+	}
+
+	return ipackage, nil
+
+}
+
+func (a *Server) GetPackageAvailableVersions(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return a.ctrl.ListPackageAvailableVersions(packageId)
+}
+
+func (a *Server) GetPackageEnvs(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.ctrl.IsUserPackageAdmin(claim.UserId, packageId)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.ctrl.GetEnvs(packageId)
+}
+
+func (a *Server) UpdatePackageEnvs(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	packageId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.ctrl.IsUserPackageAdmin(claim.UserId, packageId)
+	if err != nil {
+		return nil, err
+	}
+
+	var envs map[string]string
+	if err := ctx.ShouldBindJSON(&envs); err != nil {
+		return nil, err
+	}
+	if envs == nil {
+		envs = make(map[string]string)
+	}
+	if err := a.ctrl.UpdateEnvs(packageId, envs); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+type InstallRequest struct {
+	Name     string `json:"name"`
+	RepoSlug string `json:"repo_slug,omitempty"`
+	Version  string `json:"version,omitempty"`
+}
+
+func (a *Server) InstallPackageRepo(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	var req InstallRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		return nil, err
+	}
+
+	ipackage, err := a.ctrl.InstallPackageRepo(claim.UserId, req.Name, req.RepoSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +201,12 @@ func (a *Server) ListInstalledSpaces(claim *signer.AccessClaim, ctx *gin.Context
 
 func (a *Server) AuthorizeSpace(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 
-	data := &actions.SpaceAuth{}
-	if err := ctx.ShouldBindJSON(data); err != nil {
+	data := actions.SpaceAuth{}
+	if err := ctx.ShouldBindJSON(&data); err != nil {
 		return nil, err
 	}
 
-	token, err := a.ctrl.AuthorizeSpace(claim.UserId, *data)
+	token, err := a.ctrl.AuthorizeSpace(claim.UserId, data)
 	if err != nil {
 		return nil, err
 	}
@@ -292,16 +385,13 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	tempFile.Close()
 
 	// Upgrade the package
-	packageId, err := a.ctrl.UpgradePackage(claim.UserId, tempFile.Name(), claim.InstallPackageId, recreateArtifacts)
+	result, err := a.ctrl.UpgradePackage(claim.UserId, tempFile.Name(), claim.InstallPackageId, recreateArtifacts)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
 	}
 
-	httpx.WriteJSON(ctx, gin.H{
-		"package_version_id": packageId,
-		"message":            "package upgraded successfully",
-	}, nil)
+	httpx.WriteJSON(ctx, result, nil)
 }
 
 func (a *Server) handleCapabilities(ctx *gin.Context) {

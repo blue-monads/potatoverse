@@ -44,6 +44,7 @@ type BuddyHubOptions struct {
 }
 
 type BuddyInfo struct {
+	Name            string     `json:"name"`
 	Pubkey          string     `json:"pubkey"`
 	URLs            []BuddyUrl `json:"urls"`
 	AllowStorage    bool       `json:"allow_storage"`
@@ -53,7 +54,8 @@ type BuddyInfo struct {
 }
 
 type BuddyUrl struct {
-	Endpoint   string `json:"endpoint"`
+	Host       string `json:"host"`
+	Port       string `json:"port"`
 	IsDefault  bool   `json:"is_default"`
 	Priority   int    `json:"priority"`
 	Provider   string `json:"provider"` // funnel, direct, nostr, udp, libp2p(lpweb), tor etc

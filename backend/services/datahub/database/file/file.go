@@ -24,7 +24,7 @@ var FileSchemaSQL string
 
 var refIdGen, _ = nanoid.ASCII(16)
 
-const BlobSizeLimit = 1024 * 1024 * 1
+const BlobSizeLimit = 1024 * 1024 * 5 // 5MB
 
 const (
 	StoreTypeInline    = 0

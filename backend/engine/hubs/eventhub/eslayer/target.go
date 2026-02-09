@@ -4,116 +4,113 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/evtype"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/rengine"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	qq "github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
 func (e *ESLayer) targetProcessor(targetId int64) error {
+	qq.Println("@targetProcessor: processing target", targetId)
 
-	qq.Println("targetProcessor/1")
+	sink := e.datahandle.GetMQSynk()
+	sops := e.datahandle.GetSpaceOps()
 
-	sops := e.db.GetSpaceOps()
-
-	qq.Println("targetProcessor/2")
-
-	target, err := e.sink.TransitionTargetStart(targetId)
+	target, err := sink.TransitionTargetStart(targetId)
 	if err != nil {
-		qq.Println("targetProcessor/3", err)
+		qq.Println("@targetProcessor/TransitionTargetStart/error", err)
 		return err
 	}
 
-	qq.Println("targetProcessor/4")
-
-	event, err := e.sink.GetEvent(target.EventID)
+	event, err := sink.GetEvent(target.EventID)
 	if err != nil {
-		qq.Println("targetProcessor/5", err)
+		qq.Println("@targetProcessor/GetEvent/error", err)
 		return err
 	}
-
-	qq.Println("targetProcessor/6")
 
 	sub, err := sops.GetEventSubscription(event.InstallID, target.SubscriptionID)
 	if err != nil {
-		qq.Println("targetProcessor/7", err)
+		qq.Println("@targetProcessor/GetEventSubscription/error", err)
 		return err
 	}
-
-	qq.Println("targetProcessor/8", sub)
 
 	ok, err := rengine.RuleEngine(sub.Rules, event.Payload)
 	if err != nil {
-		qq.Println("targetProcessor/9", err)
-		e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
+		sink.TransitionTargetFail(event.ID, targetId, err.Error())
+		qq.Println("@targetProcessor/RuleEngine/error", err)
 		return err
 	}
 	if !ok {
-		qq.Println("targetProcessor/10", "rules not matched")
+		qq.Println("@targetProcessor/RuleEngine: no match")
 		return nil
 	}
 
-	ectx := &TargetExecution{
+	handler, ok := e.handlers[sub.TargetType]
+	if !ok {
+		err = fmt.Errorf("handler not found: %s", sub.TargetType)
+		qq.Println("@targetProcessor/handler-not-found", err)
+		return err
+	}
+
+	ectx := &evtype.TExecution{
 		Subscription: sub,
 		Target:       target,
 		Event:        event,
-		App:          e.app,
 	}
 
-	if sub.DelayStart > 0 && target.Status != "start_delayed" {
-		delayStart := time.Now().Unix() + sub.DelayStart*1000
-		err = e.sink.TransitionTargetStartDelayed(targetId, event.ID, delayStart)
-		if err != nil {
-			qq.Println("targetProcessor/11", err)
-			e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
-			return err
-		}
-
-		qq.Println("targetProcessor/12", "delayed for", sub.DelayStart, "seconds")
-		return nil
-	}
-
-	switch sub.TargetType {
-	case "webhook":
-		err = PerformWebhookTargetExecution(ectx)
-	case "script":
-		err = PerformScriptTargetExecution(ectx)
-	case "space_method":
-		err = PerformSpaceMethodTargetExecution(ectx)
-	case "log":
-		err = PerformLogTargetExecution(ectx)
-	default:
-		qq.Println("targetProcessor/11", "unknown target type", sub.TargetType)
-		e.sink.TransitionTargetFail(event.ID, targetId, "unknown target type: "+sub.TargetType)
-		return fmt.Errorf("unknown target type: %s", sub.TargetType)
-	}
-	if err != nil {
-		qq.Println("targetProcessor/11", err, sub.TargetType)
-		e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
-
-		if sub.MaxRetries > 0 && target.RetryCount < sub.MaxRetries {
-			retryCount := target.RetryCount + 1
-			delay := time.Now().Unix() + sub.RetryDelay*1000
-			err = e.sink.TransitionTargetDelay(targetId, event.ID, delay, retryCount)
+	if sub.DelayStart > 0 {
+		// Check if we have a delayed until time
+		if target.DelayedUntil == 0 {
+			// First time processing, set delay
+			delayStart := time.Now().Unix() + int64(sub.DelayStart)
+			err = sink.TransitionTargetStartDelayed(targetId, event.ID, delayStart)
 			if err != nil {
-				qq.Println("targetProcessor/12", err)
-				e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
+				sink.TransitionTargetFail(event.ID, targetId, err.Error())
+				qq.Println("@targetProcessor/TransitionTargetStartDelayed/error", err)
 				return err
 			}
-			qq.Println("targetProcessor/13", "delayed for", sub.RetryDelay, "seconds")
+			qq.Println("@targetProcessor: target", targetId, "delayed until", delayStart)
+			return nil
+		} else {
+			// Check if delay has expired
+			now := time.Now().Unix()
+			if target.DelayedUntil > now {
+				// Delay not expired yet, return and wait for next check
+				qq.Println("@targetProcessor: target", targetId, "delay not expired, delayed until", target.DelayedUntil)
+				return nil
+			}
+			// Delay has expired, proceed to call handler
+		}
+	}
+
+	qq.Println("@targetProcessor: calling handler for target", targetId)
+	err = handler(ectx)
+	if err != nil {
+		qq.Println("@targetProcessor/handler/error", err)
+		// Check if this is a retryable error
+		if ectx.RetryAble && sub.MaxRetries > 0 && target.RetryCount < sub.MaxRetries {
+			newRetryCount := target.RetryCount + 1
+			delayUntil := time.Now().Unix() + int64(sub.RetryDelay)
+
+			err = sink.TransitionTargetDelay(targetId, event.ID, delayUntil, newRetryCount)
+			if err != nil {
+				sink.TransitionTargetFail(event.ID, targetId, err.Error())
+				return err
+			}
+			qq.Println("@targetProcessor: target", targetId, "retried, new count", newRetryCount)
 			return nil
 		}
 
-		e.sink.TransitionTargetFail(event.ID, targetId, err.Error())
-
-		return nil
-	} else {
-		err = e.sink.TransitionTargetComplete(event.ID, targetId)
-		if err != nil {
-			qq.Println("targetProcessor/9", err)
-			return err
-		}
-
+		sink.TransitionTargetFail(event.ID, targetId, err.Error())
+		return err
 	}
 
-	return nil
+	// Mark target as completed
+	err = sink.TransitionTargetComplete(event.ID, targetId)
+	if err != nil {
+		qq.Println("@targetProcessor/TransitionTargetComplete/error", err)
+		return err
+	}
 
+	qq.Println("@targetProcessor: target", targetId, "completed")
+	return nil
 }

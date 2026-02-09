@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
 	"github.com/blue-monads/potatoverse/backend/utils/kosher"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
@@ -106,6 +108,23 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 			key := l.CheckString(1)
 			l.Push(lua.LString(params[key]))
 			return 1
+		},
+
+		"next": func(l *lua.LState) int {
+
+			caller, ok := ctx.Get("yielder")
+			if !ok {
+				return luaplus.PushError(l, errors.New("yielder not found"))
+			}
+
+			callerFn, ok := caller.(func())
+			if !ok {
+				return luaplus.PushError(l, errors.New("yielder is not a function"))
+			}
+
+			callerFn()
+
+			return 0
 		},
 
 		"get_user_claim": func(l *lua.LState) int {
@@ -208,7 +227,7 @@ func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 			actionName := L.CheckString(1)
 			params := L.CheckTable(2)
 
-			paramsLazyData := binds.NewLuaLazyData(L, params)
+			paramsLazyData := lazylua.NewLuaLazyData(L, params)
 
 			result, err := event.Request.ExecuteAction(actionName, paramsLazyData)
 			if err != nil {
@@ -279,13 +298,31 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 }
 
 func (l *LuaH) registerModules() error {
-	installId := l.parent.handle.InstalledId
-	spaceId := l.parent.handle.SpaceId
-	app := l.parent.parent.app
-	packageVersionId := l.parent.handle.PackageVersionId
 
-	l.L.PreloadModule("pmcp", binds.BindMCP)
-	l.L.PreloadModule("potato", binds.PotatoModule(app, installId, packageVersionId, spaceId))
+	/*
+
+		installId := l.parent.handle.InstalledId
+		spaceId := l.parent.handle.SpaceId
+		app := l.parent.parent.app
+		packageVersionId := l.parent.handle.PackageVersionId
+
+		l.L.PreloadModule("pmcp", binds.BindMCP)
+
+
+	*/
+
+	es := &executors.ExecState{
+		SpaceId:          l.parent.handle.SpaceId,
+		InstalledId:      l.parent.handle.InstalledId,
+		PackageVersionId: l.parent.handle.PackageVersionId,
+		App:              l.parent.parent.app,
+	}
+
+	es.Init()
+
+	sharedBinds := l.parent.parent.binds
+
+	l.L.PreloadModule("potato", binds.PotatoModule(es, sharedBinds))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 	l.L.PreloadModule("json", luaJson.Loader)
 

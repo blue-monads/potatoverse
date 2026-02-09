@@ -11,6 +11,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	rtbuddy "github.com/blue-monads/potatoverse/backend/app/server/rt_buddy"
 	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
@@ -37,7 +38,8 @@ type Option struct {
 	SiteName    string
 	LocalSocket string
 
-	CoreHub *corehub.CoreHub
+	BuddyHub *buddyhub.BuddyHub
+	CoreHub  *corehub.CoreHub
 
 	ServerPubKey string
 }
@@ -53,12 +55,10 @@ func NewServer(opt Option) *Server {
 }
 
 func (s *Server) Start() error {
-	pubkey := s.opt.CoreHub.GetBuddyHub().GetPubkey()
+	pubkey := s.opt.BuddyHub.GetPubkey()
 	s.opt.ServerPubKey = pubkey
 
-	buddyhub := s.opt.CoreHub.GetBuddyHub()
-
-	s.buddyRoutes = rtbuddy.New(buddyhub, s.opt.Port, s.opt.ServerPubKey)
+	s.buddyRoutes = rtbuddy.New(s.opt.BuddyHub, s.opt.Port, s.opt.ServerPubKey)
 
 	err := s.buildGlobalJS()
 	if err != nil {

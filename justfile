@@ -25,7 +25,8 @@ build_frontend:
 build_backend:
 	go build -v -o tmp/potatoverse ./main.go
 
-copy_binary:
+copy_dev_binary:
+	cd frontend && mv output/build old_build && bun run build && rm -rf output/build && mv old_build output/build
 	go build -v -o tmp/potatoverse ./main.go
 	cp tmp/potatoverse ~/go/bin
 

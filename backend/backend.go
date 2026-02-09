@@ -7,14 +7,12 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/app"
 	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/mailer/stdio"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-
-	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
-	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/harvester"
 )
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
@@ -26,8 +24,15 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	os.MkdirAll(maindbDir, 0755)
 
+	bhub := buddyhub.NewBuddyHub(options, logger)
+
 	db, err := database.NewDB(dbFile, logger)
 	if err != nil {
+		logger.Error("Failed to initialize database", "err", err)
+		return nil, err
+	}
+
+	if err := db.Init(bhub); err != nil {
 		logger.Error("Failed to initialize database", "err", err)
 		return nil, err
 	}
@@ -66,6 +71,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		},
 		Mailer:            m,
 		WorkingFolderBase: options.WorkingDir,
+		BuddyHub:          bhub,
 	})
 
 	if seedDB {

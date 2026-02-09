@@ -5,17 +5,26 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
+	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
 
+func init() {
+	registry.RegisterExecutorBuilderFactory("luaz", BuildLuazExecutorBuilder)
+}
+
 func BuildLuazExecutorBuilder(app xtypes.App) (xtypes.ExecutorBuilder, error) {
-	return &LuazExecutorBuilder{app: app}, nil
+	binds := binds.PotatoBindable(app)
+
+	return &LuazExecutorBuilder{app: app, binds: binds}, nil
 }
 
 type LuazExecutorBuilder struct {
-	app xtypes.App
+	app   xtypes.App
+	binds map[string]map[string]lua.LGFunction
 }
 
 func (b *LuazExecutorBuilder) Name() string {
@@ -30,28 +39,36 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 
 	source := Code
 
-	if !ByPassPackageCode {
-		sOps := b.app.Database().GetSpaceOps()
-		s, err := sOps.GetSpace(opt.SpaceId)
+	if opt.CodeLoader == nil {
+		if !ByPassPackageCode {
+			sOps := b.app.Database().GetSpaceOps()
+			s, err := sOps.GetSpace(opt.SpaceId)
+			if err != nil {
+				return nil, errors.New("space not found")
+			}
+
+			if s.ServerFile == "" {
+				s.ServerFile = "server.lua"
+			}
+
+			pfops := b.app.Database().GetPackageFileOps()
+			packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, "", s.ServerFile)
+
+			if err != nil {
+				qq.Println("@script file load error", err)
+				qq.Println("@package file not found", opt.PackageVersionId, opt.SpaceId, s.ServerFile)
+				qq.Println("@space", s)
+				return nil, errors.New("package file not found")
+			}
+			source = string(packageFile)
+		}
+	} else {
+		fcode, err := opt.CodeLoader()
 		if err != nil {
-			return nil, errors.New("space not found")
+			return nil, errors.New("could not load source code")
 		}
 
-		if s.ServerFile == "" {
-			s.ServerFile = "server.lua"
-		}
-
-		pfops := b.app.Database().GetPackageFileOps()
-		packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, "", s.ServerFile)
-
-		if err != nil {
-			qq.Println("@script file load error", err)
-			qq.Println("@package file not found", opt.PackageVersionId, opt.SpaceId, s.ServerFile)
-			qq.Println("@space", s)
-			return nil, errors.New("package file not found")
-		}
-
-		source = string(packageFile)
+		source = fcode
 
 	}
 
