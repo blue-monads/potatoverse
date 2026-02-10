@@ -154,7 +154,7 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		if err != nil {
 			return nil, err
 		}
-		config.WorkingDir = path.Join(cwd, ".pdata")
+		config.WorkingDir = path.Join(cwd, "pdata")
 	}
 
 	if config.MasterSecret == "" {

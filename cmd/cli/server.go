@@ -87,7 +87,7 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 			return err
 		}
 
-		config.WorkingDir = path.Join(cwd, ".pdata")
+		config.WorkingDir = path.Join(cwd, "pdata")
 	}
 
 	if config.SocketFile == "" {

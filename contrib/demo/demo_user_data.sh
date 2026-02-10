@@ -21,11 +21,11 @@ Demo deployment server for potatoverse
 GET /deploy/:secret_key
 - Downloads latest tar.gz file from GitHub releases
 - Extracts tar.gz file
-- If .pdata/maindb doesn't exist, runs potatoverse server init
+- If pdata/maindb doesn't exist, runs potatoverse server init
 - Runs ./potatoverse server start
 
 POST /reset/:secret_key
-- Deletes .pdata/maindb (not config)
+- Deletes pdata/maindb (not config)
 """
 
 import os
@@ -324,8 +324,8 @@ def deploy():
             print(f"Copied binary to {target_binary}")        
 
         
-        # Check if .pdata/maindb exists
-        maindb_path = os.path.join(WORK_DIR, ".pdata", "maindb")
+        # Check if pdata/maindb exists
+        maindb_path = os.path.join(WORK_DIR, "pdata", "maindb")
         needs_init = not os.path.exists(maindb_path)
         
         if needs_init:
@@ -404,13 +404,13 @@ def get_status():
 
 
 def reset():
-    """Reset the demo by deleting .pdata/maindb."""
+    """Reset the demo by deleting pdata/maindb."""
     print("Resetting demo state...")
     
     # Note: We don't kill the server here, just reset the database
     # The server will continue running with a fresh database
     
-    maindb_path = os.path.join(WORK_DIR, ".pdata", "maindb")
+    maindb_path = os.path.join(WORK_DIR, "pdata", "maindb")
     
     if os.path.exists(maindb_path):
         if os.path.isdir(maindb_path):
