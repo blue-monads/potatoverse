@@ -145,7 +145,6 @@ main() {
     echo "========================================="
     echo "  Potatoverse Installer"
     echo "========================================="
-    echo ""
     
     get_latest_version
     detect_platform
@@ -157,7 +156,7 @@ main() {
     
     # Ask if user wants to run it now
     read -p "Do you want to run potatoverse now? (y/N) " -n 1 -r answer
-    echo
+    
     if [[ $answer =~ ^[Yy]$ ]]; then
         print_info "Executing potatoverse..."
         "${INSTALL_DIR}/potatoverse" server init-and-start
