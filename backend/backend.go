@@ -133,6 +133,14 @@ var DefaultDevRepos = []xtypes.RepoOptions{
 		Slug: "Official",
 		URL:  "https://github.com/blue-monads/store/raw/refs/heads/master",
 	},
+
+	{
+		Name: "Third Party Potato Field",
+		Type: "harvester-v1",
+		Slug: "ThirdParty",
+		URL:  "https://github.com/blue-monads/store-thirdparty/raw/refs/heads/master",
+	},
+
 	{
 		Name: "Development Packages",
 		Type: "dev",
