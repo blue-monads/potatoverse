@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path/filepath"
 
@@ -152,6 +153,11 @@ func (f *FileOperations) setupHTTPHeaders(ctx *gin.Context, file *dbmodels.FileM
 	header := ctx.Writer.Header()
 	if file.Mime != "" {
 		header.Set("Content-Type", file.Mime)
+	} else {
+
+		fileExt := filepath.Ext(file.Name)
+		fmimi := mime.TypeByExtension(fileExt)
+		header.Set("Content-Type", fmimi)
 	}
 
 	if ifhash := header.Get("If-None-Match"); ifhash != "" {
