@@ -18,19 +18,3 @@ import (
 
 	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/targets"
 )
-
-/*
-backend/engine/capabilities/xAutoSeeder
-backend/engine/capabilities/xCorn
-backend/engine/capabilities/xCtxUser
-backend/engine/capabilities/xEasyWS
-backend/engine/capabilities/xFileRelay
-backend/engine/capabilities/xFiles
-backend/engine/capabilities/xMigrator
-backend/engine/capabilities/xPing
-backend/engine/capabilities/xSelfPkg
-backend/engine/capabilities/xStaticSeeder
-backend/engine/capabilities/xTemplate
-backend/engine/capabilities/xUser
-
-*/

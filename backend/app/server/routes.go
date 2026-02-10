@@ -16,28 +16,30 @@ var StaticFiles embed.FS
 
 func (a *Server) bindRoutes() {
 
-	root := a.router.Group("/zz")
+	a.router.NoRoute(a.RootRoute())
 
-	root.GET("/ping", func(c *gin.Context) {
+	zroot := a.router.Group("/zz")
+
+	zroot.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
-	coreApi := root.Group("/api/core")
+	coreApi := zroot.Group("/api/core")
 
-	a.pages(root)
-	a.extraRoutes(root)
+	a.pages(zroot)
+	a.extraRoutes(zroot)
 
 	a.userRoutes(coreApi.Group("/user"))
 	a.authRoutes(coreApi.Group("/auth"))
 	a.selfUserRoutes(coreApi.Group("/self"))
-	a.engineRoutes(root, coreApi)
+	a.engineRoutes(zroot, coreApi)
 	a.spaceFileRoutes(coreApi.Group("/space_file"))
 
-	a.buddyRoutes.AttachRoutes(root)
+	a.buddyRoutes.AttachRoutes(zroot)
 
 	coreApi.GET("/global.js", a.getGlobalJS)
 
-	root.GET("/static/*files", func(c *gin.Context) {
+	zroot.GET("/static/*files", func(c *gin.Context) {
 		filePath := c.Param("files")
 		if len(filePath) > 0 && filePath[0] == '/' {
 			filePath = filePath[1:]
