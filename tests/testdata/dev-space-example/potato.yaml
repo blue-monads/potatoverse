@@ -1,0 +1,15 @@
+name: Dev Space Example
+slug: dev-space-example
+info: This is a example of a dev space
+canonical_url: ''
+format_version: '0.0.2'
+author_name: John Doe
+author_email: john.doe@example.com
+author_site: https://example.com
+source_code: ''
+license: MIT
+version: '1.0.0'
+tags:
+  - example
+  - dev
+  - space

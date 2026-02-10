@@ -1,0 +1,46 @@
+name: Simple TODO
+slug: simple-todo
+info: Todo list app to manage your tasks.
+canonical_url: ''
+format_version: '0.0.2'
+author_name: John Doe
+author_email: john.doe@example.com
+author_site: https://example.com
+source_code: https://github.com/john-doe/simple-todo
+license: MIT
+version: '0.0.1'
+tags:
+  - productivity
+  - personal
+
+spaces:
+  - namespace: simple-todo
+    executor_type: luaz
+    executor_sub_type: ''
+    server_file: server.lua
+    dev_serve_port: 0
+    is_default: true
+    route_options:
+      router_type: ''
+      serve_folder: public
+      force_html_extension: false
+      force_index_html_file: false
+      on_not_found_file: ''
+      trim_path_prefix: ''
+      template_folder: ''
+      routes: []
+
+developer:
+  server_url: http://localhost:7777
+  token: xxxx
+  token_env: POTATO_DEV_TOKEN
+  output_zip_file: simple-todo.zip
+  build_command: ''
+  include_files:
+    - 'public/**/*'
+    - server.lua
+    - spec.json
+  exclude_files:
+    - 'public/node_modules/**/*'
+    - public/package-lock.json
+    - public/package.json

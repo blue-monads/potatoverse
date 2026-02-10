@@ -6,11 +6,11 @@ type PackageCmd struct {
 }
 
 type PackagePushCmd struct {
-	PotatoTomlFile string `name:"potato-toml-file" help:"Path to package directory." type:"path" default:"./potato.toml"`
+	PotatoYamlFile string `name:"potato-yaml-file" help:"Path to potato manifest file." type:"path" default:"./potato.yaml"`
 	OutputZipFile  string `name:"output-zip-file" help:"Output path for built package." type:"path"`
 }
 
 type PackageBuildCmd struct {
-	PotatoTomlFile string `name:"potato-toml-file" help:"Path to package directory." type:"path" default:"./potato.toml"`
+	PotatoYamlFile string `name:"potato-yaml-file" help:"Path to potato manifest file." type:"path" default:"./potato.yaml"`
 	OutputZipFile  string `name:"output-zip-file" help:"Output path for built package." type:"path"`
 }

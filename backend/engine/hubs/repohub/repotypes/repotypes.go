@@ -20,16 +20,16 @@ type IRepo interface {
 }
 
 type PotatoPackage struct {
-	Name          string   `json:"name" toml:"name"`
-	Slug          string   `json:"slug" toml:"slug"`
-	Info          string   `json:"info" toml:"info"`
-	Tags          []string `json:"tags" toml:"tags"`
-	FormatVersion string   `json:"format_version" toml:"format_version"`
-	AuthorName    string   `json:"author_name" toml:"author_name"`
-	AuthorEmail   string   `json:"author_email" toml:"author_email"`
-	AuthorSite    string   `json:"author_site" toml:"author_site"`
-	SourceCode    string   `json:"source_code" toml:"source_code"`
-	License       string   `json:"license" toml:"license"`
-	Version       string   `json:"version" toml:"version"`
-	Versions      []string `json:"versions" toml:"versions"`
+	Name          string   `json:"name" yaml:"name"`
+	Slug          string   `json:"slug" yaml:"slug"`
+	Info          string   `json:"info" yaml:"info"`
+	Tags          []string `json:"tags" yaml:"tags"`
+	FormatVersion string   `json:"format_version" yaml:"format_version"`
+	AuthorName    string   `json:"author_name" yaml:"author_name"`
+	AuthorEmail   string   `json:"author_email" yaml:"author_email"`
+	AuthorSite    string   `json:"author_site" yaml:"author_site"`
+	SourceCode    string   `json:"source_code" yaml:"source_code"`
+	License       string   `json:"license" yaml:"license"`
+	Version       string   `json:"version" yaml:"version"`
+	Versions      []string `json:"versions" yaml:"versions"`
 }

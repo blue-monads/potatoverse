@@ -14,12 +14,12 @@ import (
 
 func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 
-	err := RunBuildCommand(c.PotatoTomlFile)
+	err := RunBuildCommand(c.PotatoYamlFile)
 	if err != nil {
 		return err
 	}
 
-	_, err = PackageFiles(c.PotatoTomlFile, c.OutputZipFile)
+	_, err = PackageFiles(c.PotatoYamlFile, c.OutputZipFile)
 	if err != nil {
 		return err
 	}

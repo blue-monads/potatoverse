@@ -11,6 +11,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/pelletier/go-toml/v2"
+	"gopkg.in/yaml.v3"
 )
 
 func ReadPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
@@ -37,6 +38,8 @@ func ReadPotato(potatoJsonFile string, target any) error {
 	pdata, err := os.ReadFile(potatoJsonFile)
 	if strings.HasSuffix(potatoJsonFile, ".json") {
 		err = json.Unmarshal(pdata, target)
+	} else if strings.HasSuffix(potatoJsonFile, ".yaml") || strings.HasSuffix(potatoJsonFile, ".yml") {
+		err = yaml.Unmarshal(pdata, target)
 	} else {
 		err = toml.Unmarshal(pdata, target)
 	}
