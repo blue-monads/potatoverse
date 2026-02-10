@@ -156,9 +156,9 @@ main() {
     print_info "Run 'potatoverse --help' to verify installation"
     
     # Ask if user wants to run it now
-    read -p "Do you want to run potatoverse now? (y/N) " -n 1 -r
+    read -p "Do you want to run potatoverse now? (y/N) " -n 1 -r answer
     echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if [[ $answer =~ ^[Yy]$ ]]; then
         print_info "Executing potatoverse..."
         "${INSTALL_DIR}/potatoverse" server init-and-start
     else
