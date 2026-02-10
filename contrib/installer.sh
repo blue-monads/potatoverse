@@ -153,6 +153,7 @@ main() {
     
     echo ""
     print_info "Run 'potatoverse --help' to verify installation"
+    print_info "You can run potatoverse later with: potatoverse server init-and-start OR ${INSTALL_DIR}/potatoverse server init-and-start"
     
     # Ask if user wants to run it now
     read -p "Do you want to run potatoverse now? (y/N) " -n 1 -r answer
