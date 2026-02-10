@@ -13,7 +13,7 @@ import (
 
 func (c *PackagePushCmd) Run(_ *kong.Context) error {
 
-	potatoYaml, err := pkgutils.ReadPotatoToml(c.PotatoYamlFile)
+	potatoYaml, err := pkgutils.ReadPotatoFile(c.PotatoYamlFile)
 	if err != nil {
 		return err
 	}
@@ -30,8 +30,8 @@ func (c *PackagePushCmd) Run(_ *kong.Context) error {
 	return PushPackage(c.PotatoYamlFile, outputZipFile)
 }
 
-func PushPackage(potatoTomlFile string, outputZipFile string) error {
-	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
+func PushPackage(potatoYamlFile string, outputZipFile string) error {
+	potatoYaml, err := pkgutils.ReadPotatoFile(potatoYamlFile)
 	if err != nil {
 		return err
 	}
@@ -42,18 +42,18 @@ func PushPackage(potatoTomlFile string, outputZipFile string) error {
 	}
 	defer file.Close()
 
-	serverUrl := potatoToml.Developer.ServerUrl
+	serverUrl := potatoYaml.Developer.ServerUrl
 	if serverUrl == "" {
 		return errors.New("server url is required")
 	}
 
-	token := potatoToml.Developer.Token
+	token := potatoYaml.Developer.Token
 	if token == "" {
-		if potatoToml.Developer.TokenEnv == "" {
+		if potatoYaml.Developer.TokenEnv == "" {
 			return errors.New("token is required/1")
 		}
 
-		token = os.Getenv(potatoToml.Developer.TokenEnv)
+		token = os.Getenv(potatoYaml.Developer.TokenEnv)
 		if token == "" {
 			return errors.New("token is required/2")
 		}

@@ -12,7 +12,7 @@ import (
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/pelletier/go-toml/v2"
+	"gopkg.in/yaml.v3"
 )
 
 // server
@@ -41,11 +41,11 @@ type ServerInitCmd struct {
 func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 
 	// Check if already initialized
-	if _, err := os.Stat("./config.toml"); err == nil && !c.Force {
+	if _, err := os.Stat("./config.yaml"); err == nil && !c.Force {
 		// Configuration file exists, check if we should just start the server
 		if len(ctx.Args) > 0 && ctx.Args[1] == "init-and-start" {
 			qq.Println("Server already initialized, starting without reinitialization")
-			return RunServerStartCommand("./config.toml", true)
+			return RunServerStartCommand("./config.yaml", true)
 		}
 		qq.Println("Server already initialized. Use --force to reinitialize")
 		return nil
@@ -94,14 +94,14 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 		config.SocketFile = path.Join(config.WorkingDir, "potatoverse.sock")
 	}
 
-	cfgData, err := toml.Marshal(config)
+	cfgData, err := yaml.Marshal(config)
 	if err != nil {
 		return err
 	}
 
 	os.MkdirAll(config.WorkingDir, 0755)
 
-	err = os.WriteFile("./config.toml", cfgData, 0644)
+	err = os.WriteFile("./config.yaml", cfgData, 0644)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 	qq.Println("@args", ctx.Args)
 
 	if len(ctx.Args) > 0 && ctx.Args[1] == "init-and-start" {
-		return RunServerStartCommand("./config.toml", true)
+		return RunServerStartCommand("./config.yaml", true)
 	}
 
 	return nil
@@ -117,7 +117,7 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 }
 
 type ServerStartCmd struct {
-	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.yaml"`
 	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
@@ -151,7 +151,7 @@ func RunServerStartCommand(config string, autoSeed bool) error {
 }
 
 type ServerActualStartCmd struct {
-	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.toml"`
+	Config   string `name:"config" short:"c" help:"Path to configuration file." type:"path" default:"./config.yaml"`
 	AutoSeed bool   `name:"auto-seed" short:"s" help:"Auto seed the server." default:"false"`
 }
 
@@ -163,7 +163,7 @@ func (c *ServerActualStartCmd) Run(ctx *kong.Context) error {
 	}
 
 	config := xtypes.AppOptions{}
-	err = toml.Unmarshal(cfgData, &config)
+	err = yaml.Unmarshal(cfgData, &config)
 	if err != nil {
 		return err
 	}

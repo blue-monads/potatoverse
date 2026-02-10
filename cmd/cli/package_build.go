@@ -30,19 +30,19 @@ func (c *PackageBuildCmd) Run(_ *kong.Context) error {
 // simple.chip.zip
 // simple.czip
 
-func RunBuildCommand(potatoTomlFile string) error {
+func RunBuildCommand(potatoYamlFile string) error {
 	fmt.Printf("Running build command\n")
 
-	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
+	potatoYaml, err := pkgutils.ReadPotatoFile(potatoYamlFile)
 	if err != nil {
 		return err
 	}
 
 	buildCommand := ""
 
-	if potatoToml.Developer != nil &&
-		potatoToml.Developer.BuildCommand != "" {
-		buildCommand = potatoToml.Developer.BuildCommand
+	if potatoYaml.Developer != nil &&
+		potatoYaml.Developer.BuildCommand != "" {
+		buildCommand = potatoYaml.Developer.BuildCommand
 	}
 
 	if buildCommand == "" {
@@ -63,18 +63,18 @@ func RunBuildCommand(potatoTomlFile string) error {
 	return nil
 }
 
-func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
+func PackageFiles(potatoYamlFile string, outputZipFile string) (string, error) {
 	fmt.Printf("Package files start\n")
 
-	potatoToml, err := pkgutils.ReadPotatoToml(potatoTomlFile)
+	potatoYaml, err := pkgutils.ReadPotatoFile(potatoYamlFile)
 	if err != nil {
 		return "", err
 	}
 
 	if outputZipFile == "" {
-		outputZipFile = potatoToml.Developer.OutputZipFile
+		outputZipFile = potatoYaml.Developer.OutputZipFile
 		if outputZipFile == "" {
-			outputZipFile = fmt.Sprintf("%s.zip", potatoToml.Slug)
+			outputZipFile = fmt.Sprintf("%s.zip", potatoYaml.Slug)
 		}
 	}
 
@@ -87,16 +87,16 @@ func PackageFiles(potatoTomlFile string, outputZipFile string) (string, error) {
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
-	potatoFileDir := path.Dir(potatoTomlFile)
+	potatoFileDir := path.Dir(potatoYamlFile)
 
-	err = pkgutils.PackageFilesV2(potatoFileDir, potatoToml.Developer, zipWriter)
+	err = pkgutils.PackageFilesV2(potatoFileDir, potatoYaml.Developer, zipWriter)
 	if err != nil {
 		return "", err
 	}
 
-	potatoToml.Developer = nil
+	potatoYaml.Developer = nil
 
-	potatoMap, err := pkgutils.ReadPotatoMap(potatoTomlFile)
+	potatoMap, err := pkgutils.ReadPotatoMap(potatoYamlFile)
 	if err != nil {
 		return "", err
 	}

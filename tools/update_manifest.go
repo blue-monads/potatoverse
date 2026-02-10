@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
-	"github.com/pelletier/go-toml/v2"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	// Find all potato.toml and potato.json files in potatoverse and potato-apps
+	// Find all potato.yaml and potato.json files in potatoverse and potato-apps
 	var manifestFiles []string
 
 	// Search in potatoverse (current directory is tools, go up one level)
@@ -23,7 +23,7 @@ func main() {
 		if info.IsDir() && (info.Name() == "potato-apps" || strings.Contains(path, ".git")) {
 			return filepath.SkipDir // Skip potato-apps (we'll search it separately) and git directories
 		}
-		if !info.IsDir() && (strings.EqualFold(info.Name(), "potato.toml") || strings.EqualFold(info.Name(), "potato.json")) {
+		if !info.IsDir() && (strings.EqualFold(info.Name(), "potato.yaml") || strings.EqualFold(info.Name(), "potato.json")) {
 			manifestFiles = append(manifestFiles, path)
 		}
 		return nil
@@ -40,7 +40,7 @@ func main() {
 		if info.IsDir() && strings.Contains(path, ".git") {
 			return filepath.SkipDir // Skip git directories
 		}
-		if !info.IsDir() && (strings.EqualFold(info.Name(), "potato.toml") || strings.EqualFold(info.Name(), "potato.json")) {
+		if !info.IsDir() && (strings.EqualFold(info.Name(), "potato.yaml") || strings.EqualFold(info.Name(), "potato.json")) {
 			manifestFiles = append(manifestFiles, path)
 		}
 		return nil
@@ -55,8 +55,8 @@ func main() {
 
 		if strings.HasSuffix(strings.ToLower(filePath), ".json") {
 			err = processJSONFile(filePath)
-		} else if strings.HasSuffix(strings.ToLower(filePath), ".toml") {
-			err = processTOMLFile(filePath)
+		} else if strings.HasSuffix(strings.ToLower(filePath), ".yaml") || strings.HasSuffix(strings.ToLower(filePath), ".yml") {
+			err = processYAMLFile(filePath)
 		}
 
 		if err != nil {
@@ -195,7 +195,7 @@ func processJSONFile(filePath string) error {
 	if strings.HasSuffix(strings.ToLower(filePath), ".json") {
 		newData, err = json.MarshalIndent(pkg, "", "    ")
 	} else {
-		newData, err = toml.Marshal(pkg)
+		newData, err = yaml.Marshal(pkg)
 	}
 	if err != nil {
 		return err
@@ -209,15 +209,15 @@ func processJSONFile(filePath string) error {
 	return nil
 }
 
-func processTOMLFile(filePath string) error {
-	// Read and parse existing TOML file
+func processYAMLFile(filePath string) error {
+	// Read and parse existing YAML file
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}
 
 	var oldData map[string]any
-	err = toml.Unmarshal(data, &oldData)
+	err = yaml.Unmarshal(data, &oldData)
 	if err != nil {
 		return err
 	}
@@ -357,7 +357,7 @@ func processTOMLFile(filePath string) error {
 	if strings.HasSuffix(strings.ToLower(filePath), ".json") {
 		newData, err = json.MarshalIndent(pkg, "", "    ")
 	} else {
-		newData, err = toml.Marshal(pkg)
+		newData, err = yaml.Marshal(pkg)
 	}
 	if err != nil {
 		return err

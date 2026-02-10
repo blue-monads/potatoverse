@@ -11,6 +11,7 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
+	github.com/fiatjaf/eventstore v0.16.2
 	github.com/fiatjaf/relayer/v2 v2.2.7
 	github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506
 	github.com/gin-gonic/gin v1.10.0
@@ -25,7 +26,6 @@ require (
 	github.com/ncruces/go-sqlite3 v0.30.4
 	github.com/ncruces/litestream v0.5.6-0.20260105140158-c09d3c3dfe6c
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/rqlite/sql v0.0.0-20251204023435-65660522892e
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/spf13/afero v1.15.0
@@ -38,6 +38,7 @@ require (
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/crypto v0.46.0
 	golang.org/x/net v0.47.0
+	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/gopher-json v0.0.0-20201124131017-552bb3c4c3bf
 )
 
@@ -62,7 +63,6 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/eknkc/basex v1.0.0 // indirect
 	github.com/fasthttp/websocket v1.5.12 // indirect
-	github.com/fiatjaf/eventstore v0.16.2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -86,6 +86,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/ncruces/wbt v0.2.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
@@ -113,5 +114,4 @@ require (
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

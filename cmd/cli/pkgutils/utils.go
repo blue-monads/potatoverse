@@ -10,19 +10,18 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
-	"github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v3"
 )
 
-func ReadPotatoToml(potatoTomlFile string) (*models.PotatoPackage, error) {
+func ReadPotatoFile(potatoFile string) (*models.PotatoPackage, error) {
 
-	potatoToml := &models.PotatoPackage{}
-	err := ReadPotato(potatoTomlFile, potatoToml)
+	potatoPkg := &models.PotatoPackage{}
+	err := ReadPotato(potatoFile, potatoPkg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoTomlFile, err)
+		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoFile, err)
 	}
 
-	return potatoToml, nil
+	return potatoPkg, nil
 }
 
 func ReadPotatoMap(potatoJsonFile string) (map[string]any, error) {
@@ -40,8 +39,6 @@ func ReadPotato(potatoJsonFile string, target any) error {
 		err = json.Unmarshal(pdata, target)
 	} else if strings.HasSuffix(potatoJsonFile, ".yaml") || strings.HasSuffix(potatoJsonFile, ".yml") {
 		err = yaml.Unmarshal(pdata, target)
-	} else {
-		err = toml.Unmarshal(pdata, target)
 	}
 
 	return err
