@@ -1,5 +1,5 @@
 dbs:
- - path: tmp/maindb/data.sqlite
+ - path: tmp/datadb/maindb.sqlite
    checkpoint-interval: 1m
    replicas:
      - type: file

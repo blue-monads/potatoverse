@@ -19,8 +19,8 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	logger := slog.Default()
 
-	maindbDir := path.Join(options.WorkingDir, "maindb")
-	dbFile := path.Join(maindbDir, "data.sqlite")
+	maindbDir := path.Join(options.WorkingDir, "datadb")
+	dbFile := path.Join(maindbDir, "main.sqlite")
 
 	os.MkdirAll(maindbDir, 0755)
 
