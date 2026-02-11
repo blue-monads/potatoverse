@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/funnel"
 	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +20,6 @@ type Options struct {
 }
 
 type BuddyHub struct {
-	funnelHQ *funnel.FunnelClient
-
 	logger *slog.Logger
 
 	baseBuddyDir string
@@ -33,7 +33,11 @@ type BuddyHub struct {
 }
 
 const (
-	DefaultFunnelHQ      = "https://tubersalltheway.top/zz/buddy/register"
+	CloudFunnelURL = "https://tubersalltheway.top/zz/buddy/register"
+	LocalFunnelURL = "http://localhost:7771/zz/buddy/register"
+
+	DefaultFunnelHQ = LocalFunnelURL
+
 	EnableEmbeddedFunnel = true
 )
 
@@ -49,7 +53,6 @@ func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 
 	bh := &BuddyHub{
 		logger:        logger,
-		funnelHQ:      nil,
 		baseBuddyDir:  path.Join(config.WorkingDir, "buddy"),
 		pubkey:        pubkey,
 		privkey:       pk,
@@ -63,28 +66,36 @@ func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 		}
 	}
 
-	token, err := nostrutils.GenerateNostrAuthToken(bh.privkey, DefaultFunnelHQ, "GET")
-	if err != nil {
-		logger.Error("Failed to generate nostr auth token", "err", err)
-		panic(err)
-	}
-
-	finalUrl := fmt.Sprintf("%s?token=%s", DefaultFunnelHQ, token)
-
-	bh.funnelHQ = funnel.NewFunnelClient(funnel.FunnelClientOptions{
-		LocalHttpPort:   port,
-		RemoteFunnelUrl: finalUrl,
-		NodeId:          pubkey,
-	})
-
 	return bh
 }
 
 func (bh *BuddyHub) Start() error {
-	err := bh.funnelHQ.Start(bh.pubkey)
+
+	token, err := nostrutils.GenerateNostrAuthToken(bh.privkey, DefaultFunnelHQ, "GET")
 	if err != nil {
-		return err
+		bh.logger.Error("Failed to generate nostr auth token", "err", err)
+		panic(err)
 	}
+
+	go func() {
+
+		for {
+			funnelHQ := funnel.NewFunnelClient(funnel.FunnelClientOptions{
+				LocalHttpPort:   bh.port,
+				RemoteFunnelUrl: DefaultFunnelHQ,
+				NodeId:          bh.pubkey,
+			})
+
+			err = funnelHQ.Start(token)
+			if err != nil {
+				qq.Println("@err", err.Error())
+			}
+
+			time.Sleep(time.Second * 20)
+
+		}
+
+	}()
 
 	if EnableEmbeddedFunnel {
 		bh.embeddedFunnel = funnel.New()

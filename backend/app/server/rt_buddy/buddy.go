@@ -6,6 +6,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,7 +29,7 @@ type BuddyRouteServer struct {
 }
 
 func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRouteServer {
-	return &BuddyRouteServer{
+	s := &BuddyRouteServer{
 		buddyhub:               buddyhub,
 		port:                   port,
 		serverPubKey:           serverPubKey,
@@ -36,6 +37,10 @@ func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRoute
 		rLock:                  sync.RWMutex{},
 		allowAnyBuddy:          true,
 	}
+
+	go s.debuLoop()
+
+	return s
 }
 
 func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
@@ -68,8 +73,19 @@ func (b *BuddyRouteServer) setNode(pubkey string) {
 
 func (b *BuddyRouteServer) getNodeId(id string) string {
 	b.rLock.RLock()
-	defer b.rLock.Unlock()
+	defer b.rLock.RUnlock()
 
 	return b.reverseBuddyIdToPubkey[id]
 
+}
+
+func (b *BuddyRouteServer) debuLoop() {
+	for {
+		time.Sleep(time.Second * 5)
+
+		b.rLock.RLock()
+		qq.Println("@reverseBuddyIdToPubkey", b.reverseBuddyIdToPubkey)
+		b.rLock.RUnlock()
+
+	}
 }

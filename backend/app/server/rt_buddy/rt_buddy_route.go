@@ -11,6 +11,8 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
+	"github.com/nbd-wtf/go-nostr/nip19"
+
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -29,9 +31,16 @@ func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
 		return
 	}
 
-	qq.Println("@event", event)
+	epubkey, err := nip19.EncodePublicKey(event.PubKey)
+	if err != nil {
 
-	a.setNode(event.PubKey)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	qq.Println("@event", event, epubkey)
+
+	a.setNode(epubkey)
 
 	a.buddyhub.HandleFunnelRegisterNode(event.PubKey, ctx)
 

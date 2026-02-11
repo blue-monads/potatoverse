@@ -90,6 +90,11 @@ func (s *Server) Start() error {
 			fmt.Println("Node Pubkey:\t\t", pubkey)
 		}
 
+		err = s.opt.BuddyHub.Start()
+		if err != nil {
+			panic(err)
+		}
+
 	}()
 
 	return s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
