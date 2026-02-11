@@ -30,7 +30,9 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 
 	if !exists {
 		qq.Println("@routeHttp/2{SERVER_NOT_CONNECTED}")
-		c.Error(errors.New("server not connected"))
+		c.Abort()
+		f.dumpConnIds()
+
 		return
 	}
 
@@ -206,5 +208,18 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 			break
 		}
 	}
+
+}
+
+func (f *Funnel) dumpConnIds() {
+	f.scLock.RLock()
+	defer f.scLock.RUnlock()
+
+	keys := make([]string, 0, len(f.serverConnections))
+	for k := range f.serverConnections {
+		keys = append(keys, k)
+	}
+
+	qq.Println("@keys", keys)
 
 }

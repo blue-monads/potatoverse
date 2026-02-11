@@ -149,14 +149,18 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 	if err := AutoMigrate(sess); err != nil {
 		return nil, err
 	}
+	var lazySyncer *lazysyncer.LazySyncer
 
-	lazySyncer := lazysyncer.New(lazysyncer.Options{
-		DbSession:     sess,
-		IsSelfEnabled: CDC_ENABLED,
-		Buddies:       []string{},
-		BasePath:      "./buddies",
-		Logger:        logger,
-	})
+	if CDC_ENABLED {
+		lazySyncer = lazysyncer.New(lazysyncer.Options{
+			DbSession:     sess,
+			IsSelfEnabled: CDC_ENABLED,
+			Buddies:       []string{},
+			BasePath:      "./buddies",
+			Logger:        logger,
+		})
+
+	}
 
 	return &DB{
 		sess:                 sess,

@@ -42,7 +42,7 @@ func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
 
 	a.setNode(epubkey)
 
-	a.buddyhub.HandleFunnelRegisterNode(event.PubKey, ctx)
+	a.buddyhub.HandleFunnelRegisterNode(epubkey, ctx)
 
 }
 
@@ -105,14 +105,21 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 
 func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
 
+	qq.Println("@routeToBuddy", 1)
+
 	extractedNodeId := strings.Split(subdomain, "buddy-")[1]
+	qq.Println("@routeToBuddy", extractedNodeId)
+
 	pubkey := a.getNodeId(extractedNodeId)
+
+	qq.Println("@routeToBuddy", pubkey)
 
 	if pubkey == "" {
 		panic("Could not map pubkey")
 	}
 
 	a.buddyhub.HandleFunnelRoute(pubkey, ctx)
+	ctx.Abort()
 }
 
 // maybe delete this

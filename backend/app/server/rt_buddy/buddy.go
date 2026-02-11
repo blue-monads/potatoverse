@@ -38,7 +38,7 @@ func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRoute
 		allowAnyBuddy:          true,
 	}
 
-	go s.debuLoop()
+	// go s.debuLoop()
 
 	return s
 }
