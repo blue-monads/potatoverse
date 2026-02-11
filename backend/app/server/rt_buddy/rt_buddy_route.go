@@ -14,44 +14,26 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-func (a *BuddyRouteServer) handleBuddyRoute(ctx *gin.Context) {
-	ev, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
-	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
+
+	token := ctx.Query("token")
+
+	if token == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "token is required"})
 		return
 	}
 
-	turl := ev.Tags[1][1]
-
-	// convert https://example.com/ to http://localhost:3000/
-	// convert zz-12-serverkey.example.com to http://zz-12-serverkey.localhost:3000/
-
-	purl, err := url.Parse(turl)
+	event, err := nostrutils.VerifyNostrAuth(token)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	host := purl.Host
+	qq.Println("@event", event)
 
-	newHost := fmt.Sprintf("localhost:%d", a.port)
+	a.setNode(event.PubKey)
 
-	if strings.HasPrefix(host, "zz-") {
-		parts := strings.Split(host, ".")
-		suborigin := parts[len(parts)-1]
-		newHost = fmt.Sprintf("%s.localhost:%d", suborigin, a.port)
-	}
-
-	newUrl := url.URL{
-		Scheme:   "http",
-		Host:     newHost,
-		Path:     purl.Path,
-		RawQuery: purl.RawQuery,
-		Fragment: purl.Fragment,
-	}
-
-	proxy := httputil.NewSingleHostReverseProxy(&newUrl)
-	proxy.ServeHTTP(ctx.Writer, ctx.Request)
+	a.buddyhub.HandleFunnelRegisterNode(event.PubKey, ctx)
 
 }
 
@@ -97,12 +79,12 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 
 		// buddy start
 
-		if strings.HasPrefix(subdomain, "buddy") {
+		if strings.HasPrefix(subdomain, "buddy-") {
 			a.routeToBuddy(subdomain, ctx)
 			return
 		}
 
-		if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "buddy") {
+		if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "buddy-") {
 			a.routeToBuddy(subdomain, ctx)
 			return
 		}
@@ -114,26 +96,56 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 
 func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
 
-	extractedPubkey := strings.Split(subdomain, "buddy")[1]
-	a.buddyhub.HandleFunnelRoute(fmt.Sprintf("npub%s", extractedPubkey), ctx)
+	extractedNodeId := strings.Split(subdomain, "buddy-")[1]
+	pubkey := a.getNodeId(extractedNodeId)
+
+	if pubkey == "" {
+		panic("Could not map pubkey")
+	}
+
+	a.buddyhub.HandleFunnelRoute(pubkey, ctx)
 }
 
-func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
+// maybe delete this
 
-	token := ctx.Query("token")
-
-	if token == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "token is required"})
+func (a *BuddyRouteServer) handleBuddyRoute(ctx *gin.Context) {
+	ev, err := verifyNostrAuthCtx(ctx, BuddyAuthExpiry)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	pubkey, err := nostrutils.DecodeKeyToHex(token)
+	turl := ev.Tags[1][1]
+
+	// convert https://example.com/ to http://localhost:3000/
+	// convert zz-12-serverkey.example.com to http://zz-12-serverkey.localhost:3000/
+
+	purl, err := url.Parse(turl)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	a.buddyhub.HandleFunnelRegisterNode(fmt.Sprintf("npub%s", pubkey), ctx)
+	host := purl.Host
+
+	newHost := fmt.Sprintf("localhost:%d", a.port)
+
+	if strings.HasPrefix(host, "zz-") {
+		parts := strings.Split(host, ".")
+		suborigin := parts[len(parts)-1]
+		newHost = fmt.Sprintf("%s.localhost:%d", suborigin, a.port)
+	}
+
+	newUrl := url.URL{
+		Scheme:   "http",
+		Host:     newHost,
+		Path:     purl.Path,
+		RawQuery: purl.RawQuery,
+		Fragment: purl.Fragment,
+	}
+
+	proxy := httputil.NewSingleHostReverseProxy(&newUrl)
+	proxy.ServeHTTP(ctx.Writer, ctx.Request)
 
 }
 
