@@ -227,7 +227,7 @@ export const installPackageZip = async (zip: ArrayBuffer) => {
 }
 
 export const upgradePackageZipDirectly = async (packageId: number, zip: ArrayBuffer) => {
-    return iaxios.post<UpgradePackageResult>(`/core/package/upgrade/${packageId}/zip`, zip, {
+    return iaxios.post<UpgradePackageResult>(`/core/package/${packageId}/upgrade/zip`, zip, {
         headers: {
             "Content-Type": "application/zip",
         },
