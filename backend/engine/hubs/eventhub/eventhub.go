@@ -34,6 +34,8 @@ func NewEventHub(app xtypes.App) *EventHub {
 		db:               db,
 		activeEvents:     make(map[string]bool),
 		activeEventsLock: sync.RWMutex{},
+		refreshFullIndex: make(chan struct{}, 1),
+		eslayer:          nil,
 	}
 }
 

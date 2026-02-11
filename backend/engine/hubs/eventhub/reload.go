@@ -6,9 +6,9 @@ import (
 
 func (e *EventHub) watchReload() {
 
-	for event := range e.refreshFullIndex {
+	for range e.refreshFullIndex {
 
-		qq.Println("@watchReload/refreshFullIndex", event)
+		qq.Println("@watchReload/refreshFullIndex")
 
 		err := e.buildActiveEventsIndex()
 		if err != nil {
