@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
@@ -37,8 +38,6 @@ const (
 	LocalFunnelURL = "http://localhost:7771/zz/buddy/register"
 
 	DefaultFunnelHQ = CloudFunnelURL
-
-	EnableEmbeddedFunnel = true
 )
 
 func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
@@ -77,12 +76,20 @@ func (bh *BuddyHub) Start() error {
 		panic(err)
 	}
 
+	funnelHQ := DefaultFunnelHQ
+
+	envHq := os.Getenv("POTATO_DEFAULT_HQ")
+
+	if envHq != "" {
+		funnelHQ = envHq
+	}
+
 	go func() {
 
 		for {
 			funnelHQ := funnel.NewFunnelClient(funnel.FunnelClientOptions{
 				LocalHttpPort:   bh.port,
-				RemoteFunnelUrl: DefaultFunnelHQ,
+				RemoteFunnelUrl: funnelHQ,
 				NodeId:          bh.pubkey,
 			})
 
@@ -97,7 +104,7 @@ func (bh *BuddyHub) Start() error {
 
 	}()
 
-	if EnableEmbeddedFunnel {
+	if os.Getenv("POTATO_DISABLE_EMBED_FUNNEL") != "1" {
 		bh.embeddedFunnel = funnel.New()
 	}
 
