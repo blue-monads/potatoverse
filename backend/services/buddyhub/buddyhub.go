@@ -36,7 +36,7 @@ const (
 	CloudFunnelURL = "https://tubersalltheway.top/zz/buddy/register"
 	LocalFunnelURL = "http://localhost:7771/zz/buddy/register"
 
-	DefaultFunnelHQ = LocalFunnelURL
+	DefaultFunnelHQ = CloudFunnelURL
 
 	EnableEmbeddedFunnel = true
 )
