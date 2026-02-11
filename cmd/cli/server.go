@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/blue-monads/potatoverse/backend"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -93,6 +94,8 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 	if config.SocketFile == "" {
 		config.SocketFile = path.Join(config.WorkingDir, "potatoverse.sock")
 	}
+
+	config.Repos = repohub.Default
 
 	cfgData, err := yaml.Marshal(config)
 	if err != nil {

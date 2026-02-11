@@ -7,6 +7,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/app"
 	"github.com/blue-monads/potatoverse/backend/app/actions"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
@@ -51,7 +52,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	// }
 
 	if len(options.Repos) == 0 {
-		options.Repos = DefaultDevRepos
+		options.Repos = repohub.Default
 	}
 
 	happ := app.New(app.Option{
@@ -126,28 +127,6 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	return happ, nil
 }
 
-var DefaultDevRepos = []xtypes.RepoOptions{
-	{
-		Name: "Official Potato Field",
-		Type: "harvester-v1",
-		Slug: "Official",
-		URL:  "https://github.com/blue-monads/store/raw/refs/heads/master",
-	},
-
-	{
-		Name: "Third Party Potato Field",
-		Type: "harvester-v1",
-		Slug: "ThirdParty",
-		URL:  "https://github.com/blue-monads/store-thirdparty/raw/refs/heads/master",
-	},
-
-	{
-		Name: "Development Packages",
-		Type: "dev",
-		Slug: "Dev",
-	},
-}
-
 func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	if config.WorkingDir == "" {
 		cwd, err := os.Getwd()
@@ -166,7 +145,7 @@ func NewDevApp(config *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 	}
 
 	if len(config.Repos) == 0 {
-		config.Repos = DefaultDevRepos
+		config.Repos = repohub.Default
 
 	}
 
