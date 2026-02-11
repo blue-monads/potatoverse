@@ -33,7 +33,7 @@ type BuddyHub struct {
 }
 
 const (
-	DefaultFunnelHQ      = "ws://localhost:7447"
+	DefaultFunnelHQ      = "https://tubersalltheway.top/zz/buddy/register"
 	EnableEmbeddedFunnel = true
 )
 
@@ -63,9 +63,17 @@ func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 		}
 	}
 
+	token, err := nostrutils.GenerateNostrAuthToken(bh.privkey, DefaultFunnelHQ, "GET")
+	if err != nil {
+		logger.Error("Failed to generate nostr auth token", "err", err)
+		panic(err)
+	}
+
+	finalUrl := fmt.Sprintf("%s?token=%s", DefaultFunnelHQ, token)
+
 	bh.funnelHQ = funnel.NewFunnelClient(funnel.FunnelClientOptions{
 		LocalHttpPort:   port,
-		RemoteFunnelUrl: DefaultFunnelHQ,
+		RemoteFunnelUrl: finalUrl,
 		NodeId:          pubkey,
 	})
 

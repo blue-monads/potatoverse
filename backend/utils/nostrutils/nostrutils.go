@@ -35,12 +35,17 @@ func VerifyNostrAuth(authHeader string) (*nostr.Event, error) {
 
 func GenerateNostrAuthToken(privkey string, serverURL, method string) (string, error) {
 
+	hexPubkey, err := DecodeKeyToHex(privkey)
+	if err != nil {
+		return "", err
+	}
+
 	event := nostr.Event{
 		Kind: nostr.KindHTTPAuth,
 		Tags: nostr.Tags{{"u", serverURL}, {"m", method}},
 	}
 
-	err := event.Sign(privkey)
+	err = event.Sign(hexPubkey)
 	if err != nil {
 		return "", err
 	}

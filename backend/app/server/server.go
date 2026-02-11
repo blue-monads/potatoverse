@@ -66,7 +66,7 @@ func (s *Server) Start() error {
 	}
 
 	s.router = gin.Default()
-	s.router.Use(s.buddyRoutes.BuddyAutoRouteMW)
+	s.router.Use(s.buddyRoutes.BuddyAutoRouteMW())
 
 	s.bindRoutes()
 	err = s.listenUnixSocket()

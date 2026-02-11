@@ -55,55 +55,57 @@ func (a *BuddyRouteServer) handleBuddyRoute(ctx *gin.Context) {
 
 }
 
-func (a *BuddyRouteServer) BuddyAutoRouteMW(ctx *gin.Context) {
-
+func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 	pubkey := a.buddyhub.GetPubkey()
 
-	domainName := ctx.Request.Host
-	if strings.Contains(domainName, ":") {
-		hh, _, err := net.SplitHostPort(ctx.Request.Host)
-		if err != nil {
-			domainName = ctx.Request.Host
-		} else {
-			domainName = hh
+	return func(ctx *gin.Context) {
+
+		domainName := ctx.Request.Host
+		if strings.Contains(domainName, ":") {
+			hh, _, err := net.SplitHostPort(ctx.Request.Host)
+			if err != nil {
+				domainName = ctx.Request.Host
+			} else {
+				domainName = hh
+			}
 		}
-	}
 
-	qq.Println("@BuddyAutoRouteMW/1", domainName)
+		qq.Println("@BuddyAutoRouteMW/1", domainName)
 
-	subdomain, err := getSubdomain(domainName)
-	if err != nil {
-		return
-	}
+		subdomain, err := getSubdomain(domainName)
+		if err != nil {
+			return
+		}
 
-	// current node start
-	if subdomain == "" || subdomain == "main" || subdomain == pubkey {
-		ctx.Next()
-		return
-	}
+		// current node start
+		if subdomain == "" || subdomain == "main" || subdomain == pubkey {
+			ctx.Next()
+			return
+		}
 
-	if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, "-main") {
-		ctx.Next()
-		return
-	}
+		if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, "-main") {
+			ctx.Next()
+			return
+		}
 
-	if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, a.serverPubKey) {
-		ctx.Next()
-		return
-	}
+		if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, a.serverPubKey) {
+			ctx.Next()
+			return
+		}
 
-	// current node end
+		// current node end
 
-	// buddy start
+		// buddy start
 
-	if strings.HasPrefix(subdomain, "buddy") {
-		a.routeToBuddy(subdomain, ctx)
-		return
-	}
+		if strings.HasPrefix(subdomain, "buddy") {
+			a.routeToBuddy(subdomain, ctx)
+			return
+		}
 
-	if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "buddy") {
-		a.routeToBuddy(subdomain, ctx)
-		return
+		if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "buddy") {
+			a.routeToBuddy(subdomain, ctx)
+			return
+		}
 	}
 
 	// buddy end
@@ -111,6 +113,7 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW(ctx *gin.Context) {
 }
 
 func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
+
 	extractedPubkey := strings.Split(subdomain, "buddy")[1]
 	a.buddyhub.HandleFunnelRoute(fmt.Sprintf("npub%s", extractedPubkey), ctx)
 }
