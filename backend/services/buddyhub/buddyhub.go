@@ -158,7 +158,7 @@ func (bh *BuddyHub) HandleFunnelRoute(buddyPubkey string, ctx *gin.Context) {
 		return
 	}
 
-	bh.embeddedFunnel.HandleServerWebSocket(buddyPubkey, ctx)
+	bh.embeddedFunnel.HandleRoute(buddyPubkey, ctx)
 
 }
 
