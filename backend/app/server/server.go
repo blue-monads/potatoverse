@@ -100,7 +100,7 @@ func (s *Server) listenUnixSocket() error {
 
 	qq.Println("@listen_unix_socket", s.opt.LocalSocket)
 
-	if s.opt.LocalSocket != "" {
+	if s.opt.LocalSocket == "" {
 		return nil
 	}
 
