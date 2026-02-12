@@ -68,6 +68,8 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 		}
 	}
 
+	qq.Println("@final_path", file)
+
 	var settings = sqlite.ConnectionURL{
 		Database: file,
 		Options: map[string]string{
