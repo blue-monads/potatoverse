@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"runtime"
@@ -52,6 +53,10 @@ var (
 	ErrUserNoScope = errors.New("err: user doesnot have required scope")
 )
 
+var (
+	FLAGS = "mode=rwc&_journal_mode=WAL&_busy_timeout=1000&_synchronous=NORMAL&_cache_size=-64000&_txlock=immediate"
+)
+
 func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
 	if runtime.GOOS == "windows" {
@@ -64,25 +69,12 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
 	qq.Println("@final_path", file)
 
-	var settings = sqlite.ConnectionURL{
-		Database: file,
-		Options: map[string]string{
-			"_journal_mode": "WAL",
-			"_busy_timeout": "10000", // 10 second busy timeout
-		},
-	}
-
-	if logger != nil {
-		logger.Info("opening sqlite", "file", file)
-	}
-
-	sess, err := sqlite.Open(settings)
+	sdb, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?%s", file, FLAGS))
 	if err != nil {
-		logger.Error("sqlite.Open() failed", "err", err)
-		return nil, err
+		panic(err)
 	}
 
-	return fromSqlHandle(sess, logger)
+	return FromSqlHandle(sdb, logger)
 }
 
 func AutoMigrate(sess upperdb.Session) error {
