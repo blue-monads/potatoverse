@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"time"
@@ -31,6 +32,8 @@ type BuddyHub struct {
 	staticBuddies map[string]*xtypes.BuddyInfo
 
 	embeddedFunnel *funnel.Funnel
+
+	hqURl string
 }
 
 const (
@@ -50,6 +53,14 @@ func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 		panic(err)
 	}
 
+	funnelHQ := DefaultFunnelHQ
+
+	envHq := os.Getenv("POTATO_DEFAULT_HQ")
+
+	if envHq != "" {
+		funnelHQ = envHq
+	}
+
 	bh := &BuddyHub{
 		logger:        logger,
 		baseBuddyDir:  path.Join(config.WorkingDir, "buddy"),
@@ -57,6 +68,7 @@ func NewBuddyHub(config *xtypes.AppOptions, logger *slog.Logger) *BuddyHub {
 		privkey:       pk,
 		port:          port,
 		staticBuddies: make(map[string]*xtypes.BuddyInfo),
+		hqURl:         funnelHQ,
 	}
 
 	if config.BuddyOptions != nil {
@@ -76,20 +88,12 @@ func (bh *BuddyHub) Start() error {
 		panic(err)
 	}
 
-	funnelHQ := DefaultFunnelHQ
-
-	envHq := os.Getenv("POTATO_DEFAULT_HQ")
-
-	if envHq != "" {
-		funnelHQ = envHq
-	}
-
 	go func() {
 
 		for {
 			funnelHQ := funnel.NewFunnelClient(funnel.FunnelClientOptions{
 				LocalHttpPort:   bh.port,
-				RemoteFunnelUrl: funnelHQ,
+				RemoteFunnelUrl: bh.hqURl,
 				NodeId:          bh.pubkey,
 			})
 
@@ -123,6 +127,20 @@ func (bh *BuddyHub) GetPubkey() string {
 
 func (bh *BuddyHub) GetPrivkey() string {
 	return bh.privkey
+}
+
+func (bh *BuddyHub) GetHQTunnelDomain() string {
+
+	hqurl, err := url.Parse(bh.hqURl)
+	if err != nil {
+		return ""
+	}
+
+	nodeId := nostrutils.PubKeyToNodeId(bh.pubkey)
+	final := fmt.Sprintf("%s.%s", nodeId, hqurl.Host)
+
+	return final
+
 }
 
 func (bh *BuddyHub) ListBuddies() ([]*xtypes.BuddyInfo, error) {

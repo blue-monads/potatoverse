@@ -88,7 +88,14 @@ func (s *Server) Start() error {
 			fmt.Println("Server started:")
 			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
 			fmt.Println("Node Pubkey:\t\t", pubkey)
+
+			tdomain := s.opt.BuddyHub.GetHQTunnelDomain()
+
+			fmt.Println("HQ Tunnel :\t\t", fmt.Sprintf("http://%s/zz/pages", tdomain))
+
 		}
+
+		// GetHQTunnelDomain
 
 		err = s.opt.BuddyHub.Start()
 		if err != nil {
