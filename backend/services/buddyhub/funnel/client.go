@@ -416,11 +416,12 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 		for {
 			qq.Println("@handleWebSocketRequest/4{READ_LOCAL_WS}")
 
-			msg, op, err := wsutil.ReadClientData(localWS)
+			msg, op, err := wsutil.ReadServerData(localWS)
 			if err != nil {
-				qq.Println("@handleWebSocketRequest/1")
-
-				return
+				if err != io.EOF {
+					qq.Println("@handleWebSocketRequest/1", err.Error())
+					return
+				}
 			}
 
 			ptype := packetwire.PtypeWebSocketBinData
@@ -459,28 +460,28 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 
 		if packet.PType == packetwire.PtypeWebSocketTextData {
 			qq.Println("@routeWS/12/loop/write/text")
-			err = wsutil.WriteServerMessage(localWS, ws.OpText, packet.Data)
+			err = wsutil.WriteClientText(localWS, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
 				break
 			}
 		} else if packet.PType == packetwire.PtypeWebSocketBinData {
 			qq.Println("@routeWS/12/loop/write/binary")
-			err = wsutil.WriteServerMessage(localWS, ws.OpBinary, packet.Data)
+			err = wsutil.WriteClientBinary(localWS, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
 				break
 			}
 		} else if packet.PType == packetwire.PtypeWebSocketPing {
 			qq.Println("@routeWS/12/loop/write/ping")
-			err = wsutil.WriteServerMessage(localWS, ws.OpPing, packet.Data)
+			err = wsutil.WriteClientMessage(localWS, ws.OpPing, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
 				break
 			}
 		} else if packet.PType == packetwire.PtypeWebSocketPong {
 			qq.Println("@routeWS/12/loop/write/pong")
-			err = wsutil.WriteServerMessage(localWS, ws.OpPong, packet.Data)
+			err = wsutil.WriteClientMessage(localWS, ws.OpPong, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
 				break

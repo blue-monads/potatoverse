@@ -30,5 +30,27 @@ func NewCoreHub(app xtypes.App) *CoreHub {
 
 func (c *CoreHub) Run() error {
 
+	// go func() {
+
+	// 	time.Sleep(10 * time.Second)
+
+	// 	count := 0
+
+	// 	for {
+
+	// 		qq.Println("@send_user_message", count)
+
+	// 		c.UserSendMessage(&dbmodels.UserMessage{
+	// 			Title:    fmt.Sprintf("Test %d", count),
+	// 			Contents: "aaaaaaa",
+	// 			ToUser:   1,
+	// 		})
+
+	// 		time.Sleep(10 * time.Second)
+
+	// 	}
+
+	// }()
+
 	return nil
 }
