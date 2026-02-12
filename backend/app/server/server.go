@@ -91,7 +91,9 @@ func (s *Server) Start() error {
 
 			tdomain := s.opt.BuddyHub.GetHQTunnelDomain()
 
-			fmt.Println("HQ Tunnel :\t\t", fmt.Sprintf("http://%s/zz/pages", tdomain))
+			if tdomain != "" {
+				fmt.Println("HQ Tunnel :\t\t", fmt.Sprintf("http://%s/zz/pages", tdomain))
+			}
 
 		}
 
