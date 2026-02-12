@@ -6,7 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"log/slog"
-	"path/filepath"
+	"os"
 	"runtime"
 	"strings"
 
@@ -54,17 +54,11 @@ var (
 
 func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
-	// Normalize path for cross-platform behavior. On Windows, some callers
-	// may provide paths like "/C:/path/to/db" which will make sqlite fail
-	// with CreateFile "/C::" errors. Convert slashes and strip a leading
-	// forward slash before a drive letter when running on Windows.
-	if file != ":memory:" && file != "" {
-		file = filepath.FromSlash(file)
-		if runtime.GOOS == "windows" {
-			if strings.HasPrefix(file, "/") && len(file) > 2 && file[2] == ':' {
-				file = file[1:]
-			}
-			file = filepath.Clean(file)
+	if runtime.GOOS == "windows" {
+		directPath := os.Getenv("DIRECT_DB_PATH")
+
+		if directPath != "" {
+			file = directPath
 		}
 	}
 
@@ -76,6 +70,10 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 			"_journal_mode": "WAL",
 			"_busy_timeout": "10000", // 10 second busy timeout
 		},
+	}
+
+	if logger != nil {
+		logger.Info("opening sqlite", "file", file)
 	}
 
 	sess, err := sqlite.Open(settings)
