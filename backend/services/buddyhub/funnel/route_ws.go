@@ -100,11 +100,37 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 
 			qq.Println("@routeWS/12/loop/write")
 
-			err = wsutil.WriteServerBinary(clientConn, packet.Data)
-			if err != nil {
-				qq.Println("@routeWS/13/loop/write/break", err)
-				break
+			if packet.PType == packetwire.PtypeWebSocketBinData {
+				qq.Println("@routeWS/12/loop/write/bin/data")
+				err = wsutil.WriteServerBinary(clientConn, packet.Data)
+				if err != nil {
+					qq.Println("@routeWS/13/loop/write/break", err)
+					break
+				}
+			} else if packet.PType == packetwire.PtypeWebSocketTextData {
+				qq.Println("@routeWS/12/loop/write/text/data")
+				err = wsutil.WriteServerText(clientConn, packet.Data)
+				if err != nil {
+					qq.Println("@routeWS/13/loop/write/break", err)
+					break
+				}
+			} else if packet.PType == packetwire.PtypeWebSocketPing {
+				qq.Println("@routeWS/12/loop/write/ping")
+				err = wsutil.WriteServerMessage(clientConn, ws.OpPing, packet.Data)
+				if err != nil {
+					qq.Println("@routeWS/13/loop/write/break", err)
+					break
+				}
+			} else if packet.PType == packetwire.PtypeWebSocketPong {
+				qq.Println("@routeWS/12/loop/write/pong")
+				err = wsutil.WriteServerMessage(clientConn, ws.OpPong, packet.Data)
+				if err != nil {
+					qq.Println("@routeWS/13/loop/write/break", err)
+					break
+				}
 			}
+
+			qq.Println("@routeWS/13/loop/write/end")
 
 		}
 	}()
@@ -124,12 +150,23 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 			break
 		}
 
+		ptype := packetwire.PtypeWebSocketBinData
+		if op == ws.OpText {
+			ptype = packetwire.PtypeWebSocketTextData
+		} else if op == ws.OpClose {
+			break
+		} else if op == ws.OpPing {
+			ptype = packetwire.PtypeWebSocketPing
+		} else if op == ws.OpPong {
+			ptype = packetwire.PtypeWebSocketPong
+		}
+
 		qq.Println("@routeWS/17/loop/write")
 
 		// Write WebSocket data as packet
 		serverConn.writeChan <- &ServerWrite{
 			packet: &packetwire.Packet{
-				PType:  packetwire.PtypeWebSocketData,
+				PType:  ptype,
 				Offset: 0,
 				Total:  int32(len(msg)),
 				Data:   msg,

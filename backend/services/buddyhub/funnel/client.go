@@ -128,7 +128,7 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 	for {
 		_, err := io.ReadFull(conn, reqIdBuf)
 		if err != nil {
-			continue
+			return err
 		}
 
 		reqId := string(reqIdBuf)
@@ -138,8 +138,7 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		// Read header packet
 		headerPacket, err := packetwire.ReadPacket(conn)
 		if err != nil {
-			qq.Println("@FunnelClient/handleFunnelConnection/3{ERROR}", err)
-			continue
+			return err
 		}
 
 		if headerPacket.PType != packetwire.PTypeSendHeader {
@@ -383,6 +382,8 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 		c.prLock.Unlock()
 	}()
 
+	qq.Println("@handleWebSocketRequest/1")
+
 	// Parse local websocket URL
 	port := strconv.Itoa(c.opts.LocalHttpPort)
 	wsUrl := fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path)
@@ -390,24 +391,45 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 	// Connect to local websocket server using gobwas/ws
 	localWS, _, _, err := ws.Dial(context.TODO(), wsUrl)
 	if err != nil {
+		qq.Println("@handleWebSocketRequest/2")
 		// Could not connect to local websocket
 		return
 	}
 	defer localWS.Close()
 
+	qq.Println("@handleWebSocketRequest/3")
+
 	// After sending the header packet, websocket communication uses packets with request ID
 	// Forward from local WS to funnel
 	go func() {
 		for {
-			msg, _, err := wsutil.ReadServerData(localWS)
+			qq.Println("@handleWebSocketRequest/4{READ_LOCAL_WS}")
+
+			msg, op, err := wsutil.ReadClientData(localWS)
 			if err != nil {
+				qq.Println("@handleWebSocketRequest/1")
+
 				return
+			}
+
+			ptype := packetwire.PtypeWebSocketBinData
+
+			if op == ws.OpText {
+				ptype = packetwire.PtypeWebSocketTextData
+			} else if op == ws.OpClose {
+				break
+			} else if op == ws.OpPing {
+				ptype = packetwire.PtypeWebSocketPing
+			} else if op == ws.OpPong {
+				ptype = packetwire.PtypeWebSocketPong
+			} else if op == ws.OpBinary {
+				ptype = packetwire.PtypeWebSocketBinData
 			}
 
 			// Write WebSocket data as packet
 			c.writeChan <- &ServerWrite{
 				packet: &packetwire.Packet{
-					PType:  packetwire.PtypeWebSocketData,
+					PType:  ptype,
 					Offset: 0,
 					Total:  int32(len(msg)),
 					Data:   msg,
@@ -424,10 +446,37 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 			break
 		}
 
-		err = wsutil.WriteServerBinary(localWS, packet.Data)
-		if err != nil {
-			break
+		if packet.PType == packetwire.PtypeWebSocketTextData {
+			qq.Println("@routeWS/12/loop/write/text")
+			err = wsutil.WriteServerMessage(localWS, ws.OpText, packet.Data)
+			if err != nil {
+				qq.Println("@routeWS/13/loop/write/break", err)
+				break
+			}
+		} else if packet.PType == packetwire.PtypeWebSocketBinData {
+			qq.Println("@routeWS/12/loop/write/binary")
+			err = wsutil.WriteServerMessage(localWS, ws.OpBinary, packet.Data)
+			if err != nil {
+				qq.Println("@routeWS/13/loop/write/break", err)
+				break
+			}
+		} else if packet.PType == packetwire.PtypeWebSocketPing {
+			qq.Println("@routeWS/12/loop/write/ping")
+			err = wsutil.WriteServerMessage(localWS, ws.OpPing, packet.Data)
+			if err != nil {
+				qq.Println("@routeWS/13/loop/write/break", err)
+				break
+			}
+		} else if packet.PType == packetwire.PtypeWebSocketPong {
+			qq.Println("@routeWS/12/loop/write/pong")
+			err = wsutil.WriteServerMessage(localWS, ws.OpPong, packet.Data)
+			if err != nil {
+				qq.Println("@routeWS/13/loop/write/break", err)
+				break
+			}
 		}
+
+		qq.Println("@routeWS/13/loop/write/end")
 
 	}
 }

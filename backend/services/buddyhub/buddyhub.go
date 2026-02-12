@@ -98,6 +98,8 @@ func (bh *BuddyHub) Start() error {
 				qq.Println("@err", err.Error())
 			}
 
+			funnelHQ.Stop()
+
 			time.Sleep(time.Second * 20)
 
 		}

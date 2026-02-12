@@ -82,7 +82,12 @@ func (s *session) readPump() {
 		data, msg, err := wsutil.ReadClientData(s.conn)
 		if err != nil {
 			errCount++
-			return
+			if errCount > 10 {
+				s.room.disconnect <- s.connId
+				return
+			}
+			time.Sleep(time.Millisecond * 10)
+			continue
 		}
 
 		errCount = 0
