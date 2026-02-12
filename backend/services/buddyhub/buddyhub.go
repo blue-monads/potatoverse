@@ -137,7 +137,7 @@ func (bh *BuddyHub) GetHQTunnelDomain() string {
 	}
 
 	nodeId := nostrutils.PubKeyToNodeId(bh.pubkey)
-	final := fmt.Sprintf("%s.%s", nodeId, hqurl.Host)
+	final := fmt.Sprintf("buddy-%s.%s", nodeId, hqurl.Host)
 
 	return final
 
