@@ -13,6 +13,7 @@ import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
 import useFavorites from '@/hooks/useFavorites/useFavorites';
 import { deriveHostAndIframeSrc } from '../exec/hostSrc';
+import SimpleLoader from '@/contain/SimpleLoader/SimpleLoader';
 
 
 
@@ -133,6 +134,8 @@ const SpacesDirectory = () => {
                     </div>
 
                     {loader.data?.spaces.length === 0 && <EmptySpacesState />}
+
+                    {loader.loading && (<><SimpleLoader /></>)}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 

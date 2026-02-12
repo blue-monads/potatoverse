@@ -36,6 +36,7 @@ import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { useGApp } from '@/hooks';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { getInstalledPackageInfo, listPackageFiles, downloadPackageFile, updatePackageFileContent, PackageVersion, PackageFile, InstalledPackageInfo, generatePackageDevToken, listPackageAvailableVersions, upgradePackageFromRepo, upgradePackageZipDirectly, AvailableVersionsResponse, UpgradePackageResult } from '@/lib';
+import SimpleLoader from '@/contain/SimpleLoader/SimpleLoader';
 
 export default function Page() {
     const searchParams = useSearchParams();
@@ -135,9 +136,7 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
     if (loader.loading) {
         return (
             <WithAdminBodyLayout Icon={History} name="Versions" description="Loading versions..." variant="none">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
+               <SimpleLoader />
             </WithAdminBodyLayout>
         );
     }

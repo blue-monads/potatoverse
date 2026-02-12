@@ -23,6 +23,7 @@ import { useGApp } from '@/hooks';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { getInstalledPackageInfo, InstalledPackageInfo, generatePackageDevToken, Space, PackageVersion } from '@/lib';
 import { staticGradients } from '@/app/utils';
+import SimpleLoader from '@/contain/SimpleLoader/SimpleLoader';
 
 export default function Page() {
     const router = useRouter();
@@ -88,7 +89,7 @@ const PackageAbout = ({ packageId, spaceId }: PackageAboutProps) => {
 
     if (loader.loading) {
         return (
-            <p className="text-gray-500">Loading package information...</p>
+            <SimpleLoader ></SimpleLoader>
         );
     }
 
