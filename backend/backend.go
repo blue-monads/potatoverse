@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/blue-monads/potatoverse/backend/app"
 	"github.com/blue-monads/potatoverse/backend/app/actions"
@@ -20,8 +21,8 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
 	logger := slog.Default()
 
-	maindbDir := path.Join(options.WorkingDir, "datadb")
-	dbFile := path.Join(maindbDir, "main.sqlite")
+	maindbDir := filepath.Join(options.WorkingDir, "datadb")
+	dbFile := filepath.Join(maindbDir, "main.sqlite")
 
 	os.MkdirAll(maindbDir, 0755)
 

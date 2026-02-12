@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -88,11 +88,11 @@ func (c *ServerInitCmd) Run(ctx *kong.Context) error {
 			return err
 		}
 
-		config.WorkingDir = path.Join(cwd, "pdata")
+		config.WorkingDir = filepath.Join(cwd, "pdata")
 	}
 
 	if config.SocketFile == "" {
-		config.SocketFile = path.Join(config.WorkingDir, "potatoverse.sock")
+		config.SocketFile = filepath.Join(config.WorkingDir, "potatoverse.sock")
 	}
 
 	config.Repos = repohub.Default

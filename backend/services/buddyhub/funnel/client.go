@@ -418,11 +418,28 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 
 			msg, op, err := wsutil.ReadServerData(localWS)
 			if err != nil {
-				if err != io.EOF {
-					qq.Println("@handleWebSocketRequest/1", err.Error())
-					return
+				if err == io.EOF {
+					qq.Println("@handleWebSocketRequest/4{LOCAL_WS_EOF}", err.Error())
+					break
 				}
+				qq.Println("@handleWebSocketRequest/4{READ_ERROR}", err.Error())
+				return
 			}
+
+			msgStr := ""
+			if len(msg) > 10 {
+				msgStr = string(msg[:10])
+			} else {
+				msgStr = string(msg)
+			}
+
+			// If we received an empty text/binary frame, skip sending a packet.
+			if len(msg) == 0 && (op == ws.OpText || op == ws.OpBinary) {
+				continue
+			}
+
+			qq.Println("@msgstr", msgStr)
+			qq.Println("@op", op)
 
 			ptype := packetwire.PtypeWebSocketBinData
 
