@@ -33,7 +33,9 @@ copy_dev_binary:
 run_cli:
 	cd tmp && FRONTEND_DEV_SERVER="http://localhost:7779"  go run ../main.go 
 
-
+run_full_server:
+  cd tmp && go run ../main.go server init-and-start
+  
 run_http_server:
 	cd contrib && python3 -m http.server 8080
 
