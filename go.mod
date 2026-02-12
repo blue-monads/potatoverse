@@ -7,6 +7,7 @@ toolchain go1.24.11
 require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/alecthomas/repr v0.5.1
+	github.com/aurowora/compress v0.0.0-20230724224640-6512772d482f
 	github.com/brianvoe/gofakeit/v7 v7.14.0
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/bwmarrin/snowflake v0.3.0
@@ -14,6 +15,7 @@ require (
 	github.com/fiatjaf/eventstore v0.16.2
 	github.com/fiatjaf/relayer/v2 v2.2.7
 	github.com/flosch/go-humanize v0.0.0-20140728123800-3ba51eabe506
+	github.com/gin-contrib/size v1.0.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gobwas/ws v1.4.0
 	github.com/hako/branca v0.0.0-20200807062402-6052ac720505
@@ -54,7 +56,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
-	github.com/bytedance/sonic v1.13.1 // indirect
+	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
@@ -63,11 +65,11 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
 	github.com/eknkc/basex v1.0.0 // indirect
 	github.com/fasthttp/websocket v1.5.12 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.4 // indirect
-	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
+	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.20.0 // indirect
+	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
@@ -86,7 +88,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/ncruces/wbt v0.2.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
@@ -108,10 +110,10 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.59.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
-	golang.org/x/arch v0.15.0 // indirect
+	golang.org/x/arch v0.16.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )

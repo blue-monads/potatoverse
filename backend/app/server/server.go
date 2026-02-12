@@ -16,6 +16,9 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
+
+	"github.com/aurowora/compress"
+	limits "github.com/gin-contrib/size"
 )
 
 type Server struct {
@@ -66,6 +69,10 @@ func (s *Server) Start() error {
 	}
 
 	s.router = gin.Default()
+
+	s.router.Use(compress.Compress())
+	s.router.Use(limits.RequestSizeLimiter(100 * 1024 * 1024)) // 100 mb
+
 	s.router.Use(s.buddyRoutes.BuddyAutoRouteMW())
 
 	s.bindRoutes()

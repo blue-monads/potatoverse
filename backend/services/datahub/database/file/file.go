@@ -176,6 +176,7 @@ func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileReques
 	mimeType := ""
 	if len(exts) > 1 {
 		fullext := "." + exts[len(exts)-1]
+
 		mimeType = mime.TypeByExtension(fullext)
 	}
 
