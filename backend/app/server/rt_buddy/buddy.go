@@ -6,6 +6,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer/selfcdc"
+	"github.com/blue-monads/potatoverse/backend/utils/nostrutils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
@@ -56,19 +57,14 @@ func (a *BuddyRouteServer) AttachRoutes(g *gin.RouterGroup) {
 // npub19z2svstd8aega8rtld86lc5wdjmgz0jnwku9u62mcdrl60ge2pespjwl6j
 func (b *BuddyRouteServer) setNode(pubkey string) {
 	// Safety check
-	if len(pubkey) < 20 {
-		panic("pubkey is too short")
-	}
 
-	firstId := pubkey[5:12]
-	lastId := pubkey[len(pubkey)-7:]
+	firstId := nostrutils.PubKeyToNodeId(pubkey)
 
 	b.rLock.Lock()
 	defer b.rLock.Unlock()
 
 	b.reverseBuddyIdToPubkey[firstId] = pubkey
-	b.reverseBuddyIdToPubkey[lastId] = pubkey
-	b.reverseBuddyIdToPubkey[pubkey] = pubkey
+
 }
 
 func (b *BuddyRouteServer) getNodeId(id string) string {
@@ -79,7 +75,7 @@ func (b *BuddyRouteServer) getNodeId(id string) string {
 
 }
 
-func (b *BuddyRouteServer) debuLoop() {
+func (b *BuddyRouteServer) debugLoop() {
 	for {
 		time.Sleep(time.Second * 5)
 

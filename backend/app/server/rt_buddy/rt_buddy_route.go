@@ -47,7 +47,41 @@ func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
 }
 
 func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
-	pubkey := a.buddyhub.GetPubkey()
+	pubkey1 := a.buddyhub.GetPubkey()
+
+	nodeId := nostrutils.PubKeyToNodeId(pubkey1)
+
+	routeToBuddy := func(subdomain string, ctx *gin.Context) {
+
+		qq.Println("@routeToBuddy", 1)
+
+		extractedNodeId := strings.Split(subdomain, "buddy-")[1]
+		qq.Println("@routeToBuddy", extractedNodeId)
+
+		if nodeId == extractedNodeId {
+			// we are home
+			qq.Println("@routeToBuddy/home", extractedNodeId)
+			ctx.Next()
+			return
+		}
+
+		cpubkey := a.getNodeId(extractedNodeId)
+		qq.Println("@routeToBuddy", cpubkey)
+
+		if cpubkey == "" {
+			panic("Could not map pubkey")
+		}
+
+		if cpubkey == pubkey1 {
+			qq.Println("@routeToBuddy/home/pub", extractedNodeId)
+			ctx.Next()
+			return
+
+		}
+
+		a.buddyhub.HandleFunnelRoute(cpubkey, ctx)
+		ctx.Abort()
+	}
 
 	return func(ctx *gin.Context) {
 
@@ -69,7 +103,7 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 		}
 
 		// current node start
-		if subdomain == "" || subdomain == "main" || subdomain == pubkey {
+		if subdomain == "" || subdomain == "main" || subdomain == pubkey1 || nodeId == subdomain {
 			ctx.Next()
 			return
 		}
@@ -89,37 +123,18 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 		// buddy start
 
 		if strings.HasPrefix(subdomain, "buddy-") {
-			a.routeToBuddy(subdomain, ctx)
+			routeToBuddy(subdomain, ctx)
 			return
 		}
 
 		if strings.HasPrefix(subdomain, "zz-") && strings.Contains(subdomain, "buddy-") {
-			a.routeToBuddy(subdomain, ctx)
+			routeToBuddy(subdomain, ctx)
 			return
 		}
 	}
 
 	// buddy end
 
-}
-
-func (a *BuddyRouteServer) routeToBuddy(subdomain string, ctx *gin.Context) {
-
-	qq.Println("@routeToBuddy", 1)
-
-	extractedNodeId := strings.Split(subdomain, "buddy-")[1]
-	qq.Println("@routeToBuddy", extractedNodeId)
-
-	pubkey := a.getNodeId(extractedNodeId)
-
-	qq.Println("@routeToBuddy", pubkey)
-
-	if pubkey == "" {
-		panic("Could not map pubkey")
-	}
-
-	a.buddyhub.HandleFunnelRoute(pubkey, ctx)
-	ctx.Abort()
 }
 
 // maybe delete this

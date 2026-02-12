@@ -386,7 +386,18 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 
 	// Parse local websocket URL
 	port := strconv.Itoa(c.opts.LocalHttpPort)
-	wsUrl := fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path)
+
+	lurl, err := url.Parse(fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path))
+	if err != nil {
+		qq.Println("@handleWebSocketRequest/2{ERROR}", err)
+		return
+	}
+
+	lurl.RawQuery = req.URL.RawQuery
+
+	wsUrl := lurl.String()
+
+	qq.Println("@final_url", wsUrl)
 
 	// Connect to local websocket server using gobwas/ws
 	localWS, _, _, err := ws.Dial(context.TODO(), wsUrl)

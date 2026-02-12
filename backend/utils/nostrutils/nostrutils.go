@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/nbd-wtf/go-nostr"
 )
@@ -59,4 +60,14 @@ func GenerateNostrAuthToken(privkey string, serverURL, method string) (string, e
 
 	return encoded, nil
 
+}
+
+func PubKeyToNodeId(pubkey string) string {
+	if len(pubkey) < 20 || !strings.HasPrefix(pubkey, "npub1") {
+		panic("Invalid pubkey")
+	}
+
+	firstId := pubkey[5:20]
+
+	return firstId
 }
