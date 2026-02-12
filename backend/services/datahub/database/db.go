@@ -6,6 +6,8 @@ import (
 	_ "embed"
 	"errors"
 	"log/slog"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
@@ -51,6 +53,20 @@ var (
 )
 
 func NewDB(file string, logger *slog.Logger) (*DB, error) {
+
+	// Normalize path for cross-platform behavior. On Windows, some callers
+	// may provide paths like "/C:/path/to/db" which will make sqlite fail
+	// with CreateFile "/C::" errors. Convert slashes and strip a leading
+	// forward slash before a drive letter when running on Windows.
+	if file != ":memory:" && file != "" {
+		file = filepath.FromSlash(file)
+		if runtime.GOOS == "windows" {
+			if strings.HasPrefix(file, "/") && len(file) > 2 && file[2] == ':' {
+				file = file[1:]
+			}
+			file = filepath.Clean(file)
+		}
+	}
 
 	var settings = sqlite.ConnectionURL{
 		Database: file,
