@@ -2,12 +2,12 @@ package distro
 
 import (
 	// Capabilities
-	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xAutoSeeder"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xCorn"
-	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xEasyWS"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xMigrator"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xPing"
-	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xStaticSeeder"
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSeeder/xAutoSeeder"
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSeeder/xStaticSeeder"
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xWebsocket/xEasyWS"
 
 	// Lua Executor
 	_ "github.com/blue-monads/potatoverse/backend/engine/executors/luaz"

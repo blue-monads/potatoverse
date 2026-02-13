@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xEasyWS/room"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xWebsocket/xEasyWS/room"
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"

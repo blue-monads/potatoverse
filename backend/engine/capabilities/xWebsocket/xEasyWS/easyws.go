@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xEasyWS/room"
+	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xWebsocket/xEasyWS/room"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
