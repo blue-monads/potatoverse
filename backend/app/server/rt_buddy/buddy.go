@@ -16,9 +16,8 @@ const (
 )
 
 type BuddyRouteServer struct {
-	buddyhub     *buddyhub.BuddyHub
-	port         int
-	serverPubKey string
+	buddyhub *buddyhub.BuddyHub
+	port     int
 
 	// lazy cdc
 	selfcdc *selfcdc.SelfCDCSyncer
@@ -29,11 +28,11 @@ type BuddyRouteServer struct {
 	rLock                  sync.RWMutex
 }
 
-func New(buddyhub *buddyhub.BuddyHub, port int, serverPubKey string) *BuddyRouteServer {
+func New(buddyhub *buddyhub.BuddyHub, port int) *BuddyRouteServer {
 	s := &BuddyRouteServer{
-		buddyhub:               buddyhub,
-		port:                   port,
-		serverPubKey:           serverPubKey,
+		buddyhub: buddyhub,
+		port:     port,
+
 		reverseBuddyIdToPubkey: map[string]string{},
 		rLock:                  sync.RWMutex{},
 		allowAnyBuddy:          true,

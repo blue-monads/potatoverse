@@ -113,7 +113,7 @@ func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 			return
 		}
 
-		if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, a.serverPubKey) {
+		if strings.HasPrefix(subdomain, "zz-") && strings.HasSuffix(subdomain, pubkey1) {
 			ctx.Next()
 			return
 		}

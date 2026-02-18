@@ -12,10 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	DEV_MODE = true
-)
-
 // during dev we just proxy to dev server running otherwise serve files from build folder
 func (s *Server) pages(z *gin.RouterGroup) {
 	rfunc := assets.PagesRoutesServer()

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"time"
@@ -43,8 +44,7 @@ type Option struct {
 
 	BuddyHub *buddyhub.BuddyHub
 	CoreHub  *corehub.CoreHub
-
-	ServerPubKey string
+	Logger   *slog.Logger
 }
 
 func NewServer(opt Option) *Server {
@@ -58,10 +58,8 @@ func NewServer(opt Option) *Server {
 }
 
 func (s *Server) Start() error {
-	pubkey := s.opt.BuddyHub.GetPubkey()
-	s.opt.ServerPubKey = pubkey
 
-	s.buddyRoutes = rtbuddy.New(s.opt.BuddyHub, s.opt.Port, s.opt.ServerPubKey)
+	s.buddyRoutes = rtbuddy.New(s.opt.BuddyHub, s.opt.Port)
 
 	err := s.buildGlobalJS()
 	if err != nil {
@@ -92,6 +90,7 @@ func (s *Server) Start() error {
 		time.Sleep(2 * time.Second)
 
 		if !existed {
+			pubkey := s.opt.BuddyHub.GetPubkey()
 			fmt.Println("Server started:")
 			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
 			fmt.Println("Node Pubkey:\t\t", pubkey)

@@ -247,11 +247,16 @@ func (a *Server) GeneratePackageDevToken(claim *signer.AccessClaim, ctx *gin.Con
 func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 
 	proxyAddrs := map[string]*httputil.ReverseProxy{}
+	devSpacesEnv := os.Getenv("POTATO_DEV_SPACES")
 
-	if DEV_MODE {
-		// TURNIX_DEV_SPACES="space1:8080,space2:8081"
-		devSpacesEnv := os.Getenv("TURNIX_DEV_SPACES")
+	enableDevSpace := devSpacesEnv != ""
+
+	if enableDevSpace {
+		// POTATO_DEV_SPACES="space_keyspace1:8080,space2:8081"
+		devSpacesEnv := os.Getenv("POTATO_DEV_SPACES")
 		devSpaces := strings.SplitSeq(devSpacesEnv, ",")
+
+		a.opt.Logger.Info("Enabled DEV Proxy for", "space_namespaces", devSpaces)
 
 		for pname := range devSpaces {
 			nameParts := strings.Split(pname, ":")
@@ -271,10 +276,13 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 
 		spaceKey := ctx.Param("space_key")
-		proxy := proxyAddrs[spaceKey]
-		if proxy != nil {
-			proxy.ServeHTTP(ctx.Writer, ctx.Request)
-			return
+
+		if enableDevSpace {
+			proxy := proxyAddrs[spaceKey]
+			if proxy != nil {
+				proxy.ServeHTTP(ctx.Writer, ctx.Request)
+				return
+			}
 		}
 
 		a.engine.ServeSpaceFile(ctx)
@@ -317,9 +325,9 @@ func (a *Server) handleDeriveHost(ctx *gin.Context) {
 	}
 
 	serverKey := "main"
-	if strings.Contains(hostName, "npub") {
-		serverKey = a.opt.ServerPubKey
-	}
+	// if strings.Contains(hostName, "npub") {
+	// 	serverKey = a.opt.ServerPubKey
+	// }
 
 	execHost := xutils.BuildExecHost(hostName, spaceId, a.opt.Hosts, serverKey)
 	httpx.WriteJSON(ctx, gin.H{

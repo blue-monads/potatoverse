@@ -91,6 +91,7 @@ func New(opt Option) *App {
 		SiteName:    opt.AppOpts.Name,
 		CoreHub:     happ.coreHub,
 		BuddyHub:    opt.BuddyHub,
+		Logger:      opt.Logger,
 	})
 
 	happ.server = server
