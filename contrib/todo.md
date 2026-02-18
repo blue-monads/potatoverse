@@ -30,6 +30,8 @@
 - add lua linter
 - disabled app in single domain mode or ns collision icon
 - expose flag (--expose-hq-tunnel)
+- refactor notification fronetend and fix bug
+- normal user portal
 
 
 [Potatoverse](https://github.com/blue-monads/potatoverse)
