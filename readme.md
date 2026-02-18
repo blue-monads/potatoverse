@@ -44,4 +44,4 @@ curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/main/c
     - `server.lua`
 
 # Developing
-[How to develop](./docs/how_to_develop.md)
+[How to develop](./docs/contents/how_to_develop.md)
