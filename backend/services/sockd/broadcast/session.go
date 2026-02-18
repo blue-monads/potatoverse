@@ -106,12 +106,7 @@ func (s *session) readPump() {
 			continue
 		}
 
-		if msg == ws.OpText {
-			s.room.broadcast <- data
-			continue
-		}
-
-		if msg == ws.OpBinary {
+		if msg == ws.OpBinary || msg == ws.OpText {
 
 			tcan := time.After(time.Second * 5)
 
