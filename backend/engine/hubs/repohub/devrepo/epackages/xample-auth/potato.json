@@ -2,10 +2,6 @@
     "name": "Auth Example",
     "slug": "auth-example",
     "info": "Example e-package for testing authentication",
-    "special_pages": {
-        "init_page": "init.html",
-        "update_page": "update_1.html"
-    },
     "spaces": [
         {
             "namespace": "auth-example",
