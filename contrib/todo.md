@@ -35,5 +35,7 @@ https://github.com/pluveto/flydav
 - show error if potato.yaml is missing for packaging command (instead of unkown panic ) and other 
 - add lua linter
 - disabled app in single domain mode or ns collision icon
+- expose flag (--expose-hq-tunnel)
+
 
 [Potatoverse](https://github.com/blue-monads/potatoverse)
