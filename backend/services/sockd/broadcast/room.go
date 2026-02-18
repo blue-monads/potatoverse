@@ -100,7 +100,7 @@ func (r *Room) run() {
 
 			for _, sess := range copySess {
 
-				tcan := time.After(time.Second * 1)
+				tcan := time.After(time.Second * 5)
 
 				select {
 				case sess.send <- msg:
