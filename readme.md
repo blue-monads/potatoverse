@@ -30,7 +30,7 @@ curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/main/c
 ```bash
 potatoverse server init-and-start 
 # goto http://localhost:7777/zz/pages OR 
-# http://buddy-<nodeid>.tubersalltheway.top/zz/pages as printed in terminal
+# http://buddy-<nodeid>.tubersalltheway.top/zz/pages as printed in terminal to access from internet or another computer
 ```
 
 
