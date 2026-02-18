@@ -30,7 +30,8 @@ curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/main/c
 ```bash
 potatoverse server init-and-start 
 # goto http://localhost:7777/zz/pages OR 
-# http://buddy-<nodeid>.tubersalltheway.top/zz/pages as printed in terminal to access from internet or another computer
+# http://buddy-<nodeid>.tubersalltheway.top/zz/pages as printed in terminal to access from internet or another computer 
+# (But there are couple issue with tunneling system websocket does not work and app are running in no isolated origin mode... to be fixed in future)
 ```
 
 
