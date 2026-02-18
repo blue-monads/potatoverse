@@ -27,6 +27,12 @@ https://github.com/user-attachments/assets/120b826e-c5f9-4e1f-829e-816e7d2982ea
 curl https://raw.githubusercontent.com/blue-monads/potatoverse/refs/heads/main/contrib/installer.sh | bash
 ```
 
+```bash
+potatoverse server init-and-start 
+# goto http://localhost:7777/zz/pages OR 
+# http://buddy-<nodeid>.tubersalltheway.top/zz/pages as printed in terminal
+```
+
 
 ## Future features
 - [ ] Buddy backup
