@@ -51,4 +51,4 @@ potatoverse server init-and-start
     - `server.lua`
 
 # Developing
-[How to develop](./docs/contents/how_to_develop.md)
+[How to develop](./docs/contents/topics/how_to_develop.md)
