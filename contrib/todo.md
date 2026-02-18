@@ -28,3 +28,11 @@ https://github.com/pluveto/flydav
 // <s-x>_<pub_key_hash>.freehttptunnel.com
 
 // zz-10-funnel
+
+
+- Zero to 100 building app
+- tell invalid zip if manifest is empty
+- show error if potato.yaml is missing for packaging command (instead of unkown panic ) and other 
+- add lua linter
+
+[Potatoverse](https://github.com/blue-monads/potatoverse)
