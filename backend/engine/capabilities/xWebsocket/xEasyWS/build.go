@@ -43,7 +43,8 @@ var (
 )
 
 func init() {
-	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+
+	b := xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			appTyped := app.(xtypes.App)
 			builder := &EasyWsBuilder{
@@ -62,7 +63,10 @@ func init() {
 		Name:         Name,
 		Icon:         Icon,
 		OptionFields: OptionFields,
-	})
+	}
+
+	registry.RegisterCapability(Name, b)
+	registry.RegisterCapability("xEasyWS", b)
 }
 
 type EasyWsBuilder struct {
