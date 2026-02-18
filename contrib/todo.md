@@ -34,5 +34,6 @@ https://github.com/pluveto/flydav
 - tell invalid zip if manifest is empty
 - show error if potato.yaml is missing for packaging command (instead of unkown panic ) and other 
 - add lua linter
+- disabled app in single domain mode or ns collision icon
 
 [Potatoverse](https://github.com/blue-monads/potatoverse)
