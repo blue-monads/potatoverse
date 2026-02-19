@@ -294,6 +294,21 @@ func (d *LowDB) FindAllByQuery(query *datahub.FindQuery) ([]map[string]any, erro
 
 }
 
+func (d *LowDB) FindTyped(query *datahub.FindTypedQuery) error {
+	collection := d.sess.Collection(d.tableName(query.Table))
+	queryf := collection.Find(buildCond(query.Cond))
+	if query.Offset > 0 {
+		queryf = queryf.Offset(query.Offset)
+	}
+	if query.Limit > 0 {
+		queryf = queryf.Limit(query.Limit)
+	}
+	if query.Order != "" {
+		queryf = queryf.OrderBy(query.Order)
+	}
+	return queryf.All(query.Targets)
+}
+
 func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) {
 	if len(query.Joins) == 0 {
 		return nil, errors.New("no joins provided")
