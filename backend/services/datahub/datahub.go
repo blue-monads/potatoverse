@@ -27,6 +27,7 @@ type Database interface {
 
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
+	// GetCoreLowDBOps() DBLowCoreOps
 
 	GetLowPackageDBOps(installId int64) DBLowOps
 	GetLowCapabilityDBOps(capabilityId int64) DBLowOps
@@ -242,6 +243,15 @@ type Join struct {
 	JoinType   string `json:"join_type,omitempty"`
 }
 
+type FindTypedQuery struct {
+	Table   string      `json:"table"`
+	Cond    map[any]any `json:"cond"`
+	Offset  int         `json:"offset"`
+	Limit   int         `json:"limit"`
+	Order   string      `json:"order"`
+	Targets any         `json:"targets"`
+}
+
 type DBLowOps interface {
 	ListTables() ([]string, error)
 	ListTableColumns(table string) ([]map[string]any, error)
@@ -277,6 +287,8 @@ type DBLowCoreOps interface {
 	FindAllByQuery(query *FindQuery) ([]map[string]any, error)
 
 	FindByJoin(query *FindByJoin) ([]map[string]any, error)
+
+	FindTyped(query *FindTypedQuery) error
 }
 
 type MQSynk interface {
