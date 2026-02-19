@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrPackageManifestNotFound = errors.New("Invalid package: potato.json not found")
+	ErrPackageManifestNotFound = errors.New("Invalid package: manifest file (potato.json) not found")
 )
 
 func GetPackageManifest(zipFile string) ([]byte, error) {
