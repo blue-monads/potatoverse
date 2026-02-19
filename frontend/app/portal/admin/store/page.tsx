@@ -10,6 +10,7 @@ import { EPackage, getUsers, installPackage, installPackageEmbed, InstallPackage
 import { staticGradients } from '@/app/utils';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { useRouter } from 'next/navigation';
+import { Axios, isAxiosError } from 'axios';
 
 
 
@@ -47,7 +48,7 @@ const StoreDirectory = () => {
         if (gapp.isInitialized) {
             listRepos().then(res => {
                 if (res.status === 200 && res.data) {
-                    setRepos(res.data);                   
+                    setRepos(res.data);
                 }
             }).catch(err => {
                 console.error('Failed to load repos:', err);
@@ -332,6 +333,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
     const [activeTab, setActiveTab] = useState('url');
     const [mode, setMode] = useState<'enter_input' | 'importing' | 'success' | 'error'>('enter_input');
     const [installResult, setInstallResult] = useState<InstallPackageResult | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     const inputRef = useRef<HTMLInputElement>(null);
     const gapp = props.gapp;
@@ -391,44 +393,69 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                     <button
                         onClick={async () => {
                             setMode('importing');
-                            if (activeTab === 'url') {
-                                const url = inputRef.current?.value;
-                                if (!url) {
-                                    setMode('error');
-                                    return;
+                            setErrorMessage('');
+
+                            try {
+
+                                if (activeTab === 'url') {
+                                    const url = inputRef.current?.value;
+                                    if (!url) {
+                                        setMode('error');
+                                        setErrorMessage('Please enter a URL');
+                                        return;
+                                    }
+                                    const response = await installPackage(url);
+                                    if (response.status !== 200) {
+                                        setMode('error');
+                                        setErrorMessage(response.data?.message || 'Unknown error');
+                                        return;
+                                    }
+
+                                    setInstallResult(response.data);
+
+                                    setMode('success');
+
+                                } else {
+                                    const file = inputRef.current?.files?.[0];
+                                    if (!file) {
+                                        setMode('error');
+                                        setErrorMessage('Please select a ZIP file');
+                                        return;
+                                    }
+                                    const zip = await file.arrayBuffer();
+                                    if (!zip) {
+                                        setMode('error');
+                                        setErrorMessage('Failed to read ZIP file');
+                                        return;
+                                    }
+
+                                    const response = await installPackageZip(zip);
+                                    if (response.status !== 200) {
+                                        setMode('error');
+                                        setErrorMessage(response.data?.message || 'Unknown error');
+                                        return;
+                                    }
+
+                                    setInstallResult(response.data);
+
+                                    setMode('success');
                                 }
-                                const response = await installPackage(url);
-                                if (response.status !== 200) {
-                                    setMode('error');
-                                    return;
+
+                            } catch (error) {
+
+
+                                if (isAxiosError(error)) {
+                                    console.error('Axios error:', error.response?.data);
+                                    const errpayload = error.response?.data;
+                                    setErrorMessage(errpayload?.message || error.message || 'Unknown error');
+                                } else {
+                                    setErrorMessage((error as Error).message || 'Unknown error');
                                 }
+                                
+                                setMode('error');
 
-                                setInstallResult(response.data);
-
-                                setMode('success');
-
-                            } else {
-                                const file = inputRef.current?.files?.[0];
-                                if (!file) {
-                                    setMode('error');
-                                    return;
-                                }
-                                const zip = await file.arrayBuffer();
-                                if (!zip) {
-                                    setMode('error');
-                                    return;
-                                }
-
-                                const response = await installPackageZip(zip);
-                                if (response.status !== 200) {
-                                    setMode('error');
-                                    return;
-                                }
-
-                                setInstallResult(response.data);
-
-                                setMode('success');
                             }
+
 
                         }}
                         className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors"
@@ -465,8 +492,8 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 
         {mode === 'error' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600">
-                    Error importing space
+                <p className="text-red-600">
+                    Error importing space: {errorMessage}
                 </p>
             </div>
         </>)}
@@ -483,6 +510,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
 const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?: string, gapp: GAppStateHandle }) => {
     const [installResult, setInstallResult] = useState<InstallPackageResult | null>(null);
     const [mode, setMode] = useState<'verify' | 'importing' | 'success' | 'error'>('verify');
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
 
     return (<>
@@ -502,9 +530,11 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
                 <button
                     onClick={async () => {
                         setMode('importing');
+                        setErrorMessage('');
                         const resp = await installPackageEmbed(slug, repoSlug);
                         if (resp.status !== 200) {
                             setMode('error');
+                            setErrorMessage(resp.data?.message || 'Unknown error');
                             return;
                         }
                         setInstallResult(resp.data);
@@ -549,8 +579,8 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
         </>)}
         {mode === 'error' && (<>
             <div className="space-y-1">
-                <p className="text-gray-600">
-                    Error importing package
+                <p className="text-red-600">
+                    Error importing package: {errorMessage}
                 </p>
             </div>
         </>)}

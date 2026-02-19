@@ -9,6 +9,10 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
+var (
+	ErrPackageManifestNotFound = errors.New("Invalid package: potato.json not found")
+)
+
 func GetPackageManifest(zipFile string) ([]byte, error) {
 	zipReader, err := zip.OpenReader(zipFile)
 	if err != nil {
@@ -33,7 +37,7 @@ func GetPackageManifest(zipFile string) ([]byte, error) {
 		}
 	}
 
-	return nil, errors.New("potato.json not found")
+	return nil, ErrPackageManifestNotFound
 }
 
 func ReadPackageManifestFromZip(zipFile string) (*models.PotatoPackage, error) {

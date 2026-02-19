@@ -3,6 +3,7 @@ package actions
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -88,7 +89,7 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 
 	rawPkg, err := xutils.GetPackageManifest(file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get package manifest: %w", err)
 	}
 
 	pkg := &models.PotatoPackage{}
