@@ -29,10 +29,11 @@
 - x show error if potato.yaml is missing for packaging command (instead of unkown panic ) and other 
 - add lua linter
 - disabled app in single domain mode or ns collision icon
-- expose flag (--expose-hq-tunnel)
 - refactor notification fronetend and fix bug
 - normal user portal
 - `GlobToRegex` replace with package ?
+- - add flag expose flag (--expose-tunnel and --run-embed-funnel) `server init` which would add appoprate config to config.yaml and use it 
+
 
 
 [Potatoverse](https://github.com/blue-monads/potatoverse)
