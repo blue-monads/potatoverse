@@ -71,6 +71,14 @@ func PackageFiles(potatoYamlFile string, outputZipFile string) (string, error) {
 		return "", err
 	}
 
+	if potatoYaml == nil {
+		return "", fmt.Errorf("potato.yaml is not valid or missing")
+	}
+
+	if potatoYaml.Developer == nil {
+		return "", fmt.Errorf("potato.yaml is missing developer section")
+	}
+
 	if outputZipFile == "" {
 		outputZipFile = potatoYaml.Developer.OutputZipFile
 		if outputZipFile == "" {

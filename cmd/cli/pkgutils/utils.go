@@ -28,13 +28,17 @@ func ReadPotatoMap(potatoJsonFile string) (map[string]any, error) {
 	potatoMap := make(map[string]any)
 	err := ReadPotato(potatoJsonFile, &potatoMap)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read potato manifest: %s %w", potatoJsonFile, err)
+		return nil, err
 	}
 	return potatoMap, nil
 }
 
 func ReadPotato(potatoJsonFile string, target any) error {
 	pdata, err := os.ReadFile(potatoJsonFile)
+	if err != nil {
+		return fmt.Errorf("failed to read potato manifest file %w", err)
+	}
+
 	if strings.HasSuffix(potatoJsonFile, ".json") {
 		err = json.Unmarshal(pdata, target)
 	} else if strings.HasSuffix(potatoJsonFile, ".yaml") || strings.HasSuffix(potatoJsonFile, ".yml") {
