@@ -33,6 +33,7 @@
 - normal user portal
 - `GlobToRegex` replace with package ?
 - - add flag expose flag (--expose-tunnel and --run-embed-funnel) `server init` which would add appoprate config to config.yaml and use it 
+- write about file and file management in features
 
 
 
