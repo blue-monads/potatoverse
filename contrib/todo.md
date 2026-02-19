@@ -25,13 +25,14 @@
 
 
 - Zero to 100 building app
-- tell invalid zip if manifest is empty
-- show error if potato.yaml is missing for packaging command (instead of unkown panic ) and other 
+- x tell invalid zip if manifest is empty
+- x show error if potato.yaml is missing for packaging command (instead of unkown panic ) and other 
 - add lua linter
 - disabled app in single domain mode or ns collision icon
 - expose flag (--expose-hq-tunnel)
 - refactor notification fronetend and fix bug
 - normal user portal
+- `GlobToRegex` replace with package ?
 
 
 [Potatoverse](https://github.com/blue-monads/potatoverse)
