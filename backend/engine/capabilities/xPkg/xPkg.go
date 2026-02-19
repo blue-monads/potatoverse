@@ -1,4 +1,4 @@
-package xselfpkg
+package xpkg
 
 /*
 
