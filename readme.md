@@ -1,4 +1,13 @@
 # PotatoVerse 🥔
+
+
+<div align="center">
+    <img src="contrib/potatoverse_banner.png" >
+    
+[FIDDLE WITH DEMO SITE](https://tubersalltheway.top/zz/pages/auth/login) 
+
+</div>
+
 PotatoVerse is a small app platform that hosts web applications with server-side code. Think of it as a hybrid between a CMS and Heroku-like PaaS, all in one static go binary (ui assets bundled) and SQLite db.
 
 ## Features
@@ -23,10 +32,9 @@ potato.cap.execute(
 
 
 
-> ⚠️ **Alpha Software**: This is early alpha software being developed in spare weekend time. Expect bugs, breaking changes, and incomplete features.
+> ⚠️ **🚨🚨🚨Alpha Software🚨🚨🚨**: This is early alpha software being developed in spare weekend time. Expect bugs, breaking changes, and incomplete features.
 
 
-[FIDDLE WITH DEMO SITE](https://tubersalltheway.top/zz/pages/auth/login) 
 
 
 
