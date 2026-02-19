@@ -1,0 +1,35 @@
+name: Build UI Assets
+
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |
+          bun install
+          bun run build
+
+      - name: Commit UI Assets
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add frontend/output/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "UI ASSETS"
+            git push
+          fi
