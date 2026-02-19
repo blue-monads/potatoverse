@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aurowora/compress"
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	rtbuddy "github.com/blue-monads/potatoverse/backend/app/server/rt_buddy"
 	"github.com/blue-monads/potatoverse/backend/engine"
@@ -16,10 +17,8 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
-	"github.com/gin-gonic/gin"
-
-	"github.com/aurowora/compress"
 	limits "github.com/gin-contrib/size"
+	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
@@ -68,7 +67,19 @@ func (s *Server) Start() error {
 
 	s.router = gin.Default()
 
-	s.router.Use(compress.Compress())
+	enableCOmpression :=
+		os.Getenv("FRONTEND_DEV_SERVER") == "" &&
+			os.Getenv("POTATO_DEV_SPACES") == ""
+
+	if enableCOmpression {
+		s.router.Use(compress.Compress(
+			compress.WithAlgo(compress.DEFLATE, true),
+			compress.WithAlgo(compress.GZIP, true),
+			compress.WithAlgo(compress.ZSTD, true),
+			compress.WithAlgo(compress.BROTLI, true),
+		))
+	}
+
 	s.router.Use(limits.RequestSizeLimiter(100 * 1024 * 1024)) // 100 mb
 
 	s.router.Use(s.buddyRoutes.BuddyAutoRouteMW())

@@ -253,7 +253,7 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 
 	if enableDevSpace {
 		// POTATO_DEV_SPACES="space_keyspace1:8080,space2:8081"
-		devSpacesEnv := os.Getenv("POTATO_DEV_SPACES")
+
 		devSpaces := strings.SplitSeq(devSpacesEnv, ",")
 
 		a.opt.Logger.Info("Enabled DEV Proxy for", "space_namespaces", devSpaces)
