@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -352,7 +353,7 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	// Get the dev token from Authorization header
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
-		httpx.WriteErrString(ctx, "missing authorization token")
+		ctx.Data(http.StatusUnauthorized, "text/plain", []byte("missing authorization token"))
 		return
 	}
 
@@ -360,14 +361,14 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	claim, err := a.signer.ParsePackageDev(token)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to parse package dev token: %s", err.Error())
-		httpx.WriteErrString(ctx, errMsg)
+		ctx.Data(http.StatusUnauthorized, "text/plain", []byte(errMsg))
 		return
 	}
 
 	_, err = a.ctrl.GetPackage(claim.InstallPackageId)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to get package: %s", err.Error())
-		httpx.WriteErrString(ctx, errMsg)
+		ctx.Data(http.StatusUnauthorized, "text/plain", []byte(errMsg))
 		return
 	}
 
