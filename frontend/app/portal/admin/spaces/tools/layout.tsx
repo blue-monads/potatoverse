@@ -96,7 +96,7 @@ const WithTabbedToolsLayout = (props: PropsType) => {
             {/* Shared Package Header */}
             {packageData && (
                 <div className="bg-white px-6 py-6 border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto flex justify-between ">
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-2 justify-between ">
                         <div className=" flex flex-col gap-2">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-3xl font-bold text-blue-600">
@@ -110,7 +110,7 @@ const WithTabbedToolsLayout = (props: PropsType) => {
                                 </span>
                             </div>
 
-                            <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-gray-600">
+                            <div className="flex flex-row items-center gap-4 text-sm text-gray-600">
                                 <div className='flex items-center gap-1'>
                                     <span className="text-gray-400">License</span>
                                     <span className="text-gray-300">•</span>
@@ -136,9 +136,9 @@ const WithTabbedToolsLayout = (props: PropsType) => {
 
 
                             <button
-                                className={"btn btn-base preset-filled text-white bg-secondary-600 hover:bg-secondary-700"}
+                                className={"btn btn-sm md:btn-base  preset-filled text-white bg-secondary-600 hover:bg-secondary-700"}
                             >
-                                <DownloadCloud className="w-4 h-4 mr-1" />
+                                <DownloadCloud className="w-3 h-3 md:w-4 md:h-4" />
                                 Export
                             </button>
 
