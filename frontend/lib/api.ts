@@ -970,3 +970,8 @@ export const getCapabilitiesDebug = async (capabilityName: string) => {
 export const getSpaceSpec = async (installId: number) => {
     return iaxios.get<any>(`/core/space/${installId}/spec.json`);
 }
+
+// export the full state of a space installation as a zip file
+export const exportSpaceState = async (installId: number, excludeTables: string[] = []) => {
+    return iaxios.post(`/core/space/${installId}/export`, { exclude_tables: excludeTables }, { responseType: 'blob' });
+}

@@ -450,3 +450,43 @@ func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {
 
 	return dbutils.SelectScan(rows)
 }
+
+func (d *LowDB) FindTablePK(table string) (string, error) {
+	finalTableName := d.tableName(table)
+	quoted := fmt.Sprintf(`"%s"`, strings.ReplaceAll(finalTableName, `"`, `""`))
+
+	rows, err := d.sess.SQL().Query(fmt.Sprintf("PRAGMA table_info(%s)", quoted))
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	var pkColumn string
+	for rows.Next() {
+		var cid int
+		var name string
+		var dataType string
+		var notNull int
+		var defaultValue interface{}
+		var pk int
+
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &pk); err != nil {
+			return "", err
+		}
+
+		if pk > 0 {
+			pkColumn = name
+			break
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return "", err
+	}
+
+	if pkColumn == "" {
+		pkColumn = "rowid"
+	}
+
+	return pkColumn, nil
+}

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { getInstalledPackageInfo, InstalledPackageInfo } from '@/lib';
+import { getInstalledPackageInfo, InstalledPackageInfo, exportSpaceState } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { useGApp } from '@/hooks';
 import { AddButton } from '@/contain/AddButton';
@@ -91,6 +91,66 @@ const WithTabbedToolsLayout = (props: PropsType) => {
         return activeTab === value;
     };
 
+    const openExportModal = () => {
+        if (!installId) return;
+        gapp.modal.openModal({
+            title: 'Export space state',
+            size: 'md',
+            content: <ExportModalContent installId={parseInt(installId)} onClose={gapp.modal.closeModal} />,
+        });
+    };
+
+    interface ExportModalProps {
+        installId: number;
+        onClose: () => void;
+    }
+
+    const ExportModalContent: React.FC<ExportModalProps> = ({ installId, onClose }) => {
+        const [loading, setLoading] = useState(false);
+
+        const handleConfirm = async () => {
+            setLoading(true);
+            try {
+                const res = await exportSpaceState(installId);
+                const blob = res.data as Blob;
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `space_${installId}_export.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                onClose();
+            } catch (err) {
+                console.error('export failed', err);
+                setLoading(false);
+            }
+        };
+
+        return (
+            <div>
+                <p>Export state for this space as a ZIP file. This may take a moment depending on data size.</p>
+                <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                        className="btn btn-sm"
+                        onClick={onClose}
+                        disabled={loading}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="btn btn-sm preset-filled text-white bg-secondary-600 hover:bg-secondary-700"
+                        onClick={handleConfirm}
+                        disabled={loading}
+                    >
+                        {loading ? 'Exporting...' : 'Export'}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="flex flex-col w-full h-full bg-surface-50">
             {/* Shared Package Header */}
@@ -136,6 +196,7 @@ const WithTabbedToolsLayout = (props: PropsType) => {
 
 
                             <button
+                                onClick={openExportModal}
                                 className={"btn btn-sm md:btn-base  preset-filled text-white bg-secondary-600 hover:bg-secondary-700"}
                             >
                                 <DownloadCloud className="w-3 h-3 md:w-4 md:h-4" />

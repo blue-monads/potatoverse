@@ -13,9 +13,11 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
@@ -433,4 +435,42 @@ func (a *Server) GetSpaceSpec(claim *signer.AccessClaim, ctx *gin.Context) (any,
 		return nil, err
 	}
 	return spec, nil
+}
+
+func (a *Server) ExportState(ctx *gin.Context) {
+	claim, err := a.withAccessToken(ctx.GetHeader("Authorization"))
+	if err != nil {
+		httpx.WriteAuthErr(ctx, err)
+		return
+	}
+
+	qq.Println("@check_perm_user", "user_id", claim.UserId)
+
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	es := &corehub.StateExport{}
+	err = ctx.BindJSON(es)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	es.InstallId = installId
+
+	zipPath, err := a.opt.CoreHub.ExportState(es)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// stream file as attachment
+	ctx.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="space_%d_export.zip"`, installId))
+	// remove temp file after serving
+	defer os.Remove(zipPath)
+	ctx.File(zipPath)
+
 }

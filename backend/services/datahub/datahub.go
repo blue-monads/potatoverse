@@ -139,11 +139,6 @@ type SpaceOps interface {
 	UpdateSpaceConfig(spaceId int64, uid int64, id int64, data map[string]any) error
 	RemoveSpaceConfig(spaceId int64, uid int64, id int64) error
 
-	ListSpaceTables(spaceId int64) ([]string, error)
-	ListSpaceTableColumns(spaceId int64, table string) ([]dbmodels.SpaceTableColumn, error)
-	RunSpaceSQLQuery(spaceId int64, query string, data []any) ([]map[string]any, error)
-	RunSpaceDDL(spaceId int64, ddl string) error
-
 	// Space Capabilities
 	QuerySpaceCapabilities(installId int64, cond map[any]any) ([]dbmodels.SpaceCapability, error)
 	AddSpaceCapability(installId int64, data *dbmodels.SpaceCapability) error
@@ -255,6 +250,7 @@ type FindTypedQuery struct {
 type DBLowOps interface {
 	ListTables() ([]string, error)
 	ListTableColumns(table string) ([]map[string]any, error)
+	FindTablePK(table string) (string, error)
 
 	DBLowCoreOps
 
