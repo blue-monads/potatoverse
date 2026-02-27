@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { getInstalledPackageInfo, InstalledPackageInfo } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { useGApp } from '@/hooks';
+import { AddButton } from '@/contain/AddButton';
 
 const navItems = [
     {
@@ -95,41 +96,56 @@ const WithTabbedToolsLayout = (props: PropsType) => {
             {/* Shared Package Header */}
             {packageData && (
                 <div className="bg-white px-6 py-6 border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto flex flex-col gap-2">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl font-bold text-blue-600">
-                                {packageData.name}
-                            </h1>
-                            <span className="text-gray-500 text-lg">
-                                @ {activeVersion?.version || '0.0.0'}
-                            </span>
-                            <span className="bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
-                                latest
-                            </span>
+                    <div className="max-w-7xl mx-auto flex justify-between ">
+                        <div className=" flex flex-col gap-2">
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-3xl font-bold text-blue-600">
+                                    {packageData.name}
+                                </h1>
+                                <span className="text-gray-500 text-lg">
+                                    @ {activeVersion?.version || '0.0.0'}
+                                </span>
+                                <span className="bg-yellow-400 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                    latest
+                                </span>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-gray-600">
+                                <div className='flex items-center gap-1'>
+                                    <span className="text-gray-400">License</span>
+                                    <span className="text-gray-300">•</span>
+                                    <span className="text-gray-700">{activeVersion?.license || 'MIT'}</span>
+                                </div>
+
+                                <div className='flex items-center gap-1'>
+                                    <span className="text-gray-400">Author</span>
+                                    <span className="text-gray-300">•</span>
+                                    <span className="text-gray-700">{activeVersion?.author_name || 'Anonymous'}</span>
+                                </div>
+
+                                <div className="flex items-center gap-1">
+                                    {(activeVersion?.tags?.split(',') || ['deno', 'package']).map((tag) => (
+                                        <span key={tag} className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full border border-gray-200">
+                                            {tag.trim()}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+
+
+                            <button
+                                className={"btn btn-base preset-filled text-white bg-secondary-600 hover:bg-secondary-700"}
+                            >
+                                <DownloadCloud className="w-4 h-4 mr-1" />
+                                Export
+                            </button>
+
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center gap-4 text-sm text-gray-600">
-                            <div className='flex items-center gap-1'>
-                                <span className="text-gray-400">License</span>
-                                <span className="text-gray-300">•</span>
-                                <span className="text-gray-700">{activeVersion?.license || 'MIT'}</span>
-                            </div>
-
-                            <div className='flex items-center gap-1'>
-                                <span className="text-gray-400">Author</span>
-                                <span className="text-gray-300">•</span>
-                                <span className="text-gray-700">{activeVersion?.author_name || 'Anonymous'}</span>
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                                {(activeVersion?.tags?.split(',') || ['deno', 'package']).map((tag) => (
-                                    <span key={tag} className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full border border-gray-200">
-                                        {tag.trim()}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
                     </div>
+
                 </div>
             )}
 
