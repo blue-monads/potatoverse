@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud } from 'lucide-react';
+import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud, EllipsisVertical, Trash2 as Trash2Icon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { getInstalledPackageInfo, InstalledPackageInfo, exportSpaceState } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { useGApp } from '@/hooks';
@@ -76,7 +77,9 @@ const WithTabbedToolsLayout = (props: PropsType) => {
     const searchParams = useSearchParams();
     const gapp = useGApp();
     const installId = searchParams.get('install_id');
+    const installIdNum = installId ? parseInt(installId, 10) : NaN;
     const activeTab = pathname?.split('/').filter(Boolean).pop();
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     const loader = useSimpleDataLoader<InstalledPackageInfo>({
         loader: () => getInstalledPackageInfo(parseInt(installId!)),
@@ -91,14 +94,117 @@ const WithTabbedToolsLayout = (props: PropsType) => {
         return activeTab === value;
     };
 
+    // option dropdown state and helpers
+    const optionsRef = useRef<HTMLButtonElement>(null);
+    const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+    const [optionsRect, setOptionsRect] = useState<DOMRect | null>(null);
+
+    const handleToggleOptions = () => {
+        if (!isOptionsOpen && optionsRef.current) {
+            setOptionsRect(optionsRef.current.getBoundingClientRect());
+        }
+        setIsOptionsOpen(!isOptionsOpen);
+    };
+
     const openExportModal = () => {
-        if (!installId) return;
+        console.log('openExportModal called, installId', installId, installIdNum);
+        if (isNaN(installIdNum)) {
+            console.warn('cannot export, invalid install id');
+            return;
+        }
         gapp.modal.openModal({
             title: 'Export space state',
             size: 'md',
-            content: <ExportModalContent installId={parseInt(installId)} onClose={gapp.modal.closeModal} />,
+            content: <ExportModalContent installId={installIdNum} onClose={gapp.modal.closeModal} />,
         });
     };
+
+    const openImportModal = () => {
+        if (!installId) return;
+        gapp.modal.openModal({
+            title: 'Import space state',
+            size: 'md',
+            content: (
+                <div className="space-y-4">
+                    <p>This feature is not implemented yet.</p>
+                    <div className="flex justify-end">
+                        <button
+                            className="btn btn-sm"
+                            onClick={gapp.modal.closeModal}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            ),
+        });
+    };
+
+    const handleDelete = () => {
+        if (!installId) return;
+        gapp.modal.openModal({
+            title: 'Delete space',
+            size: 'md',
+            content: (
+                <div className="space-y-4">
+                    <p>This action is not hooked up yet.</p>
+                    <div className="flex justify-end">
+                        <button
+                            className="btn btn-sm"
+                            onClick={gapp.modal.closeModal}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            ),
+        });
+    };
+
+    const toolOptions = [
+        { label: 'Export', icon: DownloadCloud, onClick: openExportModal },
+        { label: 'Import', icon: UploadCloudIcon, onClick: openImportModal },
+        { label: 'Delete', icon: Trash2Icon, onClick: handleDelete },
+    ];
+
+    // debug values
+    console.log('layout render', { installId, installIdNum });
+
+    // close dropdown when clicking outside or on scroll/resize
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                isOptionsOpen &&
+                optionsRef.current &&
+                !optionsRef.current.contains(event.target as Node) &&
+                dropdownRef.current && 
+                !dropdownRef.current.contains(event.target as Node) // <-- Check if click is outside dropdown
+            ) {
+                setIsOptionsOpen(false);
+            }
+        };
+
+
+        const handleScroll = () => {
+            if (isOptionsOpen && optionsRef.current) {
+                setOptionsRect(optionsRef.current.getBoundingClientRect());
+            }
+        };
+
+        document.addEventListener('mouseup', handleClickOutside);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+
+
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mouseup', handleClickOutside);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleScroll);
+        };
+
+    }, [isOptionsOpen]);
 
     interface ExportModalProps {
         installId: number;
@@ -192,16 +298,64 @@ const WithTabbedToolsLayout = (props: PropsType) => {
                                 </div>
                             </div>
                         </div>
-                        <div>
+                        <div className='flex items-center gap-1 '>
 
 
-                            <button
+                            {/* <button
                                 onClick={openExportModal}
                                 className={"btn btn-sm md:btn-base  preset-filled text-white bg-secondary-600 hover:bg-secondary-700"}
                             >
                                 <DownloadCloud className="w-3 h-3 md:w-4 md:h-4" />
                                 Export
-                            </button>
+                            </button> */}
+
+                            {/* options dropdown button */}
+                            <div className="relative">
+                                <button
+                                    ref={optionsRef}
+                                    onClick={handleToggleOptions}
+                                    className={"btn btn-sm md:btn-base  preset-filled text-white bg-secondary-600 hover:bg-secondary-700 self-center flex items-center gap-1"}
+                                >
+                                    Options
+                                    <EllipsisVertical className="w-3 h-3 md:w-4 md:h-4 " />
+                                </button>
+
+                                {isOptionsOpen && optionsRect && createPortal(
+                                    <div
+                                        id="options-dropdown"
+                                        ref={dropdownRef}
+                                        className="fixed w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-[9999]"
+                                        style={{
+                                            top: optionsRect.bottom + 4,
+                                            left: optionsRect.right - 160,
+                                        }}
+                                    >
+                                        {toolOptions.map((opt) => {
+                                            return (
+                                                <button
+                                                    key={opt.label}
+                                                    onClick={() => {
+                                                        console.log('dropdown option clicked', opt.label);
+                                                        opt.onClick();
+                                                        setTimeout(() => setIsOptionsOpen(false), 100);
+                                                    }}
+                                                    className="w-full text-left px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                                                >
+                                                    <div className="inline-flex items-center gap-2">
+                                                        <opt.icon className="w-4 h-4" />
+                                                        {opt.label}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>,
+                                    document.body
+                                )}
+                            </div>
+
+
+
+
 
                         </div>
 

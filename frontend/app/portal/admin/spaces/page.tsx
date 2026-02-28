@@ -363,13 +363,7 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
 
 const actionsOptions = [
     { id: "run", label: "Run in new tab", icon: <Bolt className="w-4 h-4" /> },
-    // { id: "logs", label: "Logs", icon: <ScrollText className="w-4 h-4" /> },
-    // { id: "package-files", label: "Package Files", icon: <FileCode2 className="w-4 h-4" /> },
-    // { id: "files", label: "Files", icon: <Files className="w-4 h-4" /> },
-    // { id: "kv", label: "KV State", icon: <Grid2x2Plus className="w-4 h-4" /> },
-    { id: "tools", label: "Options", icon: <Box className="w-4 h-4" /> },
-    // { id: "users", label: "Users", icon: <SquareUserRound className="w-4 h-4" /> },
-    // { id: "settings", label: "Settings", icon: <Cog className="w-4 h-4" /> },
+    { id: "tools", label: "Tools and settings", icon: <Box className="w-4 h-4" /> },
     { id: "delete", label: "Delete", icon: <Trash2Icon className="w-4 h-4" /> }
 ]
 
