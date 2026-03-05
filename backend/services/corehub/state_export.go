@@ -2,6 +2,7 @@ package corehub
 
 import (
 	"archive/zip"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -27,10 +28,12 @@ func (c *CoreHub) ExportState(opts *StateExport) (string, error) {
 	defer zfile.Close()
 
 	dataOpts := c.db.GetLowPackageDBOps(opts.InstallId)
-	tables, err := dataOpts.ListTables()
+	tableInfos, err := dataOpts.ListTables()
 	if err != nil {
 		return "", err
 	}
+
+	qq.Println("@tables", tableInfos)
 
 	zipWriter := zip.NewWriter(zfile)
 
@@ -108,9 +111,19 @@ func (c *CoreHub) ExportState(opts *StateExport) (string, error) {
 
 	}
 
-	qq.Println("@tables", tables)
+	qq.Println("@tables", tableInfos)
 
-	for _, table := range tables {
+	for _, tableInfo := range tableInfos {
+
+		if tableInfo.TableType == "virtual" {
+			continue
+		}
+
+		if tableInfo.TableType == "virtual_sub_type" {
+			continue
+		}
+
+		table := tableInfo.Name
 
 		prefix := fmt.Sprintf("zz_P__%d__", opts.InstallId)
 		umangledTable := table
@@ -137,4 +150,62 @@ func (c *CoreHub) ExportState(opts *StateExport) (string, error) {
 
 	return zfile.Name(), nil
 
+}
+
+func (c *CoreHub) Import(installId int64, zipfile string) error {
+
+	zfile, err := zip.OpenReader(zipfile)
+	if err != nil {
+		return err
+	}
+	defer zfile.Close()
+
+	dataOpts := c.db.GetLowPackageDBOps(installId)
+
+	for _, file := range zfile.File {
+
+		if file.FileInfo().Size() == 0 {
+			continue
+		}
+
+		if !strings.HasSuffix(file.Name, ".jsonl") {
+			continue
+		}
+
+		tableName := strings.TrimSuffix(file.Name, ".jsonl")
+		qq.Println("@importTable", tableName)
+
+		reader, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer reader.Close()
+
+		// Read and insert each line
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			line := scanner.Bytes()
+			if len(line) == 0 {
+				continue
+			}
+
+			var rowData map[string]any
+			err := json.Unmarshal(line, &rowData)
+			if err != nil {
+				return err
+			}
+
+			// Insert the row into the table
+			_, err = dataOpts.Insert(tableName, rowData)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud, EllipsisVertical, Trash2 as Trash2Icon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { getInstalledPackageInfo, InstalledPackageInfo, exportSpaceState } from '@/lib';
+import { getInstalledPackageInfo, InstalledPackageInfo, exportSpaceState, importSpaceState } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { useGApp } from '@/hooks';
 import { AddButton } from '@/contain/AddButton';
@@ -125,17 +125,7 @@ const WithTabbedToolsLayout = (props: PropsType) => {
             title: 'Import space state',
             size: 'md',
             content: (
-                <div className="space-y-4">
-                    <p>This feature is not implemented yet.</p>
-                    <div className="flex justify-end">
-                        <button
-                            className="btn btn-sm"
-                            onClick={gapp.modal.closeModal}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
+                <ImportModalContent installId={installIdNum} onClose={gapp.modal.closeModal} />
             ),
         });
     };
@@ -251,6 +241,53 @@ const WithTabbedToolsLayout = (props: PropsType) => {
                         disabled={loading}
                     >
                         {loading ? 'Exporting...' : 'Export'}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
+    const ImportModalContent: React.FC<ExportModalProps> = ({ installId, onClose }) => {
+        const [loading, setLoading] = useState(false);
+        const [file, setFile] = useState<File | null>(null);
+
+        const handleConfirm = async () => {
+            if (!file) return;
+            setLoading(true);
+            try {
+                await importSpaceState(installId, file);
+                onClose();
+            } catch (err) {
+                console.error('import failed', err);
+                setLoading(false);
+            }
+        };
+
+        return (
+            <div className="space-y-4">
+                <p>Upload a ZIP file previously exported from this space.</p>
+                <input
+                    type="file"
+                    accept=".zip"
+                    onChange={(e) => {
+                        const f = e.target.files && e.target.files[0];
+                        setFile(f || null);
+                    }}
+                />
+                <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                        className="btn btn-sm"
+                        onClick={onClose}
+                        disabled={loading}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="btn btn-sm preset-filled text-white bg-secondary-600 hover:bg-secondary-700"
+                        onClick={handleConfirm}
+                        disabled={loading || !file}
+                    >
+                        {loading ? 'Importing...' : 'Import'}
                     </button>
                 </div>
             </div>

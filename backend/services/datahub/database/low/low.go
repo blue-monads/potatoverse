@@ -407,12 +407,13 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 	return dbutils.SelectScan(rows)
 }
 
-func (d *LowDB) ListTables() ([]string, error) {
+func (d *LowDB) ListTables() ([]datahub.TableInfo, error) {
 
 	pattern := enforcer.TableNamePattern(d.ownerType, d.ownerID)
 
+	// fetch the table definition as well so we can detect virtual tables
 	query := d.sess.SQL().
-		Select("name").
+		Select("name", "sql").
 		From("sqlite_master").
 		Where(db.Cond{
 			"type": "table",
@@ -430,12 +431,45 @@ func (d *LowDB) ListTables() ([]string, error) {
 		return nil, err
 	}
 
-	tableNames := make([]string, len(results))
+	tableInfos := make([]datahub.TableInfo, len(results))
+
 	for i, result := range results {
-		tableNames[i] = result["name"].(string)
+		name, _ := result["name"].(string)
+		tInfo := datahub.TableInfo{Name: name, TableType: "normal"}
+		if sqlDef, ok := result["sql"].(string); ok {
+			tInfo.Schema = sqlDef
+
+			// SQLite marks virtual tables in the create statement
+			if strings.Contains(strings.ToUpper(sqlDef), "VIRTUAL TABLE") {
+				tInfo.TableType = "virtual"
+			}
+		}
+		tableInfos[i] = tInfo
 	}
 
-	return tableNames, nil
+	for i := range tableInfos {
+		currTable := &tableInfos[i]
+		if currTable.TableType != "virtual" {
+			continue
+		}
+
+		for oid := range tableInfos {
+			otherTable := &tableInfos[oid]
+
+			if otherTable.Name == currTable.Name {
+				continue
+			}
+
+			if strings.HasPrefix(otherTable.Name, currTable.Name) {
+				otherTable.TableType = "virtual_sub_type"
+
+			}
+
+		}
+
+	}
+
+	return tableInfos, nil
 }
 
 func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {

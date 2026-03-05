@@ -3,6 +3,7 @@ package low
 import (
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
@@ -188,6 +189,61 @@ func TestRunQueryOne(t *testing.T) {
 	_, err = ldb.RunQueryOne("SELECT * FROM test_table WHERE name = ?", "Nonexistent")
 	if err == nil {
 		t.Error("Expected error for nonexistent record, got nil")
+	}
+}
+
+func TestListTables(t *testing.T) {
+	sess, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	ldb := NewLowDB(sess, "package", "test123")
+
+	// create an extra normal table
+	if err := ldb.RunDDL(`CREATE TABLE other_table (id INTEGER)`); err != nil {
+		t.Fatalf("Failed to create other_table: %v", err)
+	}
+
+	// also create a virtual table to verify detection
+	if err := ldb.RunDDL(`CREATE VIRTUAL TABLE virt USING fts5(content)`); err != nil {
+		// FTS5 may not be available on all builds; ignore if not supported
+		if !strings.Contains(err.Error(), "no such module") {
+			t.Fatalf("Failed to create virtual table: %v", err)
+		}
+	}
+
+	tables, err := ldb.ListTables()
+	if err != nil {
+		t.Fatalf("ListTables failed: %v", err)
+	}
+
+	if len(tables) < 2 {
+		t.Errorf("Expected at least 2 tables, got %d", len(tables))
+	}
+
+	found := map[string]datahub.TableInfo{}
+	for _, ti := range tables {
+		found[ti.Name] = ti
+	}
+
+	// check regular table entries
+	if ti, ok := found[enforcer.TableName("package", "test123", "test_table")]; !ok {
+		t.Errorf("test_table not present in ListTables")
+	} else if ti.TableType == "virtual" {
+		t.Errorf("test_table incorrectly marked as virtual")
+	}
+
+	if ti, ok := found[enforcer.TableName("package", "test123", "other_table")]; !ok {
+		t.Errorf("other_table not present in ListTables")
+	} else if ti.TableType == "virtual" {
+		t.Errorf("other_table incorrectly marked as virtual")
+	}
+
+	// if virtual table was created successfully, ensure detection
+	if _, ok := found[enforcer.TableName("package", "test123", "virt")]; ok {
+		ti := found[enforcer.TableName("package", "test123", "virt")]
+		if ti.TableType != "virtual" {
+			t.Errorf("virtual table not marked as virtual")
+		}
 	}
 }
 

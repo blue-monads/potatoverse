@@ -627,6 +627,18 @@ export const uploadSpaceFile = async (installId: number, file: File, path: strin
     });
 }
 
+// Import a space state ZIP file
+export const importSpaceState = async (installId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return iaxios.post(`/core/space/${installId}/import`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
 export const updateSpaceFileContent = async (installId: number, fileId: number, content: string, fileName: string, path: string = '') => {
     // Delete the old file first
     await deleteSpaceFile(installId, fileId);

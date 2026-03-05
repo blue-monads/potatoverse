@@ -247,8 +247,14 @@ type FindTypedQuery struct {
 	Targets any         `json:"targets"`
 }
 
+type TableInfo struct {
+	Name      string `json:"name"`
+	TableType string `json:"table_type,omitempty"` // normal, virtual, virtual_sub_type
+	Schema    string `json:"schema,omitempty"`
+}
+
 type DBLowOps interface {
-	ListTables() ([]string, error)
+	ListTables() ([]TableInfo, error)
 	ListTableColumns(table string) ([]map[string]any, error)
 	FindTablePK(table string) (string, error)
 

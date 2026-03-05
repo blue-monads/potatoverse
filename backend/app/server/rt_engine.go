@@ -444,6 +444,8 @@ func (a *Server) ExportState(ctx *gin.Context) {
 		return
 	}
 
+	qq.Println("@ImportState user", claim.UserId)
+
 	qq.Println("@check_perm_user", "user_id", claim.UserId)
 
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
@@ -472,5 +474,60 @@ func (a *Server) ExportState(ctx *gin.Context) {
 	// remove temp file after serving
 	defer os.Remove(zipPath)
 	ctx.File(zipPath)
+
+}
+
+func (a *Server) ImportState(ctx *gin.Context) {
+	claim, err := a.withAccessToken(ctx.GetHeader("Authorization"))
+	if err != nil {
+		httpx.WriteAuthErr(ctx, err)
+		return
+	}
+
+	qq.Println("@claim", claim.UserId)
+
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// Parse multipart form (allow up to 64MB file in memory before streaming to disk)
+	if err := ctx.Request.ParseMultipartForm(64 << 20); err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	file, _, err := ctx.Request.FormFile("file")
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+	defer file.Close()
+
+	tmpFile, err := os.CreateTemp("", "import_state_*.zip")
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+	tmpPath := tmpFile.Name()
+	// ensure file descriptor closed
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+	}()
+
+	if _, err := io.Copy(tmpFile, file); err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// call CoreHub.Import
+	if err := a.opt.CoreHub.Import(installId, tmpPath); err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(200, gin.H{"message": "Import completed"})
 
 }
