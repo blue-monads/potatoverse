@@ -3,8 +3,7 @@ default:
 frontend_start_dev:
 	cd frontend && bun run dev
 backend_start_dev:
-	FRONTEND_DEV_SERVER="http://localhost:7779" go run -v cmd/dev/*.go
-
+    export POTATO_DEV_SPACES="cimple-table:5174" && export FRONTEND_DEV_SERVER="http://localhost:7779" && go run -v cmd/dev/*.go
 litestream_start_dev:
 	litestream replicate -config contrib/litestream/litestream_dev.yml
 labs_start_dev:

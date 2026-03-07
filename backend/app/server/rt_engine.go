@@ -254,6 +254,8 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 
 	enableDevSpace := devSpacesEnv != ""
 
+	qq.Println("@dev_spaces_env", devSpacesEnv)
+
 	if enableDevSpace {
 		// POTATO_DEV_SPACES="space_keyspace1:8080,space2:8081"
 
