@@ -2,6 +2,7 @@ package funnel
 
 import (
 	"net"
+	"strings"
 	"sync"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
@@ -48,7 +49,7 @@ func (f *Funnel) HandleServerWebSocket(nodeId string, c *gin.Context) {
 
 func (f *Funnel) HandleRoute(nodeId string, c *gin.Context) {
 
-	if c.Request.Header.Get("Upgrade") == "websocket" {
+	if strings.EqualFold(c.Request.Header.Get("Upgrade"), "websocket") {
 		f.routeWS(nodeId, c)
 		return
 	}

@@ -44,15 +44,21 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 
 	qq.Println("@routeWS/4")
 
-	pendingReqChan := make(chan *packetwire.Packet)
+	// Use a buffered channel so handleServerConnection never blocks sending
+	// to a request whose goroutine has already exited.
+	pendingReqChan := make(chan *packetwire.Packet, 32)
 	f.pendingReqLock.Lock()
 	f.pendingReq[reqId] = pendingReqChan
 	f.pendingReqLock.Unlock()
 
 	qq.Println("@routeWS/5")
 
+	// done is closed when the main read loop exits, to signal the writer goroutine.
+	done := make(chan struct{})
+
 	defer func() {
 		qq.Println("@cleanup/1{REQ_ID}", reqId)
+		close(done)
 		f.pendingReqLock.Lock()
 		delete(f.pendingReq, reqId)
 		f.pendingReqLock.Unlock()
@@ -92,45 +98,50 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 
 			qq.Println("@routeWS/10/loop")
 
-			packet := <-pendingReqChan
-			if packet == nil {
-				qq.Println("@routeWS/11/loop/break")
-				break
+			select {
+			case <-done:
+				qq.Println("@routeWS/10/loop/done")
+				return
+			case packet, ok := <-pendingReqChan:
+				if !ok || packet == nil {
+					qq.Println("@routeWS/11/loop/break")
+					return
+				}
+
+				qq.Println("@routeWS/12/loop/write")
+
+				if packet.PType == packetwire.PtypeWebSocketBinData {
+					qq.Println("@routeWS/12/loop/write/bin/data")
+					err = wsutil.WriteServerBinary(clientConn, packet.Data)
+					if err != nil {
+						qq.Println("@routeWS/13/loop/write/break", err)
+						return
+					}
+				} else if packet.PType == packetwire.PtypeWebSocketTextData {
+					qq.Println("@routeWS/12/loop/write/text/data")
+					err = wsutil.WriteServerText(clientConn, packet.Data)
+					if err != nil {
+						qq.Println("@routeWS/13/loop/write/break", err)
+						return
+					}
+				} else if packet.PType == packetwire.PtypeWebSocketPing {
+					qq.Println("@routeWS/12/loop/write/ping")
+					err = wsutil.WriteServerMessage(clientConn, ws.OpPing, packet.Data)
+					if err != nil {
+						qq.Println("@routeWS/13/loop/write/break", err)
+						return
+					}
+				} else if packet.PType == packetwire.PtypeWebSocketPong {
+					qq.Println("@routeWS/12/loop/write/pong")
+					err = wsutil.WriteServerMessage(clientConn, ws.OpPong, packet.Data)
+					if err != nil {
+						qq.Println("@routeWS/13/loop/write/break", err)
+						return
+					}
+				}
+
+				qq.Println("@routeWS/13/loop/write/end")
 			}
-
-			qq.Println("@routeWS/12/loop/write")
-
-			if packet.PType == packetwire.PtypeWebSocketBinData {
-				qq.Println("@routeWS/12/loop/write/bin/data")
-				err = wsutil.WriteServerBinary(clientConn, packet.Data)
-				if err != nil {
-					qq.Println("@routeWS/13/loop/write/break", err)
-					break
-				}
-			} else if packet.PType == packetwire.PtypeWebSocketTextData {
-				qq.Println("@routeWS/12/loop/write/text/data")
-				err = wsutil.WriteServerText(clientConn, packet.Data)
-				if err != nil {
-					qq.Println("@routeWS/13/loop/write/break", err)
-					break
-				}
-			} else if packet.PType == packetwire.PtypeWebSocketPing {
-				qq.Println("@routeWS/12/loop/write/ping")
-				err = wsutil.WriteServerMessage(clientConn, ws.OpPing, packet.Data)
-				if err != nil {
-					qq.Println("@routeWS/13/loop/write/break", err)
-					break
-				}
-			} else if packet.PType == packetwire.PtypeWebSocketPong {
-				qq.Println("@routeWS/12/loop/write/pong")
-				err = wsutil.WriteServerMessage(clientConn, ws.OpPong, packet.Data)
-				if err != nil {
-					qq.Println("@routeWS/13/loop/write/break", err)
-					break
-				}
-			}
-
-			qq.Println("@routeWS/13/loop/write/end")
 
 		}
 	}()

@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
@@ -171,14 +172,16 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 			continue
 		}
 
-		pendingReqChan := make(chan *packetwire.Packet)
+		// Use a buffered channel so the funnel's handleServerConnection never
+		// blocks trying to send to a request whose handler has already exited.
+		pendingReqChan := make(chan *packetwire.Packet, 32)
 
 		c.prLock.Lock()
 		c.pendingRequests[reqId] = pendingReqChan
 		c.prLock.Unlock()
 
 		// Check if it's a websocket request
-		if req.Header.Get("Upgrade") == "websocket" {
+		if strings.EqualFold(req.Header.Get("Upgrade"), "websocket") {
 			qq.Println("@FunnelClient/handleFunnelConnection/4{WEBSOCKET_REQUEST}")
 			// Handle websocket request
 			go c.handleWebSocketRequest(pendingReqChan, reqId, req)
@@ -376,7 +379,12 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 
 func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId string, req *http.Request) {
 
+	// done is closed when the main forward loop exits (funnel→localWS direction),
+	// so the reverse goroutine (localWS→funnel) can exit cleanly.
+	done := make(chan struct{})
+
 	defer func() {
+		close(done)
 		c.prLock.Lock()
 		delete(c.pendingRequests, reqId)
 		c.prLock.Unlock()
@@ -399,10 +407,27 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 
 	qq.Println("@final_url", wsUrl)
 
+	// Build a dialer that forwards the original request headers to the local server.
+	// This is critical for auth headers, cookies, Origin, Sec-WebSocket-Protocol, etc.
+	header := make(http.Header)
+	for k, vv := range req.Header {
+		// Skip hop-by-hop headers that ws.Dial manages itself.
+		switch strings.ToLower(k) {
+		case "upgrade", "connection", "sec-websocket-key",
+			"sec-websocket-version", "sec-websocket-extensions":
+			continue
+		}
+		header[k] = vv
+	}
+
+	dialer := ws.Dialer{
+		Header: ws.HandshakeHeaderHTTP(header),
+	}
+
 	// Connect to local websocket server using gobwas/ws
-	localWS, _, _, err := ws.Dial(context.TODO(), wsUrl)
+	localWS, _, _, err := dialer.Dial(context.TODO(), wsUrl)
 	if err != nil {
-		qq.Println("@handleWebSocketRequest/2")
+		qq.Println("@handleWebSocketRequest/2{DIAL_ERROR}", err)
 		// Could not connect to local websocket
 		return
 	}
@@ -410,8 +435,7 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 
 	qq.Println("@handleWebSocketRequest/3")
 
-	// After sending the header packet, websocket communication uses packets with request ID
-	// Forward from local WS to funnel
+	// Forward from local WS to funnel (server→client direction)
 	go func() {
 		for {
 			qq.Println("@handleWebSocketRequest/4{READ_LOCAL_WS}")
@@ -420,9 +444,9 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 			if err != nil {
 				if err == io.EOF {
 					qq.Println("@handleWebSocketRequest/4{LOCAL_WS_EOF}", err.Error())
-					break
+				} else {
+					qq.Println("@handleWebSocketRequest/4{READ_ERROR}", err.Error())
 				}
-				qq.Println("@handleWebSocketRequest/4{READ_ERROR}", err.Error())
 				return
 			}
 
@@ -446,7 +470,7 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 			if op == ws.OpText {
 				ptype = packetwire.PtypeWebSocketTextData
 			} else if op == ws.OpClose {
-				break
+				return
 			} else if op == ws.OpPing {
 				ptype = packetwire.PtypeWebSocketPing
 			} else if op == ws.OpPong {
@@ -455,8 +479,11 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 				ptype = packetwire.PtypeWebSocketBinData
 			}
 
-			// Write WebSocket data as packet
-			c.writeChan <- &ServerWrite{
+			// Write WebSocket data as packet; bail if the main loop already finished.
+			select {
+			case <-done:
+				return
+			case c.writeChan <- &ServerWrite{
 				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: 0,
@@ -464,15 +491,22 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 					Data:   msg,
 				},
 				reqId: reqId,
+			}:
 			}
 		}
 	}()
 
-	// Forward from funnel to local WS
+	// Forward from funnel to local WS (client→server direction)
 	for {
-		packet := <-pch
-		if packet == nil {
-			break
+		var packet *packetwire.Packet
+		select {
+		case <-done:
+			return
+		case p, ok := <-pch:
+			if !ok || p == nil {
+				return
+			}
+			packet = p
 		}
 
 		if packet.PType == packetwire.PtypeWebSocketTextData {
@@ -480,33 +514,32 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 			err = wsutil.WriteClientText(localWS, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
-				break
+				return
 			}
 		} else if packet.PType == packetwire.PtypeWebSocketBinData {
 			qq.Println("@routeWS/12/loop/write/binary")
 			err = wsutil.WriteClientBinary(localWS, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
-				break
+				return
 			}
 		} else if packet.PType == packetwire.PtypeWebSocketPing {
 			qq.Println("@routeWS/12/loop/write/ping")
 			err = wsutil.WriteClientMessage(localWS, ws.OpPing, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
-				break
+				return
 			}
 		} else if packet.PType == packetwire.PtypeWebSocketPong {
 			qq.Println("@routeWS/12/loop/write/pong")
 			err = wsutil.WriteClientMessage(localWS, ws.OpPong, packet.Data)
 			if err != nil {
 				qq.Println("@routeWS/13/loop/write/break", err)
-				break
+				return
 			}
 		}
 
 		qq.Println("@routeWS/13/loop/write/end")
-
 	}
 }
 
