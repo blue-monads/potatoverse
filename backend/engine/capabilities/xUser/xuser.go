@@ -1,15 +1,156 @@
 package xuser
 
-/*
+import (
+	"errors"
 
-query_user({offset: 0, limit: 100, group: ""})
-get_user_info(id: 1)
-query_user_config({user_id: 1, config_group: "TEST", limit: 100, offset: 0})
-update_user_config({user_id: 1, config_group: "TEST", config_key: "TEST", config_value: "TEST"})
-delete_user_config({user_id: 1, config_group: "TEST", config_key: "TEST"})
-send_user_message({user_id: 1, title: "TEST", message: "TEST"})
+	"github.com/blue-monads/potatoverse/backend/registry"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
+	"github.com/gin-gonic/gin"
+)
 
+var (
+	Name         = "xUser"
+	Icon         = ""
+	OptionFields = []xcapability.CapabilityOptionField{}
+)
 
+func init() {
+	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
+			appTyped := app.(xtypes.App)
+			return &CurrUserBuilder{app: appTyped}, nil
+		},
+		Name:         Name,
+		Icon:         Icon,
+		OptionFields: OptionFields,
+	})
+}
 
+type CurrUserBuilder struct {
+	app xtypes.App
+}
 
-*/
+func (b *CurrUserBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
+	model := handle.GetModel()
+	return &CurrUserCapability{
+		app:        b.app,
+		handle:     handle,
+		spaceId:    model.SpaceID,
+		installId:  model.InstallID,
+		capability: model,
+	}, nil
+}
+
+func (b *CurrUserBuilder) Serve(ctx *gin.Context) {}
+
+func (b *CurrUserBuilder) Name() string {
+	return Name
+}
+
+func (b *CurrUserBuilder) GetDebugData() map[string]any {
+	return map[string]any{}
+}
+
+type CurrUserCapability struct {
+	app        xtypes.App
+	handle     xcapability.XCapabilityHandle
+	spaceId    int64
+	installId  int64
+	capability *dbmodels.SpaceCapability
+}
+
+func (c *CurrUserCapability) Reload(model *dbmodels.SpaceCapability) (xcapability.Capability, error) {
+	c.capability = model
+	return c, nil
+}
+
+func (c *CurrUserCapability) Close() error {
+	return nil
+}
+
+func (c *CurrUserCapability) Handle(ctx *gin.Context) {
+	ctx.JSON(200, gin.H{
+		"message":    "curruser capability",
+		"capability": Name,
+		"space_id":   c.spaceId,
+	})
+}
+
+func (c *CurrUserCapability) ListActions() ([]string, error) {
+	return []string{"send_user_message", "get_user_info", "get_user_config"}, nil
+}
+
+func (c *CurrUserCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+	switch name {
+	case "send_user_message":
+		return c.sendUserMessage(params)
+	case "get_user_info":
+		return c.getUserInfo(params)
+	default:
+		return nil, errors.New("unknown action: " + name)
+	}
+}
+
+func (c *CurrUserCapability) parseUserToken(userToken string) (int64, error) {
+	claim, err := c.app.Signer().ParseAccess(userToken)
+	if err != nil {
+		return 0, errors.New("invalid user_token: " + err.Error())
+	}
+
+	return claim.UserId, nil
+}
+
+type UserMessageData struct {
+	UserToken   string               `json:"user_token"`
+	MessageData dbmodels.UserMessage `json:"message_data"`
+}
+
+func (c *CurrUserCapability) sendUserMessage(params lazydata.LazyData) (any, error) {
+
+	userMessageData := &UserMessageData{}
+
+	userId, err := c.parseUserToken(userMessageData.UserToken)
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.AsJson(&userMessageData)
+	if err != nil {
+		return nil, err
+	}
+
+	userMessageData.MessageData.ToUser = userId
+	userMessageData.MessageData.FromUserId = 0
+	userMessageData.MessageData.FromSpaceId = c.spaceId
+	userMessageData.MessageData.IsRead = false
+
+	// Use corehub to send message
+	coreHub := c.app.CoreHub().(*corehub.CoreHub)
+	id, err := coreHub.UserSendMessage(&userMessageData.MessageData)
+	if err != nil {
+		return nil, err
+	}
+
+	return id, nil
+}
+
+func (c *CurrUserCapability) getUserInfo(params lazydata.LazyData) (any, error) {
+	userToken := params.GetFieldAsString("user_token")
+
+	userId, err := c.parseUserToken(userToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get user from database
+	user, err := c.app.Database().GetUserOps().GetUser(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
