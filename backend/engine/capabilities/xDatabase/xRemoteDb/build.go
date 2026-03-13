@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Name         = "remote_db"
+	Name         = "xRemoteDB"
 	Icon         = `<i class="fa-solid fa-database"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{}
 )
