@@ -56,7 +56,7 @@ type Event struct {
 }
 
 func (p *CcurdCapability) Handle(ctx *gin.Context) {
-	token := ctx.Request.Header.Get("x-cap-token")
+	token := ctx.Request.Header.Get("Authorization")
 	if token == "" {
 		httpx.WriteErrString(ctx, "Empty token")
 		return
