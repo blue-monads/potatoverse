@@ -7,6 +7,7 @@ import (
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xSeeder/xStaticSeeder"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSystem/xCorn"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSystem/xPing"
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSqlite"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xWebsocket/xEasyWS"
 
 	// Lua Executor
