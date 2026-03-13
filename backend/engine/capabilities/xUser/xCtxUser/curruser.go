@@ -90,8 +90,6 @@ func (c *CurrUserCapability) Execute(name string, params lazydata.LazyData) (any
 		return c.sendUserMessage(params)
 	case "get_user_info":
 		return c.getUserInfo(params)
-	case "get_user_config":
-		return c.getUserConfig(params)
 	default:
 		return nil, errors.New("unknown action: " + name)
 	}
@@ -155,13 +153,4 @@ func (c *CurrUserCapability) getUserInfo(params lazydata.LazyData) (any, error) 
 	}
 
 	return user, nil
-}
-
-func (c *CurrUserCapability) getUserConfig(_ lazydata.LazyData) (any, error) {
-	// userToken := params.GetFieldAsString("user_token")
-
-	// TODO: Implement this
-
-	return nil, nil
-
 }
