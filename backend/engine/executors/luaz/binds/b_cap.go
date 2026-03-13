@@ -83,6 +83,7 @@ type SignCapabilityTokenOptions struct {
 	ResourceId string         `json:"resource_id"`
 	ExtraMeta  map[string]any `json:"extrameta"`
 	UserId     int64          `json:"user_id"`
+	SubType    string         `json:"sub_type"`
 }
 
 func capSignToken(sdb datahub.SpaceOps, s *signer.Signer, L *lua.LState) int {
@@ -102,6 +103,7 @@ func capSignToken(sdb datahub.SpaceOps, s *signer.Signer, L *lua.LState) int {
 		SpaceId:      execState.SpaceId,
 		UserId:       opts.UserId,
 		ResourceId:   opts.ResourceId,
+		SubType:      opts.SubType,
 		ExtraMeta:    opts.ExtraMeta,
 	})
 	if err != nil {

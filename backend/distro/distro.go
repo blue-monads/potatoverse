@@ -2,6 +2,7 @@ package distro
 
 import (
 	// Capabilities
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xFiles"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xMigrator"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xSeeder/xAutoSeeder"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xSeeder/xStaticSeeder"

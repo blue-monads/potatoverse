@@ -72,6 +72,7 @@ type CapabilityClaim struct {
 	InstallId    int64          `json:"i,omitempty"`
 	SpaceId      int64          `json:"s,omitempty"`
 	UserId       int64          `json:"u,omitempty"`
+	SubType      string         `json:"st,omitempty"`
 	ResourceId   string         `json:"r,omitempty"`
 	ExtraMeta    map[string]any `json:"e,omitempty"`
 }
