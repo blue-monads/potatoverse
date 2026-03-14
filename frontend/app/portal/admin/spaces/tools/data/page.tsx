@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Database, Table2, ChevronLeft, ChevronRight, ChevronDown, Columns3, RefreshCw } from 'lucide-react';
+import { Database, Table2, ChevronDown, Columns3, RefreshCw, ChevronsUp } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import {
@@ -30,7 +30,6 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
     const router = useRouter();
 
     const selectedTable = searchParams.get('table') || '';
-    const currentOffset = parseInt(searchParams.get('offset') || '0', 10) || 0;
 
     const tablesLoader = useSimpleDataLoader<SpaceDataTable[]>({
         loader: () => listSpaceDataTables(installId),
@@ -42,6 +41,8 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
     const [dataLoading, setDataLoading] = useState(false);
     const [dataError, setDataError] = useState<string | null>(null);
     const [pickerOpen, setPickerOpen] = useState(false);
+    const [reachedEnd, setReachedEnd] = useState(false);
+    const [currentOffset, setCurrentOffset] = useState(0);
     const pickerRef = useRef<HTMLDivElement>(null);
 
     const tables = tablesLoader.data || [];
@@ -63,22 +64,30 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
         } else {
             params.delete('table');
         }
-        params.delete('offset');
         router.push(`?${params.toString()}`);
         setPickerOpen(false);
+        setRows([]);
+        setColumns([]);
+        setCurrentOffset(0);
+        setReachedEnd(false);
     };
 
-    const loadTableData = useCallback(async () => {
+    const loadInitial = useCallback(async () => {
         if (!selectedTable) return;
         setDataLoading(true);
         setDataError(null);
+        setCurrentOffset(0);
+        setReachedEnd(false);
         try {
             const [colsRes, rowsRes] = await Promise.all([
                 getSpaceDataTableColumns(installId, selectedTable),
-                querySpaceDataTable(installId, selectedTable, currentOffset, PAGE_LIMIT),
+                querySpaceDataTable(installId, selectedTable, 0, PAGE_LIMIT),
             ]);
             setColumns(colsRes.data || []);
-            setRows(rowsRes.data || []);
+            const newRows = rowsRes.data || [];
+            setRows(newRows);
+            setCurrentOffset(newRows.length);
+            if (newRows.length < PAGE_LIMIT) setReachedEnd(true);
         } catch (err: any) {
             setDataError(err.message || 'Failed to load table data');
             setColumns([]);
@@ -86,29 +95,44 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
         } finally {
             setDataLoading(false);
         }
-    }, [installId, selectedTable, currentOffset]);
+    }, [installId, selectedTable]);
+
+    const loadMore = useCallback(async () => {
+        if (!selectedTable || dataLoading) return;
+        setDataLoading(true);
+        try {
+            const rowsRes = await querySpaceDataTable(installId, selectedTable, currentOffset, PAGE_LIMIT);
+            const newRows = rowsRes.data || [];
+            if (newRows.length < PAGE_LIMIT) setReachedEnd(true);
+            setRows(prev => [...prev, ...newRows]);
+            setCurrentOffset(prev => prev + newRows.length);
+        } catch (err: any) {
+            setDataError(err.message || 'Failed to load more data');
+        } finally {
+            setDataLoading(false);
+        }
+    }, [installId, selectedTable, currentOffset, dataLoading]);
+
+    const goToStart = () => {
+        setRows([]);
+        setCurrentOffset(0);
+        setReachedEnd(false);
+        loadInitialRef.current?.();
+    };
+
+    const loadInitialRef = useRef(loadInitial);
+    loadInitialRef.current = loadInitial;
 
     useEffect(() => {
         if (selectedTable) {
-            loadTableData();
+            loadInitial();
         } else {
             setColumns([]);
             setRows([]);
+            setCurrentOffset(0);
+            setReachedEnd(false);
         }
-    }, [selectedTable, currentOffset, loadTableData]);
-
-    const hasNext = rows.length === PAGE_LIMIT;
-    const hasPrevious = currentOffset > 0;
-
-    const navigate = (newOffset: number) => {
-        const params = new URLSearchParams(searchParams.toString());
-        if (newOffset === 0) {
-            params.delete('offset');
-        } else {
-            params.set('offset', newOffset.toString());
-        }
-        router.push(`?${params.toString()}`);
-    };
+    }, [selectedTable, loadInitial]);
 
     const columnNames = columns.length > 0
         ? columns.map(c => c.name)
@@ -189,7 +213,7 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
                                 </span>
                             )}
                             <button
-                                onClick={() => { tablesLoader.reload(); if (selectedTable) loadTableData(); }}
+                                onClick={() => { tablesLoader.reload(); if (selectedTable) loadInitial(); }}
                                 disabled={dataLoading}
                                 className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-50"
                                 title="Refresh"
@@ -271,36 +295,30 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
                                 )}
                             </div>
 
-                            {/* Pagination */}
-                            {(hasPrevious || hasNext) && (
-                                <div className="px-4 py-2.5 bg-white border-t border-gray-200 flex items-center justify-between shrink-0">
+                            {/* Load More / Back to Start */}
+                            {rows.length > 0 && (
+                                <div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between shrink-0">
                                     <div className="text-xs text-gray-500">
-                                        Showing {currentOffset + 1} - {currentOffset + rows.length}
+                                        {rows.length} rows loaded
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    {reachedEnd ? (
                                         <button
-                                            onClick={() => navigate(Math.max(0, currentOffset - PAGE_LIMIT))}
-                                            disabled={!hasPrevious || dataLoading}
-                                            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${hasPrevious && !dataLoading
-                                                ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                }`}
+                                            onClick={goToStart}
+                                            disabled={dataLoading}
+                                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
                                         >
-                                            <ChevronLeft className="w-3.5 h-3.5" />
-                                            Prev
+                                            <ChevronsUp className="w-3.5 h-3.5" />
+                                            Back to Start
                                         </button>
+                                    ) : (
                                         <button
-                                            onClick={() => navigate(currentOffset + PAGE_LIMIT)}
-                                            disabled={!hasNext || dataLoading}
-                                            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${hasNext && !dataLoading
-                                                ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                }`}
+                                            onClick={loadMore}
+                                            disabled={dataLoading}
+                                            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
                                         >
-                                            Next
-                                            <ChevronRight className="w-3.5 h-3.5" />
+                                            {dataLoading ? 'Loading...' : 'Load More'}
                                         </button>
-                                    </div>
+                                    )}
                                 </div>
                             )}
                         </>
