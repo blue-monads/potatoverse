@@ -253,9 +253,17 @@ type TableInfo struct {
 	Schema    string `json:"schema,omitempty"`
 }
 
+type TableColumnInfo struct {
+	Cid        int    `json:"cid" db:"cid"`
+	Name       string `json:"name" db:"name"`
+	DataType   string `json:"data_type" db:"type"`
+	NotNull    int    `json:"not_null" db:"notnull"`
+	PrimaryKey int    `json:"primary_key" db:"pk"`
+}
+
 type DBLowOps interface {
 	ListTables() ([]TableInfo, error)
-	ListTableColumns(table string) ([]map[string]any, error)
+	ListTableColumns(table string) ([]TableColumnInfo, error)
 	FindTablePK(table string) (string, error)
 
 	DBLowCoreOps

@@ -472,7 +472,7 @@ func (d *LowDB) ListTables() ([]datahub.TableInfo, error) {
 	return tableInfos, nil
 }
 
-func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {
+func (d *LowDB) ListTableColumns(table string) ([]datahub.TableColumnInfo, error) {
 	finalTableName := d.tableName(table)
 	rawquery := fmt.Sprintf(`SELECT * FROM pragma_table_info('%s')`, finalTableName)
 	rows, err := d.sess.SQL().Query(rawquery)
@@ -482,7 +482,16 @@ func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {
 
 	defer rows.Close()
 
-	return dbutils.SelectScan(rows)
+	columns := []datahub.TableColumnInfo{}
+	for rows.Next() {
+		var column datahub.TableColumnInfo
+		if err := rows.Scan(&column.Cid, &column.Name, &column.DataType, &column.NotNull, &column.PrimaryKey); err != nil {
+			return nil, err
+		}
+		columns = append(columns, column)
+	}
+
+	return columns, nil
 }
 
 func (d *LowDB) FindTablePK(table string) (string, error) {
