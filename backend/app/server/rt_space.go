@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
@@ -155,6 +156,68 @@ func (a *Server) DeleteSpaceKV(claim *signer.AccessClaim, ctx *gin.Context) (any
 	}
 
 	return gin.H{"message": "KV entry deleted successfully"}, nil
+}
+
+func (a *Server) ListSpaceDataTables(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	tables, err := a.ctrl.ListSpaceDataTables(installId)
+	if err != nil {
+		return nil, err
+	}
+
+	return tables, nil
+}
+
+func (a *Server) GetSpaceDataTable(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	tableName := ctx.Param("table_name")
+	if tableName == "" {
+		return nil, errors.New("table name is required")
+	}
+
+	return a.ctrl.GetSpaceDataTable(installId, tableName)
+}
+
+func (a *Server) QuerySpaceDataTable(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	tableName := ctx.Param("table_name")
+	if tableName == "" {
+		return nil, errors.New("table name is required")
+	}
+
+	offset := ctx.Query("offset")
+	if offset == "" {
+		offset = "0"
+	}
+	limit := ctx.Query("limit")
+	if limit == "" {
+		limit = "100"
+	}
+
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return nil, err
+	}
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.ctrl.QuerySpaceDataTable(installId, tableName, offsetInt, limitInt)
 }
 
 // ListSpaceUsers lists all users for a space/package
