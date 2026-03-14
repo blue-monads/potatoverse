@@ -141,6 +141,7 @@ type SpaceOps interface {
 
 	// Space Capabilities
 	QuerySpaceCapabilities(installId int64, cond map[any]any) ([]dbmodels.SpaceCapability, error)
+	QueryAutoStartSpaceCapabilities() ([]dbmodels.SpaceCapability, error)
 	AddSpaceCapability(installId int64, data *dbmodels.SpaceCapability) error
 	GetSpaceCapability(installId int64, name string) (*dbmodels.SpaceCapability, error)
 	GetSpaceCapabilityByID(installId int64, id int64) (*dbmodels.SpaceCapability, error)

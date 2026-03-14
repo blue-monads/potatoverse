@@ -5,6 +5,16 @@ import (
 	"github.com/upper/db/v4"
 )
 
+func (d *SpaceOperations) QueryAutoStartSpaceCapabilities() ([]dbmodels.SpaceCapability, error) {
+	table := d.spaceCapabilitiesTable()
+	datas := make([]dbmodels.SpaceCapability, 0)
+	err := table.Find(db.Cond{"auto_start": true}).All(&datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
+}
+
 func (d *SpaceOperations) QuerySpaceCapabilities(installId int64, cond map[any]any) ([]dbmodels.SpaceCapability, error) {
 	table := d.spaceCapabilitiesTable()
 	datas := make([]dbmodels.SpaceCapability, 0)

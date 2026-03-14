@@ -198,6 +198,8 @@ CREATE TABLE IF NOT EXISTS SpaceCapabilities (
   install_id INTEGER NOT NULL,
   space_id INTEGER NOT NULL DEFAULT 0,
   capability_type TEXT NOT NULL DEFAULT '',
+  auto_start BOOLEAN NOT NULL DEFAULT FALSE,
+
   options JSON NOT NULL DEFAULT '{}',
 
   extrameta JSON NOT NULL DEFAULT '{}',
