@@ -409,7 +409,11 @@ func dbListTableColumns(dbOps datahub.DBLowOps, L *lua.LState) int {
 	}
 	resultTable := L.NewTable()
 	for _, column := range columns {
-		columnTable := luaplus.MapToTable(L, column)
+		columnTable, err := luaplus.StructToTable(L, &column)
+		if err != nil {
+			return luaplus.PushError(L, err)
+		}
+
 		resultTable.Append(columnTable)
 	}
 	L.Push(resultTable)
