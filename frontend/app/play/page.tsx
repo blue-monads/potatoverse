@@ -1,11 +1,7 @@
 "use client"
-import { useGApp } from "@/hooks";
-import ModalDemo from "@/hooks/modal/use";
+import { IconPicker } from "@/contain/IconPicker/IconPicker";
 
 export default function PlayPage() {
-  const { modal } = useGApp();
-
-  return (
-        <ModalDemo />
-  );
+  return <IconPicker onSelect={() => {}} />;
 }
+
