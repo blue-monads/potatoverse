@@ -18,6 +18,8 @@ type StateExport struct {
 	ExcludeTables []string `json:"exclude_tables"`
 }
 
+const exportBatchSize = 10
+
 func (c *CoreHub) ExportState(opts *StateExport) (string, error) {
 
 	zfile, err := os.CreateTemp("", "export_state_*.zip")
@@ -55,9 +57,11 @@ func (c *CoreHub) ExportState(opts *StateExport) (string, error) {
 
 		for {
 
+			qq.Println("@exportTableData", table, maxRowId, exportBatchSize)
+
 			data, err := dataOpts.FindAllByQuery(&datahub.FindQuery{
 				Table: table,
-				Limit: 10,
+				Limit: exportBatchSize,
 				Order: pkColumn,
 				Cond: map[any]any{
 					fmt.Sprintf("%s >", pkColumn): maxRowId,
