@@ -20,15 +20,11 @@ func (c *Controller) ListSpaceDataTables(installId int64) ([]datahub.TableInfo, 
 	for i := range tables {
 		table := &tables[i]
 
-		if table.TableType != "normal" {
-			continue
-		}
-
 		sanName := tablePattern.ReplaceAllString(table.Name, "")
 
 		resultTables = append(resultTables, datahub.TableInfo{
 			Name:      sanName,
-			TableType: "normal",
+			TableType: table.TableType,
 			Schema:    strings.ReplaceAll(table.Schema, table.Name, sanName),
 		})
 	}
