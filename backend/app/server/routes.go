@@ -160,7 +160,7 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	// data API
 	coreApi.GET("/space/:install_id/data/table", a.withAccessTokenFn(a.ListSpaceDataTables))
 	coreApi.GET("/space/:install_id/data/table/columns/:table_name", a.withAccessTokenFn(a.GetSpaceDataTable))
-	coreApi.POST("/space/:install_id/data/query/:table_name", a.withAccessTokenFn(a.QuerySpaceDataTable))
+	coreApi.GET("/space/:install_id/data/query/:table_name", a.withAccessTokenFn(a.QuerySpaceDataTable))
 
 	// Space Files API
 	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.adminListSpaceFiles))

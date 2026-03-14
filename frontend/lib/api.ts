@@ -983,6 +983,33 @@ export const getSpaceSpec = async (installId: number) => {
     return iaxios.get<any>(`/core/space/${installId}/spec.json`);
 }
 
+// Space Data Tables API
+export interface SpaceDataTable {
+    name: string;
+    table_type?: string;
+    schema?: string;
+}
+
+export interface SpaceDataColumn {
+    cid: number;
+    name: string;
+    data_type: string;
+    not_null: number;
+    primary_key: number;
+}
+
+export const listSpaceDataTables = async (installId: number) => {
+    return iaxios.get<SpaceDataTable[]>(`/core/space/${installId}/data/table`);
+}
+
+export const getSpaceDataTableColumns = async (installId: number, tableName: string) => {
+    return iaxios.get<SpaceDataColumn[]>(`/core/space/${installId}/data/table/columns/${tableName}`);
+}
+
+export const querySpaceDataTable = async (installId: number, tableName: string, offset: number = 0, limit: number = 50) => {
+    return iaxios.get<Record<string, any>[]>(`/core/space/${installId}/data/query/${tableName}?offset=${offset}&limit=${limit}`);
+}
+
 // export the full state of a space installation as a zip file
 export const exportSpaceState = async (installId: number, excludeTables: string[] = []) => {
     return iaxios.post(`/core/space/${installId}/export`, { exclude_tables: excludeTables }, { responseType: 'blob' });

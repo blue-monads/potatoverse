@@ -254,11 +254,12 @@ type TableInfo struct {
 }
 
 type TableColumnInfo struct {
-	Cid        int    `json:"cid" db:"cid"`
-	Name       string `json:"name" db:"name"`
-	DataType   string `json:"data_type" db:"type"`
-	NotNull    int    `json:"not_null" db:"notnull"`
-	PrimaryKey int    `json:"primary_key" db:"pk"`
+	Cid          int    `json:"cid" db:"cid"`
+	Name         string `json:"name" db:"name"`
+	DataType     string `json:"data_type" db:"type"`
+	NotNull      int    `json:"not_null" db:"notnull"`
+	DefaultValue any    `json:"default_value" db:"dflt_value"`
+	PrimaryKey   int    `json:"primary_key" db:"pk"`
 }
 
 type DBLowOps interface {

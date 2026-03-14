@@ -485,7 +485,7 @@ func (d *LowDB) ListTableColumns(table string) ([]datahub.TableColumnInfo, error
 	columns := []datahub.TableColumnInfo{}
 	for rows.Next() {
 		var column datahub.TableColumnInfo
-		if err := rows.Scan(&column.Cid, &column.Name, &column.DataType, &column.NotNull, &column.PrimaryKey); err != nil {
+		if err := rows.Scan(&column.Cid, &column.Name, &column.DataType, &column.NotNull, &column.DefaultValue, &column.PrimaryKey); err != nil {
 			return nil, err
 		}
 		columns = append(columns, column)

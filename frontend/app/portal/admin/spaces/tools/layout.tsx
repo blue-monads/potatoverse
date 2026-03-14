@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud, EllipsisVertical, Trash2 as Trash2Icon } from 'lucide-react';
+import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud, EllipsisVertical, Trash2 as Trash2Icon, Database } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getInstalledPackageInfo, InstalledPackageInfo, exportSpaceState, importSpaceState } from '@/lib';
@@ -34,6 +34,12 @@ const navItems = [
         value: 'kv',
         url: '/portal/admin/spaces/tools/kv',
         icon: Key,
+    },
+    {
+        label: 'Data',
+        value: 'data',
+        url: '/portal/admin/spaces/tools/data',
+        icon: Database,
     },
     {
         label: 'Capabilities',
