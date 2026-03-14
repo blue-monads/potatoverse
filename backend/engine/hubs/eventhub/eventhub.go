@@ -65,6 +65,9 @@ func (e *EventHub) Start() error {
 }
 
 func (e *EventHub) Publish(opts *xtypes.EventOptions) error {
+
+	qq.Println("@Publish/0", opts.Name, opts.ResourceId, opts.CollapseKey, opts.InstallId, opts.SpaceId)
+
 	installId := opts.InstallId
 	name := opts.Name
 	payload := opts.Payload

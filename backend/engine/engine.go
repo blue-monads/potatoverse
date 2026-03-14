@@ -325,6 +325,8 @@ func (e *Engine) GetRepoHub() *repohub.RepoHub {
 
 func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {
 
+	qq.Println("@PublishEvent/1", opts.Name, opts.ResourceId, opts.CollapseKey, opts.InstallId, opts.SpaceId)
+
 	return e.eventHub.Publish(opts)
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -80,8 +81,11 @@ func corePublishEvent(engine xtypes.Engine, es *executors.ExecState, L *lua.LSta
 	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
+		qq.Println("@corePublishEvent/0", err.Error())
 		return 1
 	}
+
+	qq.Println("@corePublishEvent/1", opts.Name, opts.ResourceId, opts.CollapseKey, es.InstalledId, es.SpaceId)
 
 	var payloadBytes []byte
 	if opts.Payload == nil {
@@ -97,11 +101,14 @@ func corePublishEvent(engine xtypes.Engine, es *executors.ExecState, L *lua.LSta
 			jsonData, err := json.Marshal(v)
 			if err != nil {
 				L.Push(lua.LString(err.Error()))
+				qq.Println("@corePublishEvent/2", err.Error())
 				return 1
 			}
 			payloadBytes = jsonData
 		}
 	}
+
+	qq.Println("@corePublishEvent/3", opts.Name, opts.ResourceId, opts.CollapseKey, es.InstalledId, es.SpaceId)
 
 	err = engine.PublishEvent(&xtypes.EventOptions{
 		InstallId:   es.InstalledId,
@@ -113,6 +120,7 @@ func corePublishEvent(engine xtypes.Engine, es *executors.ExecState, L *lua.LSta
 	})
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
+		qq.Println("@corePublishEvent/4", err.Error())
 		return 1
 	}
 	L.Push(lua.LNil)
