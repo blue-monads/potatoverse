@@ -2,29 +2,9 @@ package dbutils
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/alecthomas/repr"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
-	"github.com/upper/db/v4"
 )
-
-func Execute(driver *sql.DB, qstr string) error {
-	fmt.Print(qstr)
-
-	// fixme => check syntax using explain or sth
-	_, err := driver.Exec(qstr)
-
-	if err != nil {
-		qq.Println("ERROR =>", err.Error())
-	}
-
-	return err
-}
-
-func Table(sess db.Session, name string) db.Collection {
-	return sess.Collection(name)
-}
 
 func SelectScan(rows *sql.Rows) ([]map[string]any, error) {
 	defer rows.Close()
