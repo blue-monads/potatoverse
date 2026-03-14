@@ -88,7 +88,6 @@ func AutoMigrate(sess upperdb.Session) error {
 
 		pschema := strings.Replace(fileops.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
 		pschema = strings.Replace(pschema, "FileBlob", "PFileBlob", 1)
-		pschema = strings.Replace(pschema, "FileShares", "PFileShares", 1)
 
 		schema := schema.Get()
 
