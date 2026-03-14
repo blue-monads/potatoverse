@@ -71,12 +71,17 @@ func (b *WebsocketBuilder) GetDebugData() map[string]any {
 	return map[string]any{}
 }
 
+type wsMsg struct {
+	data   []byte
+	binary bool
+}
+
 // wsConn represents a managed websocket connection
 type wsConn struct {
 	connId string
 	userId int64
 	conn   net.Conn
-	send   chan []byte
+	send   chan *wsMsg
 	once   sync.Once
 	closed bool
 }
@@ -187,7 +192,12 @@ func (c *WebsocketCapability) writePump(wc *wsConn) {
 			return
 		}
 
-		err := wsutil.WriteServerText(wc.conn, msg)
+		var err error
+		if msg.binary {
+			err = wsutil.WriteServerBinary(wc.conn, msg.data)
+		} else {
+			err = wsutil.WriteServerText(wc.conn, msg.data)
+		}
 		if err != nil {
 			qq.Println("@ws/write_error", wc.connId, err)
 			c.removeConn(wc.connId)
@@ -267,9 +277,11 @@ func (c *WebsocketCapability) removeConn(connId string) {
 
 // shared helpers
 
-func (c *WebsocketCapability) sendToConnections(connIds []string, message []byte) error {
+func (c *WebsocketCapability) sendToConnections(connIds []string, message []byte, binary bool) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
+
+	msg := &wsMsg{data: message, binary: binary}
 
 	for _, connId := range connIds {
 		wc, exists := c.connections[connId]
@@ -278,7 +290,7 @@ func (c *WebsocketCapability) sendToConnections(connIds []string, message []byte
 		}
 
 		select {
-		case wc.send <- message:
+		case wc.send <- msg:
 		default:
 			qq.Println("@ws/drop_message", connId)
 		}
@@ -287,9 +299,11 @@ func (c *WebsocketCapability) sendToConnections(connIds []string, message []byte
 	return nil
 }
 
-func (c *WebsocketCapability) broadcastAll(message []byte) error {
+func (c *WebsocketCapability) broadcastAll(message []byte, binary bool) error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
+
+	msg := &wsMsg{data: message, binary: binary}
 
 	for connId, wc := range c.connections {
 		if wc.closed {
@@ -297,7 +311,7 @@ func (c *WebsocketCapability) broadcastAll(message []byte) error {
 		}
 
 		select {
-		case wc.send <- message:
+		case wc.send <- msg:
 		default:
 			qq.Println("@ws/drop_message", connId)
 		}
@@ -341,6 +355,7 @@ func (c *WebsocketCapability) Execute(name string, params lazydata.LazyData) (an
 		var p struct {
 			ConnIds []string        `json:"conns"`
 			Message json.RawMessage `json:"message"`
+			Binary  bool            `json:"binary"`
 		}
 		if err := params.AsJson(&p); err != nil {
 			return nil, err
@@ -348,16 +363,17 @@ func (c *WebsocketCapability) Execute(name string, params lazydata.LazyData) (an
 		if len(p.ConnIds) == 0 {
 			return nil, errors.New("conns is required")
 		}
-		return ok, c.sendToConnections(p.ConnIds, p.Message)
+		return ok, c.sendToConnections(p.ConnIds, p.Message, p.Binary)
 
 	case "broadcast_message":
 		var p struct {
 			Message json.RawMessage `json:"message"`
+			Binary  bool            `json:"binary"`
 		}
 		if err := params.AsJson(&p); err != nil {
 			return nil, err
 		}
-		return ok, c.broadcastAll(p.Message)
+		return ok, c.broadcastAll(p.Message, p.Binary)
 
 	case "list_connections":
 		return c.listConnections(), nil
@@ -414,7 +430,7 @@ func (cc *connectCtx) ExecuteAction(name string, params lazydata.LazyData) (any,
 			connId: cc.claim.ResourceId,
 			userId: cc.claim.UserId,
 			conn:   conn,
-			send:   make(chan []byte, 16),
+			send:   make(chan *wsMsg, 16),
 		}
 
 		cc.cap.mu.Lock()
@@ -458,15 +474,16 @@ func (m *messageCtx) ExecuteAction(name string, params lazydata.LazyData) (any, 
 	case "broadcast_current_message":
 		var p struct {
 			ConnIds []string `json:"conns"`
+			Binary  bool     `json:"binary"`
 		}
 		if err := params.AsJson(&p); err != nil {
 			return nil, err
 		}
 
 		if len(p.ConnIds) == 0 {
-			return ok, m.cap.broadcastAll(m.payload)
+			return ok, m.cap.broadcastAll(m.payload, p.Binary)
 		}
-		return ok, m.cap.sendToConnections(p.ConnIds, m.payload)
+		return ok, m.cap.sendToConnections(p.ConnIds, m.payload, p.Binary)
 
 	case "broadcast_message", "send_to_connections", "list_connections":
 		return m.cap.Execute(name, params)
