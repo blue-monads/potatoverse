@@ -62,6 +62,7 @@ Core system operations.
 - `sign_advisery_token(opts)` - Generate advisery token. `opts`: `{token_sub_type, user_id, data}`
 - `parse_advisery_token(toekn)` - Parse advisery token
 - `read_package_file(fpath)` - read package file contents
+- `get_env` - read env variable, which is set at package level (this is not os env)
 
 ## http.request
 
