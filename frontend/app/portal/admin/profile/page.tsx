@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Edit, Save, X } from 'lucide-react';
+import { User, Mail, Edit, Save, X, Smartphone } from 'lucide-react';
 import { getSelfInfo, updateSelfBio, User as UserType } from '../../../../lib/api';
 import { useGApp } from '../../../../hooks/contexts/GAppStateContext';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
     return (<>
@@ -11,6 +12,7 @@ export default function Page() {
 }
 
 const UserProfile = () => {
+    const router = useRouter();
     const { loaded, isInitialized, isAuthenticated } = useGApp();
     const [user, setUser] = useState<UserType | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -130,13 +132,27 @@ const UserProfile = () => {
                                 </button>
                             </>
                         ) : (
+                            <>
                             <button
                                 onClick={() => setIsEditing(true)}
-                                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                className="btn btn-base preset-filled bg-primary-600 text-white"
                             >
                                 <Edit className="w-4 h-4" />
                                 Edit Profile
                             </button>
+
+                            <button
+                                onClick={() => router.push('/portal/admin/profile/devices')}
+                                className="btn btn-base preset-filled bg-secondary-600 text-white"
+                            >
+                                <Smartphone className="w-4 h-4" />
+                                Devices
+                            </button>
+
+
+                            </>
+                            
+                            
                         )}
                     </div>
                 </div>

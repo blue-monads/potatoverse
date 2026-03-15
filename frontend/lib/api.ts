@@ -197,6 +197,22 @@ export const updateSelfBio = async (bio: string) => {
     return iaxios.put<{ message: string }>("/core/self/bio", { bio });
 }
 
+export interface UserDevice {
+    id: number;
+    name: string;
+    dtype: string;
+    user_id: number;
+    last_ip: string;
+    last_login: string;
+    expires_on: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export const getSelfDevices = async () => {
+    return iaxios.get<UserDevice[]>("/core/self/devices");
+}
+
 
 export interface InstallPackageResult {
     installed_id: number;

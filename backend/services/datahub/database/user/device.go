@@ -38,6 +38,15 @@ func (d *UserOperations) GetUserDevice(id int64) (*dbmodels.UserDevice, error) {
 	return data, nil
 }
 
+func (d *UserOperations) GetUserDeviceByTokenHash(userId int64, tokenHash string) (*dbmodels.UserDevice, error) {
+	data := &dbmodels.UserDevice{}
+	err := d.deviceTable().Find(db.Cond{"user_id": userId, "token_hash": tokenHash}).One(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
 func (d *UserOperations) UpdateUserDevice(id int64, data map[string]any) error {
 	return d.deviceTable().Find(db.Cond{"id": id}).Update(data)
 }

@@ -18,6 +18,7 @@ func (a *Server) login(ctx *gin.Context) {
 		httpx.WriteAuthErr(ctx, err)
 		return
 	}
+	data.ClientIP = ctx.ClientIP()
 
 	resp, err := a.ctrl.Login(data)
 	if err != nil {

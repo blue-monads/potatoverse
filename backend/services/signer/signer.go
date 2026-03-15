@@ -25,6 +25,7 @@ const (
 type AccessClaim struct {
 	Typeid    uint16         `json:"t,omitempty"`
 	UserId    int64          `json:"u,omitempty"`
+	DeviceId  int64          `json:"d,omitempty"`
 	Extrameta map[string]any `json:"e,omitempty"`
 }
 

@@ -50,3 +50,7 @@ func (s *Server) updateSelfBio(claim *signer.AccessClaim, ctx *gin.Context) (any
 
 	return gin.H{"message": "Bio updated successfully"}, nil
 }
+
+func (s *Server) selfListDevices(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	return s.ctrl.ListSelfDevices(claim.UserId)
+}

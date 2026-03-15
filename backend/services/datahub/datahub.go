@@ -73,6 +73,8 @@ type UserOps interface {
 
 	ListUserDevice(userId int64) ([]dbmodels.UserDevice, error)
 	GetUserDevice(id int64) (*dbmodels.UserDevice, error)
+	GetUserDeviceByTokenHash(userId int64, tokenHash string) (*dbmodels.UserDevice, error)
+	AddUserDevice(data *dbmodels.UserDevice) (int64, error)
 	DeleteUserDevice(id int64) error
 	UpdateUserDevice(id int64, data map[string]any) error
 
