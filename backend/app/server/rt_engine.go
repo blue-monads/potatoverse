@@ -361,6 +361,8 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 		return
 	}
 
+	token = strings.TrimPrefix(token, actions.PackageDevTokenPrefix)
+
 	// Parse the package dev token
 	claim, err := a.signer.ParsePackageDev(token)
 	if err != nil {
