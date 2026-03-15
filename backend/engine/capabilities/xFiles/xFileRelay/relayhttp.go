@@ -26,7 +26,7 @@ const (
 
 var (
 	Name         = "xFileRelay"
-	Icon         = "relay"
+	Icon         = "<i class='fa-solid fa-share-nodes'></i>"
 	OptionFields = []xcapability.CapabilityOptionField{}
 )
 
