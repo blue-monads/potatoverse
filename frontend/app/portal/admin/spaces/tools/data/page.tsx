@@ -189,12 +189,12 @@ const DataExplorerPage = ({ installId }: { installId: number }) => {
                         <div className="w-px h-5 bg-gray-200 shrink-0" />
 
                         {/* Scrollable table tabs */}
-                        <div className="flex-1 flex items-center overflow-x-auto no-scrollbar min-w-0">
+                        <div className="flex-1 flex items-center overflow-x-auto no-scrollbar min-w-0 pb-3">
                             {tables.map((t) => (
                                 <button
                                     key={t.name}
                                     onClick={() => setSelectedTable(t.name)}
-                                    className={`shrink-0 px-3 py-2.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${selectedTable === t.name
+                                    className={`shrink-0 px-3 py-4 text-sm font-medium transition-colors whitespace-nowrap border-b-2 ${selectedTable === t.name
                                         ? 'text-blue-600 border-blue-600'
                                         : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
                                         }`}
