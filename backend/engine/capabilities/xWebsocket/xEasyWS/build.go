@@ -20,7 +20,7 @@ var Ok = struct {
 }
 
 var (
-	Name = "easy-ws"
+	Name = "xEasyWS"
 	Icon = `<i class="fa-solid fa-hexagon-nodes"></i>`
 
 	OptionFields = []xcapability.CapabilityOptionField{
@@ -43,6 +43,11 @@ var (
 )
 
 func init() {
+	registerCapability(Name)
+	registerCapability("easy-ws") // deprecated
+}
+
+func registerCapability(name string) {
 
 	b := xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
@@ -60,13 +65,13 @@ func init() {
 
 			return builder, nil
 		},
-		Name:         Name,
+		Name:         name,
 		Icon:         Icon,
 		OptionFields: OptionFields,
 	}
 
-	registry.RegisterCapability(Name, b)
-	registry.RegisterCapability("xEasyWS", b)
+	registry.RegisterCapability(b)
+
 }
 
 type EasyWsBuilder struct {

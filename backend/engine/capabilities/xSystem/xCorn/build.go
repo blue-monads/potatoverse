@@ -29,7 +29,7 @@ func init() {
 		OptionFields:     OptionFields,
 	}
 
-	registry.RegisterCapability("xcorn", b)
+	registry.RegisterCapability(b)
 }
 
 type CornBuilder struct {

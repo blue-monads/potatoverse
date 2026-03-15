@@ -22,14 +22,14 @@ import (
 )
 
 var (
-	Name = "websocket"
+	Name = "xWebsocket"
 	Icon = `<i class="fa-solid fa-plug"></i>`
 
 	OptionFields = []xcapability.CapabilityOptionField{}
 )
 
 func init() {
-	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+	registry.RegisterCapability(xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			appTyped := app.(xtypes.App)
 			return &WebsocketBuilder{

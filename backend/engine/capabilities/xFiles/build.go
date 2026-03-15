@@ -26,8 +26,8 @@ func init() {
 		OptionFields: OptionFields,
 	}
 
-	registry.RegisterCapability(Name, b)
-	registry.RegisterCapability("xfiles", b)
+	registry.RegisterCapability(b)
+
 }
 
 type FilesBuilder struct {

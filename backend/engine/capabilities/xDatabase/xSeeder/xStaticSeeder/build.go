@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	Name         = "staticseeder"
+	Name         = "xStaticSeeder"
 	Icon         = `<i class="fa-solid fa-fill"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+	registry.RegisterCapability(xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			appTyped := app.(xtypes.App)
 			return &StaticSeederBuilder{app: appTyped}, nil

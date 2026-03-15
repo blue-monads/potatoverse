@@ -28,8 +28,7 @@ func init() {
 		OptionFields: OptionFields,
 	}
 
-	registry.RegisterCapability(Name, b)
-	registry.RegisterCapability("xsqlite", b)
+	registry.RegisterCapability(b)
 }
 
 type SqliteBuilder struct {
