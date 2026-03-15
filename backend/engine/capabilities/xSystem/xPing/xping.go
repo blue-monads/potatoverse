@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Name         = "Ping"
+	Name         = "xPing"
 	Icon         = `<i class="fa-solid fa-phone-volume"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
