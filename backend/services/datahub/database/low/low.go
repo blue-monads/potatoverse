@@ -162,6 +162,9 @@ func (d *LowDB) RunQueryOne(query string, data ...any) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("RunQueryOne", transformedQuery, data)
+
 	rows, err := driver.Query(transformedQuery, data...)
 	if err != nil {
 		return nil, err
