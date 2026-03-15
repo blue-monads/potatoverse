@@ -27,6 +27,7 @@ type DeveloperOptions struct {
 	ServerUrl     string   `json:"server_url" yaml:"server_url"`
 	Token         string   `json:"token" yaml:"token"`
 	TokenEnv      string   `json:"token_env" yaml:"token_env"`
+	PackageId     int64    `json:"package_id" yaml:"package_id"`
 	OutputZipFile string   `json:"output_zip_file,omitempty" yaml:"output_zip_file,omitempty"`
 	IncludeFiles  []string `json:"include_files,omitempty" yaml:"include_files,omitempty"`
 	ExcludeFiles  []string `json:"exclude_files,omitempty" yaml:"exclude_files,omitempty"`

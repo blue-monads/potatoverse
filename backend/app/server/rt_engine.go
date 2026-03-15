@@ -237,7 +237,9 @@ func (a *Server) GeneratePackageDevToken(claim *signer.AccessClaim, ctx *gin.Con
 		return nil, err
 	}
 
-	token, err := a.ctrl.GeneratePackageDevToken(claim.UserId, packageId)
+	epthermal := ctx.Query("epthermal") == "true"
+
+	token, err := a.ctrl.GeneratePackageDevToken(claim.UserId, packageId, epthermal)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/blue-monads/potatoverse/cmd/cli/pkgutils"
 )
 
@@ -47,24 +48,17 @@ func PushPackage(potatoYamlFile string, outputZipFile string) error {
 		return errors.New("server url is required")
 	}
 
-	token := potatoYaml.Developer.Token
-	if token == "" {
-		if potatoYaml.Developer.TokenEnv == "" {
-			return errors.New("token is required/1")
-		}
-
-		token = os.Getenv(potatoYaml.Developer.TokenEnv)
-	}
-
-	if token == "" {
-		return errors.New("token is required/2")
-	}
-
 	url := fmt.Sprintf("%s/zz/api/core/package/push", serverUrl)
 	req, err := http.NewRequest("POST", url, file)
 	if err != nil {
 		return err
 	}
+
+	token, err := deriveDevToken(potatoYaml)
+	if err != nil {
+		return err
+	}
+
 	req.Header.Set("Authorization", token)
 	req.Header.Set("Content-Type", "application/zip")
 
@@ -85,4 +79,22 @@ func PushPackage(potatoYamlFile string, outputZipFile string) error {
 	}
 
 	return nil
+}
+
+func deriveDevToken(potatoYaml *models.PotatoPackage) (string, error) {
+
+	token := potatoYaml.Developer.Token
+	if token == "" {
+		if potatoYaml.Developer.TokenEnv == "" {
+			return "", errors.New("token is required/1")
+		}
+
+		token = os.Getenv(potatoYaml.Developer.TokenEnv)
+	}
+
+	if token == "" {
+		return "", errors.New("token is required/2")
+	}
+
+	return "", nil
 }
