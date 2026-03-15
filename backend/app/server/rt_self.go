@@ -54,3 +54,15 @@ func (s *Server) updateSelfBio(claim *signer.AccessClaim, ctx *gin.Context) (any
 func (s *Server) selfListDevices(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	return s.ctrl.ListSelfDevices(claim.UserId)
 }
+
+type CreateDeviceRequest struct {
+	Name string `json:"name" binding:"required"`
+}
+
+func (s *Server) selfCreateDevice(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	var req CreateDeviceRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		return nil, err
+	}
+	return s.ctrl.CreateNewDevice(claim.UserId, req.Name)
+}

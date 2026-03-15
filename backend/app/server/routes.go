@@ -65,6 +65,7 @@ func (a *Server) bindRoutes() {
 func (a *Server) authRoutes(g *gin.RouterGroup) {
 
 	g.POST("/login", a.login)
+	g.POST("/device-token", a.loginWithDeviceToken)
 	g.GET("/invite/:token", a.getInviteInfo)
 	g.POST("/invite/:token", a.acceptInvite)
 
@@ -110,6 +111,7 @@ func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
 	g.GET("/info", a.withAccessTokenFn(a.selfInfo))
 	g.PUT("/bio", a.withAccessTokenFn(a.updateSelfBio))
 	g.GET("/devices", a.withAccessTokenFn(a.selfListDevices))
+	g.POST("/devices", a.withAccessTokenFn(a.selfCreateDevice))
 }
 
 func (a *Server) extraRoutes(g *gin.RouterGroup) {

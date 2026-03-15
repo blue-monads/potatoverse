@@ -213,6 +213,20 @@ export const getSelfDevices = async () => {
     return iaxios.get<UserDevice[]>("/core/self/devices");
 }
 
+export interface CreateDeviceResponse {
+    device: UserDevice;
+    token: string;
+    expires_on: string;
+}
+
+export const createSelfDevice = async (name: string) => {
+    return iaxios.post<CreateDeviceResponse>("/core/self/devices", { name });
+}
+
+/** Exchange a device token for an access token (for API/CLI). */
+export const loginWithDeviceToken = async (deviceToken: string) => {
+    return iaxios.post<{ access_token: string; user_info: User }>("/core/auth/device-token", { device_token: deviceToken });
+}
 
 export interface InstallPackageResult {
     installed_id: number;

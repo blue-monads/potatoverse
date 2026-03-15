@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Smartphone, ArrowLeft, Monitor } from "lucide-react";
-import { getSelfDevices, UserDevice } from "@/lib/api";
+import { Smartphone, ArrowLeft, Monitor, Plus, X, Copy, Check } from "lucide-react";
+import { getSelfDevices, createSelfDevice, UserDevice, CreateDeviceResponse } from "@/lib/api";
 import { useGApp } from "@/hooks";
 
 function formatDate(iso: string) {
@@ -25,6 +25,12 @@ function DevicesPage() {
     const [devices, setDevices] = useState<UserDevice[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [addOpen, setAddOpen] = useState(false);
+    const [addName, setAddName] = useState("");
+    const [addSubmitting, setAddSubmitting] = useState(false);
+    const [addError, setAddError] = useState<string | null>(null);
+    const [created, setCreated] = useState<CreateDeviceResponse | null>(null);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         if (loaded && isInitialized && isAuthenticated) {
@@ -43,6 +49,51 @@ function DevicesPage() {
             setError("Failed to load devices.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openAdd = () => {
+        setAddOpen(true);
+        setAddName("");
+        setAddError(null);
+        setCreated(null);
+        setCopied(false);
+    };
+
+    const closeAdd = () => {
+        setAddOpen(false);
+        if (created) loadDevices();
+    };
+
+    const submitAdd = async () => {
+        const name = addName.trim();
+        if (!name) {
+            setAddError("Name is required.");
+            return;
+        }
+        try {
+            setAddSubmitting(true);
+            setAddError(null);
+            const res = await createSelfDevice(name);
+            setCreated(res.data);
+        } catch (e: unknown) {
+            console.error("Failed to create device:", e);
+            setAddError(e && typeof e === "object" && "response" in e && e.response && typeof (e.response as { data?: { message?: string } }).data?.message === "string"
+                ? (e.response as { data: { message: string } }).data.message
+                : "Failed to create device.");
+        } finally {
+            setAddSubmitting(false);
+        }
+    };
+
+    const copyToken = async () => {
+        if (!created?.token) return;
+        try {
+            await navigator.clipboard.writeText(created.token);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            setAddError("Could not copy to clipboard.");
         }
     };
 
@@ -79,6 +130,17 @@ function DevicesPage() {
                                 <h1 className="text-xl font-bold">Devices</h1>
                                 <p className="text-sm text-gray-600">Sessions and devices where you’re signed in</p>
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={openAdd}
+                                className="btn btn-base preset-filled bg-primary-600 text-white"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Device
+                            </button>
                         </div>
 
 
@@ -137,6 +199,101 @@ function DevicesPage() {
                     )}
                 </div>
             </div>
+
+            {addOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <h2 className="text-lg font-semibold">
+                                {created ? "Device created" : "Add device"}
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={closeAdd}
+                                className="p-1 rounded hover:bg-gray-100"
+                                aria-label="Close"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            {created ? (
+                                <>
+                                    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                        Copy the device token now. It won’t be shown again. Use it with <code className="text-xs bg-amber-100 px-1 rounded">POST /zz/api/core/auth/device-token</code> to get an access token.
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={created.token}
+                                            className="flex-1 font-mono text-sm p-2 border border-gray-200 rounded bg-gray-50"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={copyToken}
+                                            className="btn btn-base preset-filled bg-primary-600 text-white flex items-center gap-1"
+                                        >
+                                            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                            {copied ? "Copied" : "Copy"}
+                                        </button>
+                                    </div>
+                                    {created.expires_on && (
+                                        <p className="text-xs text-gray-500">
+                                            Expires: {formatDate(created.expires_on)}
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {addError && (
+                                        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">{addError}</p>
+                                    )}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                        <input
+                                            type="text"
+                                            value={addName}
+                                            onChange={(e) => setAddName(e.target.value)}
+                                            placeholder="e.g. My API client"
+                                            className="w-full p-2 border border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        {!created ? (
+                            <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
+                                <button
+                                    type="button"
+                                    onClick={closeAdd}
+                                    className="btn btn-base preset-tonal"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={submitAdd}
+                                    disabled={addSubmitting}
+                                    className="btn btn-base preset-filled bg-primary-600 text-white disabled:opacity-50"
+                                >
+                                    {addSubmitting ? "Creating…" : "Create"}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="p-4 border-t border-gray-200">
+                                <button
+                                    type="button"
+                                    onClick={closeAdd}
+                                    className="btn btn-base preset-filled bg-primary-600 text-white w-full"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
