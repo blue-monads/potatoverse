@@ -65,8 +65,61 @@ func CoreBindable(app xtypes.App) map[string]lua.LGFunction {
 			L.Push(lua.LString(app.Database().Vender()))
 			return 1
 		},
+
+		"get_env": func(L *lua.LState) int {
+			return getEnv(app, L)
+		},
 	}
 
+}
+
+const ENV_CACHE_KEY = "__potato_envs__"
+
+func getEnv(app xtypes.App, L *lua.LState) int {
+	key := L.CheckString(1)
+	es := GetExecState(L)
+
+	// Check cached envs in __envs__ global variable
+	if lv := L.GetGlobal(ENV_CACHE_KEY); lv.Type() == lua.LTTable {
+		if v := lv.(*lua.LTable).RawGetString(key); v != lua.LNil {
+			L.Push(v)
+			L.Push(lua.LNil)
+			return 2
+		}
+	}
+
+	// Fall back to package install env vars
+	pkgOps := app.Database().GetPackageInstallOps()
+	pkg, err := pkgOps.GetPackage(es.InstalledId)
+	if err != nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(err.Error()))
+		return 2
+	}
+	envs := make(map[string]string)
+	if pkg.EnvVars != "" {
+		if err := json.Unmarshal([]byte(pkg.EnvVars), &envs); err != nil {
+			L.Push(lua.LNil)
+			L.Push(lua.LString(err.Error()))
+			return 2
+		}
+	}
+	// Cache in __envs__ for next time
+	tbl := L.GetGlobal(ENV_CACHE_KEY)
+	if tbl.Type() != lua.LTTable {
+		tbl = L.NewTable()
+		L.SetGlobal(ENV_CACHE_KEY, tbl)
+	}
+	for k, val := range envs {
+		tbl.(*lua.LTable).RawSetString(k, lua.LString(val))
+	}
+	if v, ok := envs[key]; ok {
+		L.Push(lua.LString(v))
+	} else {
+		L.Push(lua.LNil)
+	}
+	L.Push(lua.LNil)
+	return 2
 }
 
 type PublishEventOptions struct {

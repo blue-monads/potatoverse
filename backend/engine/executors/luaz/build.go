@@ -58,7 +58,7 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 				qq.Println("@script file load error", err)
 				qq.Println("@package file not found", opt.PackageVersionId, opt.SpaceId, s.ServerFile)
 				qq.Println("@space", s)
-				return nil, errors.New("package file not found")
+				return nil, fmt.Errorf("package file not found: %w", err)
 			}
 			source = string(packageFile)
 		}
