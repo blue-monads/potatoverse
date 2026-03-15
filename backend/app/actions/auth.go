@@ -114,6 +114,8 @@ func HashToken(token string) string {
 	return hex.EncodeToString(h[:])
 }
 
+const deviceTokenPrefix = "pdsec_"
+
 type CreateDeviceResponse struct {
 	Device    *dbmodels.UserDevice `json:"device"`
 	Token     string               `json:"token"`
@@ -162,13 +164,15 @@ func (c *Controller) CreateNewDevice(userId int64, deviceName string) (*CreateDe
 
 	return &CreateDeviceResponse{
 		Device:    device,
-		Token:     token,
+		Token:     deviceTokenPrefix + token,
 		ExpiresOn: expiresOn,
 	}, nil
 }
 
 // LoginWithDeviceToken exchanges a device token for an access token. Used by API/CLI clients.
+// Device tokens are expected to have the pdsec_ prefix; it is stripped before parsing.
 func (c *Controller) LoginWithDeviceToken(deviceToken string, clientIP string) (*LoginResponse, error) {
+	deviceToken = strings.TrimPrefix(deviceToken, deviceTokenPrefix)
 	claim, err := c.signer.ParseDevice(deviceToken)
 	if err != nil {
 		return nil, errors.New("invalid device token")
