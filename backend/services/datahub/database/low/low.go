@@ -9,6 +9,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/enforcer"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/dbutils"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -314,6 +315,8 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 		return nil, errors.New("no joins provided")
 	}
 
+	qq.Println("FindByJoin", query)
+
 	for i := range query.Joins {
 		join := &query.Joins[i]
 		if join.LeftAs == "" {
@@ -395,7 +398,7 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 		sqlQuery = sqlQuery.OrderBy(query.Order)
 	}
 
-	// qq.Println(sqlQuery.String())
+	qq.Println(sqlQuery.String())
 
 	// Execute query and get rows
 	rows, err := sqlQuery.Query()
