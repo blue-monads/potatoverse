@@ -9,7 +9,7 @@ import (
 
 var (
 	Name         = "xUgroup"
-	Icon         = ""
+	Icon         = "<i class='fa-solid fa-users'></i>"
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name: "All User Groups",

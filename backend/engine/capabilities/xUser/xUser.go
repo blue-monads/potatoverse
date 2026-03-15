@@ -14,7 +14,7 @@ import (
 
 var (
 	Name         = "xUser"
-	Icon         = ""
+	Icon         = "<i class='fa-solid fa-user'></i>"
 	OptionFields = []xcapability.CapabilityOptionField{}
 )
 
