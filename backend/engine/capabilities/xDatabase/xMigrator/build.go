@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Name         = "migrator"
+	Name         = "xMigrator"
 	Icon         = `<i class="fa-solid fa-database"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
