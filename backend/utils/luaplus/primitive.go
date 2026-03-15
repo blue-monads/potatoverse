@@ -7,7 +7,7 @@ import (
 )
 
 func LuaTypeToGoType(l *lua.LState, lvalue lua.LValue) any {
-	if lvalue == lua.LNil {
+	if lvalue == nil || lvalue.Type() == lua.LTNil {
 		return nil
 	}
 

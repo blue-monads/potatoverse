@@ -42,6 +42,8 @@ func LuaToAny(L *lua.LState, value lua.LValue) any {
 		} else {
 			return TableToMap(L, tbl)
 		}
+	case lua.LTNil:
+		return nil
 
 	default:
 		return value.String()
@@ -72,6 +74,8 @@ func MapToTable(L *lua.LState, m map[string]any) *lua.LTable {
 			L.SetField(table, k, lua.LNumber(vt))
 		case bool:
 			L.SetField(table, k, lua.LBool(vt))
+		case nil:
+			L.SetField(table, k, lua.LNil)
 		case map[string]any:
 			L.SetField(table, k, MapToTable(L, vt))
 		case []any:
