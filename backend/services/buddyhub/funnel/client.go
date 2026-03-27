@@ -213,6 +213,9 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 		}
 	}
 
+	// fix encoding issue
+	req.Header.Del("Accept-Encoding")
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
