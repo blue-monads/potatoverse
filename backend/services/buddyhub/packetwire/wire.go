@@ -2,11 +2,15 @@ package packetwire
 
 import (
 	"encoding/binary"
+	"fmt"
+	"hash/crc64"
 	"io"
 	"net"
 
 	nanoid "github.com/jaevor/go-nanoid"
 )
+
+var crcTable = crc64.MakeTable(crc64.ISO)
 
 type PacketType = uint8
 
@@ -73,6 +77,15 @@ func WritePacket(conn net.Conn, packet *Packet) error {
 		return err
 	}
 
+	// write checksum
+	checksumBytes := make([]byte, 8)
+	checksum := crc64.Checksum(packet.Data, crcTable)
+	binary.BigEndian.PutUint64(checksumBytes, checksum)
+	_, err = conn.Write(checksumBytes)
+	if err != nil {
+		return err
+	}
+
 	// write data
 	totalWritten := 0
 	for {
@@ -123,11 +136,24 @@ func ReadPacket(conn net.Conn) (*Packet, error) {
 	}
 	total := binary.BigEndian.Uint32(intBytes)
 
+	// read checksum
+	checksumBytes := make([]byte, 8)
+	_, err = io.ReadFull(conn, checksumBytes)
+	if err != nil {
+		return nil, err
+	}
+	expectedChecksum := binary.BigEndian.Uint64(checksumBytes)
+
 	// read data
 	dataBytes := make([]byte, length)
 	_, err = io.ReadFull(conn, dataBytes)
 	if err != nil {
 		return nil, err
+	}
+
+	actualChecksum := crc64.Checksum(dataBytes, crcTable)
+	if actualChecksum != expectedChecksum {
+		return nil, fmt.Errorf("data corruption detected: expected checksum %016x, got %016x", expectedChecksum, actualChecksum)
 	}
 
 	packet.PType = ptype

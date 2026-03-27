@@ -37,7 +37,7 @@ type BuddyHub struct {
 }
 
 const (
-	CloudFunnelURL = "https://tubersalltheway.top/zz/buddy/register"
+	CloudFunnelURL = "http://tubersalltheway.top/zz/buddy/register"
 	LocalFunnelURL = "http://localhost:7771/zz/buddy/register"
 
 	DefaultFunnelHQ = CloudFunnelURL
