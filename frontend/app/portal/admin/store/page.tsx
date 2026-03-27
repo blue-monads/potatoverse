@@ -407,7 +407,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                                     const response = await installPackage(url);
                                     if (response.status !== 200) {
                                         setMode('error');
-                                        setErrorMessage(response.data?.message || 'Unknown error');
+                                        setErrorMessage((response.data as any)?.message || 'Unknown error');
                                         return;
                                     }
 
@@ -432,7 +432,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                                     const response = await installPackageZip(zip);
                                     if (response.status !== 200) {
                                         setMode('error');
-                                        setErrorMessage(response.data?.message || 'Unknown error');
+                                        setErrorMessage((response.data as any)?.message || 'Unknown error');
                                         return;
                                     }
 
@@ -534,7 +534,7 @@ const InstallPackageModal = ({ slug, repoSlug, gapp }: { slug: string, repoSlug?
                         const resp = await installPackageEmbed(slug, repoSlug);
                         if (resp.status !== 200) {
                             setMode('error');
-                            setErrorMessage(resp.data?.message || 'Unknown error');
+                            setErrorMessage((resp.data as any)?.message || 'Unknown error');
                             return;
                         }
                         setInstallResult(resp.data);
