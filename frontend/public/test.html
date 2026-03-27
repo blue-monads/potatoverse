@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gin Endpoint Tester</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        input {
+            padding: 8px;
+            width: 70%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #log {
+            background: #f4f4f4;
+            padding: 10px;
+            margin-top: 20px;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px inset #ccc;
+            font-family: monospace;
+        }
+
+        .ws-msg {
+            color: blue;
+        }
+
+        .post-msg {
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>TEST TEST WE ARE BEST </h2>
+        <input type="text" id="inputBox" placeholder="Type something..." value="Hello">
+        <br><br>
+
+        <button onclick="testWebSocket()">Send via WebSocket</button>
+        <button onclick="testPOST()">Send via POST</button>
+
+        <h3>Response Log:</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const logDiv = document.getElementById('log');
+        const input = document.getElementById('inputBox');
+
+
+
+        const url = `${location.origin}/zz/testWS`
+        const postUrl = `${location.origin}/zz/testPOST`
+
+
+        const socket = new WebSocket(url.replace('http', 'ws'));
+
+
+
+        socket.onopen = () => appendLog("System", "WebSocket Connected!", "black");
+        socket.onerror = (error) => appendLog("Error", "WebSocket Connection Failed", "red");
+
+        socket.onmessage = (event) => {
+            appendLog("WS Received", event.data, "blue");
+        };
+
+        function testWebSocket() {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(input.value);
+            } else {
+                appendLog("Error", "WebSocket is not open", "red");
+            }
+        }
+
+        // --- POST Logic ---
+        async function testPOST() {
+            try {
+                const response = await fetch(postUrl, {
+                    method: 'POST',
+                    body: input.value
+                });
+                const text = await response.text();
+                appendLog("POST Received", text, "green");
+            } catch (error) {
+                appendLog("Error", "POST request failed", "red");
+            }
+        }
+
+        // Helper to show results on screen
+        function appendLog(type, msg, color) {
+            const entry = document.createElement('div');
+            entry.style.color = color;
+            entry.innerHTML = `<strong>[${type}]:</strong> ${msg}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+    </script>
+
+</body>
+
+</html>

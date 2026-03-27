@@ -60,6 +60,9 @@ func (a *Server) bindRoutes() {
 		c.FileFromFS(fpath, http.FS(docs.Docs))
 	})
 
+	zroot.GET("/testWS", a.testWS)
+	zroot.POST("/testPOST", a.testPOST)
+
 }
 
 func (a *Server) authRoutes(g *gin.RouterGroup) {
