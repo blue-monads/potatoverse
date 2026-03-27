@@ -65,7 +65,7 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 		packet: &packetwire.Packet{
 			PType:  packetwire.PTypeSendHeader,
 			Offset: 0,
-			Total:  0, // WebSocket doesn't have a body in the initial request
+			Total:  int32(len(out)),
 			Data:   out,
 		},
 		reqId: reqId,

@@ -12,36 +12,40 @@ import (
 	"strconv"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
-	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 	"github.com/k0kubun/pp"
 )
 
+func DebugLog(a ...interface{}) (n int, err error) {
+
+	return 0, nil
+}
+
 // Route routes an HTTP request to the specified server and writes the response back to gin.Context
 func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
-	qq.Println("@routeHttp/1", nodeId)
+	DebugLog("@routeHttp/1", nodeId)
 
 	// Get server connection
 	f.scLock.RLock()
 	serverConn, exists := f.serverConnections[nodeId]
 	f.scLock.RUnlock()
 
-	qq.Println("@routeHttp/2")
+	DebugLog("@routeHttp/2")
 
 	if !exists {
-		qq.Println("@routeHttp/2{SERVER_NOT_CONNECTED}")
+		DebugLog("@routeHttp/2{SERVER_NOT_CONNECTED}")
 		c.Abort()
 		f.dumpConnIds()
 
 		return
 	}
 
-	qq.Println("@routeHttp/2.1")
+	DebugLog("@routeHttp/2.1")
 
 	// Generate request ID
 	reqId := packetwire.GetRequestId()
 
-	qq.Println("@routeHttp/2.2")
+	DebugLog("@routeHttp/2.2")
 
 	pendingReqChan := make(chan *packetwire.Packet)
 	f.pendingReqLock.Lock()
@@ -49,13 +53,13 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 	f.pendingReqLock.Unlock()
 
 	defer func() {
-		qq.Println("@cleanup/1{REQ_ID}", reqId)
+		DebugLog("@cleanup/1{REQ_ID}", reqId)
 		f.pendingReqLock.Lock()
 		delete(f.pendingReq, reqId)
 		f.pendingReqLock.Unlock()
 	}()
 
-	qq.Println("@routeHttp/3")
+	DebugLog("@routeHttp/3")
 
 	// Dump request
 	req := c.Request
@@ -65,7 +69,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 		return
 	}
 
-	qq.Println("@routeHttp/4")
+	DebugLog("@routeHttp/4")
 
 	// Write request header packet
 
@@ -79,18 +83,18 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 		reqId: reqId,
 	}
 
-	qq.Println("@routeHttp/6")
+	DebugLog("@routeHttp/6")
 
 	if req.ContentLength > 0 {
 
-		qq.Println("@routeHttp/7")
+		DebugLog("@routeHttp/7")
 
 		fbuf := make([]byte, packetwire.FragmentSize)
 		offset := int32(0)
 
 		for {
 
-			qq.Println("@routeHttp/8")
+			DebugLog("@routeHttp/8")
 
 			last := false
 			n, err := req.Body.Read(fbuf)
@@ -167,7 +171,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 		panic(err)
 	}
 
-	qq.Println("@routeHttp/parseResponse/1{STATUS}", resp.StatusCode, "CONTENT_LENGTH", resp.ContentLength)
+	DebugLog("@routeHttp/parseResponse/1{STATUS}", resp.StatusCode, "CONTENT_LENGTH", resp.ContentLength)
 
 	header := c.Writer.Header()
 	maps.Copy(header, resp.Header)
@@ -178,7 +182,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 		header.Set("Content-Length", strconv.FormatInt(resp.ContentLength, 10))
 	}
 
-	qq.Println("@routeHttp/parseResponse/2{HEADERS_COPIED}")
+	DebugLog("@routeHttp/parseResponse/2{HEADERS_COPIED}")
 
 	c.Writer.WriteHeader(resp.StatusCode)
 
@@ -188,7 +192,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 			break
 		}
 
-		qq.Println("@routeHttp/writeBody/1{PACKET_TYPE}", wpack.PType, "DATA_LEN", len(wpack.Data))
+		DebugLog("@routeHttp/writeBody/1{PACKET_TYPE}", wpack.PType, "DATA_LEN", len(wpack.Data))
 
 		for {
 			n, err := c.Writer.Write(wpack.Data)
@@ -196,7 +200,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 				pp.Println("@err/Write", err.Error())
 				break
 			}
-			qq.Println("@routeHttp/writeBody/2{WRITTEN}", n, "REMAINING", len(wpack.Data)-n)
+			DebugLog("@routeHttp/writeBody/2{WRITTEN}", n, "REMAINING", len(wpack.Data)-n)
 			wpack.Data = wpack.Data[n:]
 			if len(wpack.Data) == 0 {
 				break
@@ -204,7 +208,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 		}
 
 		if wpack.PType == packetwire.PtypeEndBody {
-			qq.Println("@routeHttp/writeBody/3{END_BODY}")
+			DebugLog("@routeHttp/writeBody/3{END_BODY}")
 			break
 		}
 	}
@@ -220,6 +224,6 @@ func (f *Funnel) dumpConnIds() {
 		keys = append(keys, k)
 	}
 
-	qq.Println("@keys", keys)
+	DebugLog("@keys", keys)
 
 }
