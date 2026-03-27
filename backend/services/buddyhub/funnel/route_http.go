@@ -89,10 +89,10 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 
 		DebugLog("@routeHttp/7")
 
-		fbuf := make([]byte, packetwire.FragmentSize)
 		offset := int32(0)
 
 		for {
+			fbuf := make([]byte, packetwire.FragmentSize)
 
 			DebugLog("@routeHttp/8")
 

@@ -331,9 +331,9 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 		qq.Println("@handleHttpRequest/case_negative_length/chunked")
 
 		offset := int32(0)
-		fbuf := make([]byte, packetwire.FragmentSize)
 
 		for {
+			fbuf := make([]byte, packetwire.FragmentSize)
 			n, err := resp.Body.Read(fbuf)
 			if err != nil && err != io.EOF {
 				return
