@@ -45,20 +45,43 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 		existIng.conn.Close()
 	}
 
+	// Send KCP upgrade packet if KCP server is running
+	if f.kcpPort > 0 {
+		upgradePacket := &packetwire.KCPUpgradePacket{
+			Port:  int32(f.kcpPort),
+			Token: nodeId, // Currently token is just nodeId
+		}
+		packet := &packetwire.Packet{
+			PType: packetwire.PtypeKcpUpgrade,
+			Data:  upgradePacket.Encode(),
+		}
+		// Send over WebSocket
+		go func() {
+			err := packetwire.WritePacketFull(conn, packet, packetwire.GetRequestId())
+			if err != nil {
+				qq.Println("@Funnel/registerServer/2{KCP_UPGRADE_ERROR}", err)
+			}
+		}()
+	}
+
 	// Start goroutine to handle incoming responses from this server
-	go f.handleServerConnection(nodeId, swchan, conn)
+	go f.handleServerConnection(nodeId, swchan, conn, func() {
+		f.scLock.Lock()
+		delete(f.serverConnections, nodeId)
+		f.scLock.Unlock()
+	})
 }
 
 // handleServerConnection handles incoming packets from a server connection
-func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite, conn net.Conn) {
+func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite, conn net.Conn, onExit func()) {
 	qq.Println("@handleServerConnection/1", nodeId)
 	defer func() {
 		conn.Close()
 
 		qq.Println("@handleServerConnection/2", nodeId)
-		f.scLock.Lock()
-		delete(f.serverConnections, nodeId)
-		f.scLock.Unlock()
+		if onExit != nil {
+			onExit()
+		}
 	}()
 
 	go func() {

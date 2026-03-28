@@ -7,6 +7,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
+	"github.com/xtaci/kcp-go/v5"
 )
 
 // Funnel is a service that routes all http requests to a node(server) which are connected
@@ -26,17 +27,25 @@ type Funnel struct {
 	serverConnections map[string]*ServerHandle
 	scLock            sync.RWMutex
 
+	KcpServerConnections map[string]*ServerHandle
+	kcpScLock            sync.RWMutex
+
 	pendingReq     map[string]chan *packetwire.Packet
 	pendingReqLock sync.Mutex
+
+	kcpListener *kcp.Listener
+	kcpPort     int
 }
 
 // New creates a new Funnel instance
 func New() *Funnel {
 	return &Funnel{
-		serverConnections: make(map[string]*ServerHandle),
-		scLock:            sync.RWMutex{},
-		pendingReq:        make(map[string]chan *packetwire.Packet),
-		pendingReqLock:    sync.Mutex{},
+		serverConnections:    make(map[string]*ServerHandle),
+		scLock:               sync.RWMutex{},
+		KcpServerConnections: make(map[string]*ServerHandle),
+		kcpScLock:            sync.RWMutex{},
+		pendingReq:           make(map[string]chan *packetwire.Packet),
+		pendingReqLock:       sync.Mutex{},
 	}
 }
 

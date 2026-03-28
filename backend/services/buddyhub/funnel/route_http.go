@@ -26,17 +26,10 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 	DebugLog("@routeHttp/1", nodeId)
 
 	// Get server connection
-	f.scLock.RLock()
-	serverConn, exists := f.serverConnections[nodeId]
-	f.scLock.RUnlock()
-
-	DebugLog("@routeHttp/2")
-
-	if !exists {
-		DebugLog("@routeHttp/2{SERVER_NOT_CONNECTED}")
+	serverConn := f.getServerConn(nodeId)
+	if serverConn == nil {
+		c.Writer.WriteHeader(http.StatusBadGateway)
 		c.Abort()
-		f.dumpConnIds()
-
 		return
 	}
 

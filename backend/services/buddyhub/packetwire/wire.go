@@ -2,6 +2,7 @@ package packetwire
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"hash/crc64"
 	"io"
@@ -24,7 +25,27 @@ const (
 	PtypeWebSocketPing     PacketType = iota
 	PtypeWebSocketPong     PacketType = iota
 	PtypeEndSocket         PacketType = iota
+	PtypeKcpUpgrade        PacketType = iota
 )
+
+type KCPUpgradePacket struct {
+	Port  int32  `json:"port"`
+	Token string `json:"token"`
+}
+
+func (p *KCPUpgradePacket) Encode() []byte {
+	res, _ := json.Marshal(p)
+	return res
+}
+
+func DecodeKCPUpgradePacket(data []byte) (*KCPUpgradePacket, error) {
+	var p KCPUpgradePacket
+	err := json.Unmarshal(data, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
 
 type Packet struct {
 	PType  PacketType

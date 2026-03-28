@@ -112,6 +112,10 @@ func (bh *BuddyHub) Start() error {
 
 	if os.Getenv("POTATO_DISABLE_EMBED_FUNNEL") != "1" {
 		bh.embeddedFunnel = funnel.New()
+		err := bh.embeddedFunnel.StartKcpServer()
+		if err != nil {
+			bh.logger.Error("Failed to start KCP server", "err", err)
+		}
 	}
 
 	return nil
