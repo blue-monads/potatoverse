@@ -9,7 +9,7 @@ import (
 )
 
 func (f *Funnel) StartKcpServer() error {
-	l, err := kcp.ListenWithOptions(":0", nil, 10, 3)
+	l, err := kcp.ListenWithOptions(":0", nil, 0, 0)
 	if err != nil {
 		return err
 	}
