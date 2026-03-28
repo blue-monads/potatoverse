@@ -4,6 +4,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
@@ -47,10 +48,15 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 
 	// Send KCP upgrade packet if KCP server is running
 	if f.kcpPort > 0 {
+
+		directHost := os.Getenv("POTATO_FUNNEL_DHOST")
+
 		upgradePacket := &packetwire.KCPUpgradePacket{
-			Port:  int32(f.kcpPort),
-			Token: nodeId, // Currently token is just nodeId
+			Port:       int32(f.kcpPort),
+			Token:      nodeId, // Currently token is just nodeId
+			DirectHost: directHost,
 		}
+
 		packet := &packetwire.Packet{
 			PType: packetwire.PtypeKcpUpgrade,
 			Data:  upgradePacket.Encode(),

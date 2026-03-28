@@ -29,8 +29,9 @@ const (
 )
 
 type KCPUpgradePacket struct {
-	Port  int32  `json:"port"`
-	Token string `json:"token"`
+	Port       int32  `json:"port"`
+	Token      string `json:"token"`
+	DirectHost string `json:"direct_host"`
 }
 
 func (p *KCPUpgradePacket) Encode() []byte {

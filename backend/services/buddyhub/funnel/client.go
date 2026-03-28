@@ -150,9 +150,13 @@ func (c *FunnelClient) upgradeToKcp(upgrade *packetwire.KCPUpgradePacket) {
 		return
 	}
 
-	host, _, _ := net.SplitHostPort(u.Host)
+	host := upgrade.DirectHost
+
 	if host == "" {
-		host = u.Host
+		host, _, _ = net.SplitHostPort(u.Host)
+		if host == "" {
+			host = u.Host
+		}
 	}
 
 	addr := fmt.Sprintf("%s:%d", host, upgrade.Port)
