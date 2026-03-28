@@ -13,9 +13,9 @@ import (
 )
 
 func (f *Funnel) getServerConn(nodeId string) *ServerHandle {
-	f.kcpScLock.RLock()
-	serverConn, exists := f.KcpServerConnections[nodeId]
-	f.kcpScLock.RUnlock()
+	f.quicScLock.RLock()
+	serverConn, exists := f.QuicServerConnections[nodeId]
+	f.quicScLock.RUnlock()
 
 	if !exists {
 		f.scLock.RLock()
@@ -37,7 +37,7 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 	qq.Println("@routeWS/1", nodeId)
 	serverConn := f.getServerConn(nodeId)
 	if serverConn == nil {
-		c.Writer.WriteHeader(http.StatusBadGateway)
+		c.String(http.StatusBadGateway, "server not connected")
 		c.Abort()
 		return
 	}

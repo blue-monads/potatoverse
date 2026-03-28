@@ -2,14 +2,13 @@ package funnel
 
 import (
 	"io"
-	"net"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 )
 
 // responseReader reads response body from packets
 type responseReader struct {
-	conn     net.Conn
+	conn     io.Reader
 	total    int64
 	received int64
 	buffer   []byte

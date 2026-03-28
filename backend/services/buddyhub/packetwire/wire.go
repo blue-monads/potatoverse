@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash/crc64"
 	"io"
-	"net"
 
 	nanoid "github.com/jaevor/go-nanoid"
 )
@@ -25,22 +24,22 @@ const (
 	PtypeWebSocketPing     PacketType = iota
 	PtypeWebSocketPong     PacketType = iota
 	PtypeEndSocket         PacketType = iota
-	PtypeKcpUpgrade        PacketType = iota
+	PtypeQuicUpgrade       PacketType = iota
 )
 
-type KCPUpgradePacket struct {
+type QuicUpgradePacket struct {
 	Port       int32  `json:"port"`
 	Token      string `json:"token"`
 	DirectHost string `json:"direct_host"`
 }
 
-func (p *KCPUpgradePacket) Encode() []byte {
+func (p *QuicUpgradePacket) Encode() []byte {
 	res, _ := json.Marshal(p)
 	return res
 }
 
-func DecodeKCPUpgradePacket(data []byte) (*KCPUpgradePacket, error) {
-	var p KCPUpgradePacket
+func DecodeQuicUpgradePacket(data []byte) (*QuicUpgradePacket, error) {
+	var p QuicUpgradePacket
 	err := json.Unmarshal(data, &p)
 	if err != nil {
 		return nil, err
@@ -57,7 +56,7 @@ type Packet struct {
 
 const FragmentSize = 1024 * 512
 
-func WritePacketFull(conn net.Conn, packet *Packet, reqId string) error {
+func WritePacketFull(conn io.Writer, packet *Packet, reqId string) error {
 
 	_, err := conn.Write([]byte(reqId))
 	if err != nil {
@@ -67,8 +66,8 @@ func WritePacketFull(conn net.Conn, packet *Packet, reqId string) error {
 	return WritePacket(conn, packet)
 }
 
-// WritePacket writes a packet to a net.Conn
-func WritePacket(conn net.Conn, packet *Packet) error {
+// WritePacket writes a packet to an io.Writer
+func WritePacket(conn io.Writer, packet *Packet) error {
 	// write packet type
 	_, err := conn.Write([]byte{packet.PType})
 	if err != nil {
@@ -124,8 +123,8 @@ func WritePacket(conn net.Conn, packet *Packet) error {
 	return nil
 }
 
-// ReadPacket reads a packet from a net.Conn
-func ReadPacket(conn net.Conn) (*Packet, error) {
+// ReadPacket reads a packet from an io.Reader
+func ReadPacket(conn io.Reader) (*Packet, error) {
 	packet := &Packet{}
 	intBytes := make([]byte, 4)
 

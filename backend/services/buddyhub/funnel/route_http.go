@@ -28,7 +28,7 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 	// Get server connection
 	serverConn := f.getServerConn(nodeId)
 	if serverConn == nil {
-		c.Writer.WriteHeader(http.StatusBadGateway)
+		c.String(http.StatusBadGateway, "server not connected")
 		c.Abort()
 		return
 	}

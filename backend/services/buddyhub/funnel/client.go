@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -17,7 +18,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/xtaci/kcp-go/v5"
+	"github.com/quic-go/quic-go"
 )
 
 type FunnelClientOptions struct {
@@ -34,9 +35,9 @@ type FunnelClient struct {
 
 	writeChan chan *ServerWrite
 
-	wsConn  net.Conn
-	kcpConn net.Conn
-	clock   sync.Mutex
+	wsConn     net.Conn
+	quicStream quic.Stream
+	clock      sync.Mutex
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
@@ -61,18 +62,24 @@ func (c *FunnelClient) writePackets() {
 		}
 
 		c.clock.Lock()
-		conn := c.kcpConn
+		conn := c.quicStream
+		var anyConn io.Writer = conn
 		if conn == nil {
-			conn = c.wsConn
+			anyConn = c.wsConn
 		}
 		c.clock.Unlock()
 
-		if conn == nil {
+		if anyConn == nil {
 			qq.Println("@FunnelClient/writePackets/1{CONN_NIL}")
 			continue
 		}
 
-		err := packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
+		var err error
+		if conn != nil {
+			err = packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
+		} else {
+			err = packetwire.WritePacketFull(c.wsConn, sw.packet, sw.reqId)
+		}
 		if err != nil {
 			qq.Println("@FunnelClient/writePackets/1{ERROR}", err)
 			errCount++
@@ -142,11 +149,11 @@ func (c *FunnelClient) Stop() {
 	close(c.writeChan)
 }
 
-func (c *FunnelClient) upgradeToKcp(upgrade *packetwire.KCPUpgradePacket) {
-	// Dialer for KCP
+func (c *FunnelClient) upgradeToQuic(upgrade *packetwire.QuicUpgradePacket) {
+	// Dialer for QUIC
 	u, err := url.Parse(c.opts.RemoteFunnelUrl)
 	if err != nil {
-		qq.Println("@FunnelClient/upgradeToKcp/1{ERROR}", err)
+		qq.Println("@FunnelClient/upgradeToQuic/1{ERROR}", err)
 		return
 	}
 
@@ -160,49 +167,67 @@ func (c *FunnelClient) upgradeToKcp(upgrade *packetwire.KCPUpgradePacket) {
 	}
 
 	addr := fmt.Sprintf("%s:%d", host, upgrade.Port)
-	qq.Println("@FunnelClient/upgradeToKcp/2{DIALING_KCP}", addr)
+	qq.Println("@FunnelClient/upgradeToQuic/2{DIALING_QUIC}", addr)
 
-	conn, err := kcp.DialWithOptions(addr, nil, 10, 3)
+	tlsConf := &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"funnel-quic"},
+	}
+
+	conn, err := quic.DialAddr(context.Background(), addr, tlsConf, nil)
 	if err != nil {
-		qq.Println("@FunnelClient/upgradeToKcp/3{ERROR}", err)
+		qq.Println("@FunnelClient/upgradeToQuic/3{ERROR}", err)
 		return
 	}
 
-	qq.Println("@FunnelClient/upgradeToKcp/4{CONNECTED}")
+	qq.Println("@FunnelClient/upgradeToQuic/4{CONNECTED}")
+
+	stream, err := conn.OpenStreamSync(context.Background())
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToQuic/5{STREAM_ERROR}", err)
+		conn.CloseWithError(0, "failed to open stream")
+		return
+	}
+
+	qq.Println("@FunnelClient/upgradeToQuic/6{STREAM_OPEN}")
 
 	// Initial handshake: Send token (64 bytes)
 	tokenBuf := make([]byte, 64)
 	copy(tokenBuf, []byte(upgrade.Token))
-	_, err = conn.Write(tokenBuf)
+	_, err = stream.Write(tokenBuf)
 	if err != nil {
-		qq.Println("@FunnelClient/upgradeToKcp/5{ERROR}", err)
-		conn.Close()
+		qq.Println("@FunnelClient/upgradeToQuic/7{ERROR}", err)
+		stream.Close()
 		return
 	}
 
-	qq.Println("@FunnelClient/upgradeToKcp/6{HANDSHAKE_SENT}")
+	qq.Println("@FunnelClient/upgradeToQuic/8{HANDSHAKE_SENT}")
 
 	// Switch active connection
 	c.clock.Lock()
-	c.kcpConn = conn
+	c.quicStream = stream
 	c.clock.Unlock()
 
-	// Start handling incoming requests from this KCP connection
-	err = c.handleFunnelConnection(conn, true)
+	// Start handling incoming requests from this QUIC stream
+	err = c.handleFunnelConnectionReader(stream, true)
 	if err != nil {
-		qq.Println("@FunnelClient/upgradeToKcp/7{ERROR}", err)
+		qq.Println("@FunnelClient/upgradeToQuic/9{ERROR}", err)
 	}
 
 	c.clock.Lock()
-	c.kcpConn = nil
+	c.quicStream = nil
 	c.clock.Unlock()
 
-	conn.Close()
+	stream.Close()
 }
 
-const KCPDisabled = true
+const QUICDisabled = false
 
-func (c *FunnelClient) handleFunnelConnection(conn net.Conn, isKcp bool) error {
+func (c *FunnelClient) handleFunnelConnection(conn net.Conn, isQuic bool) error {
+	return c.handleFunnelConnectionReader(conn, isQuic)
+}
+
+func (c *FunnelClient) handleFunnelConnectionReader(conn io.Reader, isQuic bool) error {
 	// Read request ID (16 bytes) first, then packet
 	reqIdBuf := make([]byte, 16)
 
@@ -222,17 +247,17 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn, isKcp bool) error {
 			return err
 		}
 
-		if !KCPDisabled {
+		if !QUICDisabled {
 
-			if !isKcp && headerPacket.PType == packetwire.PtypeKcpUpgrade {
-				qq.Println("@FunnelClient/handleFunnelConnection/KCP_UPGRADE")
-				upgradePacket, err := packetwire.DecodeKCPUpgradePacket(headerPacket.Data)
+			if !isQuic && headerPacket.PType == packetwire.PtypeQuicUpgrade {
+				qq.Println("@FunnelClient/handleFunnelConnection/QUIC_UPGRADE")
+				upgradePacket, err := packetwire.DecodeQuicUpgradePacket(headerPacket.Data)
 				if err != nil {
-					qq.Println("@FunnelClient/handleFunnelConnection/KCP_UPGRADE_ERROR", err)
+					qq.Println("@FunnelClient/handleFunnelConnection/QUIC_UPGRADE_ERROR", err)
 					continue
 				}
 
-				go c.upgradeToKcp(upgradePacket)
+				go c.upgradeToQuic(upgradePacket)
 				continue
 			}
 		}

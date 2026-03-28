@@ -46,26 +46,26 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 		existIng.conn.Close()
 	}
 
-	// Send KCP upgrade packet if KCP server is running
-	if f.kcpPort > 0 {
+	// Send QUIC upgrade packet if QUIC server is running
+	if f.quicPort > 0 {
 
 		directHost := os.Getenv("POTATO_FUNNEL_DHOST")
 
-		upgradePacket := &packetwire.KCPUpgradePacket{
-			Port:       int32(f.kcpPort),
+		upgradePacket := &packetwire.QuicUpgradePacket{
+			Port:       int32(f.quicPort),
 			Token:      nodeId, // Currently token is just nodeId
 			DirectHost: directHost,
 		}
 
 		packet := &packetwire.Packet{
-			PType: packetwire.PtypeKcpUpgrade,
+			PType: packetwire.PtypeQuicUpgrade,
 			Data:  upgradePacket.Encode(),
 		}
 		// Send over WebSocket
 		go func() {
 			err := packetwire.WritePacketFull(conn, packet, packetwire.GetRequestId())
 			if err != nil {
-				qq.Println("@Funnel/registerServer/2{KCP_UPGRADE_ERROR}", err)
+				qq.Println("@Funnel/registerServer/2{QUIC_UPGRADE_ERROR}", err)
 			}
 		}()
 	}
