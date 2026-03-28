@@ -37,8 +37,6 @@ func (f *Funnel) handleKcpConnections() {
 }
 
 func (f *Funnel) handleKcpSession(conn net.Conn) {
-	defer conn.Close()
-
 	// Initial handshake: Read token (64 bytes)
 	tokenBuf := make([]byte, 64)
 	_, err := io.ReadFull(conn, tokenBuf)
@@ -77,7 +75,7 @@ func (f *Funnel) handleKcpSession(conn net.Conn) {
 	}
 
 	// Handle the KCP connection just like a WebSocket connection
-	go f.handleServerConnection(nodeId, swchan, conn, func() {
+	f.handleServerConnection(nodeId, swchan, conn, func() {
 		f.kcpScLock.Lock()
 		delete(f.KcpServerConnections, nodeId)
 		f.kcpScLock.Unlock()

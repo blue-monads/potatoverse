@@ -17,6 +17,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/xtaci/kcp-go/v5"
 )
 
 type FunnelClientOptions struct {
@@ -32,6 +33,10 @@ type FunnelClient struct {
 	prLock          sync.Mutex
 
 	writeChan chan *ServerWrite
+
+	wsConn  net.Conn
+	kcpConn net.Conn
+	clock   sync.Mutex
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
@@ -43,7 +48,7 @@ func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
 	}
 }
 
-func (c *FunnelClient) writePackets(conn net.Conn) {
+func (c *FunnelClient) writePackets() {
 
 	errCount := 0
 
@@ -53,6 +58,18 @@ func (c *FunnelClient) writePackets(conn net.Conn) {
 
 		if sw == nil {
 			break
+		}
+
+		c.clock.Lock()
+		conn := c.kcpConn
+		if conn == nil {
+			conn = c.wsConn
+		}
+		c.clock.Unlock()
+
+		if conn == nil {
+			qq.Println("@FunnelClient/writePackets/1{CONN_NIL}")
+			continue
 		}
 
 		err := packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
@@ -104,10 +121,14 @@ func (c *FunnelClient) Start(token string) error {
 		return fmt.Errorf("failed to connect to funnel: %w", err)
 	}
 
-	go c.writePackets(conn)
+	c.clock.Lock()
+	c.wsConn = conn
+	c.clock.Unlock()
+
+	go c.writePackets()
 
 	// Start handling incoming requests from funnel
-	err = c.handleFunnelConnection(conn)
+	err = c.handleFunnelConnection(conn, false)
 	if err != nil {
 		return fmt.Errorf("failed to handle funnel connection: %w", err)
 	}
@@ -121,7 +142,63 @@ func (c *FunnelClient) Stop() {
 	close(c.writeChan)
 }
 
-func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
+func (c *FunnelClient) upgradeToKcp(upgrade *packetwire.KCPUpgradePacket) {
+	// Dialer for KCP
+	u, err := url.Parse(c.opts.RemoteFunnelUrl)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToKcp/1{ERROR}", err)
+		return
+	}
+
+	host, _, _ := net.SplitHostPort(u.Host)
+	if host == "" {
+		host = u.Host
+	}
+
+	addr := fmt.Sprintf("%s:%d", host, upgrade.Port)
+	qq.Println("@FunnelClient/upgradeToKcp/2{DIALING_KCP}", addr)
+
+	conn, err := kcp.DialWithOptions(addr, nil, 10, 3)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToKcp/3{ERROR}", err)
+		return
+	}
+
+	qq.Println("@FunnelClient/upgradeToKcp/4{CONNECTED}")
+
+	// Initial handshake: Send token (64 bytes)
+	tokenBuf := make([]byte, 64)
+	copy(tokenBuf, []byte(upgrade.Token))
+	_, err = conn.Write(tokenBuf)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToKcp/5{ERROR}", err)
+		conn.Close()
+		return
+	}
+
+	qq.Println("@FunnelClient/upgradeToKcp/6{HANDSHAKE_SENT}")
+
+	// Switch active connection
+	c.clock.Lock()
+	c.kcpConn = conn
+	c.clock.Unlock()
+
+	// Start handling incoming requests from this KCP connection
+	err = c.handleFunnelConnection(conn, true)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToKcp/7{ERROR}", err)
+	}
+
+	c.clock.Lock()
+	c.kcpConn = nil
+	c.clock.Unlock()
+
+	conn.Close()
+}
+
+const KCPDisabled = true
+
+func (c *FunnelClient) handleFunnelConnection(conn net.Conn, isKcp bool) error {
 	// Read request ID (16 bytes) first, then packet
 	reqIdBuf := make([]byte, 16)
 
@@ -139,6 +216,21 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		headerPacket, err := packetwire.ReadPacket(conn)
 		if err != nil {
 			return err
+		}
+
+		if !KCPDisabled {
+
+			if !isKcp && headerPacket.PType == packetwire.PtypeKcpUpgrade {
+				qq.Println("@FunnelClient/handleFunnelConnection/KCP_UPGRADE")
+				upgradePacket, err := packetwire.DecodeKCPUpgradePacket(headerPacket.Data)
+				if err != nil {
+					qq.Println("@FunnelClient/handleFunnelConnection/KCP_UPGRADE_ERROR", err)
+					continue
+				}
+
+				go c.upgradeToKcp(upgradePacket)
+				continue
+			}
 		}
 
 		if headerPacket.PType != packetwire.PTypeSendHeader {
