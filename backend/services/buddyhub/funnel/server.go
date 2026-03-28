@@ -71,7 +71,7 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 	}
 
 	// Start goroutine to handle incoming responses from this server
-	go f.handleServerConnection(nodeId, swchan, conn, func() {
+	go f.handleServerConnection(nodeId, swchan, conn, true, func() {
 		f.scLock.Lock()
 		delete(f.serverConnections, nodeId)
 		f.scLock.Unlock()
@@ -79,7 +79,7 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 }
 
 // handleServerConnection handles incoming packets from a server connection
-func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite, conn net.Conn, onExit func()) {
+func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite, conn net.Conn, isWS bool, onExit func()) {
 	qq.Println("@handleServerConnection/1", nodeId)
 	defer func() {
 		conn.Close()
@@ -103,6 +103,8 @@ func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite,
 				break
 			}
 
+			qq.Println("@write", isWS)
+
 		}
 	}()
 
@@ -117,7 +119,7 @@ func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite,
 
 		reqId := string(reqIdBuf)
 
-		qq.Println("@handleServerConnection/4{REQ_ID}", reqId)
+		qq.Println("@handleServerConnection/4{REQ_ID}", reqId, isWS)
 
 		packet, err := packetwire.ReadPacket(conn)
 		if err != nil {

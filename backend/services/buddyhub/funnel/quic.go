@@ -94,7 +94,7 @@ func (f *Funnel) handleQuicSession(conn quic.Connection) {
 	}
 
 	// Handle the QUIC connection just like a WebSocket connection
-	f.handleServerConnection(nodeId, swchan, &quicStreamConn{Stream: stream, conn: conn}, func() {
+	f.handleServerConnection(nodeId, swchan, &quicStreamConn{Stream: stream, conn: conn}, false, func() {
 		f.quicScLock.Lock()
 		delete(f.QuicServerConnections, nodeId)
 		f.quicScLock.Unlock()
