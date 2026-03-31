@@ -56,6 +56,9 @@ type Packet struct {
 
 const FragmentSize = 1024 * 512
 
+// 16MB
+const MaxPacketDataSize = 16 * 1024 * 1024
+
 func WritePacketFull(conn io.Writer, packet *Packet, reqId string) error {
 
 	_, err := conn.Write([]byte(reqId))
@@ -68,6 +71,9 @@ func WritePacketFull(conn io.Writer, packet *Packet, reqId string) error {
 
 // WritePacket writes a packet to an io.Writer
 func WritePacket(conn io.Writer, packet *Packet) error {
+	if len(packet.Data) > MaxPacketDataSize {
+		return fmt.Errorf("packet data length %d exceeds maximum %d", len(packet.Data), MaxPacketDataSize)
+	}
 	// write packet type
 	_, err := conn.Write([]byte{packet.PType})
 	if err != nil {
@@ -142,6 +148,9 @@ func ReadPacket(conn io.Reader) (*Packet, error) {
 		return nil, err
 	}
 	length := binary.BigEndian.Uint32(intBytes)
+	if length > MaxPacketDataSize {
+		return nil, fmt.Errorf("packet length %d exceeds maximum %d", length, MaxPacketDataSize)
+	}
 
 	// read offset
 	_, err = io.ReadFull(conn, intBytes)
