@@ -8,8 +8,30 @@ import (
 
 local llm = require("llm")
 
-local provider = llm.new({
 
+function get_weather(ctx,location)
+	return "It is sunny in " .. location
+end
+
+local tools = {
+	get_weather = {
+		description: "Get the weather for a location",
+		parameters: {
+			type: "object",
+			properties: {
+				location: {
+					type: "string",
+					description: "The location to get the weather for",
+				},
+			},
+			required: ["location"],
+		},
+		function: get_weather,
+	}
+}
+
+
+local provider = llm.new({
 	model = "anthropic/claude-3-5-sonnet",
 	apiKey = "sk-or-v1-1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
 })
@@ -20,22 +42,7 @@ provider.generate_v1({
 		{ role = "assistant", content = "Hi" },
 		{ role = "user", content = "How are you?" },
 	],
-	tools: [
-		{
-			name: "get_weather",
-			description: "Get the weather for a location",
-			parameters: {
-				type: "object",
-				properties: {
-					location: {
-						type: "string",
-						description: "The location to get the weather for",
-					},
-				},
-				required: ["location"],
-			},
-		},
-	],
+	tools = tools,
 })
 
 
