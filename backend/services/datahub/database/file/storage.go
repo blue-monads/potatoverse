@@ -187,6 +187,16 @@ func (f *FileOperations) getExternalFile(file *dbmodels.FileMeta, w io.Writer) e
 	return nil
 }
 
+func (f *FileOperations) getExternalFileReadSeeker(file *dbmodels.FileMeta) (io.ReadSeeker, io.Closer, error) {
+	filePath := fmt.Sprintf("%s/%d/%d/%s/%s", f.externalFilesPath, file.OwnerID, file.CreatedBy, file.Path, file.Name)
+	ofile, err := os.Open(filePath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return ofile, ofile, nil
+}
+
 func (f *FileOperations) removeFileContent(file *dbmodels.FileMeta) error {
 	switch file.StoreType {
 	case StoreTypeExternal:

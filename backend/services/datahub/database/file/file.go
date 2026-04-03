@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -339,7 +340,6 @@ func (f *FileOperations) StreamFileByPath(ownerID int64, path string, name strin
 }
 
 func (f *FileOperations) StreamFileToHTTP(ownerID int64, path, name string, ctx *gin.Context) error {
-	w := ctx.Writer
 	file, err := f.GetFileMetaByPath(ownerID, path, name)
 	if err != nil {
 		return err
@@ -355,7 +355,22 @@ func (f *FileOperations) StreamFileToHTTP(ownerID int64, path, name string, ctx 
 		return nil
 	}
 
-	return f.streamFileByMeta(file, w)
+	rs, closer, err := f.getReadSeekerByMeta(file)
+	if err != nil {
+		return err
+	}
+	if closer != nil {
+		defer closer.Close()
+	}
+
+	modTime := time.Now()
+	if file.UpdatedAt != nil {
+		modTime = *file.UpdatedAt
+	}
+
+	http.ServeContent(ctx.Writer, ctx.Request, file.Name, modTime, rs)
+
+	return nil
 }
 
 func (f *FileOperations) UpdateFile(ownerID int64, id int64, stream io.Reader) error {
