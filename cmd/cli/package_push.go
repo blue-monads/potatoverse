@@ -237,7 +237,7 @@ func fetchPackageDevToken(baseURL, accessToken string, packageId int64) (string,
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Authorization", "TokenV1 "+accessToken)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
@@ -250,6 +250,7 @@ func fetchPackageDevToken(baseURL, accessToken string, packageId int64) (string,
 	var out struct {
 		Token string `json:"token"`
 	}
+
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return "", fmt.Errorf("could not decode response: %w", err)
 	}
