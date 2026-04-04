@@ -83,6 +83,8 @@ func PushPackage(potatoYamlFile string, outputZipFile string) error {
 
 	}
 
+	fmt.Println("Package pushed sucessfully!")
+
 	return nil
 }
 
