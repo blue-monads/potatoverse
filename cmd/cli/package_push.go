@@ -121,6 +121,8 @@ func deriveDevToken(potatoYaml *models.PotatoPackage) (string, error) {
 		if err != nil {
 			return "", err
 		}
+	} else {
+		fmt.Println("Using package id from potato.yaml:", packageId)
 	}
 
 	ppsecToken, err := fetchPackageDevToken(baseURL, accessToken, packageId)
@@ -133,6 +135,8 @@ func deriveDevToken(potatoYaml *models.PotatoPackage) (string, error) {
 const coreAPI = "/zz/api/core"
 
 func exchangeDeviceTokenForAccess(baseURL, deviceToken string) (string, error) {
+	fmt.Println("Exchanging token...")
+
 	body, _ := json.Marshal(map[string]string{"device_token": deviceToken})
 	req, err := http.NewRequest("POST", baseURL+coreAPI+"/auth/device-token", bytes.NewReader(body))
 	if err != nil {
@@ -152,15 +156,20 @@ func exchangeDeviceTokenForAccess(baseURL, deviceToken string) (string, error) {
 		AccessToken string `json:"access_token"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to decode device-token exchange response: %w", err)
 	}
 	if out.AccessToken == "" {
 		return "", errors.New("device-token response missing access_token")
 	}
+
+	fmt.Println("Token exchange successful")
+
 	return out.AccessToken, nil
 }
 
 func resolvePackageIdBySlug(baseURL, accessToken, slug string) (int64, error) {
+	fmt.Println("Empty package id, trying to resolve using slug")
+
 	req, err := http.NewRequest("GET", baseURL+coreAPI+"/space/installed", nil)
 	if err != nil {
 		return 0, err
@@ -222,6 +231,7 @@ func chooseInstallId(slug string, installIds []int64) (int64, error) {
 }
 
 func fetchPackageDevToken(baseURL, accessToken string, packageId int64) (string, error) {
+	fmt.Println("Fetching development token...")
 	url := fmt.Sprintf("%s%s/package/%d/dev-token?epthermal=true", baseURL, coreAPI, packageId)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
@@ -241,10 +251,11 @@ func fetchPackageDevToken(baseURL, accessToken string, packageId int64) (string,
 		Token string `json:"token"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return "", err
+		return "", fmt.Errorf("could not decode response: %w", err)
 	}
 	if out.Token == "" {
 		return "", errors.New("dev-token response missing token")
 	}
+	fmt.Println("Development token fetched successfully")
 	return out.Token, nil
 }
