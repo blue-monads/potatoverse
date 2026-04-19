@@ -7,15 +7,18 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
 type MigratorCapability struct {
-	folder       string
-	builder      *MigratorBuilder
+	folder  string
+	builder *MigratorBuilder
+
 	installId    int64
+	installPvId  int64
 	spaceId      int64
 	capabilityId int64
 	db           datahub.DBLowOps
@@ -82,6 +85,7 @@ func (m *MigratorCapability) Reload(model *dbmodels.SpaceCapability) (xcapabilit
 	return &MigratorCapability{
 		folder:       m.folder,
 		builder:      m.builder,
+		installPvId:  m.installPvId,
 		installId:    m.installId,
 		spaceId:      m.spaceId,
 		capabilityId: m.capabilityId,
@@ -95,6 +99,14 @@ func (m *MigratorCapability) Close() error {
 
 func (m *MigratorCapability) performMigration(folder string) error {
 
+	qq.Println(
+		"@performMigration/1",
+		"Starting migration process for installId:", m.installId,
+		"folder:", folder,
+		"installPvId:", m.installPvId,
+		"capabilityId:", m.capabilityId,
+	)
+
 	migFolder := m.folder
 
 	if migFolder == "" {
@@ -103,10 +115,12 @@ func (m *MigratorCapability) performMigration(folder string) error {
 
 	pkgFileOps := m.builder.app.Database().GetPackageFileOps()
 
-	files, err := pkgFileOps.ListFiles(m.installId, migFolder)
+	files, err := pkgFileOps.ListFiles(m.installPvId, migFolder)
 	if err != nil {
 		return err
 	}
+
+	qq.Println("@performMigration/3", "files found:", len(files))
 
 	if len(files) == 0 {
 		return nil
@@ -120,6 +134,8 @@ func (m *MigratorCapability) performMigration(folder string) error {
 		}
 	}
 
+	qq.Println("@performMigration/4", "SQL files found:", len(sqlFiles))
+
 	if len(sqlFiles) == 0 {
 		return nil
 	}
@@ -129,41 +145,68 @@ func (m *MigratorCapability) performMigration(folder string) error {
 		return sqlFiles[i].Name < sqlFiles[j].Name
 	})
 
+	qq.Println("@performMigration/5", "SQL files sorted")
+
 	// Get list of already executed migrations
 	executedMigrations, err := m.getExecutedMigrations()
 	if err != nil {
 		return fmt.Errorf("failed to get executed migrations: %w", err)
 	}
 
+	qq.Println("@performMigration/6", "Executed migrations retrieved:", len(executedMigrations))
+
 	// Execute each migration that hasn't been run yet
 	for _, file := range sqlFiles {
+
+		qq.Println("@performMigration/7", "Processing file:", file.Name)
+
 		migrationKey := getMigrationKey(migFolder, file)
+
+		qq.Println("@performMigration/8", "Migration key:", migrationKey)
 
 		// Skip if already executed
 		if executedMigrations[migrationKey] {
 
+			qq.Println("@performMigration/9", "Already executed, skipping:", file.Name)
+
 			continue
 		}
 
-		content, err := pkgFileOps.GetFileContentByPath(m.installId, file.Path, file.Name)
+		qq.Println("@performMigration/10", "Executing migration:", file.Name)
+
+		content, err := pkgFileOps.GetFileContentByPath(m.installPvId, file.Path, file.Name)
 		if err != nil {
+
+			qq.Println("@performMigration/11", "Failed to read file content:", file.Name, "error:", err)
+
 			return fmt.Errorf("failed to read migration file %s: %w", file.Name, err)
 		}
+
+		qq.Println("@performMigration/12", "File content read successfully:", file.Name)
 
 		// Execute SQL
 		sqlContent := string(content)
 		if strings.TrimSpace(sqlContent) == "" {
+
+			qq.Println("@performMigration/13", "Empty SQL content, skipping execution but marking as executed:", file.Name)
+
 			// Skip empty files but mark as executed
 			if err := m.markMigrationExecuted(migrationKey, file.Name); err != nil {
 				return fmt.Errorf("failed to mark migration as executed: %w", err)
 			}
+
+			qq.Println("@performMigration/14", "Migration marked as executed:", file.Name)
 			continue
 		}
+
+		qq.Println("@performMigration/15", "Executing SQL content:", file.Name)
 
 		_, err = m.db.Exec(sqlContent)
 		if err != nil {
 			return fmt.Errorf("failed to execute migration %s: %w", file.Name, err)
 		}
+
+		qq.Println("@performMigration/16", "SQL content executed successfully:", file.Name)
 
 		// Mark migration as executed
 		if err := m.markMigrationExecuted(migrationKey, file.Name); err != nil {

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -17,6 +18,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/quic-go/quic-go"
 )
 
 type FunnelClientOptions struct {
@@ -32,6 +34,10 @@ type FunnelClient struct {
 	prLock          sync.Mutex
 
 	writeChan chan *ServerWrite
+
+	wsConn     net.Conn
+	quicStream quic.Stream
+	clock      sync.Mutex
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
@@ -43,7 +49,7 @@ func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
 	}
 }
 
-func (c *FunnelClient) writePackets(conn net.Conn) {
+func (c *FunnelClient) writePackets() {
 
 	errCount := 0
 
@@ -55,7 +61,25 @@ func (c *FunnelClient) writePackets(conn net.Conn) {
 			break
 		}
 
-		err := packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
+		c.clock.Lock()
+		conn := c.quicStream
+		var anyConn io.Writer = conn
+		if conn == nil {
+			anyConn = c.wsConn
+		}
+		c.clock.Unlock()
+
+		if anyConn == nil {
+			qq.Println("@FunnelClient/writePackets/1{CONN_NIL}")
+			continue
+		}
+
+		var err error
+		if conn != nil {
+			err = packetwire.WritePacketFull(conn, sw.packet, sw.reqId)
+		} else {
+			err = packetwire.WritePacketFull(c.wsConn, sw.packet, sw.reqId)
+		}
 		if err != nil {
 			qq.Println("@FunnelClient/writePackets/1{ERROR}", err)
 			errCount++
@@ -104,10 +128,14 @@ func (c *FunnelClient) Start(token string) error {
 		return fmt.Errorf("failed to connect to funnel: %w", err)
 	}
 
-	go c.writePackets(conn)
+	c.clock.Lock()
+	c.wsConn = conn
+	c.clock.Unlock()
+
+	go c.writePackets()
 
 	// Start handling incoming requests from funnel
-	err = c.handleFunnelConnection(conn)
+	err = c.handleFunnelConnection(conn, false)
 	if err != nil {
 		return fmt.Errorf("failed to handle funnel connection: %w", err)
 	}
@@ -121,7 +149,85 @@ func (c *FunnelClient) Stop() {
 	close(c.writeChan)
 }
 
-func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
+func (c *FunnelClient) upgradeToQuic(upgrade *packetwire.QuicUpgradePacket) {
+	// Dialer for QUIC
+	u, err := url.Parse(c.opts.RemoteFunnelUrl)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToQuic/1{ERROR}", err)
+		return
+	}
+
+	host := upgrade.DirectHost
+
+	if host == "" {
+		host, _, _ = net.SplitHostPort(u.Host)
+		if host == "" {
+			host = u.Host
+		}
+	}
+
+	addr := fmt.Sprintf("%s:%d", host, upgrade.Port)
+	qq.Println("@FunnelClient/upgradeToQuic/2{DIALING_QUIC}", addr)
+
+	tlsConf := &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"funnel-quic"},
+	}
+
+	conn, err := quic.DialAddr(context.Background(), addr, tlsConf, nil)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToQuic/3{ERROR}", err)
+		return
+	}
+
+	qq.Println("@FunnelClient/upgradeToQuic/4{CONNECTED}")
+
+	stream, err := conn.OpenStreamSync(context.Background())
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToQuic/5{STREAM_ERROR}", err)
+		conn.CloseWithError(0, "failed to open stream")
+		return
+	}
+
+	qq.Println("@FunnelClient/upgradeToQuic/6{STREAM_OPEN}")
+
+	// Initial handshake: Send token (64 bytes)
+	tokenBuf := make([]byte, 64)
+	copy(tokenBuf, []byte(upgrade.Token))
+	_, err = stream.Write(tokenBuf)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToQuic/7{ERROR}", err)
+		stream.Close()
+		return
+	}
+
+	qq.Println("@FunnelClient/upgradeToQuic/8{HANDSHAKE_SENT}")
+
+	// Switch active connection
+	c.clock.Lock()
+	c.quicStream = stream
+	c.clock.Unlock()
+
+	// Start handling incoming requests from this QUIC stream
+	err = c.handleFunnelConnectionReader(stream, true)
+	if err != nil {
+		qq.Println("@FunnelClient/upgradeToQuic/9{ERROR}", err)
+	}
+
+	c.clock.Lock()
+	c.quicStream = nil
+	c.clock.Unlock()
+
+	stream.Close()
+}
+
+const QUICDisabled = false
+
+func (c *FunnelClient) handleFunnelConnection(conn net.Conn, isQuic bool) error {
+	return c.handleFunnelConnectionReader(conn, isQuic)
+}
+
+func (c *FunnelClient) handleFunnelConnectionReader(conn io.Reader, isQuic bool) error {
 	// Read request ID (16 bytes) first, then packet
 	reqIdBuf := make([]byte, 16)
 
@@ -139,6 +245,21 @@ func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
 		headerPacket, err := packetwire.ReadPacket(conn)
 		if err != nil {
 			return err
+		}
+
+		if !QUICDisabled {
+
+			if !isQuic && headerPacket.PType == packetwire.PtypeQuicUpgrade {
+				qq.Println("@FunnelClient/handleFunnelConnection/QUIC_UPGRADE")
+				upgradePacket, err := packetwire.DecodeQuicUpgradePacket(headerPacket.Data)
+				if err != nil {
+					qq.Println("@FunnelClient/handleFunnelConnection/QUIC_UPGRADE_ERROR", err)
+					continue
+				}
+
+				go c.upgradeToQuic(upgradePacket)
+				continue
+			}
 		}
 
 		if headerPacket.PType != packetwire.PTypeSendHeader {
@@ -212,6 +333,9 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 			buffer:         make([]byte, 0, packetwire.FragmentSize),
 		}
 	}
+
+	// fix encoding issue
+	req.Header.Del("Accept-Encoding")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -328,9 +452,9 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 		qq.Println("@handleHttpRequest/case_negative_length/chunked")
 
 		offset := int32(0)
-		fbuf := make([]byte, packetwire.FragmentSize)
 
 		for {
+			fbuf := make([]byte, packetwire.FragmentSize)
 			n, err := resp.Body.Read(fbuf)
 			if err != nil && err != io.EOF {
 				return

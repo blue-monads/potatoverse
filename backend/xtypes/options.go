@@ -1,16 +1,17 @@
 package xtypes
 
 type AppOptions struct {
-	Name         string           `json:"name,omitempty" yaml:"name,omitempty"`
-	Port         int              `json:"port,omitempty" yaml:"port,omitempty"`
-	Hosts        []Host           `json:"hosts,omitempty" yaml:"hosts,omitempty"`
-	MasterSecret string           `json:"master_secret,omitempty" yaml:"master_secret,omitempty"`
-	Debug        bool             `json:"debug_mode,omitempty" yaml:"debug_mode,omitempty"`
-	WorkingDir   string           `json:"working_dir,omitempty" yaml:"working_dir,omitempty"`
-	SocketFile   string           `json:"socket_file,omitempty" yaml:"socket_file,omitempty"`
-	Mailer       MailerOptions    `json:"mailer" yaml:"mailer"`
-	Repos        []RepoOptions    `json:"repos" yaml:"repos"`
-	BuddyOptions *BuddyHubOptions `json:"buddy_options,omitempty" yaml:"buddy_options,omitempty"`
+	Name         string            `json:"name,omitempty" yaml:"name,omitempty"`
+	Port         int               `json:"port,omitempty" yaml:"port,omitempty"`
+	Hosts        []Host            `json:"hosts,omitempty" yaml:"hosts,omitempty"`
+	MasterSecret string            `json:"master_secret,omitempty" yaml:"master_secret,omitempty"`
+	Debug        bool              `json:"debug_mode,omitempty" yaml:"debug_mode,omitempty"`
+	WorkingDir   string            `json:"working_dir,omitempty" yaml:"working_dir,omitempty"`
+	SocketFile   string            `json:"socket_file,omitempty" yaml:"socket_file,omitempty"`
+	Mailer       MailerOptions     `json:"mailer" yaml:"mailer"`
+	Repos        []RepoOptions     `json:"repos" yaml:"repos"`
+	BuddyOptions *BuddyHubOptions  `json:"buddy_options,omitempty" yaml:"buddy_options,omitempty"`
+	SystemEnv    map[string]string `json:"system_env,omitempty" yaml:"system_env,omitempty"`
 }
 
 type Host struct {

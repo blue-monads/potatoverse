@@ -188,7 +188,9 @@ func (c *Controller) GetPackageVersion(packageVersionId int64) (*dbmodels.Packag
 	return c.database.GetPackageInstallOps().GetPackageVersion(packageVersionId)
 }
 
-func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (string, error) {
+const PackageDevTokenPrefix = "ppsec_"
+
+func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64, epthermal bool) (string, error) {
 	// Verify the user owns the package
 
 	pkgOps := c.database.GetPackageInstallOps()
@@ -198,7 +200,7 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 		return "", err
 	}
 
-	if pkg.DevToken != "" {
+	if pkg.DevToken != "" && !epthermal {
 		return pkg.DevToken, nil
 	}
 
@@ -216,10 +218,14 @@ func (c *Controller) GeneratePackageDevToken(userId int64, packageId int64) (str
 		return "", err
 	}
 
-	// Store the dev token in the database
-	err = pkgOps.UpdatePackageDevToken(packageId, token)
-	if err != nil {
-		return "", err
+	token = PackageDevTokenPrefix + token
+
+	if !epthermal {
+		// Store the dev token in the database
+		err = pkgOps.UpdatePackageDevToken(packageId, token)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return token, nil

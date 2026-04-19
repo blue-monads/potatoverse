@@ -20,7 +20,14 @@ const (
 	ToekenPackageDev            uint16 = 7
 	TokenTypeCapability         uint16 = 8
 	TokenTypeBuddyAuth          uint16 = 9
+	TokenTypeDevice             uint16 = 10
 )
+
+type DeviceClaim struct {
+	Typeid   uint16 `json:"t,omitempty"`
+	UserId   int64  `json:"u,omitempty"`
+	DeviceId int64  `json:"d,omitempty"`
+}
 
 type AccessClaim struct {
 	Typeid    uint16         `json:"t,omitempty"`
@@ -72,6 +79,7 @@ type CapabilityClaim struct {
 	InstallId    int64          `json:"i,omitempty"`
 	SpaceId      int64          `json:"s,omitempty"`
 	UserId       int64          `json:"u,omitempty"`
+	SubType      string         `json:"st,omitempty"`
 	ResourceId   string         `json:"r,omitempty"`
 	ExtraMeta    map[string]any `json:"e,omitempty"`
 }
@@ -135,6 +143,25 @@ func (ts *Signer) SignAccess(claim *AccessClaim) (string, error) {
 
 	claim.Typeid = TokenTypeAccess
 
+	return ts.sign(claim)
+}
+
+func (ts *Signer) ParseDevice(tstr string) (*DeviceClaim, error) {
+	claim := &DeviceClaim{}
+	err := ts.parse(tstr, claim)
+	if err != nil {
+		return nil, err
+	}
+
+	if claim.Typeid != TokenTypeDevice {
+		return nil, ErrInvalidToken
+	}
+
+	return claim, nil
+}
+
+func (ts *Signer) SignDevice(claim *DeviceClaim) (string, error) {
+	claim.Typeid = TokenTypeDevice
 	return ts.sign(claim)
 }
 

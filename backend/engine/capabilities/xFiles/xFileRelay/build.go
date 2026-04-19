@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+	registry.RegisterCapability(xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			return &RelayHttpBuilder{}, nil
 		},

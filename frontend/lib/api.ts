@@ -197,6 +197,36 @@ export const updateSelfBio = async (bio: string) => {
     return iaxios.put<{ message: string }>("/core/self/bio", { bio });
 }
 
+export interface UserDevice {
+    id: number;
+    name: string;
+    dtype: string;
+    user_id: number;
+    last_ip: string;
+    last_login: string;
+    expires_on: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export const getSelfDevices = async () => {
+    return iaxios.get<UserDevice[]>("/core/self/devices");
+}
+
+export interface CreateDeviceResponse {
+    device: UserDevice;
+    token: string;
+    expires_on: string;
+}
+
+export const createSelfDevice = async (name: string) => {
+    return iaxios.post<CreateDeviceResponse>("/core/self/devices", { name });
+}
+
+/** Exchange a device token for an access token (for API/CLI). */
+export const loginWithDeviceToken = async (deviceToken: string) => {
+    return iaxios.post<{ access_token: string; user_info: User }>("/core/auth/device-token", { device_token: deviceToken });
+}
 
 export interface InstallPackageResult {
     installed_id: number;
@@ -627,6 +657,18 @@ export const uploadSpaceFile = async (installId: number, file: File, path: strin
     });
 }
 
+// Import a space state ZIP file
+export const importSpaceState = async (installId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return iaxios.post(`/core/space/${installId}/import`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
 export const updateSpaceFileContent = async (installId: number, fileId: number, content: string, fileName: string, path: string = '') => {
     // Delete the old file first
     await deleteSpaceFile(installId, fileId);
@@ -969,4 +1011,36 @@ export const getCapabilitiesDebug = async (capabilityName: string) => {
 
 export const getSpaceSpec = async (installId: number) => {
     return iaxios.get<any>(`/core/space/${installId}/spec.json`);
+}
+
+// Space Data Tables API
+export interface SpaceDataTable {
+    name: string;
+    table_type?: string;
+    schema?: string;
+}
+
+export interface SpaceDataColumn {
+    cid: number;
+    name: string;
+    data_type: string;
+    not_null: number;
+    primary_key: number;
+}
+
+export const listSpaceDataTables = async (installId: number) => {
+    return iaxios.get<SpaceDataTable[]>(`/core/space/${installId}/data/table`);
+}
+
+export const getSpaceDataTableColumns = async (installId: number, tableName: string) => {
+    return iaxios.get<SpaceDataColumn[]>(`/core/space/${installId}/data/table/columns/${tableName}`);
+}
+
+export const querySpaceDataTable = async (installId: number, tableName: string, offset: number = 0, limit: number = 50) => {
+    return iaxios.get<Record<string, any>[]>(`/core/space/${installId}/data/query/${tableName}?offset=${offset}&limit=${limit}`);
+}
+
+// export the full state of a space installation as a zip file
+export const exportSpaceState = async (installId: number, excludeTables: string[] = []) => {
+    return iaxios.post(`/core/space/${installId}/export`, { exclude_tables: excludeTables }, { responseType: 'blob' });
 }

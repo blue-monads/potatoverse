@@ -19,6 +19,8 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 3000; // 3 seconds
 const FALLBACK_POLL_INTERVAL = 30000; // 30 seconds
 
+
+
 // Singleton WebSocket manager to share connection across all hook instances
 class WebSocketManager {
     private ws: WebSocket | null = null;
@@ -29,10 +31,6 @@ class WebSocketManager {
     private isConnecting = false;
     private shouldBeConnected = false;
     private connectionId: number = 0; // Track connection attempts to prevent duplicates
-    private useSharedWorker: boolean = false;
-    private sharedWorker: SharedWorker | null = null;
-    private sharedWorkerPort: MessagePort | null = null;
-    private sharedWorkerMessageHandler: ((event: MessageEvent) => void) | null = null;
 
     subscribe(callback: (message: api.UserMessage) => void): () => void {
         this.subscribers.add(callback);
@@ -49,121 +47,6 @@ class WebSocketManager {
                 console.error("Error in WebSocket subscriber:", error);
             }
         });
-    }
-
-    private async checkSharedWorker(): Promise<boolean> {
-        if (typeof SharedWorker === 'undefined') {
-            return false;
-        }
-
-        try {
-            // Reuse existing shared worker if available
-            if (this.sharedWorker && this.sharedWorkerPort) {
-                // Test if port is still active by sending a ping
-                return new Promise((resolve) => {
-                    const timeout = setTimeout(() => {
-                        resolve(false);
-                    }, 1000);
-
-                    const messageHandler = (event: MessageEvent) => {
-                        if (event.data?.type === 'pong') {
-                            clearTimeout(timeout);
-                            this.sharedWorkerPort!.removeEventListener('message', messageHandler);
-                            resolve(true);
-                        }
-                    };
-
-                    this.sharedWorkerPort!.addEventListener('message', messageHandler);
-                    this.sharedWorkerPort!.postMessage({ type: 'ping' });
-                });
-            }
-
-            // Create shared worker
-            const worker = new SharedWorker('/zz/pages/sw_websocket.js', { type: 'module' });
-            this.sharedWorker = worker;
-            
-            // Set up port message handler
-            const port = worker.port;
-            this.sharedWorkerPort = port;
-            port.start();
-
-            // Send ping to shared worker
-            return new Promise((resolve) => {
-                const timeout = setTimeout(() => {
-                    resolve(false);
-                }, 1000); // 1 second timeout
-
-                const messageHandler = (event: MessageEvent) => {
-                    if (event.data?.type === 'pong') {
-                        clearTimeout(timeout);
-                        port.removeEventListener('message', messageHandler);
-                        resolve(true);
-                    }
-                };
-
-                port.addEventListener('message', messageHandler);
-                
-                // Send ping
-                port.postMessage({ type: 'ping' });
-            });
-        } catch (error) {
-            console.error("Error checking shared worker:", error);
-            return false;
-        }
-    }
-
-    private setupSharedWorkerMessageListener() {
-        if (this.sharedWorkerMessageHandler || !this.sharedWorkerPort) {
-            return; // Already set up or no port
-        }
-
-        this.sharedWorkerMessageHandler = (event: MessageEvent) => {
-            const { type, message, error } = event.data;
-
-            if (type === 'ws-message' && message) {
-                // Forward message from shared worker to subscribers
-                try {
-                    const userMessage: api.UserMessage = message;
-                    this.notifySubscribers(userMessage);
-                } catch (error) {
-                    console.error("Failed to process shared worker message:", error);
-                }
-            } else if (type === 'ws-connected') {
-                console.log("[SW] WebSocket connected via shared worker");
-                this.reconnectAttempts = 0;
-                this.isConnecting = false;
-            } else if (type === 'ws-closed') {
-                console.log("[SW] WebSocket closed via shared worker");
-                this.isConnecting = false;
-            } else if (type === 'ws-error') {
-                console.error("[SW] WebSocket error via shared worker:", error);
-                this.isConnecting = false;
-            } else if (type === 'ws-reconnect-needed') {
-                // Shared worker needs reconnection - trigger reconnect with token
-                if (this.shouldBeConnected) {
-                    console.log("[SW] Shared worker requested reconnect");
-                    const loginData = getLoginData();
-                    if (loginData?.accessToken && this.sharedWorkerPort) {
-                        this.sharedWorkerPort.postMessage({
-                            type: 'ws-connect',
-                            token: loginData.accessToken,
-                            host: window.location.host
-                        });
-                    }
-                }
-            } else if (type === 'ws-max-reconnect-reached') {
-                console.error("[SW] Max reconnection attempts reached in shared worker");
-            }
-        };
-
-        this.sharedWorkerPort.addEventListener('message', this.sharedWorkerMessageHandler);
-    }
-
-    private removeSharedWorkerMessageListener() {
-        if (this.sharedWorkerMessageHandler && this.sharedWorkerPort) {
-            this.sharedWorkerPort.removeEventListener('message', this.sharedWorkerMessageHandler);
-            this.sharedWorkerMessageHandler = null;
-        }
     }
 
     async connect() {
@@ -195,28 +78,7 @@ class WebSocketManager {
             return;
         }
 
-        // Check if shared worker is available and responsive
-        const swAvailable = await this.checkSharedWorker();
-        
-        if (swAvailable) {
-            console.log("Shared worker is available, using it for WebSocket connection");
-            this.useSharedWorker = true;
-            this.setupSharedWorkerMessageListener();
-            
-            // Send connect message to shared worker
-            if (this.sharedWorkerPort) {
-                this.isConnecting = true;
-                this.sharedWorkerPort.postMessage({
-                    type: 'ws-connect',
-                    token: loginData.accessToken,
-                    host: window.location.host
-                });
-            }
-            return;
-        } else {
-            console.log("Shared worker not available, using direct WebSocket connection");
-            this.useSharedWorker = false;
-        }
+
 
         // Only close existing connection if it's in a bad state (CLOSED or CLOSING)
         if (this.ws) {
@@ -319,10 +181,7 @@ class WebSocketManager {
     disconnect() {
         this.shouldBeConnected = false;
         
-        if (this.useSharedWorker && this.sharedWorkerPort) {
-            // Disconnect via shared worker
-            this.sharedWorkerPort.postMessage({ type: 'ws-disconnect' });
-        } else if (this.ws) {
+        if (this.ws) {
             // Disconnect direct websocket
             this.ws.close();
             this.ws = null;
@@ -340,13 +199,7 @@ class WebSocketManager {
         this.isConnecting = false;
     }
 
-    isConnected(): boolean {
-        if (this.useSharedWorker) {
-            // For shared worker, we can't directly check connection state
-            // We'll assume connected if we're not in a disconnected state
-            // In a real implementation, you might want to query the shared worker
-            return this.shouldBeConnected && !this.isConnecting;
-        }
+    isConnected(): boolean {        
         return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
     }
 }

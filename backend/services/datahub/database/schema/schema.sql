@@ -8,13 +8,24 @@ CREATE TABLE IF NOT EXISTS GlobalConfig (
 );
 
 CREATE TABLE IF NOT EXISTS UserGroups (
-  name TEXT PRIMARY KEY,  
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,  
   info TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   extrameta JSON NOT NULL DEFAULT '{}',
   UNIQUE(name)
 );
+
+CREATE TABLE IF NOT EXISTS UserGroupConfig (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, 
+  key TEXT NOT NULL DEFAULT '', 
+  "group" TEXT NOT NULL DEFAULT '',
+  value TEXT NOT NULL DEFAULT '',
+  unique("group", key)
+);
+
+
 
 CREATE TABLE IF NOT EXISTS Users (
   id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -187,6 +198,9 @@ CREATE TABLE IF NOT EXISTS SpaceCapabilities (
   install_id INTEGER NOT NULL,
   space_id INTEGER NOT NULL DEFAULT 0,
   capability_type TEXT NOT NULL DEFAULT '',
+  auto_start BOOLEAN NOT NULL DEFAULT FALSE,
+  scope TEXT NOT NULL DEFAULT 'normal', -- normal, operation (install, update, uninstall)
+
   options JSON NOT NULL DEFAULT '{}',
 
   extrameta JSON NOT NULL DEFAULT '{}',

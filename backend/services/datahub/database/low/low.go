@@ -9,6 +9,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/enforcer"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/dbutils"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -161,6 +162,9 @@ func (d *LowDB) RunQueryOne(query string, data ...any) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("RunQueryOne", transformedQuery, data)
+
 	rows, err := driver.Query(transformedQuery, data...)
 	if err != nil {
 		return nil, err
@@ -314,6 +318,8 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 		return nil, errors.New("no joins provided")
 	}
 
+	qq.Println("FindByJoin", query)
+
 	for i := range query.Joins {
 		join := &query.Joins[i]
 		if join.LeftAs == "" {
@@ -395,7 +401,7 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 		sqlQuery = sqlQuery.OrderBy(query.Order)
 	}
 
-	// qq.Println(sqlQuery.String())
+	qq.Println(sqlQuery.String())
 
 	// Execute query and get rows
 	rows, err := sqlQuery.Query()
@@ -407,12 +413,13 @@ func (d *LowDB) FindByJoin(query *datahub.FindByJoin) ([]map[string]any, error) 
 	return dbutils.SelectScan(rows)
 }
 
-func (d *LowDB) ListTables() ([]string, error) {
+func (d *LowDB) ListTables() ([]datahub.TableInfo, error) {
 
 	pattern := enforcer.TableNamePattern(d.ownerType, d.ownerID)
 
+	// fetch the table definition as well so we can detect virtual tables
 	query := d.sess.SQL().
-		Select("name").
+		Select("name", "sql").
 		From("sqlite_master").
 		Where(db.Cond{
 			"type": "table",
@@ -430,15 +437,48 @@ func (d *LowDB) ListTables() ([]string, error) {
 		return nil, err
 	}
 
-	tableNames := make([]string, len(results))
+	tableInfos := make([]datahub.TableInfo, len(results))
+
 	for i, result := range results {
-		tableNames[i] = result["name"].(string)
+		name, _ := result["name"].(string)
+		tInfo := datahub.TableInfo{Name: name, TableType: "normal"}
+		if sqlDef, ok := result["sql"].(string); ok {
+			tInfo.Schema = sqlDef
+
+			// SQLite marks virtual tables in the create statement
+			if strings.Contains(strings.ToUpper(sqlDef), "VIRTUAL TABLE") {
+				tInfo.TableType = "virtual"
+			}
+		}
+		tableInfos[i] = tInfo
 	}
 
-	return tableNames, nil
+	for i := range tableInfos {
+		currTable := &tableInfos[i]
+		if currTable.TableType != "virtual" {
+			continue
+		}
+
+		for oid := range tableInfos {
+			otherTable := &tableInfos[oid]
+
+			if otherTable.Name == currTable.Name {
+				continue
+			}
+
+			if strings.HasPrefix(otherTable.Name, currTable.Name) {
+				otherTable.TableType = "virtual_sub_type"
+
+			}
+
+		}
+
+	}
+
+	return tableInfos, nil
 }
 
-func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {
+func (d *LowDB) ListTableColumns(table string) ([]datahub.TableColumnInfo, error) {
 	finalTableName := d.tableName(table)
 	rawquery := fmt.Sprintf(`SELECT * FROM pragma_table_info('%s')`, finalTableName)
 	rows, err := d.sess.SQL().Query(rawquery)
@@ -448,5 +488,54 @@ func (d *LowDB) ListTableColumns(table string) ([]map[string]any, error) {
 
 	defer rows.Close()
 
-	return dbutils.SelectScan(rows)
+	columns := []datahub.TableColumnInfo{}
+	for rows.Next() {
+		var column datahub.TableColumnInfo
+		if err := rows.Scan(&column.Cid, &column.Name, &column.DataType, &column.NotNull, &column.DefaultValue, &column.PrimaryKey); err != nil {
+			return nil, err
+		}
+		columns = append(columns, column)
+	}
+
+	return columns, nil
+}
+
+func (d *LowDB) FindTablePK(table string) (string, error) {
+	finalTableName := d.tableName(table)
+	quoted := fmt.Sprintf(`"%s"`, strings.ReplaceAll(finalTableName, `"`, `""`))
+
+	rows, err := d.sess.SQL().Query(fmt.Sprintf("PRAGMA table_info(%s)", quoted))
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	var pkColumn string
+	for rows.Next() {
+		var cid int
+		var name string
+		var dataType string
+		var notNull int
+		var defaultValue interface{}
+		var pk int
+
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &pk); err != nil {
+			return "", err
+		}
+
+		if pk > 0 {
+			pkColumn = name
+			break
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return "", err
+	}
+
+	if pkColumn == "" {
+		pkColumn = "rowid"
+	}
+
+	return pkColumn, nil
 }

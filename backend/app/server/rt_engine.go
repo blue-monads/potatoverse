@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -12,9 +13,11 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
 )
 
@@ -234,7 +237,9 @@ func (a *Server) GeneratePackageDevToken(claim *signer.AccessClaim, ctx *gin.Con
 		return nil, err
 	}
 
-	token, err := a.ctrl.GeneratePackageDevToken(claim.UserId, packageId)
+	epthermal := ctx.Query("epthermal") == "true"
+
+	token, err := a.ctrl.GeneratePackageDevToken(claim.UserId, packageId, epthermal)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +255,8 @@ func (a *Server) handleSpaceFile() func(ctx *gin.Context) {
 	devSpacesEnv := os.Getenv("POTATO_DEV_SPACES")
 
 	enableDevSpace := devSpacesEnv != ""
+
+	qq.Println("@dev_spaces_env", devSpacesEnv)
 
 	if enableDevSpace {
 		// POTATO_DEV_SPACES="space_keyspace1:8080,space2:8081"
@@ -352,22 +359,24 @@ func (a *Server) PushPackage(ctx *gin.Context) {
 	// Get the dev token from Authorization header
 	token := ctx.GetHeader("Authorization")
 	if token == "" {
-		httpx.WriteErrString(ctx, "missing authorization token")
+		ctx.Data(http.StatusUnauthorized, "text/plain", []byte("missing authorization token"))
 		return
 	}
+
+	token = strings.TrimPrefix(token, actions.PackageDevTokenPrefix)
 
 	// Parse the package dev token
 	claim, err := a.signer.ParsePackageDev(token)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to parse package dev token: %s", err.Error())
-		httpx.WriteErrString(ctx, errMsg)
+		ctx.Data(http.StatusUnauthorized, "text/plain", []byte(errMsg))
 		return
 	}
 
 	_, err = a.ctrl.GetPackage(claim.InstallPackageId)
 	if err != nil {
 		errMsg := fmt.Sprintf("failed to get package: %s", err.Error())
-		httpx.WriteErrString(ctx, errMsg)
+		ctx.Data(http.StatusUnauthorized, "text/plain", []byte(errMsg))
 		return
 	}
 
@@ -432,4 +441,99 @@ func (a *Server) GetSpaceSpec(claim *signer.AccessClaim, ctx *gin.Context) (any,
 		return nil, err
 	}
 	return spec, nil
+}
+
+func (a *Server) ExportState(ctx *gin.Context) {
+	claim, err := a.withAccessToken(ctx.GetHeader("Authorization"))
+	if err != nil {
+		httpx.WriteAuthErr(ctx, err)
+		return
+	}
+
+	qq.Println("@ImportState user", claim.UserId)
+
+	qq.Println("@check_perm_user", "user_id", claim.UserId)
+
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	es := &corehub.StateExport{}
+	err = ctx.BindJSON(es)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	es.InstallId = installId
+
+	zipPath, err := a.opt.CoreHub.ExportState(es)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// stream file as attachment
+	ctx.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="space_%d_export.zip"`, installId))
+	// remove temp file after serving
+	defer os.Remove(zipPath)
+	ctx.File(zipPath)
+
+}
+
+func (a *Server) ImportState(ctx *gin.Context) {
+	claim, err := a.withAccessToken(ctx.GetHeader("Authorization"))
+	if err != nil {
+		httpx.WriteAuthErr(ctx, err)
+		return
+	}
+
+	qq.Println("@claim", claim.UserId)
+
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// Parse multipart form (allow up to 64MB file in memory before streaming to disk)
+	if err := ctx.Request.ParseMultipartForm(64 << 20); err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	file, _, err := ctx.Request.FormFile("file")
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+	defer file.Close()
+
+	tmpFile, err := os.CreateTemp("", "import_state_*.zip")
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+	tmpPath := tmpFile.Name()
+	// ensure file descriptor closed
+	defer func() {
+		tmpFile.Close()
+		os.Remove(tmpPath)
+	}()
+
+	if _, err := io.Copy(tmpFile, file); err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	// call CoreHub.Import
+	if err := a.opt.CoreHub.Import(installId, tmpPath); err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	ctx.JSON(200, gin.H{"message": "Import completed"})
+
 }

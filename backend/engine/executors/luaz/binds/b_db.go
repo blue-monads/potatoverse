@@ -389,13 +389,13 @@ func dbFindByJoin(dbOps datahub.DBLowCoreOps, L *lua.LState) int {
 }
 
 func dbListTables(dbOps datahub.DBLowOps, L *lua.LState) int {
-	tables, err := dbOps.ListTables()
+	tableInfos, err := dbOps.ListTables()
 	if err != nil {
 		return luaplus.PushError(L, err)
 	}
 	resultTable := L.NewTable()
-	for _, tableName := range tables {
-		resultTable.Append(lua.LString(tableName))
+	for _, tInfo := range tableInfos {
+		resultTable.Append(lua.LString(tInfo.Name))
 	}
 	L.Push(resultTable)
 	return 1
@@ -409,7 +409,11 @@ func dbListTableColumns(dbOps datahub.DBLowOps, L *lua.LState) int {
 	}
 	resultTable := L.NewTable()
 	for _, column := range columns {
-		columnTable := luaplus.MapToTable(L, column)
+		columnTable, err := luaplus.StructToTable(L, &column)
+		if err != nil {
+			return luaplus.PushError(L, err)
+		}
+
 		resultTable.Append(columnTable)
 	}
 	L.Push(resultTable)

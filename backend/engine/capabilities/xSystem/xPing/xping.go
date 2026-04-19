@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Name         = "Ping"
+	Name         = "xPing"
 	Icon         = `<i class="fa-solid fa-phone-volume"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
@@ -93,7 +93,7 @@ var (
 )
 
 func init() {
-	registry.RegisterCapability("ping", xcapability.CapabilityBuilderFactory{
+	registry.RegisterCapability(xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			appTyped := app.(xtypes.App)
 			return &PingBuilder{app: appTyped}, nil

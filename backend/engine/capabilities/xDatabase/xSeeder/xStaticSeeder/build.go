@@ -1,6 +1,8 @@
 package staticseeder
 
 import (
+	"fmt"
+
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
@@ -8,7 +10,7 @@ import (
 )
 
 var (
-	Name         = "staticseeder"
+	Name         = "xStaticSeeder"
 	Icon         = `<i class="fa-solid fa-fill"></i>`
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
@@ -23,7 +25,7 @@ var (
 )
 
 func init() {
-	registry.RegisterCapability(Name, xcapability.CapabilityBuilderFactory{
+	registry.RegisterCapability(xcapability.CapabilityBuilderFactory{
 		Builder: func(app any) (xcapability.CapabilityBuilder, error) {
 			appTyped := app.(xtypes.App)
 			return &StaticSeederBuilder{app: appTyped}, nil
@@ -54,10 +56,20 @@ func (b *StaticSeederBuilder) Build(handle xcapability.XCapabilityHandle) (xcapa
 
 	db := b.app.Database().GetLowPackageDBOps(model.InstallID)
 
+	dbh := b.app.Database()
+
+	pkgOps := dbh.GetPackageInstallOps()
+
+	pkg, err := pkgOps.GetPackage(model.InstallID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get package: %w", err)
+	}
+
 	capability := &StaticSeederCapability{
 		seedFolder:   seedFolder,
 		builder:      b,
 		installId:    model.InstallID,
+		installPvId:  pkg.ActiveInstallID,
 		spaceId:      model.SpaceID,
 		capabilityId: model.ID,
 		db:           db,

@@ -30,14 +30,7 @@ func (c *Controller) UpdateSelfBio(userId int64, bio string) error {
 	})
 }
 
-/*
-
-todo:
-- update email
-- update password
-- message another user
-- read self messages
-- delete self messages
-- update read status of self messages
-
-*/
+// ListSelfDevices returns the current user's devices (sessions).
+func (c *Controller) ListSelfDevices(userId int64) ([]dbmodels.UserDevice, error) {
+	return c.database.GetUserOps().ListUserDevice(userId)
+}

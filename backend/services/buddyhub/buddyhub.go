@@ -37,7 +37,7 @@ type BuddyHub struct {
 }
 
 const (
-	CloudFunnelURL = "https://tubersalltheway.top/zz/buddy/register"
+	CloudFunnelURL = "http://tubersalltheway.top/zz/buddy/register"
 	LocalFunnelURL = "http://localhost:7771/zz/buddy/register"
 
 	DefaultFunnelHQ = CloudFunnelURL
@@ -112,6 +112,10 @@ func (bh *BuddyHub) Start() error {
 
 	if os.Getenv("POTATO_DISABLE_EMBED_FUNNEL") != "1" {
 		bh.embeddedFunnel = funnel.New()
+		err := bh.embeddedFunnel.StartQuicServer()
+		if err != nil {
+			bh.logger.Error("Failed to start QUIC server", "err", err)
+		}
 	}
 
 	return nil

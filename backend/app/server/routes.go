@@ -60,11 +60,15 @@ func (a *Server) bindRoutes() {
 		c.FileFromFS(fpath, http.FS(docs.Docs))
 	})
 
+	zroot.GET("/testWS", a.testWS)
+	zroot.POST("/testPOST", a.testPOST)
+
 }
 
 func (a *Server) authRoutes(g *gin.RouterGroup) {
 
 	g.POST("/login", a.login)
+	g.POST("/device-token", a.loginWithDeviceToken)
 	g.GET("/invite/:token", a.getInviteInfo)
 	g.POST("/invite/:token", a.acceptInvite)
 
@@ -109,6 +113,8 @@ func (a *Server) selfUserRoutes(g *gin.RouterGroup) {
 	g.GET("/portalData/:portal_type", a.withAccessTokenFn(a.selfUserPortalData))
 	g.GET("/info", a.withAccessTokenFn(a.selfInfo))
 	g.PUT("/bio", a.withAccessTokenFn(a.updateSelfBio))
+	g.GET("/devices", a.withAccessTokenFn(a.selfListDevices))
+	g.POST("/devices", a.withAccessTokenFn(a.selfCreateDevice))
 }
 
 func (a *Server) extraRoutes(g *gin.RouterGroup) {
@@ -157,6 +163,11 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.PUT("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.UpdateSpaceKV))
 	coreApi.DELETE("/space/:install_id/kv/:kvId", a.withAccessTokenFn(a.DeleteSpaceKV))
 
+	// data API
+	coreApi.GET("/space/:install_id/data/table", a.withAccessTokenFn(a.ListSpaceDataTables))
+	coreApi.GET("/space/:install_id/data/table/columns/:table_name", a.withAccessTokenFn(a.GetSpaceDataTable))
+	coreApi.GET("/space/:install_id/data/query/:table_name", a.withAccessTokenFn(a.QuerySpaceDataTable))
+
 	// Space Files API
 	coreApi.GET("/space/:install_id/files", a.withAccessTokenFn(a.adminListSpaceFiles))
 	coreApi.GET("/space/:install_id/files/:fileId", a.withAccessTokenFn(a.adminGetSpaceFile))
@@ -187,6 +198,8 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.PUT("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.UpdateEventSubscription))
 	coreApi.DELETE("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.DeleteEventSubscription))
 	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))
+	coreApi.POST("/space/:install_id/export", (a.ExportState))
+	coreApi.POST("/space/:install_id/import", (a.ImportState))
 
 	// Capability Types API
 	coreApi.GET("/capability/types", a.withAccessTokenFn(a.ListCapabilityTypes))

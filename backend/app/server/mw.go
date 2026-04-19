@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/signer"
@@ -22,6 +23,9 @@ func (a *Server) withAccessTokenFn(fn AuthedFunc) func(ctx *gin.Context) {
 
 		claim, err := a.withAccessToken(tok)
 		if err != nil {
+			fmt.Printf("Error validating access token: %v\n", tok)
+
+			httpx.WriteAuthErr(ctx, err)
 			return
 		}
 

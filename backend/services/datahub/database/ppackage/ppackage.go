@@ -120,6 +120,15 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int
 		return 0, err
 	}
 
+	specialPages := "{}"
+	if len(pkgManifest.SpecialPages) != 0 {
+		out, err := json.Marshal(pkgManifest.SpecialPages)
+		if err != nil {
+			return 0, err
+		}
+		specialPages = string(out)
+	}
+
 	version := &dbmodels.PackageVersion{
 		InstallId:     id,
 		Name:          pkgManifest.Name,
@@ -133,6 +142,7 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int
 		AuthorSite:    pkgManifest.AuthorSite,
 		SourceCode:    pkgManifest.SourceCode,
 		License:       pkgManifest.License,
+		SpecialPages:  specialPages,
 	}
 
 	result, err := d.packageVersionsTable().Insert(version)

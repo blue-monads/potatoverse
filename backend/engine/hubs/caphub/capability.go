@@ -56,6 +56,22 @@ func (gh *CapabilityHub) Init(app xtypes.App) error {
 
 	}
 
+	db := gh.app.Database().GetSpaceOps()
+
+	capabilities, err := db.QueryAutoStartSpaceCapabilities()
+	if err != nil {
+		return err
+	}
+
+	for _, capability := range capabilities {
+
+		_, err := gh.get(capability.CapabilityType, capability.InstallID, capability.SpaceID)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	app.Logger().Info("CapabilityHub initialized")
 
 	return nil

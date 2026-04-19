@@ -2,6 +2,7 @@ package file
 
 import (
 	"hash"
+	"io"
 	"os"
 
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
@@ -29,10 +30,6 @@ func (f *FileOperations) fileBlobTable() db.Collection {
 	return f.db.Collection(f.getBlobTableName())
 }
 
-func (f *FileOperations) fileShareTable() db.Collection {
-	return f.db.Collection(f.getShareTableName())
-}
-
 func (f *FileOperations) getTableName() string {
 	return f.prefix + "FileMeta"
 }
@@ -41,22 +38,19 @@ func (f *FileOperations) getBlobTableName() string {
 	return f.prefix + "FileBlob"
 }
 
-func (f *FileOperations) getShareTableName() string {
-	return f.prefix + "FileShares"
-}
-
 func (f *FileOperations) readFileHash(file *os.File, hash hash.Hash) error {
 	buf := make([]byte, 1024*1024)
 	for {
 		n, err := file.Read(buf)
+		if n > 0 {
+			hash.Write(buf[:n])
+		}
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return err
 		}
-
-		if n == 0 {
-			break
-		}
-		hash.Write(buf[:n])
 	}
 
 	return nil

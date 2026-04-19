@@ -1,8 +1,8 @@
 package funnel
 
 import (
-	"errors"
 	"io"
+	"net/http"
 	"net/http/httputil"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
@@ -12,17 +12,33 @@ import (
 	"github.com/gobwas/ws/wsutil"
 )
 
+func (f *Funnel) getServerConn(nodeId string) *ServerHandle {
+	f.quicScLock.RLock()
+	serverConn, exists := f.QuicServerConnections[nodeId]
+	f.quicScLock.RUnlock()
+
+	if !exists {
+		f.scLock.RLock()
+		serverConn, exists = f.serverConnections[nodeId]
+		f.scLock.RUnlock()
+
+		if !exists {
+			qq.Println("@routeWS/1{SERVER_NOT_CONNECTED}")
+			f.dumpConnIds()
+			return nil
+		}
+	}
+
+	return serverConn
+}
+
 func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 
 	qq.Println("@routeWS/1", nodeId)
-
-	f.scLock.RLock()
-	serverConn, exists := f.serverConnections[nodeId]
-	f.scLock.RUnlock()
-
-	if !exists {
-		qq.Println("@routeWS/1{SERVER_NOT_CONNECTED}")
-		c.Error(errors.New("server not connected"))
+	serverConn := f.getServerConn(nodeId)
+	if serverConn == nil {
+		c.String(http.StatusBadGateway, "server not connected")
+		c.Abort()
 		return
 	}
 
@@ -65,7 +81,7 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 		packet: &packetwire.Packet{
 			PType:  packetwire.PTypeSendHeader,
 			Offset: 0,
-			Total:  0, // WebSocket doesn't have a body in the initial request
+			Total:  int32(len(out)),
 			Data:   out,
 		},
 		reqId: reqId,

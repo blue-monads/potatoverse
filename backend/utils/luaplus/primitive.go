@@ -7,31 +7,23 @@ import (
 )
 
 func LuaTypeToGoType(l *lua.LState, lvalue lua.LValue) any {
-	if lvalue == lua.LNil {
+	if lvalue == nil || lvalue.Type() == lua.LTNil {
 		return nil
 	}
 
-	switch v := lvalue.(type) {
-	case lua.LBool:
-		return bool(v)
-	case lua.LString:
-		return string(v)
-	case lua.LNumber:
-		// Check if it's an integer
-		if v == lua.LNumber(int64(v)) {
-			return int64(v)
-		}
-		return float64(v)
-	case *lua.LTable:
-		// Check if it's an array (consecutive integer keys starting from 1)
-		if isArray(v) {
-			return tableToArray(v)
-		}
-		// Otherwise treat as map
-		return tableToMap(v)
+	switch lvalue.Type() {
+	case lua.LTBool:
+		return bool(lvalue.(lua.LBool))
+	case lua.LTString:
+		return string(lvalue.(lua.LString))
+	case lua.LTNumber:
+		return float64(lvalue.(lua.LNumber))
+	case lua.LTTable:
+		return tableToMap(lvalue.(*lua.LTable))
 	default:
 		return nil
 	}
+
 }
 
 func GoTypeToLuaType(l *lua.LState, goValue any) lua.LValue {

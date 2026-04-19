@@ -35,6 +35,23 @@ func (f *FileOperations) getFileContentByMeta(file *dbmodels.FileMeta) ([]byte, 
 	}
 }
 
+func (f *FileOperations) getReadSeekerByMeta(file *dbmodels.FileMeta) (io.ReadSeeker, io.Closer, error) {
+	switch file.StoreType {
+	case StoreTypeInline:
+		data, err := f.getInlineBlob(file.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return bytes.NewReader(data), nil, nil
+	case StoreTypeExternal:
+		return f.getExternalFileReadSeeker(file)
+	case StoreTypeMultipart:
+		return f.getMultipartReadSeeker(file)
+	default:
+		return nil, nil, fmt.Errorf("unknown storage type: %d", file.StoreType)
+	}
+}
+
 func (f *FileOperations) streamFileByMeta(file *dbmodels.FileMeta, w io.Writer) error {
 	switch file.StoreType {
 	case StoreTypeInline:

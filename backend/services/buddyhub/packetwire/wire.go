@@ -2,11 +2,15 @@ package packetwire
 
 import (
 	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"hash/crc64"
 	"io"
-	"net"
 
 	nanoid "github.com/jaevor/go-nanoid"
 )
+
+var crcTable = crc64.MakeTable(crc64.ISO)
 
 type PacketType = uint8
 
@@ -20,7 +24,28 @@ const (
 	PtypeWebSocketPing     PacketType = iota
 	PtypeWebSocketPong     PacketType = iota
 	PtypeEndSocket         PacketType = iota
+	PtypeQuicUpgrade       PacketType = iota
 )
+
+type QuicUpgradePacket struct {
+	Port       int32  `json:"port"`
+	Token      string `json:"token"`
+	DirectHost string `json:"direct_host"`
+}
+
+func (p *QuicUpgradePacket) Encode() []byte {
+	res, _ := json.Marshal(p)
+	return res
+}
+
+func DecodeQuicUpgradePacket(data []byte) (*QuicUpgradePacket, error) {
+	var p QuicUpgradePacket
+	err := json.Unmarshal(data, &p)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
 
 type Packet struct {
 	PType  PacketType
@@ -31,7 +56,10 @@ type Packet struct {
 
 const FragmentSize = 1024 * 512
 
-func WritePacketFull(conn net.Conn, packet *Packet, reqId string) error {
+// 16MB
+const MaxPacketDataSize = 16 * 1024 * 1024
+
+func WritePacketFull(conn io.Writer, packet *Packet, reqId string) error {
 
 	_, err := conn.Write([]byte(reqId))
 	if err != nil {
@@ -41,8 +69,11 @@ func WritePacketFull(conn net.Conn, packet *Packet, reqId string) error {
 	return WritePacket(conn, packet)
 }
 
-// WritePacket writes a packet to a net.Conn
-func WritePacket(conn net.Conn, packet *Packet) error {
+// WritePacket writes a packet to an io.Writer
+func WritePacket(conn io.Writer, packet *Packet) error {
+	if len(packet.Data) > MaxPacketDataSize {
+		return fmt.Errorf("packet data length %d exceeds maximum %d", len(packet.Data), MaxPacketDataSize)
+	}
 	// write packet type
 	_, err := conn.Write([]byte{packet.PType})
 	if err != nil {
@@ -73,6 +104,15 @@ func WritePacket(conn net.Conn, packet *Packet) error {
 		return err
 	}
 
+	// write checksum
+	checksumBytes := make([]byte, 8)
+	checksum := crc64.Checksum(packet.Data, crcTable)
+	binary.BigEndian.PutUint64(checksumBytes, checksum)
+	_, err = conn.Write(checksumBytes)
+	if err != nil {
+		return err
+	}
+
 	// write data
 	totalWritten := 0
 	for {
@@ -89,8 +129,8 @@ func WritePacket(conn net.Conn, packet *Packet) error {
 	return nil
 }
 
-// ReadPacket reads a packet from a net.Conn
-func ReadPacket(conn net.Conn) (*Packet, error) {
+// ReadPacket reads a packet from an io.Reader
+func ReadPacket(conn io.Reader) (*Packet, error) {
 	packet := &Packet{}
 	intBytes := make([]byte, 4)
 
@@ -108,6 +148,9 @@ func ReadPacket(conn net.Conn) (*Packet, error) {
 		return nil, err
 	}
 	length := binary.BigEndian.Uint32(intBytes)
+	if length > MaxPacketDataSize {
+		return nil, fmt.Errorf("packet length %d exceeds maximum %d", length, MaxPacketDataSize)
+	}
 
 	// read offset
 	_, err = io.ReadFull(conn, intBytes)
@@ -123,11 +166,24 @@ func ReadPacket(conn net.Conn) (*Packet, error) {
 	}
 	total := binary.BigEndian.Uint32(intBytes)
 
+	// read checksum
+	checksumBytes := make([]byte, 8)
+	_, err = io.ReadFull(conn, checksumBytes)
+	if err != nil {
+		return nil, err
+	}
+	expectedChecksum := binary.BigEndian.Uint64(checksumBytes)
+
 	// read data
 	dataBytes := make([]byte, length)
 	_, err = io.ReadFull(conn, dataBytes)
 	if err != nil {
 		return nil, err
+	}
+
+	actualChecksum := crc64.Checksum(dataBytes, crcTable)
+	if actualChecksum != expectedChecksum {
+		return nil, fmt.Errorf("data corruption detected: expected checksum %016x, got %016x", expectedChecksum, actualChecksum)
 	}
 
 	packet.PType = ptype

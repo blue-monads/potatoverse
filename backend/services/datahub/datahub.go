@@ -73,6 +73,8 @@ type UserOps interface {
 
 	ListUserDevice(userId int64) ([]dbmodels.UserDevice, error)
 	GetUserDevice(id int64) (*dbmodels.UserDevice, error)
+	GetUserDeviceByTokenHash(userId int64, tokenHash string) (*dbmodels.UserDevice, error)
+	AddUserDevice(data *dbmodels.UserDevice) (int64, error)
 	DeleteUserDevice(id int64) error
 	UpdateUserDevice(id int64, data map[string]any) error
 
@@ -139,13 +141,9 @@ type SpaceOps interface {
 	UpdateSpaceConfig(spaceId int64, uid int64, id int64, data map[string]any) error
 	RemoveSpaceConfig(spaceId int64, uid int64, id int64) error
 
-	ListSpaceTables(spaceId int64) ([]string, error)
-	ListSpaceTableColumns(spaceId int64, table string) ([]dbmodels.SpaceTableColumn, error)
-	RunSpaceSQLQuery(spaceId int64, query string, data []any) ([]map[string]any, error)
-	RunSpaceDDL(spaceId int64, ddl string) error
-
 	// Space Capabilities
 	QuerySpaceCapabilities(installId int64, cond map[any]any) ([]dbmodels.SpaceCapability, error)
+	QueryAutoStartSpaceCapabilities() ([]dbmodels.SpaceCapability, error)
 	AddSpaceCapability(installId int64, data *dbmodels.SpaceCapability) error
 	GetSpaceCapability(installId int64, name string) (*dbmodels.SpaceCapability, error)
 	GetSpaceCapabilityByID(installId int64, id int64) (*dbmodels.SpaceCapability, error)
@@ -207,13 +205,6 @@ type FileOps interface {
 	UpdateFileMeta(ownerID int64, id int64, data map[string]any) error
 	GetFilePreview(ownerID int64, id int64) ([]byte, error)
 
-	// File Ref
-
-	AddFileShare(ownerID int64, fileId int64, userId int64) (string, error)
-	GetSharedFile(ownerID int64, id string, ctx *gin.Context) error
-	ListFileShares(ownerID int64, fileId int64) ([]dbmodels.FileShare, error)
-	RemoveFileShare(ownerID int64, userId int64, id string) error
-
 	NewAsFS(ownerID int64, rootPath string) fs.FS
 }
 
@@ -252,9 +243,25 @@ type FindTypedQuery struct {
 	Targets any         `json:"targets"`
 }
 
+type TableInfo struct {
+	Name      string `json:"name"`
+	TableType string `json:"table_type,omitempty"` // normal, virtual, virtual_sub_type
+	Schema    string `json:"schema,omitempty"`
+}
+
+type TableColumnInfo struct {
+	Cid          int    `json:"cid" db:"cid"`
+	Name         string `json:"name" db:"name"`
+	DataType     string `json:"data_type" db:"type"`
+	NotNull      int    `json:"not_null" db:"notnull"`
+	DefaultValue any    `json:"default_value" db:"dflt_value"`
+	PrimaryKey   int    `json:"primary_key" db:"pk"`
+}
+
 type DBLowOps interface {
-	ListTables() ([]string, error)
-	ListTableColumns(table string) ([]map[string]any, error)
+	ListTables() ([]TableInfo, error)
+	ListTableColumns(table string) ([]TableColumnInfo, error)
+	FindTablePK(table string) (string, error)
 
 	DBLowCoreOps
 

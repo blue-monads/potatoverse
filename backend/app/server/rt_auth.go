@@ -18,6 +18,7 @@ func (a *Server) login(ctx *gin.Context) {
 		httpx.WriteAuthErr(ctx, err)
 		return
 	}
+	data.ClientIP = ctx.ClientIP()
 
 	resp, err := a.ctrl.Login(data)
 	if err != nil {
@@ -26,7 +27,22 @@ func (a *Server) login(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, resp)
+}
 
+func (a *Server) loginWithDeviceToken(ctx *gin.Context) {
+	var req struct {
+		DeviceToken string `json:"device_token" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		httpx.WriteAuthErr(ctx, err)
+		return
+	}
+	resp, err := a.ctrl.LoginWithDeviceToken(req.DeviceToken, ctx.ClientIP())
+	if err != nil {
+		httpx.WriteAuthErr(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
 }
 
 func (a *Server) getInviteInfo(ctx *gin.Context) {
