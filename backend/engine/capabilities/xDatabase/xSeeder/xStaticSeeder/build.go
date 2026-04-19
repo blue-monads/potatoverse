@@ -1,6 +1,8 @@
 package staticseeder
 
 import (
+	"fmt"
+
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
@@ -54,10 +56,20 @@ func (b *StaticSeederBuilder) Build(handle xcapability.XCapabilityHandle) (xcapa
 
 	db := b.app.Database().GetLowPackageDBOps(model.InstallID)
 
+	dbh := b.app.Database()
+
+	pkgOps := dbh.GetPackageInstallOps()
+
+	pkg, err := pkgOps.GetPackage(model.InstallID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get package: %w", err)
+	}
+
 	capability := &StaticSeederCapability{
 		seedFolder:   seedFolder,
 		builder:      b,
 		installId:    model.InstallID,
+		installPvId:  pkg.ActiveInstallID,
 		spaceId:      model.SpaceID,
 		capabilityId: model.ID,
 		db:           db,

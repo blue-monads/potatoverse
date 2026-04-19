@@ -55,6 +55,9 @@ func (d *SpaceOperations) QueryWithValueSpaceKV(installId int64, cond map[any]an
 
 func (d *SpaceOperations) AddSpaceKV(installId int64, data *dbmodels.SpaceKV) error {
 	table := d.spaceKVTable()
+
+	data.InstallID = installId
+
 	_, err := table.Insert(data)
 	if err != nil {
 		return err
@@ -94,6 +97,9 @@ func (d *SpaceOperations) GetSpaceKVByGroup(installId int64, group string, offse
 
 func (d *SpaceOperations) UpdateSpaceKV(installId int64, group, key string, data map[string]any) error {
 	table := d.spaceKVTable()
+
+	delete(data, "install_id")
+
 	return table.Find(db.Cond{"install_id": installId, "group": group, "key": key}).Update(data)
 }
 

@@ -99,7 +99,13 @@ func (m *MigratorCapability) Close() error {
 
 func (m *MigratorCapability) performMigration(folder string) error {
 
-	qq.Println("@performMigration/1")
+	qq.Println(
+		"@performMigration/1",
+		"Starting migration process for installId:", m.installId,
+		"folder:", folder,
+		"installPvId:", m.installPvId,
+		"capabilityId:", m.capabilityId,
+	)
 
 	migFolder := m.folder
 
