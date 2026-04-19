@@ -1,6 +1,7 @@
 package cli
 
 type PackageCmd struct {
+	Init  PackageInitCmd  `cmd:"" help:"Initialize a new project from a template."`
 	Build PackageBuildCmd `cmd:"" help:"Build the package."`
 	Push  PackagePushCmd  `cmd:"" help:"Push the package."`
 }
