@@ -1,0 +1,42 @@
+name: {{APP_NAME}}
+info: {{APP_INFO}}
+slug: {{APP_SLUG}}
+tags:
+  - "potato-executor:luaz"
+  - "potato-db:sqlite"
+format_version: '0.0.2'
+author_name: {{AUTHOR_NAME}}
+version: '0.0.1'
+
+special_pages:
+  init_page: init.html
+
+spaces:
+  - namespace: {{APP_SLUG}}
+    executor_type: luaz
+    server_file: server.lua
+    is_default: true
+    route_options:
+      serve_folder: public
+      force_html_extension: false
+      force_index_html_file: true
+      on_not_found_file: index.html
+
+capabilities:
+  - name: xMigrator
+    options:
+      folder: migration
+  - name: xStaticSeeder
+    options:
+      folder: seed
+
+developer:
+  server_url: http://localhost:7777
+  token_env: SIMPLE_DEV_TOKEN
+  output_zip_file: package.spk.zip
+  include_files:
+    - 'ui/dist/**/*,public'
+    - 'server/server.lua,server.lua'
+    - 'server/migration/**/*.sql,migration'
+    - 'server/seed/**/*.json,seed'
+  build_command: '{{BUILD_COMMAND}}'

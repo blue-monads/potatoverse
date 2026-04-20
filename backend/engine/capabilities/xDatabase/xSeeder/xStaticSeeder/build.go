@@ -15,7 +15,7 @@ var (
 	OptionFields = []xcapability.CapabilityOptionField{
 		{
 			Name:        "Seed Folder",
-			Key:         "staticseeder_folder",
+			Key:         "folder",
 			Description: "Path to the seed folder containing JSON files (e.g., 'seed' or 'db/seed')",
 			Type:        "text",
 			Default:     "seed",
@@ -49,7 +49,7 @@ func (b *StaticSeederBuilder) Build(handle xcapability.XCapabilityHandle) (xcapa
 
 	opts := handle.GetOptionsAsLazyData()
 
-	seedFolder := opts.GetFieldAsString("staticseeder_folder")
+	seedFolder := opts.GetFieldAsString("folder")
 	if seedFolder == "" {
 		seedFolder = "seed"
 	}

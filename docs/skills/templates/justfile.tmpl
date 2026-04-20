@@ -1,0 +1,9 @@
+start_frontend:
+	cd ui && bun run dev
+
+build_app:
+	potatoverse package build
+
+deploy_app:
+	potatoverse package build
+	potatoverse package push
