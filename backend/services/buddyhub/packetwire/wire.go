@@ -2,7 +2,6 @@ package packetwire
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"hash/crc64"
 	"io"
@@ -24,28 +23,8 @@ const (
 	PtypeWebSocketPing     PacketType = iota
 	PtypeWebSocketPong     PacketType = iota
 	PtypeEndSocket         PacketType = iota
-	PtypeQuicUpgrade       PacketType = iota
 )
 
-type QuicUpgradePacket struct {
-	Port       int32  `json:"port"`
-	Token      string `json:"token"`
-	DirectHost string `json:"direct_host"`
-}
-
-func (p *QuicUpgradePacket) Encode() []byte {
-	res, _ := json.Marshal(p)
-	return res
-}
-
-func DecodeQuicUpgradePacket(data []byte) (*QuicUpgradePacket, error) {
-	var p QuicUpgradePacket
-	err := json.Unmarshal(data, &p)
-	if err != nil {
-		return nil, err
-	}
-	return &p, nil
-}
 
 type Packet struct {
 	PType  PacketType

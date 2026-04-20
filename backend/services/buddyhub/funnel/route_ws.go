@@ -13,20 +13,14 @@ import (
 )
 
 func (f *Funnel) getServerConn(nodeId string) *ServerHandle {
-	f.quicScLock.RLock()
-	serverConn, exists := f.QuicServerConnections[nodeId]
-	f.quicScLock.RUnlock()
+	f.scLock.RLock()
+	serverConn, exists := f.serverConnections[nodeId]
+	f.scLock.RUnlock()
 
 	if !exists {
-		f.scLock.RLock()
-		serverConn, exists = f.serverConnections[nodeId]
-		f.scLock.RUnlock()
-
-		if !exists {
-			qq.Println("@routeWS/1{SERVER_NOT_CONNECTED}")
-			f.dumpConnIds()
-			return nil
-		}
+		qq.Println("@routeWS/1{SERVER_NOT_CONNECTED}")
+		f.dumpConnIds()
+		return nil
 	}
 
 	return serverConn

@@ -4,8 +4,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"os"
-
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub/packetwire"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
@@ -44,30 +42,6 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 
 	if existIng != nil && existIng.conn != nil {
 		existIng.conn.Close()
-	}
-
-	// Send QUIC upgrade packet if QUIC server is running
-	if f.quicPort > 0 {
-
-		directHost := os.Getenv("POTATO_FUNNEL_DHOST")
-
-		upgradePacket := &packetwire.QuicUpgradePacket{
-			Port:       int32(f.quicPort),
-			Token:      nodeId, // Currently token is just nodeId
-			DirectHost: directHost,
-		}
-
-		packet := &packetwire.Packet{
-			PType: packetwire.PtypeQuicUpgrade,
-			Data:  upgradePacket.Encode(),
-		}
-		// Send over WebSocket
-		go func() {
-			err := packetwire.WritePacketFull(conn, packet, packetwire.GetRequestId())
-			if err != nil {
-				qq.Println("@Funnel/registerServer/2{QUIC_UPGRADE_ERROR}", err)
-			}
-		}()
 	}
 
 	// Start goroutine to handle incoming responses from this server
