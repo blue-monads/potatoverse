@@ -14,6 +14,7 @@ type CLI struct {
 	Operations OperationsCmd `cmd:"" help:"Backup and restore operations."`
 	Dev        DevCmd        `cmd:"" help:"Development utilities."`
 	Extra      ExtraCmd      `cmd:"" help:"Extra commands."`
+	Skills     SkillsCmd     `cmd:"" help:"Skills management commands."`
 	Verbose    bool          `name:"verbose" short:"v" help:"Enable verbose output."`
 }
 
