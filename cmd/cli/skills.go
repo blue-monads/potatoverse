@@ -20,7 +20,7 @@ type SkillsCmd struct {
 type SkillsListCmd struct{}
 
 func (c *SkillsListCmd) Run() error {
-	err := fs.WalkDir(docs.Skills, "skills", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(docs.Docs, "skills", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func (c *SkillsShowCmd) Run() error {
 		fullPath = "skills/" + fullPath
 	}
 
-	data, err := fs.ReadFile(docs.Skills, fullPath)
+	data, err := fs.ReadFile(docs.Docs, fullPath)
 	if err != nil {
 		return fmt.Errorf("could not read file %s: %v", fullPath, err)
 	}
@@ -61,7 +61,7 @@ type SkillsExportCmd struct {
 func (c *SkillsExportCmd) Run() error {
 	fmt.Printf("Exporting skills to %s...\n", c.Dest)
 
-	err := fs.WalkDir(docs.Skills, "skills", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(docs.Docs, "skills", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (c *SkillsExportCmd) Run() error {
 		}
 
 		// Read from embedded FS and write to local disk
-		srcFile, err := docs.Skills.Open(path)
+		srcFile, err := docs.Docs.Open(path)
 		if err != nil {
 			return err
 		}
