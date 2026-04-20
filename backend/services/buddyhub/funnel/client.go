@@ -23,6 +23,7 @@ type FunnelClientOptions struct {
 	LocalHttpPort   int
 	RemoteFunnelUrl string
 	NodeId          string
+	PoolSize        int
 }
 
 type FunnelClient struct {
@@ -31,36 +32,32 @@ type FunnelClient struct {
 	pendingRequests map[string]chan *packetwire.Packet
 	prLock          sync.Mutex
 
-	writeChan chan *ServerWrite
-
-	wsConn net.Conn
-	clock  sync.Mutex
+	stopChan chan struct{}
 }
 
 func NewFunnelClient(opts FunnelClientOptions) *FunnelClient {
+	if opts.PoolSize <= 0 {
+		opts.PoolSize = 4
+	}
 	return &FunnelClient{
 		opts:            opts,
 		pendingRequests: make(map[string]chan *packetwire.Packet),
 		prLock:          sync.Mutex{},
-		writeChan:       make(chan *ServerWrite),
+		stopChan:        make(chan struct{}),
 	}
 }
 
-func (c *FunnelClient) writePackets() {
+func (c *FunnelClient) writePackets(conn net.Conn, writeChan chan *ServerWrite) {
 
 	errCount := 0
 
 	for {
 
-		sw := <-c.writeChan
+		sw := <-writeChan
 
 		if sw == nil {
 			break
 		}
-
-		c.clock.Lock()
-		conn := c.wsConn
-		c.clock.Unlock()
 
 		if conn == nil {
 			qq.Println("@FunnelClient/writePackets/1{CONN_NIL}")
@@ -110,38 +107,67 @@ func (c *FunnelClient) Start(token string) error {
 
 	qq.Println("@FunnelClient/Start/2{FINAL_URL}", finalUrl)
 
-	// Connect to remote funnel via websocket
-	conn, _, _, err := ws.Dial(context.Background(), finalUrl)
-	if err != nil {
-		return fmt.Errorf("failed to connect to funnel: %w", err)
+	var wg sync.WaitGroup
+	var startErr error
+	var errLock sync.Mutex
+
+	for i := 0; i < c.opts.PoolSize; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+
+			for {
+				select {
+				case <-c.stopChan:
+					return
+				default:
+					// Connect to remote funnel via websocket
+					conn, _, _, err := ws.Dial(context.Background(), finalUrl)
+					if err != nil {
+						qq.Println("@FunnelClient/Start/Error{ID}", id, err)
+						errLock.Lock()
+						startErr = err
+						errLock.Unlock()
+						return
+					}
+
+					writeChan := make(chan *ServerWrite)
+					go c.writePackets(conn, writeChan)
+
+					// Start handling incoming requests from funnel
+					err = c.handleFunnelConnection(conn, writeChan)
+					conn.Close()
+					close(writeChan)
+
+					if err != nil {
+						qq.Println("@FunnelClient/ConnectionError{ID}", id, err)
+					}
+
+					select {
+					case <-c.stopChan:
+						return
+					default:
+						// Try to reconnect
+						continue
+					}
+				}
+			}
+		}(i)
 	}
 
-	c.clock.Lock()
-	c.wsConn = conn
-	c.clock.Unlock()
-
-	go c.writePackets()
-
-	// Start handling incoming requests from funnel
-	err = c.handleFunnelConnection(conn)
-	if err != nil {
-		return fmt.Errorf("failed to handle funnel connection: %w", err)
-	}
-
-	conn.Close()
-	return err
+	wg.Wait()
+	return startErr
 }
 
 func (c *FunnelClient) Stop() {
-	c.writeChan <- nil
-	close(c.writeChan)
+	close(c.stopChan)
 }
 
-func (c *FunnelClient) handleFunnelConnection(conn net.Conn) error {
-	return c.handleFunnelConnectionReader(conn)
+func (c *FunnelClient) handleFunnelConnection(conn net.Conn, writeChan chan *ServerWrite) error {
+	return c.handleFunnelConnectionReader(conn, writeChan)
 }
 
-func (c *FunnelClient) handleFunnelConnectionReader(conn io.Reader) error {
+func (c *FunnelClient) handleFunnelConnectionReader(conn io.Reader, writeChan chan *ServerWrite) error {
 	// Read request ID (16 bytes) first, then packet
 	reqIdBuf := make([]byte, 16)
 
@@ -201,16 +227,16 @@ func (c *FunnelClient) handleFunnelConnectionReader(conn io.Reader) error {
 		if req.Header.Get("Upgrade") == "websocket" {
 			qq.Println("@FunnelClient/handleFunnelConnection/4{WEBSOCKET_REQUEST}")
 			// Handle websocket request
-			go c.handleWebSocketRequest(pendingReqChan, reqId, req)
+			go c.handleWebSocketRequest(pendingReqChan, reqId, req, writeChan)
 		} else {
 			qq.Println("@FunnelClient/handleFunnelConnection/5{HTTP_REQUEST}")
 			// Handle HTTP request
-			go c.handleHttpRequest(pendingReqChan, reqId, req)
+			go c.handleHttpRequest(pendingReqChan, reqId, req, writeChan)
 		}
 	}
 }
 
-func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId string, req *http.Request) {
+func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId string, req *http.Request, writeChan chan *ServerWrite) {
 	// Modify request URL to point to local server
 	host := fmt.Sprintf("localhost:%d", c.opts.LocalHttpPort)
 	req.URL.Host = host
@@ -250,7 +276,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 		return
 	}
 
-	c.writeChan <- &ServerWrite{
+	writeChan <- &ServerWrite{
 		packet: &packetwire.Packet{
 			PType:  packetwire.PTypeSendHeader,
 			Offset: 0,
@@ -264,7 +290,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 
 		qq.Println("@handleHttpRequest/case_zero_length")
 
-		c.writeChan <- &ServerWrite{
+		writeChan <- &ServerWrite{
 			packet: &packetwire.Packet{
 				PType:  packetwire.PtypeEndBody,
 				Offset: 0,
@@ -301,7 +327,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 			if n == 0 {
 				// Send EndBody
 				qq.Println("@loop/4{SEND_END_BODY}")
-				c.writeChan <- &ServerWrite{
+				writeChan <- &ServerWrite{
 					packet: &packetwire.Packet{
 						PType:  packetwire.PtypeEndBody,
 						Offset: offset,
@@ -326,7 +352,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 
 			qq.Println("@loop/9{SEND_BODY}")
 
-			c.writeChan <- &ServerWrite{
+			writeChan <- &ServerWrite{
 				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: offset,
@@ -361,7 +387,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 
 			if n == 0 {
 				// Send EndBody
-				c.writeChan <- &ServerWrite{
+				writeChan <- &ServerWrite{
 					packet: &packetwire.Packet{
 						PType:  packetwire.PtypeEndBody,
 						Offset: offset,
@@ -378,7 +404,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 				ptype = packetwire.PtypeEndBody
 			}
 
-			c.writeChan <- &ServerWrite{
+			writeChan <- &ServerWrite{
 				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: offset,
@@ -397,7 +423,7 @@ func (c *FunnelClient) handleHttpRequest(pch chan *packetwire.Packet, reqId stri
 	}
 }
 
-func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId string, req *http.Request) {
+func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId string, req *http.Request, writeChan chan *ServerWrite) {
 
 	defer func() {
 		c.prLock.Lock()
@@ -479,7 +505,7 @@ func (c *FunnelClient) handleWebSocketRequest(pch chan *packetwire.Packet, reqId
 			}
 
 			// Write WebSocket data as packet
-			c.writeChan <- &ServerWrite{
+			writeChan <- &ServerWrite{
 				packet: &packetwire.Packet{
 					PType:  ptype,
 					Offset: 0,

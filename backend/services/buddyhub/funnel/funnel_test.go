@@ -560,3 +560,65 @@ func TestFunnel_ServerNotConnected(t *testing.T) {
 
 	t.Log("@TestFunnel_ServerNotConnected/3")
 }
+
+func TestFunnel_ConnectionPooling2(t *testing.T) {
+	t.Log("@TestFunnel_ConnectionPooling/1")
+	// Setup local server
+	localServer, localPort := setupLocalServer(t)
+	defer localServer.Close()
+
+	t.Log("@TestFunnel_ConnectionPooling/2")
+
+	// Setup funnel server
+	funnel, funnelServer, fport := setupFunnelServer(t)
+	defer funnelServer.Close()
+
+	t.Log("@TestFunnel_ConnectionPooling/3")
+
+	// Setup funnel client with pool size 8
+	poolSize := 8
+	client := NewFunnelClient(FunnelClientOptions{
+		LocalHttpPort:   localPort,
+		RemoteFunnelUrl: buildFunnelUrl("test-server", fport),
+		NodeId:          "test-server",
+		PoolSize:        poolSize,
+	})
+	defer client.Stop()
+
+	t.Log("@TestFunnel_ConnectionPooling/4")
+
+	// Start client in background
+	clientDone := make(chan error, 1)
+	go func() {
+		clientDone <- client.Start("")
+	}()
+
+	t.Log("@TestFunnel_ConnectionPooling/5")
+
+	// Wait for connections to be established
+	time.Sleep(3 * time.Second)
+
+	// Check pool size on server
+	funnel.scLock.RLock()
+	pool, exists := funnel.serverPools["test-server"]
+	funnel.scLock.RUnlock()
+
+	if !exists {
+		t.Fatalf("Server pool not found")
+	}
+
+	pool.lock.RLock()
+	actualPoolSize := len(pool.handles)
+	pool.lock.RUnlock()
+
+	if actualPoolSize != poolSize {
+		t.Fatalf("Expected pool size %d, got %d", poolSize, actualPoolSize)
+	}
+
+	t.Log("@TestFunnel_ConnectionPooling/6{ACTUAL_POOL_SIZE}", actualPoolSize)
+
+	// Make multiple requests and check if they are distributed (round-robin)
+	// We can't easily check distribution without more instrumentation, but we verified the pool size.
+
+	t.Log("@TestFunnel_ConnectionPooling/7")
+}

@@ -30,33 +30,56 @@ func (f *Funnel) registerServer(nodeId string, conn net.Conn) {
 	qq.Println("@Funnel/registerServer/1{SERVER_ID}", nodeId)
 	f.scLock.Lock()
 
-	swchan := make(chan *ServerWrite)
-
-	existIng := f.serverConnections[nodeId]
-
-	f.serverConnections[nodeId] = &ServerHandle{
-		conn:      conn,
-		writeChan: swchan,
+	pool, exists := f.serverPools[nodeId]
+	if !exists {
+		pool = &ServerPool{
+			handles: []*ServerHandle{},
+		}
+		f.serverPools[nodeId] = pool
 	}
 	f.scLock.Unlock()
 
-	if existIng != nil && existIng.conn != nil {
-		existIng.conn.Close()
+	swchan := make(chan *ServerWrite)
+	handle := &ServerHandle{
+		conn:      conn,
+		writeChan: swchan,
+		nodeId:    nodeId,
 	}
 
+	pool.lock.Lock()
+	pool.handles = append(pool.handles, handle)
+	pool.lock.Unlock()
+
 	// Start goroutine to handle incoming responses from this server
-	go f.handleServerConnection(nodeId, swchan, conn, true, func() {
-		f.scLock.Lock()
-		delete(f.serverConnections, nodeId)
-		f.scLock.Unlock()
+	go f.handleServerConnection(handle, true, func() {
+		pool.lock.Lock()
+		defer pool.lock.Unlock()
+		for i, h := range pool.handles {
+			if h == handle {
+				pool.handles = append(pool.handles[:i], pool.handles[i+1:]...)
+				break
+			}
+		}
+
+		if len(pool.handles) == 0 {
+			f.scLock.Lock()
+			if f.serverPools[nodeId] == pool {
+				delete(f.serverPools, nodeId)
+			}
+			f.scLock.Unlock()
+		}
 	})
 }
 
 // handleServerConnection handles incoming packets from a server connection
-func (f *Funnel) handleServerConnection(nodeId string, swchan chan *ServerWrite, conn net.Conn, isWS bool, onExit func()) {
+func (f *Funnel) handleServerConnection(handle *ServerHandle, isWS bool, onExit func()) {
+	nodeId := handle.nodeId
+	conn := handle.conn
+	swchan := handle.writeChan
 	qq.Println("@handleServerConnection/1", nodeId)
 	defer func() {
 		conn.Close()
+		close(swchan)
 
 		qq.Println("@handleServerConnection/2", nodeId)
 		if onExit != nil {

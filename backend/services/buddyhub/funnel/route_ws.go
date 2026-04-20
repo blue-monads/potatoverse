@@ -14,7 +14,7 @@ import (
 
 func (f *Funnel) getServerConn(nodeId string) *ServerHandle {
 	f.scLock.RLock()
-	serverConn, exists := f.serverConnections[nodeId]
+	pool, exists := f.serverPools[nodeId]
 	f.scLock.RUnlock()
 
 	if !exists {
@@ -23,12 +23,25 @@ func (f *Funnel) getServerConn(nodeId string) *ServerHandle {
 		return nil
 	}
 
-	return serverConn
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
+
+	if len(pool.handles) == 0 {
+		return nil
+	}
+
+	handle := pool.handles[pool.index%len(pool.handles)]
+	pool.index++
+
+	return handle
 }
 
 func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 
 	qq.Println("@routeWS/1", nodeId)
+	// Generate request ID
+	reqId := packetwire.GetRequestId()
+
 	serverConn := f.getServerConn(nodeId)
 	if serverConn == nil {
 		c.String(http.StatusBadGateway, "server not connected")
@@ -36,12 +49,17 @@ func (f *Funnel) routeWS(nodeId string, c *gin.Context) {
 		return
 	}
 
+	f.rcLock.Lock()
+	f.reqConnMap[reqId] = serverConn
+	f.rcLock.Unlock()
+
+	defer func() {
+		f.rcLock.Lock()
+		delete(f.reqConnMap, reqId)
+		f.rcLock.Unlock()
+	}()
+
 	qq.Println("@routeWS/2")
-
-	// Generate request ID
-	reqId := packetwire.GetRequestId()
-
-	qq.Println("@routeWS/3")
 
 	// Dump request
 	req := c.Request

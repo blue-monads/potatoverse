@@ -15,6 +15,13 @@ import (
 type ServerHandle struct {
 	conn      net.Conn
 	writeChan chan *ServerWrite
+	nodeId    string
+}
+
+type ServerPool struct {
+	handles []*ServerHandle
+	lock    sync.RWMutex
+	index   int // for round-robin
 }
 
 type ServerWrite struct {
@@ -23,19 +30,24 @@ type ServerWrite struct {
 }
 
 type Funnel struct {
-	serverConnections map[string]*ServerHandle
-	scLock            sync.RWMutex
+	serverPools map[string]*ServerPool
+	scLock      sync.RWMutex
 	pendingReq     map[string]chan *packetwire.Packet
 	pendingReqLock sync.Mutex
+
+	reqConnMap map[string]*ServerHandle
+	rcLock     sync.Mutex
 }
 
 // New creates a new Funnel instance
 func New() *Funnel {
 	return &Funnel{
-		serverConnections: make(map[string]*ServerHandle),
-		scLock:            sync.RWMutex{},
-		pendingReq:        make(map[string]chan *packetwire.Packet),
-		pendingReqLock:    sync.Mutex{},
+		serverPools:    make(map[string]*ServerPool),
+		scLock:         sync.RWMutex{},
+		pendingReq:     make(map[string]chan *packetwire.Packet),
+		pendingReqLock: sync.Mutex{},
+		reqConnMap:     make(map[string]*ServerHandle),
+		rcLock:         sync.Mutex{},
 	}
 }
 

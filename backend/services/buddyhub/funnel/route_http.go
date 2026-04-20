@@ -24,6 +24,8 @@ func DebugLog(a ...interface{}) (n int, err error) {
 // Route routes an HTTP request to the specified server and writes the response back to gin.Context
 func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 	DebugLog("@routeHttp/1", nodeId)
+	// Generate request ID
+	reqId := packetwire.GetRequestId()
 
 	// Get server connection
 	serverConn := f.getServerConn(nodeId)
@@ -33,12 +35,17 @@ func (f *Funnel) routeHttp(nodeId string, c *gin.Context) {
 		return
 	}
 
+	f.rcLock.Lock()
+	f.reqConnMap[reqId] = serverConn
+	f.rcLock.Unlock()
+
+	defer func() {
+		f.rcLock.Lock()
+		delete(f.reqConnMap, reqId)
+		f.rcLock.Unlock()
+	}()
+
 	DebugLog("@routeHttp/2.1")
-
-	// Generate request ID
-	reqId := packetwire.GetRequestId()
-
-	DebugLog("@routeHttp/2.2")
 
 	pendingReqChan := make(chan *packetwire.Packet)
 	f.pendingReqLock.Lock()
@@ -212,8 +219,8 @@ func (f *Funnel) dumpConnIds() {
 	f.scLock.RLock()
 	defer f.scLock.RUnlock()
 
-	keys := make([]string, 0, len(f.serverConnections))
-	for k := range f.serverConnections {
+	keys := make([]string, 0, len(f.serverPools))
+	for k := range f.serverPools {
 		keys = append(keys, k)
 	}
 
