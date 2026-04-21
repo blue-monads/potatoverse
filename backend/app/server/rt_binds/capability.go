@@ -1,6 +1,7 @@
 package rtbinds
 
 import (
+	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/gin-gonic/gin"
 )
@@ -14,18 +15,41 @@ type HttpBindContext struct {
 }
 
 func (b *BindServer) CapTokenSign(ctx *HttpBindContext) (any, error) {
+	capName := ctx.Http.Param("cap")
+	var opts struct {
+		ResourceId string         `json:"resource_id"`
+		ExtraMeta  map[string]any `json:"extrameta"`
+		UserId     int64          `json:"user_id"`
+		SubType    string         `json:"sub_type"`
+	}
+	err := ctx.Http.BindJSON(&opts)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	capability, err := b.db.GetSpaceOps().GetSpaceCapability(ctx.PackageId, capName)
+	if err != nil {
+		return nil, err
+	}
+
+	return b.signer.SignCapability(&signer.CapabilityClaim{
+		CapabilityId: capability.ID,
+		InstallId:    ctx.PackageId,
+		SpaceId:      ctx.SpaceId,
+		UserId:       opts.UserId,
+		ResourceId:   opts.ResourceId,
+		SubType:      opts.SubType,
+		ExtraMeta:    opts.ExtraMeta,
+	})
 }
 
 func (b *BindServer) CapList(ctx *HttpBindContext) (any, error) {
-
-	return nil, nil
+	return b.caphub.List(ctx.SpaceId)
 }
 
 func (b *BindServer) CapExecute(ctx *HttpBindContext) (any, error) {
-	method := ctx.Http.Query("method")
-	capName := ctx.Http.Query("cap")
+	method := ctx.Http.Param("method")
+	capName := ctx.Http.Param("cap")
 
 	lh := lazydata.NewLazyHTTP(ctx.Http)
 
@@ -33,6 +57,6 @@ func (b *BindServer) CapExecute(ctx *HttpBindContext) (any, error) {
 }
 
 func (b *BindServer) CapMethods(ctx *HttpBindContext) (any, error) {
-	capName := ctx.Http.Query("cap")
+	capName := ctx.Http.Param("cap")
 	return b.caphub.Methods(ctx.PackageId, ctx.SpaceId, capName)
 }

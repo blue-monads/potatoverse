@@ -1,104 +1,248 @@
 package rtbinds
 
-/*
+import (
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+)
 
+func toMapAnyAny(m map[string]any) map[any]any {
+	res := make(map[any]any, len(m))
+	for k, v := range m {
+		res[k] = v
+	}
+	return res
+}
 
+// DB Operations
 
+func (b *BindServer) DBRunQuery(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Query string `json:"query"`
+		Args  []any  `json:"args"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.RunQuery(req.Query, req.Args...)
+}
 
+func (b *BindServer) DBRunQueryOne(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Query string `json:"query"`
+		Args  []any  `json:"args"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.RunQueryOne(req.Query, req.Args...)
+}
 
-db:
+func (b *BindServer) DBInsert(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string         `json:"table"`
+		Data  map[string]any `json:"data"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.Insert(req.Table, req.Data)
+}
 
-		"vender": func(L *lua.LState) int {
-			vender := db.Vender()
-			L.Push(lua.LString(vender))
-			return 1
-		},
-		"run_ddl": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbRunDDL(dbOps, L)
-		},
-		"run_query": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbRunQuery(dbOps, L)
-		},
-		"run_query_one": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbRunQueryOne(dbOps, L)
-		},
-		"insert": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbInsert(dbOps, L)
-		},
-		"update_by_id": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbUpdateById(dbOps, L)
-		},
-		"delete_by_id": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbDeleteById(dbOps, L)
-		},
-		"find_by_id": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbFindById(dbOps, L)
-		},
-		"update_by_cond": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbUpdateByCond(dbOps, L)
-		},
-		"delete_by_cond": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbDeleteByCond(dbOps, L)
-		},
-		"find_all_by_cond": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbFindAllByCond(dbOps, L)
-		},
-		"find_one_by_cond": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbFindOneByCond(dbOps, L)
-		},
-		"find_all_by_query": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbFindAllByQuery(dbOps, L)
-		},
-		"find_by_join": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbFindByJoin(dbOps, L)
-		},
-		"list_tables": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbListTables(dbOps, L)
-		},
-		"list_columns": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbListTableColumns(dbOps, L)
-		},
-		"start_txn": func(L *lua.LState) int {
-			dbOps := getPackageDbOps(L)
-			return dbStartTxn(dbOps, L)
-		},
+func (b *BindServer) DBUpdateById(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string         `json:"table"`
+		ID    int64          `json:"id"`
+		Data  map[string]any `json:"data"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	err := dbOps.UpdateById(req.Table, req.ID, req.Data)
+	return nil, err
+}
 
-		"kv_query": func(L *lua.LState) int {
-			return kvQuery(GetExecState(L), db, L)
-		},
-		"kv_add": func(L *lua.LState) int {
-			return kvAdd(GetExecState(L), db, L)
-		},
-		"kv_get": func(L *lua.LState) int {
-			return kvGet(GetExecState(L), db, L)
-		},
-		"kv_get_by_group": func(L *lua.LState) int {
-			return kvGetByGroup(GetExecState(L), db, L)
-		},
-		"kv_remove": func(L *lua.LState) int {
-			return kvRemove(GetExecState(L), db, L)
-		},
-		"kv_update": func(L *lua.LState) int {
-			return kvUpdate(GetExecState(L), db, L)
-		},
-		"kv_upsert": func(L *lua.LState) int {
-			return kvUpsert(GetExecState(L), db, L)
-		},
+func (b *BindServer) DBDeleteById(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string `json:"table"`
+		ID    int64  `json:"id"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	err := dbOps.DeleteById(req.Table, req.ID)
+	return nil, err
+}
 
+func (b *BindServer) DBFindById(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string `json:"table"`
+		ID    int64  `json:"id"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.FindById(req.Table, req.ID)
+}
 
-*/
+func (b *BindServer) DBUpdateByCond(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string         `json:"table"`
+		Cond  map[string]any `json:"cond"`
+		Data  map[string]any `json:"data"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	err := dbOps.UpdateByCond(req.Table, toMapAnyAny(req.Cond), req.Data)
+	return nil, err
+}
+
+func (b *BindServer) DBDeleteByCond(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string         `json:"table"`
+		Cond  map[string]any `json:"cond"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	err := dbOps.DeleteByCond(req.Table, toMapAnyAny(req.Cond))
+	return nil, err
+}
+
+func (b *BindServer) DBFindAllByCond(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string         `json:"table"`
+		Cond  map[string]any `json:"cond"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.FindAllByCond(req.Table, toMapAnyAny(req.Cond))
+}
+
+func (b *BindServer) DBFindOneByCond(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Table string         `json:"table"`
+		Cond  map[string]any `json:"cond"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.FindOneByCond(req.Table, toMapAnyAny(req.Cond))
+}
+
+func (b *BindServer) DBFindAllByQuery(ctx *HttpBindContext) (any, error) {
+	req := &datahub.FindQuery{}
+	if err := ctx.Http.BindJSON(req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.FindAllByQuery(req)
+}
+
+func (b *BindServer) DBFindByJoin(ctx *HttpBindContext) (any, error) {
+	req := &datahub.FindByJoin{}
+	if err := ctx.Http.BindJSON(req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.FindByJoin(req)
+}
+
+func (b *BindServer) DBListTables(ctx *HttpBindContext) (any, error) {
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.ListTables()
+}
+
+func (b *BindServer) DBListColumns(ctx *HttpBindContext) (any, error) {
+	tableName := ctx.Http.Param("table")
+	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	return dbOps.ListTableColumns(tableName)
+}
+
+// KV Operations
+
+func (b *BindServer) KVAdd(ctx *HttpBindContext) (any, error) {
+	req := &dbmodels.SpaceKV{}
+	if err := ctx.Http.BindJSON(req); err != nil {
+		return nil, err
+	}
+	kvOps := b.db.GetSpaceKVOps()
+	err := kvOps.AddSpaceKV(ctx.PackageId, req)
+	return req, err
+}
+
+func (b *BindServer) KVGet(ctx *HttpBindContext) (any, error) {
+	group := ctx.Http.Param("group")
+	key := ctx.Http.Param("key")
+	kvOps := b.db.GetSpaceKVOps()
+	return kvOps.GetSpaceKV(ctx.PackageId, group, key)
+}
+
+func (b *BindServer) KVQuery(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Cond         map[string]any `json:"cond"`
+		Offset       int            `json:"offset"`
+		Limit        int            `json:"limit"`
+		IncludeValue bool           `json:"include_value"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	kvOps := b.db.GetSpaceKVOps()
+	if req.IncludeValue {
+		return kvOps.QueryWithValueSpaceKV(ctx.PackageId, toMapAnyAny(req.Cond), req.Offset, req.Limit)
+	}
+	return kvOps.QuerySpaceKV(ctx.PackageId, toMapAnyAny(req.Cond), req.Offset, req.Limit)
+}
+
+func (b *BindServer) KVRemove(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Group string `json:"group"`
+		Key   string `json:"key"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	kvOps := b.db.GetSpaceKVOps()
+	err := kvOps.RemoveSpaceKV(ctx.PackageId, req.Group, req.Key)
+	return nil, err
+}
+
+func (b *BindServer) KVUpdate(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Group string         `json:"group"`
+		Key   string         `json:"key"`
+		Data  map[string]any `json:"data"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	kvOps := b.db.GetSpaceKVOps()
+	err := kvOps.UpdateSpaceKV(ctx.PackageId, req.Group, req.Key, req.Data)
+	return nil, err
+}
+
+func (b *BindServer) KVUpsert(ctx *HttpBindContext) (any, error) {
+	var req struct {
+		Group string         `json:"group"`
+		Key   string         `json:"key"`
+		Data  map[string]any `json:"data"`
+	}
+	if err := ctx.Http.BindJSON(&req); err != nil {
+		return nil, err
+	}
+	kvOps := b.db.GetSpaceKVOps()
+	err := kvOps.UpsertSpaceKV(ctx.PackageId, req.Group, req.Key, req.Data)
+	return nil, err
+}
