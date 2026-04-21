@@ -242,6 +242,18 @@ func (d *EventOperations) TransitionTargetFail(evtId, targetId int64, errorMsg s
 	})
 }
 
+func (d *EventOperations) QueryAllEvents(installId int64, limit, offset int64) ([]dbmodels.MQEvent, error) {
+	var events []dbmodels.MQEvent
+	err := d.eventTable().Find(db.Cond{"install_id": installId}).Limit(int(limit)).Offset(int(offset)).All(&events)
+	return events, err
+}
+
+func (d *EventOperations) QueryAllEventTargets(installId int64, limit, offset int64) ([]dbmodels.MQEventTarget, error) {
+	var targets []dbmodels.MQEventTarget
+	err := d.eventTargetTable().Find(db.Cond{"install_id": installId}).Limit(int(limit)).Offset(int(offset)).All(&targets)
+	return targets, err
+}
+
 // Private helper methods
 
 func (d *EventOperations) eventTable() db.Collection {

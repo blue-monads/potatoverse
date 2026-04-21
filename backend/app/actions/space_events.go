@@ -45,6 +45,11 @@ func (c *Controller) DeleteEventSubscriptionByID(installId int64, eventSubscript
 	return nil
 }
 
+func (c *Controller) QueryQueues(installId int64, limit, offset int64) ([]dbmodels.MQEvent, error) {
+	synk := c.database.GetMQSynk()
+	return synk.QueryAllEvents(installId, limit, offset)
+}
+
 func (c *Controller) QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error) {
 	return c.database.GetSpaceOps().QueryEventSubscriptions(installId, cond)
 }

@@ -925,6 +925,26 @@ export const deleteEventSubscription = async (installId: number, subscriptionId:
     return iaxios.delete<void>(`/core/space/${installId}/events/${subscriptionId}`);
 }
 
+// Event Queue API
+export interface MQEvent {
+    id: number;
+    install_id: number;
+    name: string;
+    payload: string; // Base64 encoded
+    status: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export const listQueues = async (installId: number, offset: number = 0, limit: number = 100) => {
+    return iaxios.get<MQEvent[]>(`/core/space/${installId}/queues`, {
+        params: {
+            offset,
+            limit,
+        },
+    });
+}
+
 // User Messages API
 export interface UserMessage {
     id: number;

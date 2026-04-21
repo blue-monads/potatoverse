@@ -506,3 +506,26 @@ func (a *Server) DeleteEventSubscription(claim *signer.AccessClaim, ctx *gin.Con
 
 	return gin.H{"message": "Event subscription deleted successfully"}, nil
 }
+
+func (a *Server) ListQueues(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	limit, _ := strconv.ParseInt(ctx.Query("limit"), 10, 64)
+	offset, _ := strconv.ParseInt(ctx.Query("offset"), 10, 64)
+
+	if limit == 0 {
+		limit = 100
+	}
+
+	queues, err := a.ctrl.QueryQueues(installId, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return queues, nil
+}

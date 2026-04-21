@@ -9,6 +9,8 @@ import {
     listEventSubscriptions,
     EventSubscription,
     deleteEventSubscription,
+    listQueues,
+    MQEvent,
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 
@@ -34,12 +36,18 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
 
     const loader = useSimpleDataLoader<EventSubscription[]>({
         loader: () => {
-            const params: { space_id?: number } = {};
-
-            return listEventSubscriptions(installId, params.space_id);
+            return listEventSubscriptions(installId);
         },
-        ready: true,
-        dependencies: [installId, spaceId],
+        ready: activeView === 'subscriptions',
+        dependencies: [installId, spaceId, activeView],
+    });
+
+    const queueLoader = useSimpleDataLoader<MQEvent[]>({
+        loader: () => {
+            return listQueues(installId);
+        },
+        ready: activeView === 'queue',
+        dependencies: [installId, spaceId, activeView],
     });
 
     // Filter data based on search term
@@ -48,6 +56,14 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
             sub.event_key.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sub.target_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sub.target_endpoint.toLowerCase().includes(searchTerm.toLowerCase());
+
+        return matchesSearch;
+    }) || [];
+
+    const filteredQueueData = queueLoader.data?.filter(event => {
+        const matchesSearch = searchTerm === '' ||
+            event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            event.status.toLowerCase().includes(searchTerm.toLowerCase());
 
         return matchesSearch;
     }) || [];
@@ -237,7 +253,7 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
                         </div>
                     </div>
                 ) : (
-                    /* Queue Table Placeholder */
+                    /* Queue Table */
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
@@ -247,28 +263,76 @@ const EventSubscriptionsListingPage = ({ installId, spaceId }: { installId: numb
                                             Event ID
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Event Key
+                                            Event Name
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Timestamp
+                                            Created At
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Retries
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
+                                            Payload
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    <tr>
-                                        <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                                            Queue functionality coming soon
-                                        </td>
-                                    </tr>
+                                    {queueLoader.loading ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                                Loading...
+                                            </td>
+                                        </tr>
+                                    ) : filteredQueueData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                                No queue events found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredQueueData.map((event) => (
+                                            <tr key={event.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    #{event.id}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {event.name}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${event.status === 'completed'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : event.status === 'failed'
+                                                            ? 'bg-red-100 text-red-800'
+                                                            : event.status === 'processing'
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : 'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                        {event.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {new Date(event.created_at).toLocaleString()}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">
+                                                    <button
+                                                        onClick={() => {
+                                                            try {
+                                                                const decoded = atob(event.payload);
+                                                                alert(decoded);
+                                                            } catch (e) {
+                                                                alert(event.payload);
+                                                            }
+                                                        }}
+                                                        className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                                                    >
+                                                        <Filter className="w-3 h-3" /> View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>

@@ -198,6 +198,9 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/space/:install_id/events", a.withAccessTokenFn(a.CreateEventSubscription))
 	coreApi.PUT("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.UpdateEventSubscription))
 	coreApi.DELETE("/space/:install_id/events/:subscriptionId", a.withAccessTokenFn(a.DeleteEventSubscription))
+
+	coreApi.GET("/space/:install_id/queues", a.withAccessTokenFn(a.ListQueues))
+
 	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))
 	coreApi.POST("/space/:install_id/export", (a.ExportState))
 	coreApi.POST("/space/:install_id/import", (a.ImportState))
