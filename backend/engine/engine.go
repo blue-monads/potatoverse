@@ -45,6 +45,8 @@ type Engine struct {
 
 	remoteHub *remotehub.RemoteHub
 
+	HttpPort int
+
 	reloadPackageIds chan int64
 	fullReload       chan struct{}
 }
@@ -73,6 +75,7 @@ func NewEngine(opt EngineOption) *Engine {
 		logger:           elogger,
 		capHub:           caphub.NewCapabilityHub(),
 		remoteHub:        remotehub.NewRemoteHub(),
+		HttpPort:         opt.HttpPort,
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),

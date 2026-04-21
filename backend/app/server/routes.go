@@ -37,6 +37,8 @@ func (a *Server) bindRoutes() {
 
 	a.buddyRoutes.AttachRoutes(zroot)
 
+	a.BindRemoteBinds(zroot.Group("/rt_binds"))
+
 	coreApi.GET("/global.js", a.getGlobalJS)
 
 	zroot.GET("/static/*files", func(c *gin.Context) {

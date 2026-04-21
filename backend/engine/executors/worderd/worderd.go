@@ -10,7 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/blue-monads/potatoverse/backend/engine/executors/worderd/binds"
+	"github.com/blue-monads/potatoverse/backend/engine"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -85,20 +86,13 @@ func (b *WorderdExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtype
 		return nil, fmt.Errorf("could not write worker.js: %w", err)
 	}
 
-	// Create and start BindingServer
-	bindingPort, err := findFreePort()
-	if err != nil {
-		return nil, fmt.Errorf("could not find free port for bindings: %w", err)
-	}
-
-	bs := binds.NewBindingServer(b.app, opt.InstalledId, opt.SpaceId, bindingPort)
-	if err := bs.Start(); err != nil {
-		return nil, fmt.Errorf("could not start binding server: %w", err)
-	}
+	// Use RemoteHub bindings
+	eng := b.app.Engine().(*engine.Engine)
+	rhub := eng.GetRemoteHub()
+	mainPort := eng.HttpPort
 
 	// Generate potato.js and config.capnp
-	if err := os.WriteFile(filepath.Join(execDir, "potato.js"), []byte(binds.PotatoJs), 0644); err != nil {
-		bs.Stop()
+	if err := os.WriteFile(filepath.Join(execDir, "potato.js"), []byte(remotehub.PotatoJs), 0644); err != nil {
 		return nil, err
 	}
 
@@ -124,10 +118,9 @@ const config :Workerd.Config = (
     ),
   ]
 );
-`, CompatibilityDate, bindingPort, port)
+`, CompatibilityDate, mainPort, port)
 
 	if err := os.WriteFile(filepath.Join(execDir, "config.capnp"), []byte(configContent), 0644); err != nil {
-		bs.Stop()
 		return nil, err
 	}
 
@@ -137,7 +130,6 @@ const config :Workerd.Config = (
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		bs.Stop()
 		return nil, fmt.Errorf("could not start workerd: %w", err)
 	}
 
@@ -154,30 +146,35 @@ const config :Workerd.Config = (
 
 	if !started {
 		cmd.Process.Kill()
-		bs.Stop()
 		return nil, fmt.Errorf("workerd failed to start on port %d within timeout", port)
 	}
 
 	targetURL, _ := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	qq.Println("@worderd started", "port", port, "bindingPort", bindingPort, "space", opt.SpaceId)
+	qq.Println("@worderd started", "port", port, "mainPort", mainPort, "space", opt.SpaceId)
 
 	return &WorderdExecutor{
-		cmd:           cmd,
-		port:          port,
-		proxy:         proxy,
-		execDir:       execDir,
-		bindingServer: bs,
+		cmd:              cmd,
+		port:             port,
+		proxy:            proxy,
+		execDir:          execDir,
+		remoteHub:        rhub,
+		packageId:        opt.InstalledId,
+		packageVersionId: opt.PackageVersionId,
+		spaceId:          opt.SpaceId,
 	}, nil
 }
 
 type WorderdExecutor struct {
-	cmd           *exec.Cmd
-	port          int
-	proxy         *httputil.ReverseProxy
-	execDir       string
-	bindingServer *binds.BindingServer
+	cmd              *exec.Cmd
+	port             int
+	proxy            *httputil.ReverseProxy
+	execDir          string
+	remoteHub        *remotehub.RemoteHub
+	packageId        int64
+	packageVersionId int64
+	spaceId          int64
 }
 
 func (e *WorderdExecutor) Cleanup() {
@@ -185,9 +182,6 @@ func (e *WorderdExecutor) Cleanup() {
 	if e.cmd != nil && e.cmd.Process != nil {
 		e.cmd.Process.Kill()
 		e.cmd.Wait()
-	}
-	if e.bindingServer != nil {
-		e.bindingServer.Stop()
 	}
 	if e.execDir != "" {
 		os.RemoveAll(e.execDir)
@@ -205,19 +199,19 @@ func (e *WorderdExecutor) GetDebugData() map[string]any {
 		"pid":      pid,
 		"execDir":  e.execDir,
 	}
-	if e.bindingServer != nil {
-		data["bindingPort"] = e.bindingServer.GetPort()
-	}
 	return data
 }
 
 func (e *WorderdExecutor) HandleHttp(event *xtypes.HttpEvent) error {
 	reqId := uuid.New().String()
-	e.bindingServer.RegisterContext(reqId, event)
-	defer e.bindingServer.UnregisterContext(reqId)
+	token, err := e.remoteHub.GetExecToken(e.packageId, e.packageVersionId, e.spaceId, reqId)
+	if err != nil {
+		return err
+	}
 
 	req := event.Request.Request.Clone(event.Request.Request.Context())
 	req.Header.Set("X-Potato-Request-ID", reqId)
+	req.Header.Set("X-Exec-Header", token)
 
 	e.proxy.ServeHTTP(event.Request.Writer, req)
 	return nil
