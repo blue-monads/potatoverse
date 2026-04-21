@@ -43,7 +43,7 @@ export default function LiveQueryViewContent() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Enter your SQL query here..."
-                    className="p-4 font-mono text-sm resize-y focus:outline-none min-h-[150px]"
+                    className="p-4 font-mono text-sm resize-y focus:outline-none "
                     spellCheck="false"
                 />
 
