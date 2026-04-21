@@ -6,19 +6,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blue-monads/potatoverse/backend/engine/executors/core"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
-type PublishEventOptions struct {
-	Name        string `json:"name"`
-	Payload     any    `json:"payload"`
-	ResourceId  string `json:"resource_id"`
-	CollapseKey string `json:"collapse_key"`
-}
-
 func (b *RemoteHub) CorePublishEvent(ctx *HttpBindContext) (any, error) {
-	opts := &PublishEventOptions{}
+	opts := &core.PublishEventOptions{}
 	err := ctx.Http.BindJSON(opts)
 	if err != nil {
 		return nil, err
@@ -53,14 +47,8 @@ func (b *RemoteHub) CorePublishEvent(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-type SignFsPresignedTokenOptions struct {
-	Path     string `json:"path"`
-	FileName string `json:"file_name"`
-	UserId   int64  `json:"user_id"`
-}
-
 func (b *RemoteHub) CoreFileToken(ctx *HttpBindContext) (any, error) {
-	opts := &SignFsPresignedTokenOptions{}
+	opts := &core.SignFsPresignedTokenOptions{}
 	err := ctx.Http.BindJSON(opts)
 	if err != nil {
 		return nil, err
@@ -74,14 +62,8 @@ func (b *RemoteHub) CoreFileToken(ctx *HttpBindContext) (any, error) {
 	})
 }
 
-type SignAdviseryTokenOptions struct {
-	TokenSubType string         `json:"token_sub_type"`
-	UserId       int64          `json:"user_id"`
-	Data         map[string]any `json:"data"`
-}
-
 func (b *RemoteHub) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
-	opts := &SignAdviseryTokenOptions{}
+	opts := &core.SignAdviseryTokenOptions{}
 	err := ctx.Http.BindJSON(opts)
 	if err != nil {
 		return nil, err
@@ -97,9 +79,7 @@ func (b *RemoteHub) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
 }
 
 func (b *RemoteHub) CoreParseAdviseryToken(ctx *HttpBindContext) (any, error) {
-	var req struct {
-		Token string `json:"token"`
-	}
+	var req core.ParseTokenReq
 	err := ctx.Http.BindJSON(&req)
 	if err != nil {
 		return nil, err

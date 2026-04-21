@@ -1,6 +1,7 @@
 package remotehub
 
 import (
+	"github.com/blue-monads/potatoverse/backend/engine/executors/core"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/gin-gonic/gin"
@@ -16,12 +17,7 @@ type HttpBindContext struct {
 
 func (b *RemoteHub) CapTokenSign(ctx *HttpBindContext) (any, error) {
 	capName := ctx.Http.Param("cap")
-	var opts struct {
-		ResourceId string         `json:"resource_id"`
-		ExtraMeta  map[string]any `json:"extrameta"`
-		UserId     int64          `json:"user_id"`
-		SubType    string         `json:"sub_type"`
-	}
+	var opts core.CapTokenSignOptions
 	err := ctx.Http.BindJSON(&opts)
 	if err != nil {
 		return nil, err
