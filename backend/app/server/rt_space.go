@@ -220,6 +220,31 @@ func (a *Server) QuerySpaceDataTable(claim *signer.AccessClaim, ctx *gin.Context
 	return a.ctrl.QuerySpaceDataTable(installId, tableName, offsetInt, limitInt)
 }
 
+func (a *Server) QuerySQLDataTable(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// get post body
+
+	var requestData struct {
+		Query string `json:"query"`
+	}
+
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		return nil, err
+	}
+
+	if requestData.Query == "" {
+		return nil, errors.New("query is required")
+	}
+
+	return a.ctrl.QuerySQLDataTable(installId, requestData.Query)
+
+}
+
 // ListSpaceUsers lists all users for a space/package
 func (a *Server) ListSpaceUsers(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)

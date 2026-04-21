@@ -1044,3 +1044,8 @@ export const querySpaceDataTable = async (installId: number, tableName: string, 
 export const exportSpaceState = async (installId: number, excludeTables: string[] = []) => {
     return iaxios.post(`/core/space/${installId}/export`, { exclude_tables: excludeTables }, { responseType: 'blob' });
 }
+
+
+export const sqlQuerySpaceData = async (installId: number, query: string) => {
+    return iaxios.post<any>(`/core/space/${installId}/data/sqlQuery`, { query });
+}

@@ -1,25 +1,53 @@
 "use client";
 import React, { useState } from 'react';
 import { Database, Play, Copy, RefreshCw } from 'lucide-react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { sqlQuerySpaceData } from '@/lib';
 
 export default function LiveQueryViewContent() {
+    const sparams = useSearchParams();
+    const installId = sparams.get('install_id') as string;
     const [query, setQuery] = useState('SELECT * FROM users LIMIT 10;');
     const [results, setResults] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [columns, setColumns] = useState<string[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleRunQuery = () => {
+    const handleRunQuery = async () => {
+        if (!installId) {
+            setError('Install ID not available');
+            console.log("@params", sparams);
+            return;
+        }
+
         setIsLoading(true);
-        // Simulate query execution
-        setTimeout(() => {
-            setColumns(['id', 'name', 'email', 'status']);
-            setResults([
-                { id: 1, name: 'John Doe', email: 'john@example.com', status: 'active' },
-                { id: 2, name: 'Jane Smith', email: 'jane@example.com', status: 'active' },
-                { id: 3, name: 'Bob Johnson', email: 'bob@example.com', status: 'inactive' },
-            ]);
-            setIsLoading(false);
-        }, 500);
+        setError(null);
+
+        try {
+             const resp = await sqlQuerySpaceData(Number(installId), query);
+             if (resp.status !== 200) {
+                setError(`Error: ${resp.statusText}, ${resp.data?.error || 'Unknown error'}`);
+
+                return;
+             }
+
+             const data = await resp.data;
+                if (data.length > 0) {
+                    setColumns(Object.keys(data[0]));
+                    setResults(data);
+                } else {
+                    setColumns([]);
+                    setResults([]);
+                }
+        } catch (err: any) {
+            setError(err.message || 'An error occurred while running the query');
+            setResults([]);
+            setColumns([]);
+
+        }
+
+
+        
     };
 
     return (
@@ -79,7 +107,14 @@ export default function LiveQueryViewContent() {
                     </span>
                 </div>
 
-                {results.length === 0 ? (
+                {error ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="text-red-600 text-sm font-medium mb-2">Error</div>
+                            <p className="text-red-500 text-xs max-w-md">{error}</p>
+                        </div>
+                    </div>
+                ) : results.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center text-gray-500">
                         <div className="text-center">
                             <Database className="w-12 h-12 mx-auto mb-3 opacity-30" />
