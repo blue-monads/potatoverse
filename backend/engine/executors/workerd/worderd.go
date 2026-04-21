@@ -1,4 +1,4 @@
-package worderd
+package workerd
 
 import (
 	"fmt"
@@ -24,21 +24,21 @@ const (
 )
 
 func init() {
-	registry.RegisterExecutorBuilderFactory("worderd", BuildWorderdExecutorBuilder)
+	registry.RegisterExecutorBuilderFactory("workerd", BuildworkerdExecutorBuilder)
 }
 
-func BuildWorderdExecutorBuilder(app xtypes.App) (xtypes.ExecutorBuilder, error) {
-	return &WorderdExecutorBuilder{app: app}, nil
+func BuildworkerdExecutorBuilder(app xtypes.App) (xtypes.ExecutorBuilder, error) {
+	return &workerdExecutorBuilder{app: app}, nil
 }
 
-type WorderdExecutorBuilder struct {
+type workerdExecutorBuilder struct {
 	app xtypes.App
 }
 
-func (b *WorderdExecutorBuilder) Name() string { return "worderd" }
-func (b *WorderdExecutorBuilder) Icon() string { return "worderd" }
+func (b *workerdExecutorBuilder) Name() string { return "workerd" }
+func (b *workerdExecutorBuilder) Icon() string { return "workerd" }
 
-func (b *WorderdExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.Executor, error) {
+func (b *workerdExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.Executor, error) {
 	code := ""
 	if opt.CodeLoader != nil {
 		var err error
@@ -73,7 +73,7 @@ func (b *WorderdExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtype
 
 	workingDir := opt.WorkingFolder
 	if workingDir == "" {
-		workingDir = filepath.Join(os.TempDir(), "potatoverse-worderd")
+		workingDir = filepath.Join(os.TempDir(), "potatoverse-workerd")
 	}
 
 	execDir := filepath.Join(workingDir, fmt.Sprintf("exec-%d-%d", opt.SpaceId, time.Now().UnixNano()))
@@ -107,8 +107,11 @@ const config :Workerd.Config = (
         (name = "potato", esModule = embed "potato.js")
       ],
       compatibilityDate = "%s",
+      bindings = [
+        (name = "internal_bindings", service = (name = "internal_bindings"))
+      ],
     )),
-    (name = "internal_bindings", external = (address = "127.0.0.1:%d")),
+    (name = "internal_bindings", external = (address = "127.0.0.1:%d", http = ())),
   ],
   sockets = [
     ( name = "http",
@@ -152,9 +155,9 @@ const config :Workerd.Config = (
 	targetURL, _ := url.Parse(fmt.Sprintf("http://127.0.0.1:%d", port))
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	qq.Println("@worderd started", "port", port, "mainPort", mainPort, "space", opt.SpaceId)
+	qq.Println("@workerd started", "port", port, "mainPort", mainPort, "space", opt.SpaceId)
 
-	return &WorderdExecutor{
+	return &workerdExecutor{
 		cmd:              cmd,
 		port:             port,
 		proxy:            proxy,
@@ -166,7 +169,7 @@ const config :Workerd.Config = (
 	}, nil
 }
 
-type WorderdExecutor struct {
+type workerdExecutor struct {
 	cmd              *exec.Cmd
 	port             int
 	proxy            *httputil.ReverseProxy
@@ -177,8 +180,8 @@ type WorderdExecutor struct {
 	spaceId          int64
 }
 
-func (e *WorderdExecutor) Cleanup() {
-	qq.Println("@worderd cleanup", "port", e.port)
+func (e *workerdExecutor) Cleanup() {
+	qq.Println("@workerd cleanup", "port", e.port)
 	if e.cmd != nil && e.cmd.Process != nil {
 		e.cmd.Process.Kill()
 		e.cmd.Wait()
@@ -188,13 +191,13 @@ func (e *WorderdExecutor) Cleanup() {
 	}
 }
 
-func (e *WorderdExecutor) GetDebugData() map[string]any {
+func (e *workerdExecutor) GetDebugData() map[string]any {
 	pid := 0
 	if e.cmd != nil && e.cmd.Process != nil {
 		pid = e.cmd.Process.Pid
 	}
 	data := map[string]any{
-		"executor": "worderd",
+		"executor": "workerd",
 		"port":     e.port,
 		"pid":      pid,
 		"execDir":  e.execDir,
@@ -202,7 +205,7 @@ func (e *WorderdExecutor) GetDebugData() map[string]any {
 	return data
 }
 
-func (e *WorderdExecutor) HandleHttp(event *xtypes.HttpEvent) error {
+func (e *workerdExecutor) HandleHttp(event *xtypes.HttpEvent) error {
 	reqId := uuid.New().String()
 	token, err := e.remoteHub.GetExecToken(e.packageId, e.packageVersionId, e.spaceId, reqId)
 	if err != nil {
@@ -217,8 +220,8 @@ func (e *WorderdExecutor) HandleHttp(event *xtypes.HttpEvent) error {
 	return nil
 }
 
-func (e *WorderdExecutor) HandleAction(event *xtypes.ActionEvent) error {
-	return fmt.Errorf("HandleAction not implemented for worderd")
+func (e *workerdExecutor) HandleAction(event *xtypes.ActionEvent) error {
+	return fmt.Errorf("HandleAction not implemented for workerd")
 }
 
 func findFreePort() (int, error) {

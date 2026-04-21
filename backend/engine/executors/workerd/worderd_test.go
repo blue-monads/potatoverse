@@ -1,4 +1,4 @@
-package worderd
+package workerd
 
 import (
 	"fmt"
@@ -21,12 +21,12 @@ type mockApp struct {
 func (m *mockApp) Database() datahub.Database { return nil }
 func (m *mockApp) Signer() *signer.Signer     { return nil }
 
-func TestWorderdExecutor(t *testing.T) {
+func TestworkerdExecutor(t *testing.T) {
 	if _, err := os.Stat(WorkerdBinary); os.IsNotExist(err) {
 		t.Skip("workerd binary not found")
 	}
 
-	builder := &WorderdExecutorBuilder{app: &mockApp{}}
+	builder := &workerdExecutorBuilder{app: &mockApp{}}
 
 	code := `
 export default {

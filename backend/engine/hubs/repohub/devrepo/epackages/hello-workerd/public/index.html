@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Workerd - Potatoverse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --accent: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        button.secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        pre {
+            background: #000;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #a5f3fc;
+            max-height: 400px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-dim);
+        }
+
+        .status.online .status-dot {
+            background-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .loader {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status" id="status">
+            <div class="status-dot"></div>
+            <span id="status-text">Ready</span>
+        </div>
+        <h1>Hello Workerd</h1>
+        <p> This package is powered by the new <b>workerd</b> executor and utilizes the <b>remotehub</b> bridge for secure, RESTful backend access. Click the button below to trigger the worker.</p>
+        
+        <div class="button-group">
+            <button id="trigger-btn">
+                <div class="loader" id="btn-loader"></div>
+                Trigger Worker API
+            </button>
+            <button class="secondary" onclick="clearOutput()">Clear Output</button>
+        </div>
+
+        <pre id="output">// API response will appear here...</pre>
+    </div>
+
+    <script>
+        const btn = document.getElementById('trigger-btn');
+        const loader = document.getElementById('btn-loader');
+        const output = document.getElementById('output');
+        const statusText = document.getElementById('status-text');
+        const statusDiv = document.getElementById('status');
+
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            loader.style.display = 'block';
+            statusText.innerText = 'Calling Worker...';
+            statusDiv.classList.add('online');
+
+            try {
+                // The space API is hosted under /zz/api/space/{namespace}
+                // Since this is hello-workerd, we call /zz/api/space/hello-workerd
+                const resp = await fetch('/zz/api/space/hello-workerd', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await resp.json();
+                output.innerText = JSON.stringify(data, null, 2);
+                statusText.innerText = 'Response Received';
+            } catch (err) {
+                output.innerText = 'Error: ' + err.message;
+                statusText.innerText = 'Error';
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+                setTimeout(() => {
+                    statusText.innerText = 'Ready';
+                    statusDiv.classList.remove('online');
+                }, 3000);
+            }
+        });
+
+        function clearOutput() {
+            output.innerText = '// API response will appear here...';
+        }
+    </script>
+</body>
+</html>

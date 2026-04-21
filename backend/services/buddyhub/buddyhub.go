@@ -88,6 +88,8 @@ func (bh *BuddyHub) Start() error {
 		panic(err)
 	}
 
+	return nil
+
 	go func() {
 
 		for {
@@ -110,9 +112,9 @@ func (bh *BuddyHub) Start() error {
 
 	}()
 
-	if os.Getenv("POTATO_DISABLE_EMBED_FUNNEL") != "1" {
-		bh.embeddedFunnel = funnel.New()
-	}
+	// if os.Getenv("POTATO_DISABLE_EMBED_FUNNEL") != "1" {
+	// 	bh.embeddedFunnel = funnel.New()
+	// }
 
 	return nil
 }

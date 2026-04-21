@@ -6,6 +6,7 @@ import (
 
 	// Lua Executor
 	_ "github.com/blue-monads/potatoverse/backend/engine/executors/luaz"
+	_ "github.com/blue-monads/potatoverse/backend/engine/executors/workerd"
 
 	// Repo Hub
 	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
