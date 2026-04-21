@@ -1,4 +1,4 @@
-package rtbinds
+package remotehub
 
 import (
 	"encoding/json"
@@ -17,7 +17,7 @@ type PublishEventOptions struct {
 	CollapseKey string `json:"collapse_key"`
 }
 
-func (b *BindServer) CorePublishEvent(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CorePublishEvent(ctx *HttpBindContext) (any, error) {
 	opts := &PublishEventOptions{}
 	err := ctx.Http.BindJSON(opts)
 	if err != nil {
@@ -59,7 +59,7 @@ type SignFsPresignedTokenOptions struct {
 	UserId   int64  `json:"user_id"`
 }
 
-func (b *BindServer) CoreFileToken(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreFileToken(ctx *HttpBindContext) (any, error) {
 	opts := &SignFsPresignedTokenOptions{}
 	err := ctx.Http.BindJSON(opts)
 	if err != nil {
@@ -80,7 +80,7 @@ type SignAdviseryTokenOptions struct {
 	Data         map[string]any `json:"data"`
 }
 
-func (b *BindServer) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
 	opts := &SignAdviseryTokenOptions{}
 	err := ctx.Http.BindJSON(opts)
 	if err != nil {
@@ -96,7 +96,7 @@ func (b *BindServer) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
 	})
 }
 
-func (b *BindServer) CoreParseAdviseryToken(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreParseAdviseryToken(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Token string `json:"token"`
 	}
@@ -121,7 +121,7 @@ func (b *BindServer) CoreParseAdviseryToken(ctx *HttpBindContext) (any, error) {
 	return claim, nil
 }
 
-func (b *BindServer) CoreReadPackageFile(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreReadPackageFile(ctx *HttpBindContext) (any, error) {
 	fpath := ctx.Http.Param("path")
 	if len(fpath) > 0 && fpath[0] == '/' {
 		fpath = fpath[1:]
@@ -143,7 +143,7 @@ func (b *BindServer) CoreReadPackageFile(ctx *HttpBindContext) (any, error) {
 	return string(data), nil
 }
 
-func (b *BindServer) CoreListFiles(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreListFiles(ctx *HttpBindContext) (any, error) {
 	path := ctx.Http.Param("path")
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
@@ -151,12 +151,12 @@ func (b *BindServer) CoreListFiles(ctx *HttpBindContext) (any, error) {
 	return b.corehub.ListSpaceFilesSigned(ctx.PackageId, path)
 }
 
-func (b *BindServer) CoreDecodeFileId(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreDecodeFileId(ctx *HttpBindContext) (any, error) {
 	id := ctx.Http.Param("id")
 	return b.corehub.DecodeSpaceFileId(id)
 }
 
-func (b *BindServer) CoreEncodeFileId(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreEncodeFileId(ctx *HttpBindContext) (any, error) {
 	idStr := ctx.Http.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -165,7 +165,7 @@ func (b *BindServer) CoreEncodeFileId(ctx *HttpBindContext) (any, error) {
 	return b.corehub.EncodeSpaceFileId(id)
 }
 
-func (b *BindServer) CoreGetEnv(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreGetEnv(ctx *HttpBindContext) (any, error) {
 	key := ctx.Http.Param("key")
 	pkgOps := b.db.GetPackageInstallOps()
 	pkg, err := pkgOps.GetPackage(ctx.PackageId)

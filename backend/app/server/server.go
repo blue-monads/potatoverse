@@ -43,7 +43,8 @@ type Option struct {
 
 	BuddyHub *buddyhub.BuddyHub
 	CoreHub  *corehub.CoreHub
-	Logger   *slog.Logger
+
+	Logger *slog.Logger
 }
 
 func NewServer(opt Option) *Server {

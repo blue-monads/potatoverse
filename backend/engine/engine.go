@@ -11,6 +11,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
@@ -42,6 +43,8 @@ type Engine struct {
 
 	capHub *caphub.CapabilityHub
 
+	remoteHub *remotehub.RemoteHub
+
 	reloadPackageIds chan int64
 	fullReload       chan struct{}
 }
@@ -69,6 +72,7 @@ func NewEngine(opt EngineOption) *Engine {
 		},
 		logger:           elogger,
 		capHub:           caphub.NewCapabilityHub(),
+		remoteHub:        remotehub.NewRemoteHub(),
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
 		fullReload:       make(chan struct{}, 1),
@@ -135,6 +139,8 @@ func (e *Engine) Start(app xtypes.App) error {
 	if err != nil {
 		return err
 	}
+
+	e.remoteHub.Init(app)
 
 	go e.startEloop()
 
@@ -321,6 +327,10 @@ func (e *Engine) GetCapabilityHub() any {
 
 func (e *Engine) GetRepoHub() *repohub.RepoHub {
 	return e.repoHub
+}
+
+func (e *Engine) GetRemoteHub() *remotehub.RemoteHub {
+	return e.remoteHub
 }
 
 func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {

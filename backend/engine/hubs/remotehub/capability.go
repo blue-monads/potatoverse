@@ -1,4 +1,4 @@
-package rtbinds
+package remotehub
 
 import (
 	"github.com/blue-monads/potatoverse/backend/services/signer"
@@ -14,7 +14,7 @@ type HttpBindContext struct {
 	RequestId      string
 }
 
-func (b *BindServer) CapTokenSign(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CapTokenSign(ctx *HttpBindContext) (any, error) {
 	capName := ctx.Http.Param("cap")
 	var opts struct {
 		ResourceId string         `json:"resource_id"`
@@ -43,11 +43,11 @@ func (b *BindServer) CapTokenSign(ctx *HttpBindContext) (any, error) {
 	})
 }
 
-func (b *BindServer) CapList(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CapList(ctx *HttpBindContext) (any, error) {
 	return b.caphub.List(ctx.SpaceId)
 }
 
-func (b *BindServer) CapExecute(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CapExecute(ctx *HttpBindContext) (any, error) {
 	method := ctx.Http.Param("method")
 	capName := ctx.Http.Param("cap")
 
@@ -56,7 +56,7 @@ func (b *BindServer) CapExecute(ctx *HttpBindContext) (any, error) {
 	return b.caphub.Execute(ctx.PackageId, ctx.SpaceId, capName, method, lh)
 }
 
-func (b *BindServer) CapMethods(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CapMethods(ctx *HttpBindContext) (any, error) {
 	capName := ctx.Http.Param("cap")
 	return b.caphub.Methods(ctx.PackageId, ctx.SpaceId, capName)
 }

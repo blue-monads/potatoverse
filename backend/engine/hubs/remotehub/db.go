@@ -1,4 +1,4 @@
-package rtbinds
+package remotehub
 
 import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
@@ -15,7 +15,7 @@ func toMapAnyAny(m map[string]any) map[any]any {
 
 // DB Operations
 
-func (b *BindServer) DBRunQuery(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBRunQuery(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Query string `json:"query"`
 		Args  []any  `json:"args"`
@@ -27,7 +27,7 @@ func (b *BindServer) DBRunQuery(ctx *HttpBindContext) (any, error) {
 	return dbOps.RunQuery(req.Query, req.Args...)
 }
 
-func (b *BindServer) DBRunQueryOne(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBRunQueryOne(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Query string `json:"query"`
 		Args  []any  `json:"args"`
@@ -39,7 +39,7 @@ func (b *BindServer) DBRunQueryOne(ctx *HttpBindContext) (any, error) {
 	return dbOps.RunQueryOne(req.Query, req.Args...)
 }
 
-func (b *BindServer) DBInsert(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBInsert(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string         `json:"table"`
 		Data  map[string]any `json:"data"`
@@ -51,7 +51,7 @@ func (b *BindServer) DBInsert(ctx *HttpBindContext) (any, error) {
 	return dbOps.Insert(req.Table, req.Data)
 }
 
-func (b *BindServer) DBUpdateById(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBUpdateById(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string         `json:"table"`
 		ID    int64          `json:"id"`
@@ -65,7 +65,7 @@ func (b *BindServer) DBUpdateById(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-func (b *BindServer) DBDeleteById(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBDeleteById(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string `json:"table"`
 		ID    int64  `json:"id"`
@@ -78,7 +78,7 @@ func (b *BindServer) DBDeleteById(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-func (b *BindServer) DBFindById(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindById(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string `json:"table"`
 		ID    int64  `json:"id"`
@@ -90,7 +90,7 @@ func (b *BindServer) DBFindById(ctx *HttpBindContext) (any, error) {
 	return dbOps.FindById(req.Table, req.ID)
 }
 
-func (b *BindServer) DBUpdateByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBUpdateByCond(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string         `json:"table"`
 		Cond  map[string]any `json:"cond"`
@@ -104,7 +104,7 @@ func (b *BindServer) DBUpdateByCond(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-func (b *BindServer) DBDeleteByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBDeleteByCond(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string         `json:"table"`
 		Cond  map[string]any `json:"cond"`
@@ -117,7 +117,7 @@ func (b *BindServer) DBDeleteByCond(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-func (b *BindServer) DBFindAllByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindAllByCond(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string         `json:"table"`
 		Cond  map[string]any `json:"cond"`
@@ -129,7 +129,7 @@ func (b *BindServer) DBFindAllByCond(ctx *HttpBindContext) (any, error) {
 	return dbOps.FindAllByCond(req.Table, toMapAnyAny(req.Cond))
 }
 
-func (b *BindServer) DBFindOneByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindOneByCond(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Table string         `json:"table"`
 		Cond  map[string]any `json:"cond"`
@@ -141,7 +141,7 @@ func (b *BindServer) DBFindOneByCond(ctx *HttpBindContext) (any, error) {
 	return dbOps.FindOneByCond(req.Table, toMapAnyAny(req.Cond))
 }
 
-func (b *BindServer) DBFindAllByQuery(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindAllByQuery(ctx *HttpBindContext) (any, error) {
 	req := &datahub.FindQuery{}
 	if err := ctx.Http.BindJSON(req); err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (b *BindServer) DBFindAllByQuery(ctx *HttpBindContext) (any, error) {
 	return dbOps.FindAllByQuery(req)
 }
 
-func (b *BindServer) DBFindByJoin(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindByJoin(ctx *HttpBindContext) (any, error) {
 	req := &datahub.FindByJoin{}
 	if err := ctx.Http.BindJSON(req); err != nil {
 		return nil, err
@@ -159,12 +159,12 @@ func (b *BindServer) DBFindByJoin(ctx *HttpBindContext) (any, error) {
 	return dbOps.FindByJoin(req)
 }
 
-func (b *BindServer) DBListTables(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBListTables(ctx *HttpBindContext) (any, error) {
 	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
 	return dbOps.ListTables()
 }
 
-func (b *BindServer) DBListColumns(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBListColumns(ctx *HttpBindContext) (any, error) {
 	tableName := ctx.Http.Param("table")
 	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
 	return dbOps.ListTableColumns(tableName)
@@ -172,7 +172,7 @@ func (b *BindServer) DBListColumns(ctx *HttpBindContext) (any, error) {
 
 // KV Operations
 
-func (b *BindServer) KVAdd(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVAdd(ctx *HttpBindContext) (any, error) {
 	req := &dbmodels.SpaceKV{}
 	if err := ctx.Http.BindJSON(req); err != nil {
 		return nil, err
@@ -182,14 +182,14 @@ func (b *BindServer) KVAdd(ctx *HttpBindContext) (any, error) {
 	return req, err
 }
 
-func (b *BindServer) KVGet(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVGet(ctx *HttpBindContext) (any, error) {
 	group := ctx.Http.Param("group")
 	key := ctx.Http.Param("key")
 	kvOps := b.db.GetSpaceKVOps()
 	return kvOps.GetSpaceKV(ctx.PackageId, group, key)
 }
 
-func (b *BindServer) KVQuery(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVQuery(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Cond         map[string]any `json:"cond"`
 		Offset       int            `json:"offset"`
@@ -206,7 +206,7 @@ func (b *BindServer) KVQuery(ctx *HttpBindContext) (any, error) {
 	return kvOps.QuerySpaceKV(ctx.PackageId, toMapAnyAny(req.Cond), req.Offset, req.Limit)
 }
 
-func (b *BindServer) KVRemove(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVRemove(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Group string `json:"group"`
 		Key   string `json:"key"`
@@ -219,7 +219,7 @@ func (b *BindServer) KVRemove(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-func (b *BindServer) KVUpdate(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVUpdate(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Group string         `json:"group"`
 		Key   string         `json:"key"`
@@ -233,7 +233,7 @@ func (b *BindServer) KVUpdate(ctx *HttpBindContext) (any, error) {
 	return nil, err
 }
 
-func (b *BindServer) KVUpsert(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVUpsert(ctx *HttpBindContext) (any, error) {
 	var req struct {
 		Group string         `json:"group"`
 		Key   string         `json:"key"`
