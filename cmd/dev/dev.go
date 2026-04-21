@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/blue-monads/potatoverse/backend"
+	"github.com/blue-monads/potatoverse/backend/startup"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 
 	_ "github.com/blue-monads/potatoverse/backend/distro"
@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	app, err := backend.NewDevApp(&xtypes.AppOptions{
+	app, err := startup.NewDevApp(&xtypes.AppOptions{
 		WorkingDir: "./tmp",
 		Port:       7777,
 		Hosts: []xtypes.Host{

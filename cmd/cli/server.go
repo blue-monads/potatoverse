@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/blue-monads/potatoverse/backend"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
+	"github.com/blue-monads/potatoverse/backend/startup"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -175,7 +175,7 @@ func (c *ServerActualStartCmd) Run(ctx *kong.Context) error {
 		config.MasterSecret = os.Getenv(after)
 	}
 
-	app, err := backend.NewProdApp(&config, c.AutoSeed)
+	app, err := startup.NewProdApp(&config, c.AutoSeed)
 	if err != nil {
 		return err
 	}
