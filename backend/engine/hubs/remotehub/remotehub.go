@@ -71,6 +71,28 @@ func (b *RemoteHub) Init(app xtypes.App) {
 
 }
 
+func (b *RemoteHub) GetExecToken(pkgId, pkgverId, spaceId int64, reqId string) (string, error) {
+
+	claim := &XExecClaim{
+		PackageId:        pkgId,
+		PackageVersionId: pkgverId,
+		SpaceId:          spaceId,
+		RequestID:        reqId,
+	}
+
+	json, err := json.Marshal(claim)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := b.tokenSigner.EncodeToString(string(json))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+
+}
+
 func (b *RemoteHub) Authed(h HttpBindFn) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
