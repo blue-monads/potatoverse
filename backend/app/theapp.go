@@ -194,7 +194,7 @@ func (h *App) Sockd() any {
 }
 
 func (h *App) CoreHub() any {
-	return nil
+	return h.coreHub
 }
 
 // private
