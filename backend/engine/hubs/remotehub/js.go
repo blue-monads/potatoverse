@@ -28,10 +28,10 @@ const request = async (service, token, path, method, body) => {
     }
 
     const data = await resp.json();
-    if (data.error) {
+    if (data && data.error) {
         throw new Error(data.error);
     }
-    return data.result !== undefined ? data.result : data;
+    return data && data.result !== undefined ? data.result : data;
 };
 
 const get = (service, token, path) => request(service, token, path, 'GET');

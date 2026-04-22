@@ -106,16 +106,27 @@ const config :Workerd.Config = (
         (name = "worker", esModule = embed "worker.js"),
         (name = "potato", esModule = embed "potato.js")
       ],
-      compatibilityDate = "%s",
+      compatibilityDate = "%[1]s",
       bindings = [
-        (name = "internal_bindings", service = (name = "internal_bindings"))
+        (name = "internal_bindings", service = "internal_bindings")
       ],
+      globalOutbound = "internet"
     )),
-    (name = "internal_bindings", external = (address = "127.0.0.1:%d", http = ())),
+    (name = "internal_bindings", worker = (
+      modules = [
+        (name = "forwarder.js", esModule = "export default { async fetch(req, env) { const url = new URL(req.url); url.port = env.PORT; return await env.net.fetch(url, req); } }")
+      ],
+      compatibilityDate = "%[1]s",
+      bindings = [
+        (name = "net", service = "internet"),
+        (name = "PORT", text = "%[2]d")
+      ]
+    )),
+    (name = "internet", network = (allow = ["public", "private", "local", "network", "127.0.0.0/8"])),
   ],
   sockets = [
     ( name = "http",
-      address = "127.0.0.1:%d",
+      address = "127.0.0.1:%[3]d",
       http = (),
       service = "main"
     ),
@@ -207,14 +218,20 @@ func (e *workerdExecutor) GetDebugData() map[string]any {
 
 func (e *workerdExecutor) HandleHttp(event *xtypes.HttpEvent) error {
 	reqId := uuid.New().String()
-	token, err := e.remoteHub.GetExecToken(e.packageId, e.packageVersionId, e.spaceId, reqId)
-	if err != nil {
-		return err
+	token := ""
+	if e.remoteHub != nil {
+		var err error
+		token, err = e.remoteHub.GetExecToken(e.packageId, e.packageVersionId, e.spaceId, reqId)
+		if err != nil {
+			return err
+		}
 	}
 
 	req := event.Request.Request.Clone(event.Request.Request.Context())
 	req.Header.Set("X-Potato-Request-ID", reqId)
-	req.Header.Set("X-Exec-Header", token)
+	if token != "" {
+		req.Header.Set("X-Exec-Header", token)
+	}
 
 	e.proxy.ServeHTTP(event.Request.Writer, req)
 	return nil

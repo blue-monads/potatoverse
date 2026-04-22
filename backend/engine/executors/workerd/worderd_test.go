@@ -8,6 +8,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/blue-monads/potatoverse/backend/engine"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -20,8 +21,9 @@ type mockApp struct {
 
 func (m *mockApp) Database() datahub.Database { return nil }
 func (m *mockApp) Signer() *signer.Signer     { return nil }
+func (m *mockApp) Engine() any { return &engine.Engine{HttpPort: 8080} }
 
-func TestworkerdExecutor(t *testing.T) {
+func TestWorkerdExecutor(t *testing.T) {
 	if _, err := os.Stat(WorkerdBinary); os.IsNotExist(err) {
 		t.Skip("workerd binary not found")
 	}
