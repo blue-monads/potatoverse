@@ -15,7 +15,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/google/uuid"
+	"github.com/jaevor/go-nanoid"
 )
 
 const (
@@ -216,24 +216,31 @@ func (e *workerdExecutor) GetDebugData() map[string]any {
 	return data
 }
 
+var (
+	idgen func() string
+)
+
+func init() {
+	idgen, _ = nanoid.ASCII(10)
+}
+
 func (e *workerdExecutor) HandleHttp(event *xtypes.HttpEvent) error {
-	reqId := uuid.New().String()
-	token := ""
-	if e.remoteHub != nil {
-		var err error
-		token, err = e.remoteHub.GetExecToken(e.packageId, e.packageVersionId, e.spaceId, reqId)
-		if err != nil {
-			return err
-		}
+	reqId := idgen()
+
+	headers := event.Request.Request.Header
+
+	headers.Set("X-Potato-Request-ID", reqId)
+	token, err := e.remoteHub.GetExecToken(e.packageId, e.packageVersionId, e.spaceId, reqId)
+	if err != nil {
+		qq.Println("error getting exec token:", err)
+		return err
 	}
 
-	req := event.Request.Request.Clone(event.Request.Request.Context())
-	req.Header.Set("X-Potato-Request-ID", reqId)
 	if token != "" {
-		req.Header.Set("X-Exec-Header", token)
+		headers.Set("X-Exec-Header", token)
 	}
 
-	e.proxy.ServeHTTP(event.Request.Writer, req)
+	e.proxy.ServeHTTP(event.Request.Writer, event.Request.Request)
 	return nil
 }
 
