@@ -147,7 +147,7 @@ const config :Workerd.Config = (
 	}
 
 	started := false
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), 50*time.Millisecond)
 		if err == nil {
 			conn.Close()
