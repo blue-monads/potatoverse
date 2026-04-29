@@ -66,6 +66,7 @@ type UserOps interface {
 	GetUserByEmail(email string) (*dbmodels.User, error)
 	GetUserByUsername(username string) (*dbmodels.User, error)
 	ListUser(offset int, limit int) ([]dbmodels.User, error)
+	ListUsersByIds(ids []int64) ([]dbmodels.User, error)
 	ListUserByCond(cond map[any]any, offset int, limit int) ([]dbmodels.User, error)
 	ListUserByOwner(owner int64) ([]dbmodels.User, error)
 	UpdateUser(id int64, data map[string]any) error

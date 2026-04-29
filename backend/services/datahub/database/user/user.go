@@ -76,6 +76,22 @@ func (d *UserOperations) ListUser(offset int, limit int) ([]dbmodels.User, error
 	return users, nil
 }
 
+func (d *UserOperations) ListUsersByIds(ids []int64) ([]dbmodels.User, error) {
+
+	users := make([]dbmodels.User, 0)
+
+	err := d.userTable().Find(db.Cond{"id": db.In(ids)}).All(&users)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, usr := range users {
+		usr.Password = ""
+	}
+
+	return users, nil
+}
+
 func (d *UserOperations) ListUserByCond(cond map[any]any, offset int, limit int) ([]dbmodels.User, error) {
 
 	users := make([]dbmodels.User, 0)
