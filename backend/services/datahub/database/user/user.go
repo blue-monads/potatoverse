@@ -80,7 +80,7 @@ func (d *UserOperations) ListUsersByIds(ids []int64) ([]dbmodels.User, error) {
 
 	users := make([]dbmodels.User, 0)
 
-	err := d.userTable().Find(db.Cond{"id": db.In(ids)}).All(&users)
+	err := d.userTable().Find(db.Cond{"id IN": ids}).All(&users)
 	if err != nil {
 		return nil, err
 	}
