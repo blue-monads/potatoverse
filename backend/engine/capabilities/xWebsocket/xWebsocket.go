@@ -15,6 +15,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/emtyctx"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -271,6 +272,19 @@ func (c *WebsocketCapability) removeConn(connId string) {
 
 	if exists && wc != nil {
 		wc.teardown()
+
+		_ = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
+			SpaceId:    c.spaceId,
+			EventType:  "capability",
+			ActionName: "handle_websocket_disconnect",
+			Params: map[string]string{
+				"conn_id":       connId,
+				"capability_id": fmt.Sprintf("%d", c.capabilityId),
+				"capability":    "websocket",
+				"user_id":       fmt.Sprintf("%d", wc.userId),
+			},
+			Request: emtyctx.Instance,
+		})
 	}
 }
 
