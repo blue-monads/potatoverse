@@ -2,6 +2,7 @@ package luaplus
 
 import (
 	"fmt"
+	"reflect"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -69,6 +70,27 @@ func GoTypeToLuaType(l *lua.LState, goValue any) lua.LValue {
 	case map[any]any:
 		panic("map[any]any not implemented")
 	default:
+		rv := reflect.ValueOf(v)
+		rk := rv.Kind()
+
+		// Check if it's a struct type
+		if rk == reflect.Struct {
+			return MapToTable(l, StructToMap(v))
+		}
+		if rk == reflect.Ptr && !rv.IsNil() && rv.Elem().Kind() == reflect.Struct {
+			return MapToTable(l, StructToMap(rv.Elem().Interface()))
+		}
+
+		// Check if it's a slice or array (including []Struct, []*Struct)
+		if rk == reflect.Slice || rk == reflect.Array {
+			table := l.NewTable()
+			for i := 0; i < rv.Len(); i++ {
+				elem := rv.Index(i).Interface()
+				table.RawSetInt(i+1, GoTypeToLuaType(l, elem))
+			}
+			return table
+		}
+
 		// For other types, try to convert to string
 		return lua.LString(fmt.Sprintf("%v", v))
 	}

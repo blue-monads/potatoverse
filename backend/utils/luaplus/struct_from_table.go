@@ -384,3 +384,43 @@ func luaToAny(lv lua.LValue) any {
 		return nil
 	}
 }
+
+// StructToMap converts a Go struct to a map[string]any.
+// It uses the same field name resolution as MapToStruct (lua tag > json tag > field name).
+func StructToMap(v any) map[string]any {
+	result := make(map[string]any)
+
+	val := reflect.ValueOf(v)
+	typ := reflect.TypeOf(v)
+
+	// Handle pointer to struct
+	if typ.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return result
+		}
+		val = val.Elem()
+		typ = val.Type()
+	}
+
+	if typ.Kind() != reflect.Struct {
+		return result
+	}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		fieldVal := val.Field(i)
+
+		if !fieldVal.CanInterface() {
+			continue
+		}
+
+		fieldName := luaFieldName(field)
+		if fieldName == "-" {
+			continue
+		}
+
+		result[fieldName] = fieldVal.Interface()
+	}
+
+	return result
+}

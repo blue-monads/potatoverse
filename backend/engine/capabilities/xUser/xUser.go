@@ -6,6 +6,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
@@ -147,7 +148,9 @@ func (c *CurrUserCapability) getSpaceUsers(_ lazydata.LazyData) (any, error) {
 		return nil, err
 	}
 
-	userIds := make([]int64, len(susers))
+	qq.Println("@users/1", susers)
+
+	userIds := make([]int64, 0, len(susers))
 	for _, user := range susers {
 		userIds = append(userIds, user.UserID)
 	}
@@ -156,6 +159,8 @@ func (c *CurrUserCapability) getSpaceUsers(_ lazydata.LazyData) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	qq.Println("@users/2", users)
 
 	return users, nil
 }
