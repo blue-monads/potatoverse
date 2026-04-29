@@ -20,7 +20,7 @@ type connectCtx struct {
 }
 
 func (cc *connectCtx) ListActions() ([]string, error) {
-	return []string{"finish_upgrade", "list_connections"}, nil
+	return []string{"finish_upgrade"}, nil
 }
 
 func (cc *connectCtx) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
@@ -53,10 +53,6 @@ func (cc *connectCtx) ExecuteAction(name string, params lazydata.LazyData) (any,
 
 		cc.wc = wc
 		return map[string]any{"success": true, "conn_id": wc.connId}, nil
-
-	case "list_connections":
-		return cc.cap.listConnections(), nil
-
 	default:
 		return nil, errors.New("unknown action: " + name)
 	}
