@@ -32,6 +32,7 @@ type Server struct {
 }
 
 type Option struct {
+	ExecId      string
 	Port        int
 	Ctrl        *actions.Controller
 	Signer      *signer.Signer
@@ -104,6 +105,7 @@ func (s *Server) Start() error {
 		if !existed {
 			pubkey := s.opt.BuddyHub.GetPubkey()
 			fmt.Println("Server started:")
+			fmt.Println("ExecId:\t\t", s.opt.ExecId)
 			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
 			fmt.Println("Node Pubkey:\t\t", pubkey)
 

@@ -8,6 +8,7 @@ import (
 )
 
 type App interface {
+	ExecId() string
 	Init() error
 	Start() error
 	Database() datahub.Database

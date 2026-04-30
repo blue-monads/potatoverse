@@ -2,12 +2,15 @@ package app
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"log/slog"
 	"path"
+	"time"
 
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	"github.com/blue-monads/potatoverse/backend/app/server"
 	"github.com/blue-monads/potatoverse/backend/engine"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
@@ -33,6 +36,8 @@ type Option struct {
 var _ xtypes.App = (*App)(nil)
 
 type App struct {
+	execId string
+
 	db      datahub.Database
 	signer  *signer.Signer
 	logger  *slog.Logger
@@ -57,7 +62,12 @@ func New(opt Option) *App {
 
 	sockd := sockd.NewSockd()
 
+	ut := time.Now().Unix()
+	randstr, _ := xutils.GenerateRandomString(8)
+	execId := fmt.Sprintf("%d-%s", ut, randstr)
+
 	happ := &App{
+		execId: execId,
 		db:     opt.Database,
 		signer: opt.Signer,
 		logger: opt.Logger,
@@ -92,6 +102,7 @@ func New(opt Option) *App {
 		CoreHub:     happ.coreHub,
 		BuddyHub:    opt.BuddyHub,
 		Logger:      opt.Logger,
+		ExecId:      execId,
 	})
 
 	happ.server = server
@@ -104,6 +115,10 @@ func (h *App) Init() error {
 	h.logger.Info("Initializing HeadLess application")
 
 	return nil
+}
+
+func (h *App) ExecId() string {
+	return h.execId
 }
 
 func (h *App) Start() error {

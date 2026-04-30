@@ -70,6 +70,11 @@ func CoreBindable(app xtypes.App) map[string]lua.LGFunction {
 		"get_env": func(L *lua.LState) int {
 			return getEnv(app, L)
 		},
+
+		"app_exec_id": func(L *lua.LState) int {
+			L.Push(lua.LString(app.ExecId()))
+			return 1
+		},
 	}
 
 }
