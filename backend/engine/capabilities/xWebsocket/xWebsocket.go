@@ -52,9 +52,14 @@ type WebsocketBuilder struct {
 
 func (b *WebsocketBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
 	model := handle.GetModel()
-	return &WebsocketCapability{
-		builder: b,
+	spaceId, err := handle.GetSpaceId()
+	if err != nil {
+		return nil, err
+	}
 
+	return &WebsocketCapability{
+		builder:      b,
+		spaceId:      spaceId,
 		installId:    model.InstallID,
 		capabilityId: model.ID,
 		connections:  make(map[string]*wsConn),
@@ -98,6 +103,7 @@ type WebsocketCapability struct {
 	builder      *WebsocketBuilder
 	installId    int64
 	capabilityId int64
+	spaceId      int64
 
 	connections map[string]*wsConn
 	mu          sync.RWMutex
@@ -128,7 +134,7 @@ func (c *WebsocketCapability) Handle(ctx *gin.Context) {
 	}
 
 	err = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
-		SpaceId:    claim.SpaceId,
+		SpaceId:    c.spaceId,
 		EventType:  "capability",
 		ActionName: "on_websocket_connect",
 		Params: map[string]string{
@@ -240,6 +246,7 @@ func (c *WebsocketCapability) handleMessage(wc *wsConn, data []byte) {
 	}
 
 	err := c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
+		SpaceId:    c.spaceId,
 		EventType:  "capability",
 		ActionName: "on_websocket_message",
 		Params: map[string]string{
@@ -268,6 +275,7 @@ func (c *WebsocketCapability) removeConn(connId string) {
 		wc.teardown()
 
 		_ = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
+			SpaceId:    c.spaceId,
 			EventType:  "capability",
 			ActionName: "on_websocket_disconnect",
 			Params: map[string]string{

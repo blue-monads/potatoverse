@@ -64,3 +64,19 @@ func (h *CapabilityHandle) GetOptionsAsLazyData() lazydata.LazyData {
 func (h *CapabilityHandle) GetOptions(target any) error {
 	return json.Unmarshal(kosher.Byte(h.model.Options), target)
 }
+
+func (h *CapabilityHandle) GetSpaceId() (int64, error) {
+
+	if h.model.SpaceID != 0 {
+		return h.model.SpaceID, nil
+	}
+
+	spaces, err := h.app.Database().GetSpaceOps().ListSpacesByPackageId(h.model.InstallID)
+	if err != nil {
+		return 0, err
+	}
+
+	// fixme check root space
+
+	return spaces[0].ID, nil
+}
