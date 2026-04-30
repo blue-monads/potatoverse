@@ -295,9 +295,14 @@ func (c *WebsocketCapability) sendToConnections(connIds []string, message []byte
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	qq.Println("@ws/send_to_connections", len(connIds))
+
 	msg := &wsMsg{data: message, binary: binary}
 
 	for _, connId := range connIds {
+
+		qq.Println("@ws/send_message", connId)
+
 		wc, exists := c.connections[connId]
 		if !exists || wc.closed {
 			continue
@@ -364,20 +369,33 @@ func (c *WebsocketCapability) ListActions() ([]string, error) {
 }
 
 func (c *WebsocketCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+	qq.Println("@ws/execute", name)
+
 	switch name {
 	case "send_to_connections":
 		var p struct {
-			ConnIds []string        `json:"conns"`
-			Message json.RawMessage `json:"message"`
-			Binary  bool            `json:"binary"`
+			ConnIds []string `json:"conns"`
+			Message any      `json:"message"`
+			Binary  bool     `json:"binary"`
 		}
 		if err := params.AsJson(&p); err != nil {
+			qq.Println("@ws/send_to_connections asjson error", err)
 			return nil, err
 		}
+
+		qq.Println("@ws/send_to_connections params", p.ConnIds)
+
+		anyBytes, err := json.Marshal(p.Message)
+		if err != nil {
+			qq.Println("@ws/send_to_connections marshal error", err)
+			return nil, err
+		}
+
 		if len(p.ConnIds) == 0 {
+			qq.Println("@ws/send_to_connections conns is required")
 			return nil, errors.New("conns is required")
 		}
-		return ok, c.sendToConnections(p.ConnIds, p.Message, p.Binary)
+		return ok, c.sendToConnections(p.ConnIds, anyBytes, p.Binary)
 
 	case "broadcast_message":
 		var p struct {
