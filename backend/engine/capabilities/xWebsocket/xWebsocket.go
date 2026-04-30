@@ -131,7 +131,7 @@ func (c *WebsocketCapability) Handle(ctx *gin.Context) {
 	err = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
 		SpaceId:    c.spaceId,
 		EventType:  "capability",
-		ActionName: "handle_websocket_connect",
+		ActionName: "on_websocket_connect",
 		Params: map[string]string{
 			"conn_id":       claim.ResourceId,
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
@@ -247,7 +247,7 @@ func (c *WebsocketCapability) handleMessage(wc *wsConn, data []byte) {
 	err := c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
 		SpaceId:    c.spaceId,
 		EventType:  "capability",
-		ActionName: "handle_websocket_message",
+		ActionName: "on_websocket_message",
 		Params: map[string]string{
 			"conn_id":       wc.connId,
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
@@ -276,7 +276,7 @@ func (c *WebsocketCapability) removeConn(connId string) {
 		_ = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
 			SpaceId:    c.spaceId,
 			EventType:  "capability",
-			ActionName: "handle_websocket_disconnect",
+			ActionName: "on_websocket_disconnect",
 			Params: map[string]string{
 				"conn_id":       connId,
 				"capability_id": fmt.Sprintf("%d", c.capabilityId),
