@@ -53,8 +53,8 @@ type WebsocketBuilder struct {
 func (b *WebsocketBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
 	model := handle.GetModel()
 	return &WebsocketCapability{
-		builder:      b,
-		spaceId:      model.SpaceID,
+		builder: b,
+
 		installId:    model.InstallID,
 		capabilityId: model.ID,
 		connections:  make(map[string]*wsConn),
@@ -96,7 +96,6 @@ func (wc *wsConn) teardown() {
 
 type WebsocketCapability struct {
 	builder      *WebsocketBuilder
-	spaceId      int64
 	installId    int64
 	capabilityId int64
 
@@ -129,7 +128,7 @@ func (c *WebsocketCapability) Handle(ctx *gin.Context) {
 	}
 
 	err = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
-		SpaceId:    c.spaceId,
+		SpaceId:    claim.SpaceId,
 		EventType:  "capability",
 		ActionName: "on_websocket_connect",
 		Params: map[string]string{
@@ -160,19 +159,15 @@ func (c *WebsocketCapability) parseToken(token string) (*signer.CapabilityClaim,
 		return nil, err
 	}
 
-	if claim.SpaceId != c.spaceId {
-		return nil, ErrInvalidToken
-	}
+	qq.Println("@ws/claim", claim)
 
 	if claim.InstallId != c.installId {
+		qq.Println("@wrong_install_id", claim.InstallId, c.installId)
 		return nil, ErrInvalidToken
 	}
 
 	if claim.CapabilityId != c.capabilityId {
-		return nil, ErrInvalidToken
-	}
-
-	if claim.SubType != "websocket" {
+		qq.Println("@wrong_capability_id", claim.CapabilityId, c.capabilityId)
 		return nil, ErrInvalidToken
 	}
 
@@ -245,7 +240,6 @@ func (c *WebsocketCapability) handleMessage(wc *wsConn, data []byte) {
 	}
 
 	err := c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
-		SpaceId:    c.spaceId,
 		EventType:  "capability",
 		ActionName: "on_websocket_message",
 		Params: map[string]string{
@@ -274,7 +268,6 @@ func (c *WebsocketCapability) removeConn(connId string) {
 		wc.teardown()
 
 		_ = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
-			SpaceId:    c.spaceId,
 			EventType:  "capability",
 			ActionName: "on_websocket_disconnect",
 			Params: map[string]string{
