@@ -183,7 +183,6 @@ type SpaceKVOps interface {
 }
 
 type CreateFileRequest struct {
-	RefID     string `json:"ref_id"`
 	Name      string `json:"name"`
 	Path      string `json:"path"`
 	CreatedBy int64  `json:"created_by"`

@@ -90,6 +90,7 @@ HTTP request context object.
 - `bind_json()` - Bind JSON body to table
 - `bind_header()` - Bind headers to table
 - `bind_query()` - Bind query params to table
+- `finish_file_upload(filename, path)` - Finish file upload, returns file id
 
 ### Response methods
 

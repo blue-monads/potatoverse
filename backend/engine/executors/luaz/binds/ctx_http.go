@@ -3,6 +3,7 @@ package binds
 import (
 	"errors"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
@@ -253,9 +254,37 @@ func httpRequestContextIndex(L *lua.LState) int {
 			return reqStateSetAll(reqCtx, L)
 		}))
 		return 1
+	case "finish_file_upload":
+		L.Push(L.NewFunction(func(L *lua.LState) int {
+			return reqFinishFileUpload(reqCtx, L)
+		}))
+		return 1
 	}
 
 	return 0
+}
+
+func reqFinishFileUpload(reqCtx *luaHttpRequestContext, L *lua.LState) int {
+	fileOps := reqCtx.app.Database().GetFileOps()
+
+	filename := L.CheckString(1)
+	path := L.CheckString(2)
+
+	opts := &datahub.CreateFileRequest{
+		Name:      filename,
+		Path:      path,
+		CreatedBy: reqCtx.spaceClaim.UserId,
+	}
+
+	reader := reqCtx.ctx.Request.Body
+
+	fid, err := fileOps.CreateFile(reqCtx.spaceClaim.InstallId, opts, reader)
+	if err != nil {
+		return 0
+	}
+
+	L.Push(lua.LNumber(fid))
+	return 1
 }
 
 func GetUserClaim(ctx *gin.Context, signer *signer.Signer) (*signer.SpaceClaim, error) {
