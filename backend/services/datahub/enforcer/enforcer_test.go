@@ -151,12 +151,18 @@ func TestTransformQuery(t *testing.T) {
 			wantErr:          false,
 		},
 		{
-			name:             "SELECT with subquery",
+			name:             "SELECT with IN subquery",
 			input:            "SELECT * FROM users WHERE id IN (SELECT user_id FROM posts)",
-			shouldContain:    []string{expectedPrefix + "users"},
-			shouldNotContain: []string{"FROM users"},
+			shouldContain:    []string{expectedPrefix + "users", expectedPrefix + "posts"},
+			shouldNotContain: []string{"FROM users", "FROM posts"},
 			wantErr:          false,
-			// Note: Subquery table transformation may depend on parser implementation
+		},
+		{
+			name:             "SELECT with FROM subquery and alias",
+			input:            "SELECT m.id FROM (SELECT id FROM users) m",
+			shouldContain:    []string{expectedPrefix + "users", "\"m\".\"id\""},
+			shouldNotContain: []string{"FROM users", "zz_user__123__m.id"},
+			wantErr:          false,
 		},
 		{
 			name:             "INSERT with SELECT",
