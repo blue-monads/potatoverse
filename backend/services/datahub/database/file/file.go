@@ -159,10 +159,6 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 
 func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
 
-	if req.RefID == "" && f.refIdGen != nil {
-		req.RefID = f.refIdGen()
-	}
-
 	exists, err := f.fileExists(ownerID, req.Path, req.Name)
 	if err != nil {
 		return 0, err

@@ -67,9 +67,9 @@ type SignFsPresignedTokenOptions struct {
 }
 
 type SignAdviseryTokenOptions struct {
-	TokenSubType string         `json:"token_sub_type"`
-	UserId       int64          `json:"user_id"`
-	Data         map[string]any `json:"data"`
+	SubType string `json:"sub_type"`
+	UserId  int64  `json:"user_id"`
+	Data    string `json:"data"`
 }
 
 type ParseTokenReq struct {

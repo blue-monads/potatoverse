@@ -212,7 +212,7 @@ func coreSignAdviseryToken(sig *signer.Signer, es *executors.ExecState, L *lua.L
 	signature, err := sig.SignSpaceAdvisiery(&signer.SpaceAdvisieryClaim{
 		InstallId:    es.InstalledId,
 		UserId:       opts.UserId,
-		TokenSubType: opts.TokenSubType,
+		TokenSubType: opts.SubType,
 		Data:         opts.Data,
 		SpaceId:      es.SpaceId,
 	})
@@ -241,9 +241,9 @@ func coreParseAdviseryToken(sig *signer.Signer, es *executors.ExecState, L *lua.
 
 	resultTable := L.NewTable()
 
-	resultTable.RawSetString("token_sub_type", lua.LString(claim.TokenSubType))
+	resultTable.RawSetString("sub_type", lua.LString(claim.TokenSubType))
 	resultTable.RawSetString("user_id", lua.LNumber(claim.UserId))
-	resultTable.RawSetString("data", luaplus.MapToTable(L, claim.Data))
+	resultTable.RawSetString("data", lua.LString(claim.Data))
 
 	L.Push(resultTable)
 	L.Push(lua.LNil)

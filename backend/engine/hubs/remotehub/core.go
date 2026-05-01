@@ -72,7 +72,7 @@ func (b *RemoteHub) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
 	return b.signer.SignSpaceAdvisiery(&signer.SpaceAdvisieryClaim{
 		InstallId:    ctx.PackageId,
 		UserId:       opts.UserId,
-		TokenSubType: opts.TokenSubType,
+		TokenSubType: opts.SubType,
 		Data:         opts.Data,
 		SpaceId:      ctx.SpaceId,
 	})
