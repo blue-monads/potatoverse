@@ -267,8 +267,8 @@ func httpRequestContextIndex(L *lua.LState) int {
 func reqFinishFileUpload(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 	fileOps := reqCtx.app.Database().GetFileOps()
 
-	filename := L.CheckString(1)
-	path := L.CheckString(2)
+	path := L.CheckString(1)
+	filename := L.CheckString(2)
 
 	opts := &datahub.CreateFileRequest{
 		Name:      filename,
