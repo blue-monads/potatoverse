@@ -71,12 +71,3 @@ func (rs *RegistryStore) GetRootExecutorFactories() map[string]xtypes.RootExecut
 	maps.Copy(copy, rs.rootExecutorFactories)
 	return copy
 }
-
-type Registery struct {
-	// capability builder
-	// exec builder
-	// repo providers
-	// event target provider
-	// auth provider
-
-}

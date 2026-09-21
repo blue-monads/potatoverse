@@ -33,6 +33,8 @@ type Option struct {
 	BaseRouter *gin.Engine
 	OnStart    func()
 
+	BaseGlobalJS string
+
 	WorkingFolderBase string
 	RunPortNoBind     bool
 }
@@ -97,6 +99,7 @@ func New(opt Option) *App {
 
 	server := server.NewServer(server.Option{
 		Port:          opt.AppOpts.Port,
+		GlobalJS:      opt.BaseGlobalJS,
 		Ctrl:          happ.ctrl,
 		Signer:        opt.Signer,
 		Engine:        engine,

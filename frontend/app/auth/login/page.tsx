@@ -12,8 +12,8 @@ export default function Page() {
 
     const gapp = useGApp();
 
-    const [username, setUsername] = useState<string>("demo@example.com");
-    const [password, setPassword] = useState<string>("demogodTheGreat_123");
+    const [username, setUsername] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
 
@@ -78,6 +78,7 @@ export default function Page() {
                         </label>
                         <input
                             type="text"
+                            name="username"
                             required
                             className="w-full mt-2 px-3 py-2 text-gray-500 bg-transparent outline-none border focus:border-primary-100 shadow-sm rounded-lg"
                             value={username}
@@ -90,6 +91,7 @@ export default function Page() {
                         </label>
                         <input
                             type="password"
+                            name="password"
                             required
                             className="w-full mt-2 px-3 py-2 text-gray-500 bg-transparent outline-none border focus:border-primary-100 shadow-sm rounded-lg"
                             value={password}
