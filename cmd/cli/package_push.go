@@ -176,7 +176,7 @@ func resolvePackageIdBySlug(baseURL, accessToken, slug string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Authorization", "TokenV1 "+accessToken)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return 0, err
