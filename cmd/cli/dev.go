@@ -75,15 +75,19 @@ func (c *DevRunCmd) Run(_ *kong.Context) error {
 		return err
 	}
 
+	port, err := pickListenPort(c.Port)
+	if err != nil {
+		return err
+	}
+
 	devSpaces := ""
 	if c.LiveUIServe {
-		var err error
 		devSpaces, err = buildDevSpacesEnv(potatoYaml, c.LiveUIServePort)
 		if err != nil {
 			return err
 		}
 	}
-	if err := ensureDevConfig(workingDir, sockPath, c.Port, c.Host); err != nil {
+	if err := ensureDevConfig(workingDir, sockPath, port, c.Host); err != nil {
 		return err
 	}
 
@@ -102,7 +106,7 @@ func (c *DevRunCmd) Run(_ *kong.Context) error {
 		return err
 	}
 
-	fmt.Printf("Development server running at http://localhost:%d/zz/pages\n", c.Port)
+	fmt.Printf("Development server running at http://localhost:%d/zz/pages\n", port)
 	return waitForProcess(cmd)
 }
 
@@ -284,32 +288,70 @@ func buildDevSpacesEnv(pkg *models.PotatoPackage, portOverride int) (string, err
 	return strings.Join(parts, ","), nil
 }
 
+func pickListenPort(preferred int) (int, error) {
+	if preferred > 0 && portFree(preferred) {
+		return preferred, nil
+	}
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, fmt.Errorf("failed to pick a free port: %w", err)
+	}
+	port := ln.Addr().(*net.TCPAddr).Port
+	_ = ln.Close()
+
+	if preferred > 0 {
+		fmt.Printf("port %d is in use, using %d instead\n", preferred, port)
+	}
+	return port, nil
+}
+
+func portFree(port int) bool {
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return false
+	}
+	_ = ln.Close()
+	return true
+}
+
 func ensureDevConfig(workingDir, sockPath string, port int, host string) error {
 	if err := os.MkdirAll(workingDir, 0755); err != nil {
 		return err
 	}
 
 	cfgPath := filepath.Join(workingDir, "config.yaml")
-	if _, err := os.Stat(cfgPath); err == nil {
-		return nil
-	}
-
-	secret, err := xutils.GenerateRandomString(32)
-	if err != nil {
+	config := xtypes.AppOptions{}
+	if cfgData, err := os.ReadFile(cfgPath); err == nil {
+		if err := yaml.Unmarshal(cfgData, &config); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
 		return err
 	}
 
-	config := xtypes.AppOptions{
-		Name:         "PotatoVerse Dev",
-		Port:         port,
-		Hosts:        []xtypes.Host{{Name: host}},
-		MasterSecret: fmt.Sprintf("potatosec_%s", secret),
-		Debug:        true,
-		WorkingDir:   workingDir,
-		SocketFile:   sockPath,
-		Mailer:       xtypes.MailerOptions{Type: "stdio"},
-		Repos:        repohub.Default,
+	if config.MasterSecret == "" {
+		secret, err := xutils.GenerateRandomString(32)
+		if err != nil {
+			return err
+		}
+		config.MasterSecret = fmt.Sprintf("potatosec_%s", secret)
 	}
+	if config.Name == "" {
+		config.Name = "PotatoVerse Dev"
+	}
+	if len(config.Hosts) == 0 {
+		config.Hosts = []xtypes.Host{{Name: host}}
+	}
+	if len(config.Repos) == 0 {
+		config.Repos = repohub.Default
+	}
+
+	config.Port = port
+	config.Debug = true
+	config.WorkingDir = workingDir
+	config.SocketFile = sockPath
+	config.Mailer = xtypes.MailerOptions{Type: "stdio"}
 
 	cfgData, err := yaml.Marshal(config)
 	if err != nil {
