@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -154,8 +153,6 @@ func (s *Server) listenUnixSocket() error {
 		return nil
 	}
 
-	// delete old socket
-
 	os.Remove(s.opt.LocalSocket)
 
 	l, err := net.Listen("unix", s.opt.LocalSocket)
@@ -168,32 +165,12 @@ func (s *Server) listenUnixSocket() error {
 		for {
 			c, err := l.Accept()
 			if err != nil {
-				log.Fatal("accept error:", err.Error())
+				log.Println("unix socket accept error:", err.Error())
 				return
 			}
 
-			func(c net.Conn) {
-				defer c.Close()
-
-				out, err := json.Marshal(map[string]any{
-					"port": s.opt.Port,
-					"host": s.opt.Hosts,
-				})
-
-				if err != nil {
-					log.Fatal("json marshal error:", err.Error())
-					return
-				}
-
-				_, err = c.Write(out)
-				if err != nil {
-					log.Fatal("Write: ", err)
-				}
-
-			}(c)
-
+			go s.handleUnixRPC(c)
 		}
-
 	}()
 
 	return nil
