@@ -20,7 +20,11 @@ func LuaTypeToGoType(l *lua.LState, lvalue lua.LValue) any {
 	case lua.LTNumber:
 		return float64(lvalue.(lua.LNumber))
 	case lua.LTTable:
-		return tableToMap(lvalue.(*lua.LTable))
+		tbl := lvalue.(*lua.LTable)
+		if isArray(tbl) {
+			return tableToArray(tbl)
+		}
+		return tableToMap(tbl)
 	default:
 		return nil
 	}

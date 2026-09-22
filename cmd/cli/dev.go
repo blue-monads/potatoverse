@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,10 +18,10 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
-	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/blue-monads/potatoverse/cmd/cli/pkgutils"
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 )
 
@@ -330,12 +331,10 @@ func ensureDevConfig(workingDir, sockPath string, port int, host string) error {
 		return err
 	}
 
-	if config.MasterSecret == "" {
-		secret, err := xutils.GenerateRandomString(32)
-		if err != nil {
-			return err
-		}
-		config.MasterSecret = fmt.Sprintf("potatosec_%s", secret)
+	if envSecret := getEnvMasterSecret(); envSecret != "" {
+		config.MasterSecret = envSecret
+	} else if config.MasterSecret == "" {
+		config.MasterSecret = resolveDevMasterSecret()
 	}
 	if config.Name == "" {
 		config.Name = "PotatoVerse Dev"
@@ -483,3 +482,42 @@ func jsonInt(v any) (int, bool) {
 		return 0, false
 	}
 }
+
+func resolveDevMasterSecret() string {
+	if sec := getEnvMasterSecret(); sec != "" {
+		return sec
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		pwd = "."
+	}
+	if abs, err := filepath.Abs(pwd); err == nil {
+		pwd = abs
+	}
+
+	h := sha256.Sum256([]byte(pwd))
+	return fmt.Sprintf("potatosec_%x", h)
+}
+
+func getEnvMasterSecret() string {
+	if sec := strings.TrimSpace(os.Getenv("POTATO_DEV_MASTER_SECRET")); sec != "" {
+		return sec
+	}
+
+	envFiles := []string{".env.potato"}
+	if pwd, err := os.Getwd(); err == nil {
+		envFiles = append(envFiles, filepath.Join(pwd, ".env.potato"))
+	}
+
+	for _, file := range envFiles {
+		if envMap, err := godotenv.Read(file); err == nil {
+			if sec := strings.TrimSpace(envMap["POTATO_DEV_MASTER_SECRET"]); sec != "" {
+				return sec
+			}
+		}
+	}
+
+	return ""
+}
+
