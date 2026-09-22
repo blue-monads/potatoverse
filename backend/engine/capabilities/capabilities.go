@@ -11,6 +11,9 @@ import (
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xFiles"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xFiles/xFileRelay"
 
+	// xsuper
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSuper"
+
 	// xsystem
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSystem/xCorn"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSystem/xEngine/xLua"
