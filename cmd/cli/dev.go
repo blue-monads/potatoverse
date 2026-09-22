@@ -401,13 +401,11 @@ func waitForProcess(cmd *exec.Cmd) error {
 	}
 }
 
-type unixRPCResp struct {
-	Ok   bool           `json:"ok"`
-	Msg  string         `json:"msg"`
-	Data map[string]any `json:"data"`
+func unixRPCCall(sockPath, method string) (map[string]any, error) {
+	return unixRPCCallWithArgs(sockPath, method, nil)
 }
 
-func unixRPCCall(sockPath, method string) (map[string]any, error) {
+func unixRPCCallWithArgs(sockPath, method string, args map[string]any) (map[string]any, error) {
 	conn, err := net.DialTimeout("unix", sockPath, 2*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("unix rpc connect: %w", err)
@@ -415,11 +413,15 @@ func unixRPCCall(sockPath, method string) (map[string]any, error) {
 	defer conn.Close()
 
 	_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
-	if _, err := fmt.Fprintf(conn, "%s\n", method); err != nil {
+	req := xtypes.UNIXRpcRequest{
+		Method: method,
+		Args:   args,
+	}
+	if err := json.NewEncoder(conn).Encode(req); err != nil {
 		return nil, fmt.Errorf("unix rpc write: %w", err)
 	}
 
-	var resp unixRPCResp
+	var resp xtypes.UNIXRpcResponse
 	if err := json.NewDecoder(conn).Decode(&resp); err != nil {
 		return nil, fmt.Errorf("unix rpc decode: %w", err)
 	}
