@@ -124,5 +124,14 @@ func (c *CoreHub) ServePreviewFileSigned(refId string, ctx *gin.Context) {
 		return
 	}
 
-	ctx.Data(http.StatusOK, "image/jpeg", preview)
+	if len(preview) > 0 {
+		ctx.Data(http.StatusOK, "image/jpeg", preview)
+		return
+	}
+
+	err = c.db.GetFileOps().StreamFileToHTTP(fileMeta.OwnerID, fileMeta.Path, fileMeta.Name, ctx)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
 }
