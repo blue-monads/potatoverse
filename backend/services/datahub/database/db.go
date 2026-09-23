@@ -15,6 +15,7 @@ import (
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/signal"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
@@ -36,6 +37,7 @@ type DB struct {
 	packageFileOps    *fileops.FileOperations
 	packageInstallOps *ppackage.PackageInstallOperations
 	eventOps          *event.EventOperations
+	signalOps         *signal.SignalOperations
 
 	lazySyncer *lazysyncer.LazySyncer
 }
@@ -103,6 +105,18 @@ func AutoMigrate(sess upperdb.Session) error {
 			sess.Close()
 			return err
 		}
+	} else {
+		// Existing database: ensure Signals and SignalEvents tables exist
+		sigExists, _ := sess.Collection("Signals").Exists()
+		if !sigExists {
+			driver := sess.Driver().(*sql.DB)
+			sigSchema := sqlitecore.GetSigSchema()
+			_, err := driver.Exec(sigSchema)
+			if err != nil {
+				qq.Println("@migrate_signals_err", err)
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -149,6 +163,7 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 
 	packageInstallOps := ppackage.NewPackageInstallOperations(sess, packageFileOps)
 	eventOps := event.NewEventOperations(sess)
+	signalOps := signal.NewSignalOperations(sess)
 
 	if err := AutoMigrate(sess); err != nil {
 		return nil, err
@@ -176,6 +191,7 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
 		eventOps:             eventOps,
+		signalOps:            signalOps,
 		lazySyncer:           lazySyncer,
 	}, nil
 }

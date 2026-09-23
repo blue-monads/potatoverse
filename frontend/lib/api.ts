@@ -945,6 +945,81 @@ export const listQueues = async (installId: number, offset: number = 0, limit: n
     });
 }
 
+// Signals API
+export interface Signal {
+    id: number;
+    signal_key: string;
+    emitter_install_id: number;
+    emitter_space_id: number;
+    receiver_install_id: number;
+    receiver_space_id: number;
+    receiver_handler: string;
+    managed_by: 'emitter' | 'receiver' | 'both';
+    expires_on: number;
+    max_retries: number;
+    retry_delay: number;
+    created_by: number;
+    disabled: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface SignalEvent {
+    id: number;
+    signal_id: number;
+    payload: string;
+    metadata: string;
+    status: 'new' | 'scheduled' | 'processing' | 'processed' | 'failed' | 'delayed' | 'expired';
+    delayed_until: number;
+    retry_count: number;
+    last_retried_at: number;
+    error: string;
+    extrameta: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export const listSignals = async (installId: number, spaceId?: number, role?: string, signalKey?: string) => {
+    return iaxios.get<Signal[]>(`/core/space/${installId}/signals`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+            ...(role && { role }),
+            ...(signalKey && { signal_key: signalKey }),
+        },
+    });
+};
+
+export const getSignal = async (installId: number, signalId: number) => {
+    return iaxios.get<Signal>(`/core/space/${installId}/signals/${signalId}`);
+};
+
+export const createSignal = async (installId: number, data: Partial<Signal>) => {
+    return iaxios.post<Signal>(`/core/space/${installId}/signals`, data);
+};
+
+export const updateSignal = async (installId: number, signalId: number, data: Partial<Signal>) => {
+    return iaxios.put<Signal>(`/core/space/${installId}/signals/${signalId}`, data);
+};
+
+export const deleteSignal = async (installId: number, signalId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/signals/${signalId}`);
+};
+
+export const listSignalEvents = async (installId: number, signalId?: number, status?: string, offset: number = 0, limit: number = 100) => {
+    return iaxios.get<SignalEvent[]>(`/core/space/${installId}/signal_events`, {
+        params: {
+            ...(signalId !== undefined && { signal_id: signalId }),
+            ...(status && { status }),
+            offset,
+            limit,
+        },
+    });
+};
+
+export const emitSignal = async (installId: number, data: { signal_key: string; emitter_space_id?: number; payload?: any; metadata?: any }) => {
+    return iaxios.post<{ message: string }>(`/core/space/${installId}/signals/emit`, data);
+};
+
 // User Messages API
 export interface UserMessage {
     id: number;

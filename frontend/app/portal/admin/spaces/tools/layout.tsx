@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud, EllipsisVertical, Trash2 as Trash2Icon, Database } from 'lucide-react';
+import { Info, FileText, Key, Package, Layers, Users, Calendar, BookOpen, Clock, Activity, FileCode, History, ShieldCheck, CloudLightning, Zap, Folder, User, Settings, ChevronDown, Upload, UploadCloudIcon, DownloadCloud, EllipsisVertical, Trash2 as Trash2Icon, Database } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getInstalledPackageInfo, InstalledPackageInfo, exportSpaceState, importSpaceState } from '@/lib';
@@ -52,6 +52,12 @@ const navItems = [
         value: 'users',
         url: '/portal/admin/spaces/tools/users',
         icon: User,
+    },
+    {
+        label: 'Signals',
+        value: 'signals',
+        url: '/portal/admin/spaces/tools/signals',
+        icon: Zap,
     },
     {
         label: 'Events',

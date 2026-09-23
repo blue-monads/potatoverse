@@ -24,6 +24,7 @@ type Database interface {
 	GetFileOps() FileOps
 	GetPackageFileOps() FileOps
 	GetMQSynk() MQSynk
+	GetSignalOps() SignalOps
 
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
@@ -318,4 +319,27 @@ type MQSynk interface {
 	TransitionTargetDelay(targetId int64, eventId, delay, retryCount int64) error
 	TransitionTargetComplete(eventId, targetId int64) error
 	TransitionTargetFail(eventId, targetId int64, error string) error
+}
+
+type SignalOps interface {
+	AddSignal(data *dbmodels.Signal) (int64, error)
+	GetSignal(id int64) (*dbmodels.Signal, error)
+	UpdateSignal(id int64, data map[string]any) error
+	RemoveSignal(id int64) error
+	QuerySignals(installId int64, spaceId int64, cond map[any]any) ([]dbmodels.Signal, error)
+	QueryAllActiveSignals() ([]dbmodels.SignalLite, error)
+	GetSignalsForEmitter(emitterInstallId, emitterSpaceId int64, signalKey string) ([]dbmodels.SignalLite, error)
+
+	AddSignalEvent(signalId int64, payload []byte, metadata map[string]any) (int64, error)
+	GetSignalEvent(id int64) (*dbmodels.SignalEvent, error)
+	UpdateSignalEvent(id int64, data map[string]any) error
+	QuerySignalEvents(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalEvent, error)
+	QueryNewSignalEvents() ([]int64, error)
+	QueryDelayExpiredSignalEvents() ([]int64, error)
+
+	TransitionSignalEventStart(id int64) (*dbmodels.SignalEvent, error)
+	TransitionSignalEventComplete(id int64) error
+	TransitionSignalEventDelay(id int64, delayUntil int64, retryCount int64, errorMsg string) error
+	TransitionSignalEventFail(id int64, errorMsg string) error
+	TransitionSignalEventExpired(id int64) error
 }

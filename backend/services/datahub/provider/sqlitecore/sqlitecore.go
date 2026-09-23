@@ -50,3 +50,12 @@ func GetFileSchema() string {
 	return string(data)
 
 }
+
+func GetSigSchema() string {
+	data, err := MigrationBox.ReadFile("migrations/0002_sig.sql")
+	if err != nil {
+		panic(fmt.Errorf("read 0002_sig.sql: %w", err))
+	}
+
+	return string(data)
+}

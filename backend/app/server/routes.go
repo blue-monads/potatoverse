@@ -203,6 +203,15 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	coreApi.GET("/space/:install_id/queues", a.withAccessTokenFn(a.ListQueues))
 
+	// Signals API
+	coreApi.GET("/space/:install_id/signals", a.withAccessTokenFn(a.ListSignals))
+	coreApi.GET("/space/:install_id/signals/:signalId", a.withAccessTokenFn(a.GetSignal))
+	coreApi.POST("/space/:install_id/signals", a.withAccessTokenFn(a.CreateSignal))
+	coreApi.PUT("/space/:install_id/signals/:signalId", a.withAccessTokenFn(a.UpdateSignal))
+	coreApi.DELETE("/space/:install_id/signals/:signalId", a.withAccessTokenFn(a.DeleteSignal))
+	coreApi.GET("/space/:install_id/signal_events", a.withAccessTokenFn(a.ListSignalEvents))
+	coreApi.POST("/space/:install_id/signals/emit", a.withAccessTokenFn(a.EmitSignal))
+
 	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))
 	coreApi.POST("/space/:install_id/export", (a.ExportState))
 	coreApi.POST("/space/:install_id/import", (a.ImportState))

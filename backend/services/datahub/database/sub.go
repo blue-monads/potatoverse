@@ -50,3 +50,7 @@ func (db *DB) GetLowCapabilityDBOps(capabilityId int64) datahub.DBLowOps {
 func (db *DB) GetMQSynk() datahub.MQSynk {
 	return db.eventOps
 }
+
+func (db *DB) GetSignalOps() datahub.SignalOps {
+	return db.signalOps
+}

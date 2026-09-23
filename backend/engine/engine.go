@@ -11,6 +11,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/sighub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/registry"
@@ -40,6 +41,7 @@ type Engine struct {
 	repoHub *repohub.RepoHub
 
 	eventHub *eventhub.EventHub
+	sigHub   *sighub.SigHub
 
 	capHub *caphub.CapabilityHub
 
@@ -141,6 +143,12 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
+	e.sigHub = sighub.NewSigHub(app)
+	err = e.sigHub.Start()
+	if err != nil {
+		return err
+	}
+
 	err = e.repoHub.Run(app)
 	if err != nil {
 		return err
@@ -163,6 +171,9 @@ func (e *Engine) Close() {
 	})
 	if e.eventHub != nil {
 		e.eventHub.Stop()
+	}
+	if e.sigHub != nil {
+		e.sigHub.Stop()
 	}
 	if e.capHub != nil {
 		e.capHub.Close()
@@ -361,4 +372,17 @@ func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {
 
 func (e *Engine) RefreshEventIndex() {
 	e.eventHub.RefreshFullIndex()
+}
+
+func (e *Engine) PublishSignal(opts *xtypes.SignalOptions) error {
+	if e.sigHub == nil {
+		return nil
+	}
+	return e.sigHub.Publish(opts)
+}
+
+func (e *Engine) RefreshSignalIndex() {
+	if e.sigHub != nil {
+		e.sigHub.RefreshFullIndex()
+	}
 }
