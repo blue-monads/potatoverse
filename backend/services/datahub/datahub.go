@@ -23,7 +23,6 @@ type Database interface {
 	GetPackageInstallOps() PackageInstallOps
 	GetFileOps() FileOps
 	GetPackageFileOps() FileOps
-	GetMQSynk() MQSynk
 	GetSignalOps() SignalOps
 
 	// ownerType: P -> Package, C -> Capability
@@ -160,15 +159,6 @@ type SpaceOps interface {
 	GetSpaceUser(installId int64, id int64) (*dbmodels.SpaceUser, error)
 	UpdateSpaceUser(installId int64, id int64, data map[string]any) error
 	RemoveSpaceUser(installId int64, id int64) error
-
-	// Event Subscriptions
-
-	QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.MQSubscriptionLite, error)
-	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error)
-	AddEventSubscription(installId int64, data *dbmodels.MQSubscription) (int64, error)
-	GetEventSubscription(installId int64, id int64) (*dbmodels.MQSubscription, error)
-	UpdateEventSubscription(installId int64, id int64, data map[string]any) error
-	RemoveEventSubscription(installId int64, id int64) error
 }
 
 type SpaceKVOps interface {
@@ -297,28 +287,6 @@ type DBLowCoreOps interface {
 	FindByJoin(query *FindByJoin) ([]map[string]any, error)
 
 	FindTyped(query *FindTypedQuery) error
-}
-
-type MQSynk interface {
-	AddEvent(installId int64, name string, payload []byte) (int64, error)
-	GetEvent(id int64) (*dbmodels.MQEvent, error)
-	UpdateEvent(id int64, data map[string]any) error
-
-	QueryNewEvents() ([]int64, error)
-	CreateEventTargets(eventId int64) ([]int64, error)
-	QueryNewEventTargets() ([]int64, error)
-	QueryDelayExpiredTargets() ([]int64, error)
-	QueryEventTargetsByEventId(eventId int64) ([]int64, error)
-	UpdateEventTarget(id int64, data map[string]any) error
-
-	QueryAllEvents(installId int64, limit, offset int64) ([]dbmodels.MQEvent, error)
-	QueryAllEventTargets(installId int64, limit, offset int64) ([]dbmodels.MQEventTarget, error)
-
-	TransitionTargetStart(targetId int64) (*dbmodels.MQEventTarget, error)
-	TransitionTargetStartDelayed(targetId int64, eventId, delay int64) error
-	TransitionTargetDelay(targetId int64, eventId, delay, retryCount int64) error
-	TransitionTargetComplete(eventId, targetId int64) error
-	TransitionTargetFail(eventId, targetId int64, error string) error
 }
 
 type SignalOps interface {

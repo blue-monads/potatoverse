@@ -11,6 +11,4 @@ import (
 	// Repo Hub
 	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/devrepo"
 	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/repohub/providers/harvester"
-
-	_ "github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/targets"
 )

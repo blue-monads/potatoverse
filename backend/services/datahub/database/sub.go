@@ -47,10 +47,6 @@ func (db *DB) GetLowCapabilityDBOps(capabilityId int64) datahub.DBLowOps {
 	return low.NewLowDB(db.sess, "C", strconv.FormatInt(capabilityId, 10))
 }
 
-func (db *DB) GetMQSynk() datahub.MQSynk {
-	return db.eventOps
-}
-
 func (db *DB) GetSignalOps() datahub.SignalOps {
 	return db.signalOps
 }

@@ -10,10 +10,9 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub"
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub/sighub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/sighub"
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
@@ -40,8 +39,7 @@ type Engine struct {
 
 	repoHub *repohub.RepoHub
 
-	eventHub *eventhub.EventHub
-	sigHub   *sighub.SigHub
+	sigHub *sighub.SigHub
 
 	capHub *caphub.CapabilityHub
 
@@ -85,7 +83,6 @@ func NewEngine(opt EngineOption) *Engine {
 		fullReload:       make(chan struct{}, 1),
 		stopEloop:        make(chan struct{}),
 
-		eventHub: nil,
 		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
@@ -120,8 +117,6 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
 
-	e.eventHub = eventhub.NewEventHub(app)
-
 	bfactories := registry.GetExecutorBuilderFactories()
 
 	for name, factory := range bfactories {
@@ -134,11 +129,6 @@ func (e *Engine) Start(app xtypes.App) error {
 
 	// Initialize capabilities hub
 	err := e.capHub.Init(app)
-	if err != nil {
-		return err
-	}
-
-	err = e.eventHub.Start()
 	if err != nil {
 		return err
 	}
@@ -169,9 +159,6 @@ func (e *Engine) Close() {
 	e.stopOnce.Do(func() {
 		close(e.stopEloop)
 	})
-	if e.eventHub != nil {
-		e.eventHub.Stop()
-	}
 	if e.sigHub != nil {
 		e.sigHub.Stop()
 	}
@@ -364,14 +351,16 @@ func (e *Engine) GetRemoteHub() *remotehub.RemoteHub {
 }
 
 func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {
-
-	qq.Println("@PublishEvent/1", opts.Name, opts.ResourceId, opts.CollapseKey, opts.InstallId, opts.SpaceId)
-
-	return e.eventHub.Publish(opts)
+	return e.PublishSignal(&xtypes.SignalOptions{
+		SignalKey:        opts.Name,
+		EmitterInstallId: opts.InstallId,
+		EmitterSpaceId:   opts.SpaceId,
+		Payload:          opts.Payload,
+	})
 }
 
 func (e *Engine) RefreshEventIndex() {
-	e.eventHub.RefreshFullIndex()
+	e.RefreshSignalIndex()
 }
 
 func (e *Engine) PublishSignal(opts *xtypes.SignalOptions) error {

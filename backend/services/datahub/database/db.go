@@ -11,7 +11,6 @@ import (
 	"runtime"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
@@ -36,7 +35,6 @@ type DB struct {
 	fileOps           *fileops.FileOperations
 	packageFileOps    *fileops.FileOperations
 	packageInstallOps *ppackage.PackageInstallOperations
-	eventOps          *event.EventOperations
 	signalOps         *signal.SignalOperations
 
 	lazySyncer *lazysyncer.LazySyncer
@@ -162,7 +160,6 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 	})
 
 	packageInstallOps := ppackage.NewPackageInstallOperations(sess, packageFileOps)
-	eventOps := event.NewEventOperations(sess)
 	signalOps := signal.NewSignalOperations(sess)
 
 	if err := AutoMigrate(sess); err != nil {
@@ -190,7 +187,6 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 		fileOps:              fileOps,
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
-		eventOps:             eventOps,
 		signalOps:            signalOps,
 		lazySyncer:           lazySyncer,
 	}, nil
