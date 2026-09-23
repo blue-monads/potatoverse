@@ -519,7 +519,7 @@ const spaceFilePicker = (spaceToken) => {
 
             const response = await fetch(url.toString(), {
                 headers: {
-                    'Autorization': spaceToken
+                    'Authorization': spaceToken
                 }
             });
 
@@ -706,7 +706,7 @@ const spaceFilePicker = (spaceToken) => {
                 const response = await fetch(url.toString(), {
                     method: 'POST',
                     headers: {
-                        'Autorization': spaceToken
+                        'Authorization': spaceToken
                     },
                     body: formData
                 });

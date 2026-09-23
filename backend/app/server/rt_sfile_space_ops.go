@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Server) parseSpaceToken(ctx *gin.Context) (*signer.SpaceClaim, error) {
-	tok := ctx.GetHeader("Autorization")
+	tok := ctx.GetHeader("Authorization")
 
 	// fixme =>  check permission
 
