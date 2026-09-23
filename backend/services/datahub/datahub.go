@@ -298,16 +298,23 @@ type SignalOps interface {
 	QueryAllActiveSignals() ([]dbmodels.SignalLite, error)
 	GetSignalsForEmitter(emitterInstallId, emitterSpaceId int64, signalKey string) ([]dbmodels.SignalLite, error)
 
-	AddSignalEvent(signalId int64, payload []byte, metadata map[string]any) (int64, error)
+	AddSignalEvent(signalEventKey string, payload []byte, metadata map[string]any) (int64, error)
 	GetSignalEvent(id int64) (*dbmodels.SignalEvent, error)
-	UpdateSignalEvent(id int64, data map[string]any) error
-	QuerySignalEvents(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalEvent, error)
-	QueryNewSignalEvents() ([]int64, error)
-	QueryDelayExpiredSignalEvents() ([]int64, error)
+	DeleteSignalEvent(id int64) error
 
-	TransitionSignalEventStart(id int64) (*dbmodels.SignalEvent, error)
-	TransitionSignalEventComplete(id int64) error
-	TransitionSignalEventDelay(id int64, delayUntil int64, retryCount int64, errorMsg string) error
-	TransitionSignalEventFail(id int64, errorMsg string) error
-	TransitionSignalEventExpired(id int64) error
+	AddSignalTarget(signalEventId, signalId int64, metadata map[string]any) (int64, error)
+	GetSignalTarget(id int64) (*dbmodels.SignalTarget, error)
+	UpdateSignalTarget(id int64, data map[string]any) error
+	QuerySignalTargets(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalTargetWithDetails, error)
+	QueryNewSignalTargets() ([]int64, error)
+	QueryDelayExpiredSignalTargets() ([]int64, error)
+	CheckAndCleanupSignalEvent(signalEventId int64) (bool, error)
+
+	TransitionSignalTargetStart(id int64) (*dbmodels.SignalTarget, error)
+	TransitionSignalTargetComplete(id int64) error
+	TransitionSignalTargetDelay(id int64, delayUntil int64, retryCount int64, errorMsg string) error
+	TransitionSignalTargetBlocked(id int64, reason string) error
+	TransitionSignalTargetUnblock(id int64) error
+	TransitionSignalTargetFail(id int64, errorMsg string) error
+	TransitionSignalTargetExpired(id int64) error
 }

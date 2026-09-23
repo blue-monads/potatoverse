@@ -25,28 +25,19 @@ CREATE TABLE IF NOT EXISTS Signals (
 
 CREATE TABLE IF NOT EXISTS SignalEvents (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  signal_id INTEGER NOT NULL,
+  signal_event_key TEXT NOT NULL,
   payload BLOB NOT NULL,
   metadata JSON NOT NULL DEFAULT '{}',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  status TEXT NOT NULL DEFAULT 'new', -- new, scheduled, processed, failed, delayed, expired
-  delayed_until INTEGER NOT NULL DEFAULT 0,
-  retry_count INTEGER NOT NULL DEFAULT 0,
-  last_retried_at INTEGER NOT NULL DEFAULT 0,
-  error TEXT NOT NULL DEFAULT '',
-
   extrameta JSON NOT NULL DEFAULT '{}'
 );
 
-CREATE TABLE IF NOT EXISTS SigalEvents (
+CREATE TABLE IF NOT EXISTS SignalTargets (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  signal_event_id INTEGER NOT NULL,
   signal_id INTEGER NOT NULL,
-  payload BLOB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'new', -- INITIAL: (new, scheduled, delayed, blocked) | FINAL: (processed, failed, expired)
   metadata JSON NOT NULL DEFAULT '{}',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  status TEXT NOT NULL DEFAULT 'new', -- new, scheduled, processed, failed, delayed, expired
   delayed_until INTEGER NOT NULL DEFAULT 0,
   retry_count INTEGER NOT NULL DEFAULT 0,
   last_retried_at INTEGER NOT NULL DEFAULT 0,

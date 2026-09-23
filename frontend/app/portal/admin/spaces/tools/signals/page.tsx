@@ -10,7 +10,8 @@ import {
     Signal,
     deleteSignal,
     listSignalEvents,
-    SignalEvent,
+    SignalTarget,
+    updateSignalTargetStatus,
     emitSignal,
 } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
@@ -50,7 +51,7 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
         dependencies: [installId, spaceId, activeView, roleFilter],
     });
 
-    const queueLoader = useSimpleDataLoader<SignalEvent[]>({
+    const queueLoader = useSimpleDataLoader<SignalTarget[]>({
         loader: () => {
             const status = statusFilter === 'all' ? undefined : statusFilter;
             return listSignalEvents(installId, undefined, status);
@@ -76,10 +77,23 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
         return (
             evt.id.toString().includes(term) ||
             evt.signal_id.toString().includes(term) ||
+            evt.signal_event_id.toString().includes(term) ||
+            (evt.signal_key && evt.signal_key.toLowerCase().includes(term)) ||
+            (evt.receiver_handler && evt.receiver_handler.toLowerCase().includes(term)) ||
             evt.status.toLowerCase().includes(term) ||
             (evt.error && evt.error.toLowerCase().includes(term))
         );
     }) || [];
+
+    const handleUnblock = async (targetId: number) => {
+        try {
+            await updateSignalTargetStatus(installId, targetId, 'new');
+            queueLoader.reload();
+        } catch (error) {
+            console.error('Failed to unblock target:', error);
+            alert('Failed to unblock target: ' + ((error as any)?.response?.data?.error || (error as any)?.message));
+        }
+    };
 
     const handleDelete = async (id: number) => {
         try {
@@ -213,7 +227,7 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
                 ) : (
                     <div className="flex gap-2 items-center">
                         <span className="text-xs font-medium text-gray-500 mr-1">Status:</span>
-                        {['all', 'new', 'processing', 'processed', 'delayed', 'failed', 'expired'].map(st => (
+                        {['all', 'new', 'scheduled', 'delayed', 'blocked', 'processed', 'failed', 'expired'].map(st => (
                             <button
                                 key={st}
                                 onClick={() => setStatusFilter(st)}
@@ -383,10 +397,10 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
                                 <thead className="bg-gray-50">
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Event ID
+                                            Target / Event
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Signal ID
+                                            Signal / Destination
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Status
@@ -395,13 +409,13 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
                                             Retries
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Error Details
+                                            Error / Reason
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Created At
                                         </th>
                                         <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Payload
+                                            Actions
                                         </th>
                                     </tr>
                                 </thead>
@@ -409,13 +423,13 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
                                     {queueLoader.loading ? (
                                         <tr>
                                             <td colSpan={7} className="px-6 py-6 text-center text-gray-500">
-                                                Loading queue events...
+                                                Loading queue targets...
                                             </td>
                                         </tr>
                                     ) : filteredQueue.length === 0 ? (
                                         <tr>
                                             <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                                                No signal events found in queue history.
+                                                No signal targets found in queue history.
                                             </td>
                                         </tr>
                                     ) : (
@@ -423,20 +437,26 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
                                             const statusColors: Record<string, string> = {
                                                 new: 'bg-yellow-100 text-yellow-800',
                                                 scheduled: 'bg-blue-100 text-blue-800',
-                                                processing: 'bg-indigo-100 text-indigo-800',
-                                                processed: 'bg-green-100 text-green-800',
                                                 delayed: 'bg-orange-100 text-orange-800',
+                                                blocked: 'bg-purple-100 text-purple-800 border border-purple-200',
+                                                processed: 'bg-green-100 text-green-800',
                                                 failed: 'bg-red-100 text-red-800',
                                                 expired: 'bg-gray-100 text-gray-800',
                                             };
 
                                             return (
                                                 <tr key={evt.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500">
-                                                        #{evt.id}
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                        <span className="font-mono font-medium text-gray-900">#{evt.id}</span>
+                                                        <span className="block text-xs font-mono text-gray-400">Event #{evt.signal_event_id}</span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                        Signal #{evt.signal_id}
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                        <span className="font-medium text-gray-900">{evt.signal_key || `Signal #${evt.signal_id}`}</span>
+                                                        {evt.receiver_handler && (
+                                                            <span className="block text-xs text-gray-500">
+                                                                Space #{evt.receiver_space_id} &rarr; {evt.receiver_handler}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase ${
@@ -448,26 +468,50 @@ const SignalsListingPage = ({ installId, spaceId }: { installId: number; spaceId
                                                     <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                                                         {evt.retry_count} retries
                                                     </td>
-                                                    <td className="px-6 py-4 text-xs text-red-600 max-w-xs truncate" title={evt.error}>
+                                                    <td className="px-6 py-4 text-xs text-gray-600 max-w-xs truncate" title={evt.error}>
                                                         {evt.error || '-'}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
                                                         {evt.created_at ? new Date(evt.created_at).toLocaleString() : '-'}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                                        <button
-                                                            onClick={() => {
-                                                                try {
-                                                                    const decoded = atob(evt.payload);
-                                                                    setSelectedPayload(decoded);
-                                                                } catch (e) {
-                                                                    setSelectedPayload(evt.payload || '{}');
-                                                                }
-                                                            }}
-                                                            className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 text-xs font-medium"
-                                                        >
-                                                            <Eye className="w-3.5 h-3.5" /> Payload
-                                                        </button>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {evt.status === 'blocked' && (
+                                                                <button
+                                                                    onClick={() => handleUnblock(evt.id)}
+                                                                    className="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded text-xs font-medium border border-purple-200 transition-colors"
+                                                                    title="Unblock target to resume processing"
+                                                                >
+                                                                    Unblock
+                                                                </button>
+                                                            )}
+                                                            {evt.status === 'delayed' && (
+                                                                <button
+                                                                    onClick={() => handleUnblock(evt.id)}
+                                                                    className="px-2 py-1 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded text-xs font-medium border border-orange-200 transition-colors"
+                                                                    title="Retry target immediately"
+                                                                >
+                                                                    Retry Now
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (!evt.payload) {
+                                                                        setSelectedPayload("Payload was automatically purged after all targets finished processing.");
+                                                                        return;
+                                                                    }
+                                                                    try {
+                                                                        const decoded = atob(evt.payload);
+                                                                        setSelectedPayload(decoded);
+                                                                    } catch (e) {
+                                                                        setSelectedPayload(evt.payload || '{}');
+                                                                    }
+                                                                }}
+                                                                className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1 text-xs font-medium"
+                                                            >
+                                                                <Eye className="w-3.5 h-3.5" /> Payload
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );

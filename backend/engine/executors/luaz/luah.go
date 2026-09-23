@@ -241,6 +241,17 @@ func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 			return 2
 		},
 
+		"block": func(L *lua.LState) int {
+			reason := ""
+			if L.GetTop() >= 1 {
+				reason = L.OptString(1, "")
+			}
+			paramPayload := fmt.Sprintf(`{"reason": %q}`, reason)
+			paramLazyData := lazydata.LazyDataBytes(kosher.Byte(paramPayload))
+			_, _ = event.Request.ExecuteAction("block", paramLazyData)
+			return 0
+		},
+
 		"list_methods": func(L *lua.LState) int {
 			actions, err := event.Request.ListActions()
 			if err != nil {

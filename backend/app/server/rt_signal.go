@@ -129,7 +129,7 @@ func (a *Server) DeleteSignal(claim *signer.AccessClaim, ctx *gin.Context) (any,
 	return gin.H{"message": "Signal deleted successfully"}, nil
 }
 
-// ListSignalEvents lists signal event execution history
+// ListSignalEvents lists signal event execution history (targets)
 func (a *Server) ListSignalEvents(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
@@ -145,12 +145,42 @@ func (a *Server) ListSignalEvents(claim *signer.AccessClaim, ctx *gin.Context) (
 		limit = 100
 	}
 
-	events, err := a.ctrl.QuerySignalEvents(installId, signalId, status, limit, offset)
+	targets, err := a.ctrl.QuerySignalTargets(installId, signalId, status, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	return events, nil
+	return targets, nil
+}
+
+type UpdateTargetStatusRequest struct {
+	Status string `json:"status"` // blocked, new
+	Reason string `json:"reason"`
+}
+
+// UpdateSignalTargetStatus updates the status of a signal target (e.g. block/unblock)
+func (a *Server) UpdateSignalTargetStatus(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	targetId, err := strconv.ParseInt(ctx.Param("targetId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	var req UpdateTargetStatusRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		return nil, err
+	}
+
+	err = a.ctrl.UpdateSignalTargetStatus(installId, targetId, req.Status, req.Reason)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{"message": "Signal target status updated successfully"}, nil
 }
 
 type EmitSignalRequest struct {

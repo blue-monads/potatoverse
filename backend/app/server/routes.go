@@ -201,6 +201,8 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.PUT("/space/:install_id/signals/:signalId", a.withAccessTokenFn(a.UpdateSignal))
 	coreApi.DELETE("/space/:install_id/signals/:signalId", a.withAccessTokenFn(a.DeleteSignal))
 	coreApi.GET("/space/:install_id/signal_events", a.withAccessTokenFn(a.ListSignalEvents))
+	coreApi.GET("/space/:install_id/signals/targets", a.withAccessTokenFn(a.ListSignalEvents))
+	coreApi.POST("/space/:install_id/signals/targets/:targetId/status", a.withAccessTokenFn(a.UpdateSignalTargetStatus))
 	coreApi.POST("/space/:install_id/signals/emit", a.withAccessTokenFn(a.EmitSignal))
 
 	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))

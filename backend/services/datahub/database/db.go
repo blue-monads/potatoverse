@@ -104,10 +104,13 @@ func AutoMigrate(sess upperdb.Session) error {
 			return err
 		}
 	} else {
-		// Existing database: ensure Signals and SignalEvents tables exist
+		// Existing database: ensure Signals, SignalEvents, and SignalTargets tables exist
 		sigExists, _ := sess.Collection("Signals").Exists()
-		if !sigExists {
+		targetsExists, _ := sess.Collection("SignalTargets").Exists()
+		if !sigExists || !targetsExists {
 			driver := sess.Driver().(*sql.DB)
+			driver.Exec("DROP TABLE IF EXISTS SignalEvents")
+			driver.Exec("DROP TABLE IF EXISTS SigalEvents")
 			sigSchema := sqlitecore.GetSigSchema()
 			_, err := driver.Exec(sigSchema)
 			if err != nil {

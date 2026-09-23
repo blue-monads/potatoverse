@@ -35,16 +35,36 @@ type SignalLite struct {
 }
 
 type SignalEvent struct {
-	ID            int64      `json:"id" db:"id,omitempty"`
-	SignalID      int64      `json:"signal_id" db:"signal_id"`
-	Payload       []byte     `json:"payload" db:"payload"`
-	Metadata      string     `json:"metadata" db:"metadata"`
-	Status        string     `json:"status" db:"status"` // new, scheduled, processed, failed, delayed, expired
-	DelayedUntil  int64      `json:"delayed_until" db:"delayed_until"`
-	RetryCount    int64      `json:"retry_count" db:"retry_count"`
-	LastRetriedAt int64      `json:"last_retried_at" db:"last_retried_at"`
-	Error         string     `json:"error" db:"error"`
-	ExtraMeta     string     `json:"extrameta" db:"extrameta"`
-	CreatedAt     *time.Time `json:"created_at" db:"created_at,omitempty"`
-	UpdatedAt     *time.Time `json:"updated_at" db:"updated_at,omitempty"`
+	ID             int64      `json:"id" db:"id,omitempty"`
+	SignalEventKey string     `json:"signal_event_key" db:"signal_event_key"`
+	Payload        []byte     `json:"payload" db:"payload"`
+	Metadata       string     `json:"metadata" db:"metadata"`
+	ExtraMeta      string     `json:"extrameta" db:"extrameta"`
+	CreatedAt      *time.Time `json:"created_at" db:"created_at,omitempty"`
 }
+
+type SignalTarget struct {
+	ID            int64  `json:"id" db:"id,omitempty"`
+	SignalEventID int64  `json:"signal_event_id" db:"signal_event_id"`
+	SignalID      int64  `json:"signal_id" db:"signal_id"`
+	Status        string `json:"status" db:"status"` // INITIAL: (new, scheduled, delayed, blocked) | FINAL: (processed, failed, expired)
+	Metadata      string `json:"metadata" db:"metadata"`
+	DelayedUntil  int64  `json:"delayed_until" db:"delayed_until"`
+	RetryCount    int64  `json:"retry_count" db:"retry_count"`
+	LastRetriedAt int64  `json:"last_retried_at" db:"last_retried_at"`
+	Error         string `json:"error" db:"error"`
+	ExtraMeta     string `json:"extrameta" db:"extrameta"`
+}
+
+type SignalTargetWithDetails struct {
+	SignalTarget
+	SignalKey         string     `json:"signal_key"`
+	EmitterInstallID  int64      `json:"emitter_install_id"`
+	EmitterSpaceID    int64      `json:"emitter_space_id"`
+	ReceiverInstallID int64      `json:"receiver_install_id"`
+	ReceiverSpaceID   int64      `json:"receiver_space_id"`
+	ReceiverHandler   string     `json:"receiver_handler"`
+	Payload           []byte     `json:"payload,omitempty"`
+	CreatedAt         *time.Time `json:"created_at,omitempty"`
+}
+

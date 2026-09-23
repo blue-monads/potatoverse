@@ -21,7 +21,7 @@ type SigHub struct {
 	activeSignalsLock sync.RWMutex
 
 	refreshFullIndex  chan struct{}
-	signalProcessChan chan int64
+	targetProcessChan chan int64
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -40,7 +40,7 @@ func NewSigHub(app xtypes.App) *SigHub {
 		activeSignals:     make(map[string][]dbmodels.SignalLite),
 		activeSignalsLock: sync.RWMutex{},
 		refreshFullIndex:  make(chan struct{}, 1),
-		signalProcessChan: make(chan int64, 50),
+		targetProcessChan: make(chan int64, 50),
 		ctx:               ctx,
 		cancel:            cancel,
 		wg:                sync.WaitGroup{},
@@ -57,7 +57,7 @@ func (s *SigHub) Start() error {
 	go s.rootWatcher()
 	go s.watchReload()
 
-	// Start worker pool for signal events
+	// Start worker pool for signal targets
 	for range 5 {
 		go s.workerLoop()
 	}
@@ -93,22 +93,30 @@ func (s *SigHub) Publish(opts *xtypes.SignalOptions) error {
 		return nil
 	}
 
+	// Store payload once in SignalEvents
+	eventId, err := s.sigOps.AddSignalEvent(opts.SignalKey, opts.Payload, opts.Metadata)
+	if err != nil {
+		qq.Println("@SigHub/Publish/AddSignalEvent/error", err)
+		return err
+	}
+
+	// Create target entry for each matching signal
 	for _, sig := range matchingSignals {
-		eventId, err := s.sigOps.AddSignalEvent(sig.ID, opts.Payload, opts.Metadata)
+		targetId, err := s.sigOps.AddSignalTarget(eventId, sig.ID, opts.Metadata)
 		if err != nil {
-			qq.Println("@SigHub/Publish/AddSignalEvent/error", err)
+			qq.Println("@SigHub/Publish/AddSignalTarget/error", err)
 			continue
 		}
 
-		s.notifyNewEvent(eventId)
+		s.notifyNewTarget(targetId)
 	}
 
 	return nil
 }
 
-func (s *SigHub) notifyNewEvent(eventId int64) {
+func (s *SigHub) notifyNewTarget(targetId int64) {
 	select {
-	case s.signalProcessChan <- eventId:
+	case s.targetProcessChan <- targetId:
 	case <-s.ctx.Done():
 	}
 }
@@ -180,24 +188,24 @@ func (s *SigHub) rootWatcher() {
 	defer s.wg.Done()
 
 	checkForNew := func() {
-		eventIds, err := s.sigOps.QueryNewSignalEvents()
+		targetIds, err := s.sigOps.QueryNewSignalTargets()
 		if err != nil {
-			qq.Println("@SigHub/rootWatcher/QueryNewSignalEvents/error", err)
+			qq.Println("@SigHub/rootWatcher/QueryNewSignalTargets/error", err)
 			return
 		}
-		for _, id := range eventIds {
-			s.notifyNewEvent(id)
+		for _, id := range targetIds {
+			s.notifyNewTarget(id)
 		}
 	}
 
 	checkForDelayed := func() {
-		eventIds, err := s.sigOps.QueryDelayExpiredSignalEvents()
+		targetIds, err := s.sigOps.QueryDelayExpiredSignalTargets()
 		if err != nil {
-			qq.Println("@SigHub/rootWatcher/QueryDelayExpiredSignalEvents/error", err)
+			qq.Println("@SigHub/rootWatcher/QueryDelayExpiredSignalTargets/error", err)
 			return
 		}
-		for _, id := range eventIds {
-			s.notifyNewEvent(id)
+		for _, id := range targetIds {
+			s.notifyNewTarget(id)
 		}
 	}
 
@@ -223,53 +231,62 @@ func (s *SigHub) workerLoop() {
 		select {
 		case <-s.ctx.Done():
 			return
-		case eventId, ok := <-s.signalProcessChan:
+		case targetId, ok := <-s.targetProcessChan:
 			if !ok {
 				return
 			}
-			if eventId == 0 {
+			if targetId == 0 {
 				continue
 			}
-			s.processSignalEvent(eventId)
+			s.processSignalTarget(targetId)
 		}
 	}
 }
 
-func (s *SigHub) processSignalEvent(eventId int64) {
-	evt, err := s.sigOps.GetSignalEvent(eventId)
+func (s *SigHub) processSignalTarget(targetId int64) {
+	tgt, err := s.sigOps.GetSignalTarget(targetId)
 	if err != nil {
-		qq.Println("@SigHub/processSignalEvent/GetSignalEvent/error", err)
+		qq.Println("@SigHub/processSignalTarget/GetSignalTarget/error", err)
 		return
 	}
 
-	if evt.Status == "processed" || evt.Status == "expired" {
+	if tgt.Status == "processed" || tgt.Status == "expired" || tgt.Status == "blocked" {
 		return
 	}
 
-	sig, err := s.sigOps.GetSignal(evt.SignalID)
+	sig, err := s.sigOps.GetSignal(tgt.SignalID)
 	if err != nil {
-		qq.Println("@SigHub/processSignalEvent/GetSignal/error", err)
-		s.sigOps.TransitionSignalEventFail(eventId, fmt.Sprintf("signal not found: %v", err))
+		qq.Println("@SigHub/processSignalTarget/GetSignal/error", err)
+		_ = s.sigOps.TransitionSignalTargetFail(targetId, fmt.Sprintf("signal not found: %v", err))
+		_, _ = s.sigOps.CheckAndCleanupSignalEvent(tgt.SignalEventID)
 		return
 	}
 
 	if sig.Disabled {
-		qq.Println("@SigHub/processSignalEvent: signal disabled", sig.ID)
+		qq.Println("@SigHub/processSignalTarget: signal disabled", sig.ID)
 		return
 	}
 
 	// Check if signal has expired
 	now := time.Now().Unix()
 	if sig.ExpiresOn > 0 && sig.ExpiresOn < now {
-		qq.Println("@SigHub/processSignalEvent: signal expired", sig.ID)
-		s.sigOps.TransitionSignalEventExpired(eventId)
+		qq.Println("@SigHub/processSignalTarget: signal expired", sig.ID)
+		_ = s.sigOps.TransitionSignalTargetExpired(targetId)
+		_, _ = s.sigOps.CheckAndCleanupSignalEvent(tgt.SignalEventID)
 		return
 	}
 
-	// Transition to processing
-	_, err = s.sigOps.TransitionSignalEventStart(eventId)
+	evt, err := s.sigOps.GetSignalEvent(tgt.SignalEventID)
 	if err != nil {
-		qq.Println("@SigHub/processSignalEvent/TransitionSignalEventStart/error", err)
+		qq.Println("@SigHub/processSignalTarget/GetSignalEvent/error", err)
+		_ = s.sigOps.TransitionSignalTargetFail(targetId, fmt.Sprintf("event not found: %v", err))
+		return
+	}
+
+	// Transition to scheduled
+	_, err = s.sigOps.TransitionSignalTargetStart(targetId)
+	if err != nil {
+		qq.Println("@SigHub/processSignalTarget/TransitionSignalTargetStart/error", err)
 		return
 	}
 
@@ -277,8 +294,13 @@ func (s *SigHub) processSignalEvent(eventId int64) {
 	engine, ok := s.app.Engine().(xtypes.Engine)
 	if !ok {
 		err := fmt.Errorf("app engine does not implement xtypes.Engine")
-		s.sigOps.TransitionSignalEventFail(eventId, err.Error())
+		_ = s.sigOps.TransitionSignalTargetFail(targetId, err.Error())
+		_, _ = s.sigOps.CheckAndCleanupSignalEvent(tgt.SignalEventID)
 		return
+	}
+
+	actionCtx := &easyaction.Context{
+		Payload: evt.Payload,
 	}
 
 	actionErr := engine.EmitActionEvent(&xtypes.ActionEventOptions{
@@ -289,30 +311,42 @@ func (s *SigHub) processSignalEvent(eventId int64) {
 			"signal_key":          sig.SignalKey,
 			"signal_id":           fmt.Sprintf("%d", sig.ID),
 			"signal_event_id":     fmt.Sprintf("%d", evt.ID),
+			"signal_target_id":    fmt.Sprintf("%d", tgt.ID),
 			"emitter_install_id":  fmt.Sprintf("%d", sig.EmitterInstallID),
 			"emitter_space_id":    fmt.Sprintf("%d", sig.EmitterSpaceID),
 			"receiver_install_id": fmt.Sprintf("%d", sig.ReceiverInstallID),
 			"receiver_space_id":   fmt.Sprintf("%d", sig.ReceiverSpaceID),
 		},
-		Request: &easyaction.Context{
-			Payload: evt.Payload,
-		},
+		Request: actionCtx,
 	})
 
-	if actionErr != nil {
-		qq.Println("@SigHub/processSignalEvent/actionErr", actionErr)
-		// Check retry policy
-		if sig.MaxRetries > 0 && evt.RetryCount < sig.MaxRetries {
-			delayUntil := time.Now().Unix() + sig.RetryDelay
-			_ = s.sigOps.TransitionSignalEventDelay(eventId, delayUntil, evt.RetryCount+1, actionErr.Error())
-			qq.Println("@SigHub/processSignalEvent: scheduled retry", evt.RetryCount+1, "at", delayUntil)
-			return
+	// Check if action context explicitly called block
+	if actionCtx.IsBlocked() {
+		reason := actionCtx.BlockReason
+		if reason == "" && actionErr != nil {
+			reason = actionErr.Error()
 		}
-
-		_ = s.sigOps.TransitionSignalEventFail(eventId, actionErr.Error())
+		_ = s.sigOps.TransitionSignalTargetBlocked(targetId, reason)
+		qq.Println("@SigHub/processSignalTarget: target blocked explicitly by action ctx", targetId, reason)
 		return
 	}
 
-	_ = s.sigOps.TransitionSignalEventComplete(eventId)
-	qq.Println("@SigHub/processSignalEvent: completed", eventId)
+	if actionErr != nil {
+		qq.Println("@SigHub/processSignalTarget/actionErr", actionErr)
+		// Check retry policy
+		if sig.MaxRetries > 0 && tgt.RetryCount < sig.MaxRetries {
+			delayUntil := time.Now().Unix() + sig.RetryDelay
+			_ = s.sigOps.TransitionSignalTargetDelay(targetId, delayUntil, tgt.RetryCount+1, actionErr.Error())
+			qq.Println("@SigHub/processSignalTarget: scheduled retry", tgt.RetryCount+1, "at", delayUntil)
+			return
+		}
+
+		_ = s.sigOps.TransitionSignalTargetFail(targetId, actionErr.Error())
+		_, _ = s.sigOps.CheckAndCleanupSignalEvent(tgt.SignalEventID)
+		return
+	}
+
+	_ = s.sigOps.TransitionSignalTargetComplete(targetId)
+	_, _ = s.sigOps.CheckAndCleanupSignalEvent(tgt.SignalEventID)
+	qq.Println("@SigHub/processSignalTarget: completed", targetId)
 }

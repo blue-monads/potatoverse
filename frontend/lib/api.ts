@@ -849,17 +849,32 @@ export interface Signal {
 
 export interface SignalEvent {
     id: number;
-    signal_id: number;
+    signal_event_key: string;
     payload: string;
     metadata: string;
-    status: 'new' | 'scheduled' | 'processing' | 'processed' | 'failed' | 'delayed' | 'expired';
+    extrameta: string;
+    created_at?: string;
+}
+
+export interface SignalTarget {
+    id: number;
+    signal_event_id: number;
+    signal_id: number;
+    status: 'new' | 'scheduled' | 'delayed' | 'blocked' | 'processed' | 'failed' | 'expired';
+    metadata: string;
     delayed_until: number;
     retry_count: number;
     last_retried_at: number;
     error: string;
     extrameta: string;
+    signal_key?: string;
+    emitter_install_id?: number;
+    emitter_space_id?: number;
+    receiver_install_id?: number;
+    receiver_space_id?: number;
+    receiver_handler?: string;
+    payload?: string;
     created_at?: string;
-    updated_at?: string;
 }
 
 export const listSignals = async (installId: number, spaceId?: number, role?: string, signalKey?: string) => {
@@ -889,13 +904,22 @@ export const deleteSignal = async (installId: number, signalId: number) => {
 };
 
 export const listSignalEvents = async (installId: number, signalId?: number, status?: string, offset: number = 0, limit: number = 100) => {
-    return iaxios.get<SignalEvent[]>(`/core/space/${installId}/signal_events`, {
+    return iaxios.get<SignalTarget[]>(`/core/space/${installId}/signal_events`, {
         params: {
             ...(signalId !== undefined && { signal_id: signalId }),
             ...(status && { status }),
             offset,
             limit,
         },
+    });
+};
+
+export const listSignalTargets = listSignalEvents;
+
+export const updateSignalTargetStatus = async (installId: number, targetId: number, status: string, reason?: string) => {
+    return iaxios.post<{ message: string }>(`/core/space/${installId}/signals/targets/${targetId}/status`, {
+        status,
+        reason,
     });
 };
 

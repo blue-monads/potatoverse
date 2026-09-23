@@ -140,7 +140,7 @@ func (s *SignalOperations) GetSignalsForEmitter(emitterInstallId, emitterSpaceId
 
 // Signal Events operations
 
-func (s *SignalOperations) AddSignalEvent(signalId int64, payload []byte, metadata map[string]any) (int64, error) {
+func (s *SignalOperations) AddSignalEvent(signalEventKey string, payload []byte, metadata map[string]any) (int64, error) {
 	metaBytes, err := json.Marshal(metadata)
 	if err != nil {
 		metaBytes = []byte("{}")
@@ -148,15 +148,11 @@ func (s *SignalOperations) AddSignalEvent(signalId int64, payload []byte, metada
 
 	now := time.Now()
 	event := &dbmodels.SignalEvent{
-		SignalID:     signalId,
-		Payload:      payload,
-		Metadata:     string(metaBytes),
-		Status:       "new",
-		DelayedUntil: 0,
-		RetryCount:   0,
-		CreatedAt:    &now,
-		UpdatedAt:    &now,
-		ExtraMeta:    "{}",
+		SignalEventKey: signalEventKey,
+		Payload:        payload,
+		Metadata:       string(metaBytes),
+		CreatedAt:      &now,
+		ExtraMeta:      "{}",
 	}
 
 	r, err := s.eventTable().Insert(event)
@@ -175,17 +171,55 @@ func (s *SignalOperations) GetSignalEvent(id int64) (*dbmodels.SignalEvent, erro
 	return evt, nil
 }
 
-func (s *SignalOperations) UpdateSignalEvent(id int64, data map[string]any) error {
-	data["updated_at"] = time.Now()
-	return s.eventTable().Find(db.Cond{"id": id}).Update(data)
+func (s *SignalOperations) DeleteSignalEvent(id int64) error {
+	return s.eventTable().Find(db.Cond{"id": id}).Delete()
 }
 
-func (s *SignalOperations) QuerySignalEvents(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalEvent, error) {
+// Signal Targets operations
+
+func (s *SignalOperations) AddSignalTarget(signalEventId, signalId int64, metadata map[string]any) (int64, error) {
+	metaBytes, err := json.Marshal(metadata)
+	if err != nil {
+		metaBytes = []byte("{}")
+	}
+
+	target := &dbmodels.SignalTarget{
+		SignalEventID: signalEventId,
+		SignalID:      signalId,
+		Status:        "new",
+		Metadata:      string(metaBytes),
+		DelayedUntil:  0,
+		RetryCount:    0,
+		LastRetriedAt: 0,
+		Error:         "",
+		ExtraMeta:     "{}",
+	}
+
+	r, err := s.targetTable().Insert(target)
+	if err != nil {
+		return 0, err
+	}
+	return r.ID().(int64), nil
+}
+
+func (s *SignalOperations) GetSignalTarget(id int64) (*dbmodels.SignalTarget, error) {
+	tgt := &dbmodels.SignalTarget{}
+	err := s.targetTable().Find(db.Cond{"id": id}).One(tgt)
+	if err != nil {
+		return nil, err
+	}
+	return tgt, nil
+}
+
+func (s *SignalOperations) UpdateSignalTarget(id int64, data map[string]any) error {
+	return s.targetTable().Find(db.Cond{"id": id}).Update(data)
+}
+
+func (s *SignalOperations) QuerySignalTargets(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalTargetWithDetails, error) {
 	cond := db.Cond{}
 	if signalId > 0 {
 		cond["signal_id"] = signalId
 	} else if installId > 0 {
-		// Find signals related to this install
 		var signalIds []struct {
 			ID int64 `db:"id"`
 		}
@@ -197,7 +231,7 @@ func (s *SignalOperations) QuerySignalEvents(installId int64, signalId int64, st
 			return nil, err
 		}
 		if len(signalIds) == 0 {
-			return []dbmodels.SignalEvent{}, nil
+			return []dbmodels.SignalTargetWithDetails{}, nil
 		}
 		ids := make([]int64, len(signalIds))
 		for i, s := range signalIds {
@@ -214,72 +248,150 @@ func (s *SignalOperations) QuerySignalEvents(installId int64, signalId int64, st
 		limit = 100
 	}
 
-	var events []dbmodels.SignalEvent
-	err := s.eventTable().Find(cond).OrderBy("-id").Limit(int(limit)).Offset(int(offset)).All(&events)
+	var targets []dbmodels.SignalTarget
+	err := s.targetTable().Find(cond).OrderBy("-id").Limit(int(limit)).Offset(int(offset)).All(&targets)
 	if err != nil {
 		return nil, err
 	}
-	return events, nil
+
+	results := make([]dbmodels.SignalTargetWithDetails, 0, len(targets))
+	sigCache := make(map[int64]*dbmodels.Signal)
+	evtCache := make(map[int64]*dbmodels.SignalEvent)
+
+	for _, tgt := range targets {
+		item := dbmodels.SignalTargetWithDetails{
+			SignalTarget: tgt,
+		}
+
+		// Fetch Signal info
+		sig, ok := sigCache[tgt.SignalID]
+		if !ok {
+			sig, _ = s.GetSignal(tgt.SignalID)
+			sigCache[tgt.SignalID] = sig
+		}
+		if sig != nil {
+			item.SignalKey = sig.SignalKey
+			item.EmitterInstallID = sig.EmitterInstallID
+			item.EmitterSpaceID = sig.EmitterSpaceID
+			item.ReceiverInstallID = sig.ReceiverInstallID
+			item.ReceiverSpaceID = sig.ReceiverSpaceID
+			item.ReceiverHandler = sig.ReceiverHandler
+		}
+
+		// Fetch Event payload if still present
+		evt, ok := evtCache[tgt.SignalEventID]
+		if !ok {
+			evt, _ = s.GetSignalEvent(tgt.SignalEventID)
+			evtCache[tgt.SignalEventID] = evt
+		}
+		if evt != nil {
+			item.Payload = evt.Payload
+			item.CreatedAt = evt.CreatedAt
+		}
+
+		results = append(results, item)
+	}
+
+	return results, nil
 }
 
-func (s *SignalOperations) QueryNewSignalEvents() ([]int64, error) {
-	events := make([]struct {
+func (s *SignalOperations) QueryNewSignalTargets() ([]int64, error) {
+	targets := make([]struct {
 		ID int64 `db:"id"`
 	}, 0)
 
-	err := s.eventTable().Find(db.Cond{"status": "new"}).Select("id").All(&events)
+	err := s.targetTable().Find(db.Cond{"status": "new"}).Select("id").All(&targets)
 	if err != nil {
 		return nil, err
 	}
 
-	ids := make([]int64, len(events))
-	for i, e := range events {
-		ids[i] = e.ID
+	ids := make([]int64, len(targets))
+	for i, t := range targets {
+		ids[i] = t.ID
 	}
 	return ids, nil
 }
 
-func (s *SignalOperations) QueryDelayExpiredSignalEvents() ([]int64, error) {
+func (s *SignalOperations) QueryDelayExpiredSignalTargets() ([]int64, error) {
 	now := time.Now().Unix()
-	events := make([]struct {
+	targets := make([]struct {
 		ID int64 `db:"id"`
 	}, 0)
 
-	err := s.eventTable().Find(db.Cond{
+	err := s.targetTable().Find(db.Cond{
 		"status":           "delayed",
 		"delayed_until <=": now,
-	}).Select("id").All(&events)
+	}).Select("id").All(&targets)
 	if err != nil {
 		return nil, err
 	}
 
-	ids := make([]int64, len(events))
-	for i, e := range events {
-		ids[i] = e.ID
+	ids := make([]int64, len(targets))
+	for i, t := range targets {
+		ids[i] = t.ID
 	}
 	return ids, nil
+}
+
+// CheckAndCleanupSignalEvent checks if all targets for a signal_event_id have reached a final status.
+// Final statuses: "processed", "failed", "expired".
+// If all targets are in a final status, deletes the SignalEvents row (releasing payload).
+func (s *SignalOperations) CheckAndCleanupSignalEvent(signalEventId int64) (bool, error) {
+	if signalEventId <= 0 {
+		return false, nil
+	}
+
+	var targets []struct {
+		Status string `db:"status"`
+	}
+	err := s.targetTable().Find(db.Cond{"signal_event_id": signalEventId}).Select("status").All(&targets)
+	if err != nil {
+		return false, err
+	}
+
+	if len(targets) == 0 {
+		_ = s.DeleteSignalEvent(signalEventId)
+		return true, nil
+	}
+
+	for _, t := range targets {
+		switch t.Status {
+		case "processed", "failed", "expired":
+			// final status
+		default:
+			// still active: "new", "scheduled", "delayed", "blocked"
+			return false, nil
+		}
+	}
+
+	// All targets are in a final state, delete event to free payload
+	err = s.DeleteSignalEvent(signalEventId)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // State transitions
 
-func (s *SignalOperations) TransitionSignalEventStart(id int64) (*dbmodels.SignalEvent, error) {
-	err := s.UpdateSignalEvent(id, map[string]any{
-		"status": "processing",
+func (s *SignalOperations) TransitionSignalTargetStart(id int64) (*dbmodels.SignalTarget, error) {
+	err := s.UpdateSignalTarget(id, map[string]any{
+		"status": "scheduled",
 	})
 	if err != nil {
 		return nil, err
 	}
-	return s.GetSignalEvent(id)
+	return s.GetSignalTarget(id)
 }
 
-func (s *SignalOperations) TransitionSignalEventComplete(id int64) error {
-	return s.UpdateSignalEvent(id, map[string]any{
+func (s *SignalOperations) TransitionSignalTargetComplete(id int64) error {
+	return s.UpdateSignalTarget(id, map[string]any{
 		"status": "processed",
 	})
 }
 
-func (s *SignalOperations) TransitionSignalEventDelay(id int64, delayUntil int64, retryCount int64, errorMsg string) error {
-	return s.UpdateSignalEvent(id, map[string]any{
+func (s *SignalOperations) TransitionSignalTargetDelay(id int64, delayUntil int64, retryCount int64, errorMsg string) error {
+	return s.UpdateSignalTarget(id, map[string]any{
 		"status":          "delayed",
 		"delayed_until":   delayUntil,
 		"retry_count":     retryCount,
@@ -288,15 +400,29 @@ func (s *SignalOperations) TransitionSignalEventDelay(id int64, delayUntil int64
 	})
 }
 
-func (s *SignalOperations) TransitionSignalEventFail(id int64, errorMsg string) error {
-	return s.UpdateSignalEvent(id, map[string]any{
+func (s *SignalOperations) TransitionSignalTargetBlocked(id int64, reason string) error {
+	return s.UpdateSignalTarget(id, map[string]any{
+		"status": "blocked",
+		"error":  reason,
+	})
+}
+
+func (s *SignalOperations) TransitionSignalTargetUnblock(id int64) error {
+	return s.UpdateSignalTarget(id, map[string]any{
+		"status": "new",
+		"error":  "",
+	})
+}
+
+func (s *SignalOperations) TransitionSignalTargetFail(id int64, errorMsg string) error {
+	return s.UpdateSignalTarget(id, map[string]any{
 		"status": "failed",
 		"error":  errorMsg,
 	})
 }
 
-func (s *SignalOperations) TransitionSignalEventExpired(id int64) error {
-	return s.UpdateSignalEvent(id, map[string]any{
+func (s *SignalOperations) TransitionSignalTargetExpired(id int64) error {
+	return s.UpdateSignalTarget(id, map[string]any{
 		"status": "expired",
 	})
 }
@@ -309,4 +435,8 @@ func (s *SignalOperations) signalTable() db.Collection {
 
 func (s *SignalOperations) eventTable() db.Collection {
 	return s.db.Collection("SignalEvents")
+}
+
+func (s *SignalOperations) targetTable() db.Collection {
+	return s.db.Collection("SignalTargets")
 }

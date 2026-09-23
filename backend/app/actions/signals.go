@@ -55,8 +55,21 @@ func (c *Controller) GetSignalByID(installId int64, signalId int64) (*dbmodels.S
 	return c.database.GetSignalOps().GetSignal(signalId)
 }
 
-func (c *Controller) QuerySignalEvents(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalEvent, error) {
-	return c.database.GetSignalOps().QuerySignalEvents(installId, signalId, status, limit, offset)
+func (c *Controller) QuerySignalTargets(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalTargetWithDetails, error) {
+	return c.database.GetSignalOps().QuerySignalTargets(installId, signalId, status, limit, offset)
+}
+
+func (c *Controller) UpdateSignalTargetStatus(installId int64, targetId int64, status string, reason string) error {
+	switch status {
+	case "blocked":
+		return c.database.GetSignalOps().TransitionSignalTargetBlocked(targetId, reason)
+	case "new", "unblock", "unblocked":
+		return c.database.GetSignalOps().TransitionSignalTargetUnblock(targetId)
+	default:
+		return c.database.GetSignalOps().UpdateSignalTarget(targetId, map[string]any{
+			"status": status,
+		})
+	}
 }
 
 func (c *Controller) EmitSignal(installId int64, opts *xtypes.SignalOptions) error {
@@ -65,3 +78,4 @@ func (c *Controller) EmitSignal(installId int64, opts *xtypes.SignalOptions) err
 	}
 	return c.engine.PublishSignal(opts)
 }
+
