@@ -238,6 +238,7 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		OwnerID:         userId,
 		IsInitilized:    false,
 		IsPublic:        true,
+		ServerFile:      artifact.ServerFile,
 	})
 }
 
