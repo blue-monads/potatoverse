@@ -7,7 +7,9 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/engine"
@@ -53,8 +55,17 @@ func (b *workerdExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtype
 				s.ServerFile = "server.js"
 			}
 
+			serverDir, serverFile := path.Split(s.ServerFile)
+			serverDir = strings.Trim(serverDir, "/")
+
 			pfops := b.app.Database().GetPackageFileOps()
-			packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, "", s.ServerFile)
+			packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, serverDir, serverFile)
+			if err != nil && serverDir == "" && serverFile == "server.js" {
+				if f, err2 := pfops.GetFileContentByPath(opt.PackageVersionId, "server", "server.js"); err2 == nil {
+					packageFile = f
+					err = nil
+				}
+			}
 			if err == nil {
 				code = string(packageFile)
 			}

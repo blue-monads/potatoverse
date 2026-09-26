@@ -100,12 +100,17 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					"executor_sub_type": space.ExecutorSubType,
 					"space_type":        "App",
 					"route_options":     string(routeOptions),
+					"server_file":       space.ServerFile,
 				})
 
 			} else {
-				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
+				updateMap := map[string]any{
 					"install_id": installedId,
-				})
+				}
+				if space.ServerFile != "" {
+					updateMap["server_file"] = space.ServerFile
+				}
+				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, updateMap)
 				if err != nil {
 					return nil, err
 				}
