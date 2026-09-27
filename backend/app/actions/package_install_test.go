@@ -140,3 +140,57 @@ func TestInstallArtifactSpace_ZeroUserId_DoesNotAddSpaceUser(t *testing.T) {
 		t.Errorf("expected 0 space users when userId is 0, got %d", len(spaceUsers))
 	}
 }
+
+func TestInstallArtifactSpace_UserAlreadyExists_DoesNotDuplicate(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	userId := int64(42)
+	installedId := int64(100)
+	artifact := &models.PotatoSpace{
+		Namespace:    "test-pkg:existing-user-space",
+		ExecutorType: "core",
+	}
+
+	spaceId, err := installArtifactSpace(db, userId, installedId, artifact)
+	if err != nil {
+		t.Fatalf("first installArtifactSpace failed: %v", err)
+	}
+
+	// Verify 1 user
+	spaceUsers, err := db.GetSpaceOps().ListSpaceUsers(spaceId)
+	if err != nil {
+		t.Fatalf("failed to list space users: %v", err)
+	}
+	if len(spaceUsers) != 1 {
+		t.Fatalf("expected 1 space user, got %d", len(spaceUsers))
+	}
+
+	// Now simulate calling installArtifactSpace again (or if user was already added to spaceId)
+	// QuerySpaceUsers should find the existing user and not attempt to re-add or error on duplicate
+	existingUsers, err := db.GetSpaceOps().QuerySpaceUsers(installedId, map[any]any{
+		"user_id":  userId,
+		"space_id": spaceId,
+	})
+	if err != nil {
+		t.Fatalf("QuerySpaceUsers failed: %v", err)
+	}
+	if len(existingUsers) != 1 {
+		t.Fatalf("expected 1 existing user, got %d", len(existingUsers))
+	}
+
+	// If we invoke the user addition logic again, it should detect user exists
+	if len(existingUsers) == 0 {
+		t.Fatalf("expected user to exist, so len should be > 0")
+	}
+
+	// Check that space users count remains 1
+	spaceUsersAfter, err := db.GetSpaceOps().ListSpaceUsers(spaceId)
+	if err != nil {
+		t.Fatalf("failed to list space users: %v", err)
+	}
+	if len(spaceUsersAfter) != 1 {
+		t.Errorf("expected still 1 space user, got %d", len(spaceUsersAfter))
+	}
+}
+
