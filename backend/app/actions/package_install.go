@@ -227,7 +227,7 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		return 0, err
 	}
 
-	return database.GetSpaceOps().AddSpace(&dbmodels.Space{
+	spaceId, err := database.GetSpaceOps().AddSpace(&dbmodels.Space{
 		InstalledId:     installedId,
 		NamespaceKey:    artifact.Namespace,
 		ExecutorType:    artifact.ExecutorType,
@@ -240,6 +240,23 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		IsPublic:        true,
 		ServerFile:      artifact.ServerFile,
 	})
+	if err != nil {
+		return 0, err
+	}
+
+	if userId != 0 {
+		_, err = database.GetSpaceOps().AddSpaceUser(installedId, &dbmodels.SpaceUser{
+			UserID:    userId,
+			SpaceID:   spaceId,
+			InstallID: installedId,
+			ExtraMeta: "{}",
+		})
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return spaceId, nil
 }
 
 // private
