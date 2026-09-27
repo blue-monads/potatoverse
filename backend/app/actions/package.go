@@ -66,6 +66,7 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 
 	finalSpaces := make([]dbmodels.Space, 0, len(ownspaces)+len(tpSpaces))
 	hasPackageMap := make(map[int64]struct{})
+	hasSpaceMap := make(map[int64]struct{})
 
 	for _, pkg := range packages {
 		hasPackageMap[pkg.ID] = struct{}{}
@@ -73,13 +74,21 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 
 	for _, space := range ownspaces {
 		if _, ok := hasPackageMap[space.InstalledId]; ok {
-			finalSpaces = append(finalSpaces, space)
+
+			if _, ok := hasSpaceMap[space.ID]; !ok {
+				finalSpaces = append(finalSpaces, space)
+				hasSpaceMap[space.ID] = struct{}{}
+			}
+
 		}
 	}
 
 	for _, space := range tpSpaces {
 		if _, ok := hasPackageMap[space.InstalledId]; ok {
-			finalSpaces = append(finalSpaces, space)
+			if _, ok := hasSpaceMap[space.ID]; !ok {
+				finalSpaces = append(finalSpaces, space)
+				hasSpaceMap[space.ID] = struct{}{}
+			}
 		}
 	}
 
