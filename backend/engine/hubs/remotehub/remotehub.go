@@ -28,7 +28,8 @@ type RemoteHub struct {
 	db          datahub.Database
 }
 
-type HttpBindFn func(ctx *HttpBindContext) (any, error)
+type RBindFn func(ctx RContext) (any, error)
+type HttpBindFn = RBindFn
 
 func NewRemoteHub() *RemoteHub {
 
@@ -45,7 +46,8 @@ func NewRemoteHub() *RemoteHub {
 }
 
 const (
-	XExecHeader = "X-Exec-Header"
+	XExecHeader           = "X-Exec-Header"
+	XRemoteCtxTokenHeader = "X-Remote-Ctx-Token"
 )
 
 type XExecClaim struct {
@@ -53,6 +55,15 @@ type XExecClaim struct {
 	PackageVersionId int64  `json:"v"`
 	SpaceId          int64  `json:"s"`
 	RequestID        string `json:"r"`
+}
+
+type RemoteCtxClaim struct {
+	TargetSpaceId          int64  `json:"ts"`
+	TargetPackageId        int64  `json:"tp"`
+	TargetPackageVersionId int64  `json:"tv"`
+	PluginSpaceId          int64  `json:"ps,omitempty"`
+	PluginId               int64  `json:"pi,omitempty"`
+	RequestID              string `json:"r,omitempty"`
 }
 
 func (b *RemoteHub) Init(app xtypes.App) {
@@ -93,7 +104,27 @@ func (b *RemoteHub) GetExecToken(pkgId, pkgverId, spaceId int64, reqId string) (
 
 }
 
-func (b *RemoteHub) Authed(h HttpBindFn) gin.HandlerFunc {
+func (b *RemoteHub) SignRemoteCtxToken(claim *RemoteCtxClaim) (string, error) {
+	data, err := json.Marshal(claim)
+	if err != nil {
+		return "", err
+	}
+	return b.tokenSigner.EncodeToString(string(data))
+}
+
+func (b *RemoteHub) ParseRemoteCtxToken(token string) (*RemoteCtxClaim, error) {
+	data, err := b.tokenSigner.DecodeToString(token)
+	if err != nil {
+		return nil, err
+	}
+	claim := &RemoteCtxClaim{}
+	if err := json.Unmarshal([]byte(data), claim); err != nil {
+		return nil, err
+	}
+	return claim, nil
+}
+
+func (b *RemoteHub) Authed(h RBindFn) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		token := ctx.GetHeader(XExecHeader)

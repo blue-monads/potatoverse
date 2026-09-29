@@ -12,6 +12,9 @@ import (
 	// xsuper
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSuper"
 
+	// xremote
+	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xRemote"
+
 	// xsystem
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSystem/xCorn"
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xSystem/xEngine/xLua"

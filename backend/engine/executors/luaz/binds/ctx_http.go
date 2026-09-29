@@ -2,7 +2,9 @@ package binds
 
 import (
 	"errors"
+	"strings"
 
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
@@ -288,7 +290,11 @@ func reqFinishFileUpload(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 }
 
 func GetUserClaim(ctx *gin.Context, signer *signer.Signer) (*signer.SpaceClaim, error) {
-	claim, err := signer.ParseSpace(ctx.GetHeader("Authorization"))
+	authHeader := ctx.GetHeader("Authorization")
+	if after, ok := strings.CutPrefix(authHeader, "Bearer "); ok {
+		authHeader = after
+	}
+	claim, err := signer.ParseSpace(authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -296,8 +302,46 @@ func GetUserClaim(ctx *gin.Context, signer *signer.Signer) (*signer.SpaceClaim, 
 	return claim, nil
 }
 
-func getSpaceClaim(reqCtx *luaHttpRequestContext) (*signer.SpaceClaim, error) {
-	if reqCtx.spaceClaim != nil {
+func (reqCtx *luaHttpRequestContext) getRemoteHub() *remotehub.RemoteHub {
+	if reqCtx.app == nil {
+		return nil
+	}
+	if engine, ok := reqCtx.app.Engine().(interface{ GetRemoteHub() *remotehub.RemoteHub }); ok {
+		return engine.GetRemoteHub()
+	}
+	return nil
+}
+
+func (reqCtx *luaHttpRequestContext) resolveExpectedSpaceId(L *lua.LState) (int64, error) {
+	argIdx := 1
+	if L.GetTop() >= 1 {
+		if _, ok := L.Get(1).(*lua.LUserData); ok {
+			argIdx = 2
+		}
+	}
+	token := L.OptString(argIdx, "")
+
+	if token == "" {
+		return reqCtx.spaceId, nil
+	}
+
+	rhub := reqCtx.getRemoteHub()
+	if rhub == nil {
+		return 0, errors.New("remote hub not available to parse remote_ctx_token")
+	}
+	rClaim, err := rhub.ParseRemoteCtxToken(token)
+	if err != nil {
+		return 0, errors.New("invalid remote_ctx_token")
+	}
+	if reqCtx.spaceId != 0 && rClaim.PluginSpaceId != 0 && rClaim.PluginSpaceId != reqCtx.spaceId {
+		return 0, errors.New("remote_ctx_token was not issued for this plugin space")
+	}
+
+	return rClaim.TargetSpaceId, nil
+}
+
+func getSpaceClaim(reqCtx *luaHttpRequestContext, expectedSpaceId int64) (*signer.SpaceClaim, error) {
+	if reqCtx.spaceClaim != nil && reqCtx.spaceClaim.SpaceId == expectedSpaceId {
 		return reqCtx.spaceClaim, nil
 	}
 
@@ -305,9 +349,11 @@ func getSpaceClaim(reqCtx *luaHttpRequestContext) (*signer.SpaceClaim, error) {
 	if err != nil {
 		return nil, err
 	}
-	if claim.SpaceId != reqCtx.spaceId {
+
+	if claim.SpaceId != expectedSpaceId {
 		return nil, errors.New("invalid space id")
 	}
+
 	reqCtx.spaceClaim = claim
 	return claim, nil
 }
@@ -354,7 +400,14 @@ func reqCookie(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 }
 
 func reqGetClaim(reqCtx *luaHttpRequestContext, L *lua.LState) int {
-	claim, err := getSpaceClaim(reqCtx)
+	expectedSpaceId, err := reqCtx.resolveExpectedSpaceId(L)
+	if err != nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(err.Error()))
+		return 2
+	}
+
+	claim, err := getSpaceClaim(reqCtx, expectedSpaceId)
 	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(err.Error()))
@@ -371,7 +424,14 @@ func reqGetClaim(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 }
 
 func reqGetUserId(reqCtx *luaHttpRequestContext, L *lua.LState) int {
-	claim, err := getSpaceClaim(reqCtx)
+	expectedSpaceId, err := reqCtx.resolveExpectedSpaceId(L)
+	if err != nil {
+		L.Push(lua.LNil)
+		L.Push(lua.LString(err.Error()))
+		return 2
+	}
+
+	claim, err := getSpaceClaim(reqCtx, expectedSpaceId)
 	if err != nil {
 		L.Push(lua.LNil)
 		L.Push(lua.LString(err.Error()))

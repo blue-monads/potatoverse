@@ -60,7 +60,7 @@ Core system operations.
 - `publish_event(opts)` - Publish event. `opts`: `{name, payload, resource_id}`
 - `file_token(opts)` - Generate file presigned token. `opts`: `{path, file_name, user_id}`
 - `sign_advisery_token(opts)` - Generate advisery token. `opts`: `{token_sub_type, user_id, data}`
-- `parse_advisery_token(toekn)` - Parse advisery token
+- `parse_advisery_token(token)` - Parse advisery token
 - `read_package_file(fpath)` - read package file contents
 - `get_env` - read env variable, which is set at package level (this is not os env)
 
@@ -113,8 +113,8 @@ HTTP request context object.
 
 ### Auth methods
 
-- `get_claim()` - Get space claim, returns `(claim, error)`
-- `get_user_id()` - Get user ID, returns `(user_id, error)`
+- `get_claim(remote_ctx_token?)` - Get space claim, optionally verifying against `remote_ctx_token` when running as a plugin. Returns `(claim, error)`
+- `get_user_id(remote_ctx_token?)` - Get user ID, optionally verifying against `remote_ctx_token` when running as a plugin. Returns `(user_id, error)`
 
 ### State methods
 

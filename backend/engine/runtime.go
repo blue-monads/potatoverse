@@ -139,6 +139,18 @@ func (r *Runtime) ExecHttpQ(installedId, packageVersionId, spaceId int64, ctx *g
 	})
 }
 
+func (r *Runtime) ExecHttpWithParams(installedId, packageVersionId, spaceId int64, params map[string]string, ctx *gin.Context) error {
+	if params == nil {
+		params = make(map[string]string)
+	}
+	return r.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     spaceId,
+		Request:     ctx,
+		HandlerName: "",
+		Params:      params,
+	})
+}
+
 func (r *Runtime) ExecHttp(opts *xtypes.HttpEventOptions) error {
 
 	e, err := r.GetExec(opts.SpaceId)

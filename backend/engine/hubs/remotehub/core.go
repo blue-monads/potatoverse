@@ -11,9 +11,9 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
 
-func (b *RemoteHub) CorePublishEvent(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CorePublishEvent(ctx RContext) (any, error) {
 	opts := &core.PublishEventOptions{}
-	err := ctx.Http.BindJSON(opts)
+	err := bindJSON(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -37,50 +37,60 @@ func (b *RemoteHub) CorePublishEvent(ctx *HttpBindContext) (any, error) {
 	}
 
 	err = b.engine.PublishEvent(&xtypes.EventOptions{
-		InstallId:   ctx.PackageId,
+		InstallId:   ctx.GetPackageId(),
 		Name:        opts.Name,
 		Payload:     payloadBytes,
 		ResourceId:  opts.ResourceId,
 		CollapseKey: opts.CollapseKey,
-		SpaceId:     ctx.SpaceId,
+		SpaceId:     ctx.GetSpaceId(),
 	})
 	return nil, err
 }
 
-func (b *RemoteHub) CoreFileToken(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreFileToken(ctx RContext) (any, error) {
 	opts := &core.SignFsPresignedTokenOptions{}
-	err := ctx.Http.BindJSON(opts)
+	err := bindJSON(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return b.signer.SignSpaceFilePresigned(&signer.SpaceFilePresignedClaim{
-		InstallId: ctx.PackageId,
+	res, err := b.signer.SignSpaceFilePresigned(&signer.SpaceFilePresignedClaim{
+		InstallId: ctx.GetPackageId(),
 		UserId:    opts.UserId,
 		PathName:  opts.Path,
 		FileName:  opts.FileName,
 	})
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) CoreSignAdviseryToken(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreSignAdviseryToken(ctx RContext) (any, error) {
 	opts := &core.SignAdviseryTokenOptions{}
-	err := ctx.Http.BindJSON(opts)
+	err := bindJSON(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	return b.signer.SignSpaceAdvisiery(&signer.SpaceAdvisieryClaim{
-		InstallId:    ctx.PackageId,
+	res, err := b.signer.SignSpaceAdvisiery(&signer.SpaceAdvisieryClaim{
+		InstallId:    ctx.GetPackageId(),
 		UserId:       opts.UserId,
 		TokenSubType: opts.SubType,
 		Data:         opts.Data,
-		SpaceId:      ctx.SpaceId,
+		SpaceId:      ctx.GetSpaceId(),
 	})
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) CoreParseAdviseryToken(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) CoreParseAdviseryToken(ctx RContext) (any, error) {
 	var req core.ParseTokenReq
-	err := ctx.Http.BindJSON(&req)
+	err := bindJSON(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -90,19 +100,23 @@ func (b *RemoteHub) CoreParseAdviseryToken(ctx *HttpBindContext) (any, error) {
 		return nil, err
 	}
 
-	if claim.InstallId != ctx.PackageId {
+	if claim.InstallId != ctx.GetPackageId() {
 		return nil, errors.New("wrong install id")
 	}
 
-	if claim.SpaceId != ctx.SpaceId {
+	if claim.SpaceId != ctx.GetSpaceId() {
 		return nil, errors.New("wrong space id")
 	}
 
+	setDataJSON(ctx, claim)
 	return claim, nil
 }
 
-func (b *RemoteHub) CoreReadPackageFile(ctx *HttpBindContext) (any, error) {
-	fpath := ctx.Http.Param("path")
+func (b *RemoteHub) CoreReadPackageFile(ctx RContext) (any, error) {
+	fpath, err := ctx.GetMeta("path")
+	if err != nil {
+		return nil, err
+	}
 	if len(fpath) > 0 && fpath[0] == '/' {
 		fpath = fpath[1:]
 	}
@@ -116,39 +130,64 @@ func (b *RemoteHub) CoreReadPackageFile(ctx *HttpBindContext) (any, error) {
 	}
 
 	pops := b.db.GetPackageFileOps()
-	data, err := pops.GetFileContentByPath(ctx.PackageVersion, dirPath, fileName)
+	data, err := pops.GetFileContentByPath(ctx.GetPackageVersion(), dirPath, fileName)
 	if err != nil {
 		return nil, err
 	}
+	_ = ctx.SetData(data)
 	return string(data), nil
 }
 
-func (b *RemoteHub) CoreListFiles(ctx *HttpBindContext) (any, error) {
-	path := ctx.Http.Param("path")
+func (b *RemoteHub) CoreListFiles(ctx RContext) (any, error) {
+	path, _ := ctx.GetMeta("path")
 	if len(path) > 0 && path[0] == '/' {
 		path = path[1:]
 	}
-	return b.corehub.ListSpaceFilesSigned(ctx.PackageId, path)
+	res, err := b.corehub.ListSpaceFilesSigned(ctx.GetPackageId(), path)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) CoreDecodeFileId(ctx *HttpBindContext) (any, error) {
-	id := ctx.Http.Param("id")
-	return b.corehub.DecodeSpaceFileId(id)
+func (b *RemoteHub) CoreDecodeFileId(ctx RContext) (any, error) {
+	id, err := ctx.GetMeta("id")
+	if err != nil {
+		return nil, err
+	}
+	res, err := b.corehub.DecodeSpaceFileId(id)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) CoreEncodeFileId(ctx *HttpBindContext) (any, error) {
-	idStr := ctx.Http.Param("id")
+func (b *RemoteHub) CoreEncodeFileId(ctx RContext) (any, error) {
+	idStr, err := ctx.GetMeta("id")
+	if err != nil {
+		return nil, err
+	}
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	return b.corehub.EncodeSpaceFileId(id)
+	res, err := b.corehub.EncodeSpaceFileId(id)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) CoreGetEnv(ctx *HttpBindContext) (any, error) {
-	key := ctx.Http.Param("key")
+func (b *RemoteHub) CoreGetEnv(ctx RContext) (any, error) {
+	key, err := ctx.GetMeta("key")
+	if err != nil {
+		return nil, err
+	}
 	pkgOps := b.db.GetPackageInstallOps()
-	pkg, err := pkgOps.GetPackage(ctx.PackageId)
+	pkg, err := pkgOps.GetPackage(ctx.GetPackageId())
 	if err != nil {
 		return nil, err
 	}
@@ -158,5 +197,7 @@ func (b *RemoteHub) CoreGetEnv(ctx *HttpBindContext) (any, error) {
 			return nil, err
 		}
 	}
-	return envs[key], nil
+	res := envs[key]
+	_ = ctx.SetData([]byte(res))
+	return res, nil
 }

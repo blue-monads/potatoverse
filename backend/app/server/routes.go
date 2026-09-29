@@ -237,8 +237,8 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 
 	zg.Any("/api/space/:space_key", a.handleSpaceApi)
 	zg.Any("/api/space/:space_key/*subpath", a.handleSpaceApi)
-	zg.Any("/api/plugin/:space_key/:plugin_id", a.handlePluginApi)
-	zg.Any("/api/plugin/:space_key/:plugin_id/*subpath", a.handlePluginApi)
+	zg.Any("/api/plugin/:space_key/:plugin_key", a.handlePluginApi)
+	zg.Any("/api/plugin/:space_key/:plugin_key/*subpath", a.handlePluginApi)
 
 	zg.Any("/api/capabilities/:space_key/:capability_name", a.handleCapabilities)
 	zg.Any("/api/capabilities/:space_key/:capability_name/*subpath", a.handleCapabilities)

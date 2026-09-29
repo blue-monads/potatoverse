@@ -16,186 +16,264 @@ func toMapAnyAny(m map[string]any) map[any]any {
 
 // DB Operations
 
-func (b *RemoteHub) DBRunQuery(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBRunQuery(ctx RContext) (any, error) {
 	var req core.DBQueryReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.RunQuery(req.Query, req.Args...)
-}
-
-func (b *RemoteHub) DBRunQueryOne(ctx *HttpBindContext) (any, error) {
-	var req core.DBQueryReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.RunQuery(req.Query, req.Args...)
+	if err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.RunQueryOne(req.Query, req.Args...)
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBInsert(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBRunQueryOne(ctx RContext) (any, error) {
+	var req core.DBQueryReq
+	if err := bindJSON(ctx, &req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.RunQueryOne(req.Query, req.Args...)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
+}
+
+func (b *RemoteHub) DBInsert(ctx RContext) (any, error) {
 	var req core.DBInsertReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.Insert(req.Table, req.Data)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.Insert(req.Table, req.Data)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBUpdateById(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBUpdateById(ctx RContext) (any, error) {
 	var req core.DBUpdateByIdReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
 	err := dbOps.UpdateById(req.Table, req.ID, req.Data)
 	return nil, err
 }
 
-func (b *RemoteHub) DBDeleteById(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBDeleteById(ctx RContext) (any, error) {
 	var req core.DBIdReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
 	err := dbOps.DeleteById(req.Table, req.ID)
 	return nil, err
 }
 
-func (b *RemoteHub) DBFindById(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindById(ctx RContext) (any, error) {
 	var req core.DBIdReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.FindById(req.Table, req.ID)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.FindById(req.Table, req.ID)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBUpdateByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBUpdateByCond(ctx RContext) (any, error) {
 	var req core.DBUpdateByCondReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
 	err := dbOps.UpdateByCond(req.Table, toMapAnyAny(req.Cond), req.Data)
 	return nil, err
 }
 
-func (b *RemoteHub) DBDeleteByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBDeleteByCond(ctx RContext) (any, error) {
 	var req core.DBCondReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
 	err := dbOps.DeleteByCond(req.Table, toMapAnyAny(req.Cond))
 	return nil, err
 }
 
-func (b *RemoteHub) DBFindAllByCond(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindAllByCond(ctx RContext) (any, error) {
 	var req core.DBCondReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.FindAllByCond(req.Table, toMapAnyAny(req.Cond))
-}
-
-func (b *RemoteHub) DBFindOneByCond(ctx *HttpBindContext) (any, error) {
-	var req core.DBCondReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.FindAllByCond(req.Table, toMapAnyAny(req.Cond))
+	if err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.FindOneByCond(req.Table, toMapAnyAny(req.Cond))
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBFindAllByQuery(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindOneByCond(ctx RContext) (any, error) {
+	var req core.DBCondReq
+	if err := bindJSON(ctx, &req); err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.FindOneByCond(req.Table, toMapAnyAny(req.Cond))
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
+}
+
+func (b *RemoteHub) DBFindAllByQuery(ctx RContext) (any, error) {
 	req := &datahub.FindQuery{}
-	if err := ctx.Http.BindJSON(req); err != nil {
+	if err := bindJSON(ctx, req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.FindAllByQuery(req)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.FindAllByQuery(req)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBFindByJoin(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) DBFindByJoin(ctx RContext) (any, error) {
 	req := &datahub.FindByJoin{}
-	if err := ctx.Http.BindJSON(req); err != nil {
+	if err := bindJSON(ctx, req); err != nil {
 		return nil, err
 	}
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.FindByJoin(req)
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.FindByJoin(req)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBListTables(ctx *HttpBindContext) (any, error) {
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.ListTables()
+func (b *RemoteHub) DBListTables(ctx RContext) (any, error) {
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.ListTables()
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) DBListColumns(ctx *HttpBindContext) (any, error) {
-	tableName := ctx.Http.Param("table")
-	dbOps := b.db.GetLowPackageDBOps(ctx.PackageId)
-	return dbOps.ListTableColumns(tableName)
+func (b *RemoteHub) DBListColumns(ctx RContext) (any, error) {
+	tableName, err := ctx.GetMeta("table")
+	if err != nil {
+		return nil, err
+	}
+	dbOps := b.db.GetLowPackageDBOps(ctx.GetPackageId())
+	res, err := dbOps.ListTableColumns(tableName)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
 // KV Operations
 
-func (b *RemoteHub) KVAdd(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVAdd(ctx RContext) (any, error) {
 	req := &dbmodels.SpaceKV{}
-	if err := ctx.Http.BindJSON(req); err != nil {
+	if err := bindJSON(ctx, req); err != nil {
 		return nil, err
 	}
 	kvOps := b.db.GetSpaceKVOps()
-	err := kvOps.AddSpaceKV(ctx.PackageId, req)
-	return req, err
+	err := kvOps.AddSpaceKV(ctx.GetPackageId(), req)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, req)
+	return req, nil
 }
 
-func (b *RemoteHub) KVGet(ctx *HttpBindContext) (any, error) {
-	group := ctx.Http.Param("group")
-	key := ctx.Http.Param("key")
+func (b *RemoteHub) KVGet(ctx RContext) (any, error) {
+	group, err := ctx.GetMeta("group")
+	if err != nil {
+		return nil, err
+	}
+	key, err := ctx.GetMeta("key")
+	if err != nil {
+		return nil, err
+	}
 	kvOps := b.db.GetSpaceKVOps()
-	return kvOps.GetSpaceKV(ctx.PackageId, group, key)
+	res, err := kvOps.GetSpaceKV(ctx.GetPackageId(), group, key)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) KVQuery(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVQuery(ctx RContext) (any, error) {
 	var req core.KVQueryReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
 	kvOps := b.db.GetSpaceKVOps()
 	if req.IncludeValue {
-		return kvOps.QueryWithValueSpaceKV(ctx.PackageId, toMapAnyAny(req.Cond), req.Offset, req.Limit)
+		res, err := kvOps.QueryWithValueSpaceKV(ctx.GetPackageId(), toMapAnyAny(req.Cond), req.Offset, req.Limit)
+		if err != nil {
+			return nil, err
+		}
+		setDataJSON(ctx, res)
+		return res, nil
 	}
-	return kvOps.QuerySpaceKV(ctx.PackageId, toMapAnyAny(req.Cond), req.Offset, req.Limit)
+	res, err := kvOps.QuerySpaceKV(ctx.GetPackageId(), toMapAnyAny(req.Cond), req.Offset, req.Limit)
+	if err != nil {
+		return nil, err
+	}
+	setDataJSON(ctx, res)
+	return res, nil
 }
 
-func (b *RemoteHub) KVRemove(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVRemove(ctx RContext) (any, error) {
 	var req core.KVKeyReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
 	kvOps := b.db.GetSpaceKVOps()
-	err := kvOps.RemoveSpaceKV(ctx.PackageId, req.Group, req.Key)
+	err := kvOps.RemoveSpaceKV(ctx.GetPackageId(), req.Group, req.Key)
 	return nil, err
 }
 
-func (b *RemoteHub) KVUpdate(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVUpdate(ctx RContext) (any, error) {
 	var req core.KVDataReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
 	kvOps := b.db.GetSpaceKVOps()
-	err := kvOps.UpdateSpaceKV(ctx.PackageId, req.Group, req.Key, req.Data)
+	err := kvOps.UpdateSpaceKV(ctx.GetPackageId(), req.Group, req.Key, req.Data)
 	return nil, err
 }
 
-func (b *RemoteHub) KVUpsert(ctx *HttpBindContext) (any, error) {
+func (b *RemoteHub) KVUpsert(ctx RContext) (any, error) {
 	var req core.KVDataReq
-	if err := ctx.Http.BindJSON(&req); err != nil {
+	if err := bindJSON(ctx, &req); err != nil {
 		return nil, err
 	}
 	kvOps := b.db.GetSpaceKVOps()
-	err := kvOps.UpsertSpaceKV(ctx.PackageId, req.Group, req.Key, req.Data)
+	err := kvOps.UpsertSpaceKV(ctx.GetPackageId(), req.Group, req.Key, req.Data)
 	return nil, err
 }

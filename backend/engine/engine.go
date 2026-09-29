@@ -15,6 +15,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/sighub"
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
@@ -256,7 +257,74 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 }
 
 func (e *Engine) PluginApi(ctx *gin.Context) {
+	spaceKey := ctx.Param("space_key")
+	pluginKey := ctx.Param("plugin_key")
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
+	qq.Println("@PluginApi/1", spaceKey, pluginKey, spaceId)
+
+	sIndex := e.getIndex(spaceKey, spaceId)
+	if sIndex == nil {
+		httpx.WriteErrString(ctx, "host space not found")
+		return
+	}
+
+	plugins, err := e.db.GetSpaceOps().ListSpacePlugins(sIndex.installedId, sIndex.spaceId)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	var targetPluginSpace *dbmodels.Space
+	var matchedPluginId int64
+	for _, plug := range plugins {
+		pspace, err := e.db.GetSpaceOps().GetSpace(plug.TargetSpaceID)
+		if err != nil || pspace == nil {
+			continue
+		}
+		if pspace.NamespaceKey == pluginKey {
+			targetPluginSpace = pspace
+			matchedPluginId = plug.ID
+			break
+		}
+	}
+
+	if targetPluginSpace == nil {
+		httpx.WriteErrString(ctx, "plugin not found")
+		return
+	}
+
+	pluginPkg, err := e.db.GetPackageInstallOps().GetPackage(targetPluginSpace.InstalledId)
+	if err != nil || pluginPkg == nil {
+		httpx.WriteErrString(ctx, "plugin package not found")
+		return
+	}
+
+	reqId, _ := xutils.GenerateRandomString(12)
+	remoteCtxToken, err := e.remoteHub.SignRemoteCtxToken(&remotehub.RemoteCtxClaim{
+		TargetSpaceId:          sIndex.spaceId,
+		TargetPackageId:        sIndex.installedId,
+		TargetPackageVersionId: sIndex.packageVersionId,
+		PluginSpaceId:          targetPluginSpace.ID,
+		PluginId:               matchedPluginId,
+		RequestID:              reqId,
+	})
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	params := map[string]string{
+		"remote_ctx_token": remoteCtxToken,
+	}
+
+	e.runtime.ExecHttpWithParams(
+		pluginPkg.ID,
+		pluginPkg.ActiveInstallID,
+		targetPluginSpace.ID,
+		params,
+		ctx,
+	)
 }
 
 type SpaceInfo struct {
