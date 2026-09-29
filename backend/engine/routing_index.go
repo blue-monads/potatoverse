@@ -15,33 +15,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
-/*
-
-((() => {
-
-	console.log("plugin/xyz/loader.js", "loaded")
-
-	let registryFactory = window["__potato_registry_factory__"]
-	if (!registryFactory) {
-		initializeRegistryFactory()
-	}
-
-	registryFactory = window["__potato_registry_factory__"]
-	if (!registryFactory) {
-		throw new Error("registryFactory not found")
-	}
-
-	registryFactory.register((ctx) => {
-		console.log("registryFactory.register", ctx)
-	})
-
-
-})());
-
-
-
-*/
-
 type SpaceRouteIndexItem struct {
 	installedId      int64
 	packageVersionId int64
@@ -316,6 +289,31 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 	var pluginScripts strings.Builder
 	plugins, err := e.db.GetSpaceOps().ListSpacePlugins(space.InstalledId, space.ID)
 	if err == nil && len(plugins) > 0 {
+
+		const base = `(() => {
+
+			let potatoRegistryFactory = {};
+			const REG_KEY = "__pototo_registry_factory__";
+			const SPACE_META_KEY = "__potato_space_meta__";
+
+			if (window[REG_KEY]) {
+				potatoRegistryFactory = window[REG_KEY];
+			} else {
+				window[REG_KEY] = potatoRegistryFactory;
+				
+				window[SPACE_META_KEY] = {
+					space_id: %d,
+					package_version_id: %d,
+					installed_id: %d,
+					namespace_key: "%s"
+				};
+
+			}
+
+		})();`
+
+		pluginScripts.WriteString(fmt.Sprintf(base, space.ID, packageVersion.ID, space.InstalledId, space.NamespaceKey))
+
 		for _, plug := range plugins {
 			targetSpace, err := e.db.GetSpaceOps().GetSpace(plug.TargetSpaceID)
 			if err != nil || targetSpace == nil {
