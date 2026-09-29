@@ -4,8 +4,6 @@ import (
 
 	// xdatabase
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xMigrator"
-	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xSeeder/xAutoSeeder"
-	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xDatabase/xSeeder/xStaticSeeder"
 
 	// xfiles
 	_ "github.com/blue-monads/potatoverse/backend/engine/capabilities/xFiles"
