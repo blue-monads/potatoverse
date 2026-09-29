@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example Beta - AppPlugin</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 32px;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: #e0e7ff;
+      color: #4338ca;
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0 0 12px 0;
+      font-size: 22px;
+      color: #0f172a;
+    }
+    p {
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .info-card {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 13px;
+      color: #334155;
+    }
+    code {
+      font-family: monospace;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="badge">Space Type: AppPlugin</span>
+    <h1>Example Beta Plugin</h1>
+    <p>
+      This package is an <strong>AppPlugin</strong> designed to be plugged into host spaces (such as <code>pexample-alpha</code>).
+    </p>
+    <div class="info-card">
+      <strong>Plugin Features:</strong>
+      <ul>
+        <li>Exports <code>loader.js</code> which gets concatenated into the host space's <code>plugin_loaders.js</code>.</li>
+        <li>Provides backend endpoints at <code>/api/plugin/:space_key/pexample-beta/*</code>.</li>
+        <li>Authenticates user claims against the host space via <code>remote_ctx_token</code>.</li>
+        <li>Can execute cross-space operations on the host space using the <code>xRemote</code> capability.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

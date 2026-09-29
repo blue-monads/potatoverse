@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example Alpha - Plugin Host App</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 32px;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .header {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 24px;
+      color: #0f172a;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      margin-bottom: 12px;
+    }
+    p {
+      margin: 0 0 16px 0;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    .button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .button:hover {
+      background: #1d4ed8;
+    }
+    .plugins-section {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .plugins-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+    .plugins-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .empty-state {
+      padding: 32px 16px;
+      text-align: center;
+      color: #94a3b8;
+      border: 2px dashed #e2e8f0;
+      border-radius: 8px;
+    }
+    .console-box {
+      margin-top: 16px;
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 12px;
+      border-radius: 6px;
+      min-height: 24px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="badge">Host Space: pexample-alpha</span>
+      <h1>Example Alpha</h1>
+      <p>This is a host application showcasing the Potatoverse Plugin Architecture. It automatically loads plugin scripts via <code>/zz/core/space/pexample-alpha/plugin_loaders.js</code>.</p>
+      <button class="button" onclick="checkHostStatus()">Check Host API</button>
+      <div id="host-console" class="console-box" style="display: none;"></div>
+    </div>
+
+    <div class="plugins-section">
+      <div class="plugins-header">
+        <h2 class="plugins-title">Attached Plugins</h2>
+        <span id="plugin-count" style="font-size: 13px; color: #64748b;">Loading plugins...</span>
+      </div>
+
+      <!-- Plugins inject their UI into this slot -->
+      <div id="plugin-slots">
+        <div id="no-plugins-notice" class="empty-state">
+          No plugins have registered yet.<br>
+          Attach <strong>pexample-beta</strong> to this space to see its widgets dynamically injected here!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global plugin registry for the host
+    window.AlphaApp = {
+      spaceKey: "pexample-alpha",
+      registeredPlugins: [],
+      registerPlugin: function(plugin) {
+        console.log("[Alpha Host] Registered plugin:", plugin.name);
+        this.registeredPlugins.push(plugin);
+        const notice = document.getElementById("no-plugins-notice");
+        if (notice) notice.style.display = "none";
+        document.getElementById("plugin-count").textContent = 
+          this.registeredPlugins.length + " plugin(s) active";
+      }
+    };
+
+    async function checkHostStatus() {
+      const consoleBox = document.getElementById("host-console");
+      consoleBox.style.display = "block";
+      consoleBox.textContent = "Querying Host API...";
+      try {
+        const res = await fetch("/zz/api/space/pexample-alpha/status");
+        const data = await res.json();
+        consoleBox.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        consoleBox.textContent = "Error: " + err.message;
+      }
+    }
+  </script>
+
+  <!-- Dynamically load all plugged plugin scripts for this space -->
+  <script src="/zz/core/space/pexample-alpha/plugin_loaders.js"></script>
+</body>
+</html>
