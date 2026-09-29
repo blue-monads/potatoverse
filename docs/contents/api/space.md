@@ -252,5 +252,75 @@ Delete event subscription.
 
 **Response:** Success message
 
+## Space Plugins
+
+### GET /zz/api/core/space/:install_id/plugins
+
+List plugins attached to a space.
+
+**Query:**
+- `space_id` (int64) - Space ID
+
+**Response:** Array of SpacePlugin objects
+
+### GET /zz/api/core/space/:install_id/plugins/available
+
+List available AppPlugin spaces that can be attached.
+
+**Query:**
+- `space_id` (int64) - Space ID
+
+**Response:** Array of available Space objects (type AppPlugin)
+
+### GET /zz/api/core/space/:install_id/plugins/:pluginId
+
+Get attached space plugin by ID.
+
+**Response:** SpacePlugin object
+
+### POST /zz/api/core/space/:install_id/plugins
+
+Attach an AppPlugin to a space.
+
+**Query:**
+- `space_id` (int64, optional) - Source Space ID (can also be passed in JSON body)
+
+**Request:**
+- `target_space_id` (int64) - ID of the AppPlugin space to attach
+- `target_install_id` (int64, optional) - Target install ID
+- `source_space_id` (int64, optional) - Source space ID
+- `priority` (int, optional) - Execution priority
+- `active` (bool, optional) - Active status
+- `init_order` (int, optional) - Loader initialization order
+- `extra_meta` (object, optional) - Additional configuration metadata
+
+**Response:** SpacePlugin object
+
+### PUT /zz/api/core/space/:install_id/plugins/:pluginId
+
+Update an attached space plugin connection.
+
+**Request:** Map of fields to update (`priority`, `active`, `init_order`, `extra_meta`)
+
+**Response:** SpacePlugin object
+
+### DELETE /zz/api/core/space/:install_id/plugins/:pluginId
+
+Detach an AppPlugin from a space.
+
+**Response:**
+- `status` (string) - `"deleted"`
+
+### GET /zz/core/space/:space_key/plugin_loaders.js
+
+Retrieve the dynamically concatenated plugin loader JavaScript bundle for a space.
+
+**Response:** JavaScript bundle (`application/javascript`)
+
+### ANY /zz/api/plugin/:space_key/:plugin_key/*subpath
+
+Execute a request against an attached plugin's backend handler with minted `remote_ctx_token`.
+
+
 
 

@@ -18,6 +18,11 @@
           "url": "topics/getting_started.md"
         },
         {
+          "title": "Plugin System",
+          "description": "Architecture, development, and integration of AppPlugins",
+          "url": "topics/plugin_system.md"
+        },
+        {
           "title": "Examples",
           "description": "Real-world examples and use cases"
         }

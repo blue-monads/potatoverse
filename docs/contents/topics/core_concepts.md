@@ -24,6 +24,7 @@ The App Engine is the core component responsible for running applications. It ma
 
 Spaces are applications that run inside language VMs like Lua or WebAssembly (future) . Each space:
 - Is created from a package blueprint
+- Has a space type: standard standalone application (`App`) or extensible plugin (`AppPlugin`)
 - Has a namespace key (slugified name) used for resource scoping
 - Is served from HTTP routes based on its namespace key
 - Has its own file storage scoped by space ID
