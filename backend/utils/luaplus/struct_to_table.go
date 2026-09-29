@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -98,6 +99,9 @@ func structFieldToLuaValue(l *lua.LState, fieldValue reflect.Value) lua.LValue {
 		}
 		return table
 	case reflect.Struct:
+		if t, ok := fieldValue.Interface().(time.Time); ok {
+			return lua.LString(t.UTC().Format(time.RFC3339))
+		}
 		// Recursively convert nested struct
 		nestedTable := l.NewTable()
 		nestedType := fieldValue.Type()

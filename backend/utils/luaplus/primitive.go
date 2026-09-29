@@ -3,6 +3,7 @@ package luaplus
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -70,6 +71,13 @@ func GoTypeToLuaType(l *lua.LState, goValue any) lua.LValue {
 		return lua.LNumber(v)
 	case []byte:
 		return lua.LString(v)
+	case time.Time:
+		return lua.LString(v.UTC().Format(time.RFC3339))
+	case *time.Time:
+		if v == nil {
+			return lua.LNil
+		}
+		return lua.LString(v.UTC().Format(time.RFC3339))
 	case []any:
 		return arrayToTable(l, v)
 	case map[string]any:

@@ -2,6 +2,7 @@ package luaplus
 
 import (
 	"testing"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -132,5 +133,34 @@ func TestStructToTable_Nil(t *testing.T) {
 	}
 	if table.Type() != lua.LTTable {
 		t.Fatalf("expected table, got %v", table.Type())
+	}
+}
+
+func TestStructToTable_Time(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+
+	now := time.Date(2026, 9, 30, 1, 55, 0, 0, time.UTC)
+	type TimeStruct struct {
+		CreatedAt time.Time  `json:"created_at"`
+		UpdatedAt *time.Time `json:"updated_at"`
+	}
+
+	ts := TimeStruct{
+		CreatedAt: now,
+		UpdatedAt: &now,
+	}
+
+	tbl, err := StructToTable(L, ts)
+	if err != nil {
+		t.Fatalf("StructToTable failed: %v", err)
+	}
+
+	expected := "2026-09-30T01:55:00Z"
+	if ca := tbl.RawGetString("created_at").String(); ca != expected {
+		t.Errorf("expected created_at '%s', got '%s'", expected, ca)
+	}
+	if ua := tbl.RawGetString("updated_at").String(); ua != expected {
+		t.Errorf("expected updated_at '%s', got '%s'", expected, ua)
 	}
 }

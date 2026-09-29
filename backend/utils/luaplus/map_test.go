@@ -3,6 +3,7 @@ package luaplus
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -257,6 +258,35 @@ func TestEmptyTableToNil(t *testing.T) {
 	}
 	if parsed["empty_data"] != nil {
 		t.Errorf("expected empty_data to be nil/null, got %v", parsed["empty_data"])
+	}
+}
+
+func TestMapToTable_Time(t *testing.T) {
+	L := lua.NewState()
+	defer L.Close()
+
+	now := time.Date(2026, 9, 30, 1, 55, 0, 0, time.UTC)
+	input := map[string]any{
+		"last_updated": now,
+		"table_id":     1,
+	}
+
+	tbl := MapToTable(L, input)
+	converted := LuaToAny(L, tbl)
+
+	jsonBytes, err := json.Marshal(converted)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal(jsonBytes, &parsed); err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
+
+	expected := "2026-09-30T01:55:00Z"
+	if parsed["last_updated"] != expected {
+		t.Errorf("expected last_updated '%s', got '%v'", expected, parsed["last_updated"])
 	}
 }
 
