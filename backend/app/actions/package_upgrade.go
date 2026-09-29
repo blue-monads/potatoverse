@@ -94,11 +94,20 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					return nil, err
 				}
 
+				spaceType := space.SpaceType
+				if spaceType == "" {
+					spaceType = space.Type
+				}
+				if spaceType == "" {
+					spaceType = "App"
+				}
+
 				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
 					"namespace_key":     space.Namespace,
 					"executor_type":     space.ExecutorType,
 					"executor_sub_type": space.ExecutorSubType,
-					"space_type":        "App",
+					"space_type":        spaceType,
+					"loader_script":     space.LoaderScript,
 					"route_options":     string(routeOptions),
 					"server_file":       space.ServerFile,
 				})
@@ -109,6 +118,16 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 				}
 				if space.ServerFile != "" {
 					updateMap["server_file"] = space.ServerFile
+				}
+				if space.LoaderScript != "" {
+					updateMap["loader_script"] = space.LoaderScript
+				}
+				spaceType := space.SpaceType
+				if spaceType == "" {
+					spaceType = space.Type
+				}
+				if spaceType != "" {
+					updateMap["space_type"] = spaceType
 				}
 				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, updateMap)
 				if err != nil {

@@ -43,6 +43,9 @@ type PotatoCapability struct {
 
 type PotatoSpace struct {
 	Namespace       string             `json:"namespace" yaml:"namespace"`
+	Type            string             `json:"type" yaml:"type"`
+	SpaceType       string             `json:"space_type" yaml:"space_type"`
+	LoaderScript    string             `json:"loader_script" yaml:"loader_script"`
 	ExecutorType    string             `json:"executor_type" yaml:"executor_type"`
 	ExecutorSubType string             `json:"executor_sub_type" yaml:"executor_sub_type"`
 	ServerFile      string             `json:"server_file" yaml:"server_file"`

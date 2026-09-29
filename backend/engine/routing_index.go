@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"path"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,22 +15,42 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
 
+/*
+
+((() => {
+
+	console.log("plugin/xyz/loader.js", "loaded")
+
+	let registryFactory = window["__potato_registry_factory__"]
+	if (!registryFactory) {
+		initializeRegistryFactory()
+	}
+
+	registryFactory = window["__potato_registry_factory__"]
+	if (!registryFactory) {
+		throw new Error("registryFactory not found")
+	}
+
+	registryFactory.register((ctx) => {
+		console.log("registryFactory.register", ctx)
+	})
+
+
+})());
+
+
+
+*/
+
 type SpaceRouteIndexItem struct {
-	installedId       int64
-	packageVersionId  int64
-	spaceId           int64
-	overlayForSpaceId int64
-	routeOption       models.PotatoRouteOptions
-
-	compiledTemplates map[string]*template.Template
-}
-
-type PluginRouteIndexItem struct {
-	pluginId         int64
 	installedId      int64
 	packageVersionId int64
 	spaceId          int64
 	routeOption      models.PotatoRouteOptions
+
+	allPluginLoaderScript string // concat of all plugin loader scripts
+
+	compiledTemplates map[string]*template.Template
 }
 
 func (e *Engine) LoadRoutingIndex() {
@@ -290,7 +312,68 @@ func (e *Engine) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.
 		}
 	}
 
+	// Load and concatenate all plugged plugin loader scripts
+	var pluginScripts strings.Builder
+	plugins, err := e.db.GetSpaceOps().ListSpacePlugins(space.InstalledId, space.ID)
+	if err == nil && len(plugins) > 0 {
+		for _, plug := range plugins {
+			targetSpace, err := e.db.GetSpaceOps().GetSpace(plug.TargetSpaceID)
+			if err != nil || targetSpace == nil {
+				continue
+			}
+			if targetSpace.LoaderScript == "" {
+				continue
+			}
+
+			targetPkg, err := e.db.GetPackageInstallOps().GetPackage(targetSpace.InstalledId)
+			if err != nil || targetPkg == nil || targetPkg.ActiveInstallID == 0 {
+				continue
+			}
+
+			dir := path.Dir(targetSpace.LoaderScript)
+			if dir == "." {
+				dir = ""
+			}
+			name := path.Base(targetSpace.LoaderScript)
+
+			scriptBytes, err := e.db.GetPackageFileOps().GetFileContentByPath(targetPkg.ActiveInstallID, dir, name)
+			if err != nil {
+				e.logger.Warn("failed to read plugin loader script", "target_space_id", targetSpace.ID, "loader_script", targetSpace.LoaderScript, "error", err)
+				continue
+			}
+
+			if pluginScripts.Len() > 0 {
+				pluginScripts.WriteString("\n\n")
+			}
+			pluginScripts.WriteString(fmt.Sprintf("// --- Plugin: %s (space: %d) ---\n", targetSpace.NamespaceKey, targetSpace.ID))
+			pluginScripts.Write(scriptBytes)
+		}
+	}
+	indexItem.allPluginLoaderScript = pluginScripts.String()
+
 	return indexItem, nil
+}
+
+func (e *Engine) GetPluginLoaderScript(spaceKey string) string {
+	if e == nil {
+		return ""
+	}
+	index := e.getIndex(spaceKey, 0)
+	if index != nil {
+		return index.allPluginLoaderScript
+	}
+
+	if id, err := strconv.ParseInt(spaceKey, 10, 64); err == nil && id > 0 {
+		e.riLock.RLock()
+		defer e.riLock.RUnlock()
+		for _, item := range e.RoutingIndex {
+			if item.installedId == id || item.spaceId == id {
+				return item.allPluginLoaderScript
+			}
+		}
+	}
+
+	return ""
 }
 
 func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *SpaceRouteIndexItem {

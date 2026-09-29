@@ -16,6 +16,7 @@ type Space struct {
 	DevMode bool `json:"dev_mode" db:"dev_mode,omitempty"`
 
 	ModOverlayScript string `json:"mod_overlay_script" db:"mod_overlay_script,omitempty"`
+	LoaderScript     string `json:"loader_script" db:"loader_script,omitempty"`
 
 	OwnerID      int64  `json:"owned_by" db:"owned_by"`
 	ExtraMeta    string `json:"extrameta" db:"extrameta,omitempty"`
@@ -46,16 +47,14 @@ type SpaceTypes struct {
 }
 
 type SpacePlugin struct {
-	ID         int64      `json:"id" db:"id,omitempty"`
-	Name       string     `json:"name" db:"name"`
-	Type       string     `json:"ptype" db:"ptype"`
-	SpaceID    int64      `json:"space_id" db:"space_id"`
-	ServerCode string     `json:"server_code" db:"server_code"`
-	ClientCode string     `json:"client_code" db:"client_code"`
-	CreatedBy  int64      `json:"created_by" db:"created_by"`
-	UpdatedBy  int64      `json:"updated_by" db:"updated_by"`
-	CreatedAt  *time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt  *time.Time `json:"updated_at" db:"updated_at"`
+	ID              int64      `json:"id" db:"id,omitempty"`
+	SourceInstallID int64      `json:"source_install_id" db:"source_install_id"`
+	SourceSpaceID   int64      `json:"source_space_id" db:"source_space_id"`
+	TargetInstallID int64      `json:"target_install_id" db:"target_install_id"`
+	TargetSpaceID   int64      `json:"target_space_id" db:"target_space_id"`
+	ExtraMeta       string     `json:"extrameta" db:"extrameta,omitempty"`
+	CreatedAt       *time.Time `json:"created_at" db:"created_at,omitempty"`
+	UpdatedAt       *time.Time `json:"updated_at" db:"updated_at,omitempty"`
 }
 
 type SpaceConfig struct {

@@ -227,12 +227,21 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		return 0, err
 	}
 
+	spaceType := artifact.SpaceType
+	if spaceType == "" {
+		spaceType = artifact.Type
+	}
+	if spaceType == "" {
+		spaceType = "App"
+	}
+
 	spaceId, err := database.GetSpaceOps().AddSpace(&dbmodels.Space{
 		InstalledId:     installedId,
 		NamespaceKey:    artifact.Namespace,
 		ExecutorType:    artifact.ExecutorType,
 		ExecutorSubType: artifact.ExecutorSubType,
-		SpaceType:       "App",
+		SpaceType:       spaceType,
+		LoaderScript:    artifact.LoaderScript,
 		RouteOptions:    string(routeOptions),
 		DevServePort:    int64(artifact.DevServePort),
 		OwnerID:         userId,

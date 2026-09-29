@@ -358,6 +358,8 @@ export interface Space {
     install_id: number;
     executor_type: string;
     sub_type: string;
+    space_type?: string;
+    loader_script?: string;
     owned_by: number;
     extrameta: string;
     is_initilized: boolean;
@@ -444,6 +446,7 @@ export const formatSpace = (data: InstalledSpace) => {
     const formattedSpaces: FormattedSpace[] = [];
 
     for (const space of spaces) {
+        if (space.space_type === 'AppPlugin') continue;
         const pkg = packages.find((pkg) => pkg.install_id === space.install_id);
         if (!pkg) continue;
 
@@ -925,6 +928,76 @@ export const updateSignalTargetStatus = async (installId: number, targetId: numb
 
 export const emitSignal = async (installId: number, data: { signal_key: string; emitter_space_id?: number; payload?: any; metadata?: any }) => {
     return iaxios.post<{ message: string }>(`/core/space/${installId}/signals/emit`, data);
+};
+
+// Space Plugins API
+export interface SpacePlugin {
+    id: number;
+    source_install_id: number;
+    source_space_id: number;
+    target_install_id: number;
+    target_space_id: number;
+    extrameta: string;
+    target_namespace_key?: string;
+    target_package_name?: string;
+    target_package_version?: string;
+    target_loader_script?: string;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface AvailablePlugin {
+    space_id: number;
+    install_id: number;
+    namespace_key: string;
+    loader_script: string;
+    package_name: string;
+    package_info: string;
+    package_version: string;
+    package_author: string;
+    is_already_plugged: boolean;
+    current_plugin_id?: number;
+}
+
+export const listSpacePlugins = async (installId: number, spaceId?: number) => {
+    return iaxios.get<SpacePlugin[]>(`/core/space/${installId}/plugins`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+        },
+    });
+};
+
+export const listAvailablePlugins = async (installId: number, spaceId?: number) => {
+    return iaxios.get<AvailablePlugin[]>(`/core/space/${installId}/plugins/available`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+        },
+    });
+};
+
+export const getSpacePlugin = async (installId: number, pluginId: number) => {
+    return iaxios.get<SpacePlugin>(`/core/space/${installId}/plugins/${pluginId}`);
+};
+
+export const createSpacePlugin = async (installId: number, spaceId: number | undefined, data: {
+    target_install_id?: number;
+    target_space_id: number;
+    source_space_id?: number;
+    extrameta?: string;
+}) => {
+    return iaxios.post<SpacePlugin>(`/core/space/${installId}/plugins`, data, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+        },
+    });
+};
+
+export const updateSpacePlugin = async (installId: number, pluginId: number, data: { extrameta?: string }) => {
+    return iaxios.put<SpacePlugin>(`/core/space/${installId}/plugins/${pluginId}`, data);
+};
+
+export const deleteSpacePlugin = async (installId: number, pluginId: number) => {
+    return iaxios.delete<{ status: string }>(`/core/space/${installId}/plugins/${pluginId}`);
 };
 
 // User Messages API

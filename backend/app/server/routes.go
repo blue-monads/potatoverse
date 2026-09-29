@@ -205,6 +205,14 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.POST("/space/:install_id/signals/targets/:targetId/status", a.withAccessTokenFn(a.UpdateSignalTargetStatus))
 	coreApi.POST("/space/:install_id/signals/emit", a.withAccessTokenFn(a.EmitSignal))
 
+	// Space Plugins API
+	coreApi.GET("/space/:install_id/plugins", a.withAccessTokenFn(a.ListSpacePlugins))
+	coreApi.GET("/space/:install_id/plugins/available", a.withAccessTokenFn(a.ListAvailablePlugins))
+	coreApi.GET("/space/:install_id/plugins/:pluginId", a.withAccessTokenFn(a.GetSpacePlugin))
+	coreApi.POST("/space/:install_id/plugins", a.withAccessTokenFn(a.CreateSpacePlugin))
+	coreApi.PUT("/space/:install_id/plugins/:pluginId", a.withAccessTokenFn(a.UpdateSpacePlugin))
+	coreApi.DELETE("/space/:install_id/plugins/:pluginId", a.withAccessTokenFn(a.DeleteSpacePlugin))
+
 	coreApi.GET("/space/:install_id/spec.json", a.withAccessTokenFn(a.GetSpaceSpec))
 	coreApi.POST("/space/:install_id/export", (a.ExportState))
 	coreApi.POST("/space/:install_id/import", (a.ImportState))
@@ -217,6 +225,10 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
 	coreApi.GET("/engine/derivehost/:nskey", a.handleDeriveHost)
+	coreApi.GET("/space/:install_id/plugin_loaders.js", a.ServePluginLoaders)
+
+	zzCore := zg.Group("/core")
+	zzCore.GET("/space/:space_key/plugin_loaders.js", a.ServePluginLoaders)
 
 	zg.Any("/space/:space_key/*subpath", spaceFile)
 	zg.Any("/plugin/:space_key/:plugin_id/*subpath", pluginFile)

@@ -159,6 +159,15 @@ type SpaceOps interface {
 	GetSpaceUser(installId int64, id int64) (*dbmodels.SpaceUser, error)
 	UpdateSpaceUser(installId int64, id int64, data map[string]any) error
 	RemoveSpaceUser(installId int64, id int64) error
+
+	// Space Plugins
+	AddSpacePlugin(data *dbmodels.SpacePlugin) (int64, error)
+	GetSpacePlugin(id int64) (*dbmodels.SpacePlugin, error)
+	ListSpacePlugins(sourceInstallId, sourceSpaceId int64) ([]dbmodels.SpacePlugin, error)
+	QuerySpacePlugins(cond map[any]any) ([]dbmodels.SpacePlugin, error)
+	UpdateSpacePlugin(id int64, data map[string]any) error
+	RemoveSpacePlugin(id int64) error
+	ListSpacesBySpaceType(spaceType string) ([]dbmodels.Space, error)
 }
 
 type SpaceKVOps interface {
