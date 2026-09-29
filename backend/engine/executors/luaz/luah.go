@@ -167,8 +167,8 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 		"set_json": func(l *lua.LState) int {
 			code := l.CheckInt(1)
 			target := l.CheckTable(2)
-			targetMap := luaplus.TableToMap(l, target)
-			ctx.JSON(code, targetMap)
+			targetObj := luaplus.LuaToAny(l, target)
+			ctx.JSON(code, targetObj)
 			return 0
 		},
 	})

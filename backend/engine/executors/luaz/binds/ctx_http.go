@@ -326,7 +326,7 @@ func reqAbortWithStatus(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 func reqAbortWithStatusJSON(reqCtx *luaHttpRequestContext, L *lua.LState) int {
 	code := L.CheckInt(1)
 	jsonTbl := L.CheckTable(2)
-	jsonObj := luaplus.TableToMap(L, jsonTbl)
+	jsonObj := luaplus.LuaToAny(L, jsonTbl)
 	reqCtx.ctx.AbortWithStatusJSON(code, jsonObj)
 	return 0
 }
