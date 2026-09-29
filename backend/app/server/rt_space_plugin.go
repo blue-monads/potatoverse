@@ -119,7 +119,8 @@ func (a *Server) DeleteSpacePlugin(claim *signer.AccessClaim, ctx *gin.Context) 
 func (a *Server) ServePluginLoaders(ctx *gin.Context) {
 	spaceKey := ctx.Param("space_key")
 	if spaceKey == "" {
-		spaceKey = ctx.Param("install_id")
+		ctx.Data(400, "application/javascript", []byte("// space key is required\n"))
+		return
 	}
 
 	var script string

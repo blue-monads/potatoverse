@@ -225,7 +225,6 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.GET("/engine/debug", a.handleEngineDebugData)
 	coreApi.GET("/engine/space_info/:space_key", a.handleSpaceInfo)
 	coreApi.GET("/engine/derivehost/:nskey", a.handleDeriveHost)
-	coreApi.GET("/space/:install_id/plugin_loaders.js", a.ServePluginLoaders)
 
 	zzCore := zg.Group("/core")
 	zzCore.GET("/space/:space_key/plugin_loaders.js", a.ServePluginLoaders)
