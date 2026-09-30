@@ -35,6 +35,39 @@ const SpacesDirectory = () => {
     const { favorites, addFavorite, removeFavorite } = useFavorites();
     const [formattedSpaces, setFormattedSpaces] = useState<FormattedSpace[]>([]);
 
+    useEffect(() => {
+        try {
+            const savedMode = localStorage.getItem('spaces_view_mode');
+            if (savedMode === 'cards' || savedMode === 'list') {
+                setViewMode(savedMode);
+            }
+            const savedShowPlugins = localStorage.getItem('spaces_show_plugins');
+            if (savedShowPlugins !== null) {
+                setShowPlugins(savedShowPlugins === 'true');
+            }
+        } catch (e) {
+            // ignore localStorage access errors
+        }
+    }, []);
+
+    const changeViewMode = (mode: 'cards' | 'list') => {
+        setViewMode(mode);
+        try {
+            localStorage.setItem('spaces_view_mode', mode);
+        } catch (e) {
+            // ignore localStorage access errors
+        }
+    };
+
+    const changeShowPlugins = (val: boolean) => {
+        setShowPlugins(val);
+        try {
+            localStorage.setItem('spaces_show_plugins', String(val));
+        } catch (e) {
+            // ignore localStorage access errors
+        }
+    };
+
     const loader = useSimpleDataLoader<InstalledSpace>({
         loader: listInstalledSpaces,
         ready: gapp.isInitialized,
@@ -248,7 +281,7 @@ const SpacesDirectory = () => {
                                 <input
                                     type="checkbox"
                                     checked={showPlugins}
-                                    onChange={(e) => setShowPlugins(e.target.checked)}
+                                    onChange={(e) => changeShowPlugins(e.target.checked)}
                                     className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
                                 />
                                 <span className="font-medium flex items-center gap-1.5">
@@ -261,7 +294,7 @@ const SpacesDirectory = () => {
                             <div className="flex items-center border border-gray-300 rounded-lg p-0.5 bg-gray-50">
                                 <button
                                     type="button"
-                                    onClick={() => setViewMode('cards')}
+                                    onClick={() => changeViewMode('cards')}
                                     className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
                                         viewMode === 'cards'
                                             ? 'bg-white shadow-xs text-blue-600 font-semibold'
@@ -274,7 +307,7 @@ const SpacesDirectory = () => {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setViewMode('list')}
+                                    onClick={() => changeViewMode('list')}
                                     className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
                                         viewMode === 'list'
                                             ? 'bg-white shadow-xs text-blue-600 font-semibold'
@@ -341,7 +374,7 @@ const SpacesDirectory = () => {
                                 )}
                                 {!showPlugins && (
                                     <button
-                                        onClick={() => setShowPlugins(true)}
+                                        onClick={() => changeShowPlugins(true)}
                                         className="px-3 py-1.5 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors cursor-pointer"
                                     >
                                         Show Plugins
