@@ -82,9 +82,6 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 	}
 
 	for _, space := range allCandidateSpaces {
-		if space.SpaceType == "AppPlugin" {
-			continue
-		}
 		if _, ok := hasPackageMap[space.InstalledId]; ok {
 			if _, ok := hasSpaceMap[space.ID]; !ok {
 				finalSpaces = append(finalSpaces, space)

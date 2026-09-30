@@ -1,6 +1,6 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2, BoltIcon } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2, BoltIcon, List, Plug, Wrench } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
@@ -25,20 +25,15 @@ export default function Page() {
 
 
 
-
-
-
-
-
 const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
+    const [showPlugins, setShowPlugins] = useState(false);
+    const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
     const gapp = useGApp();
     const router = useRouter();
     const { favorites, addFavorite, removeFavorite } = useFavorites();
     const [formattedSpaces, setFormattedSpaces] = useState<FormattedSpace[]>([]);
-
-
 
     const loader = useSimpleDataLoader<InstalledSpace>({
         loader: listInstalledSpaces,
@@ -62,10 +57,158 @@ const SpacesDirectory = () => {
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+    const displaySpaces = useMemo(() => {
+        let spaces = formattedSpaces;
 
+        if (!showPlugins) {
+            spaces = spaces.filter((s) => !s.is_plugin);
+        }
+
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase();
+            spaces = spaces.filter((s) => {
+                const matchesName = s.package_name.toLowerCase().includes(term);
+                const matchesNs = s.namespace_key.toLowerCase().includes(term);
+                const matchesInfo = s.package_info?.toLowerCase().includes(term);
+                const matchesAuthor = s.package_author?.toLowerCase().includes(term);
+                const matchesId = s.space_id.toString().includes(term);
+                return matchesName || matchesNs || matchesInfo || matchesAuthor || matchesId;
+            });
+        }
+
+        if (selectedFilter === 'Recently Created' || selectedFilter === 'Installed Date' || selectedFilter === 'Recently Updated') {
+            spaces = [...spaces].sort((a, b) => b.space_id - a.space_id);
+        }
+
+        return spaces;
+    }, [formattedSpaces, showPlugins, searchTerm, selectedFilter]);
+
+    const packageGroups = useMemo(() => {
+        if (!loader.data) return [];
+
+        const spacesByInstallId = new Map<number, FormattedSpace[]>();
+        for (const space of displaySpaces) {
+            const list = spacesByInstallId.get(space.install_id) || [];
+            list.push(space);
+            spacesByInstallId.set(space.install_id, list);
+        }
+
+        const groups: { pkg?: Package; installId: number; spaces: FormattedSpace[] }[] = [];
+        const seenInstallIds = new Set<number>();
+
+        for (const pkg of loader.data.packages) {
+            const spaces = spacesByInstallId.get(pkg.install_id);
+            if (spaces && spaces.length > 0) {
+                groups.push({
+                    pkg,
+                    installId: pkg.install_id,
+                    spaces,
+                });
+                seenInstallIds.add(pkg.install_id);
+            }
+        }
+
+        for (const [installId, spaces] of spacesByInstallId.entries()) {
+            if (!seenInstallIds.has(installId)) {
+                groups.push({
+                    pkg: undefined,
+                    installId,
+                    spaces,
+                });
+            }
+        }
+
+        return groups;
+    }, [loader.data, displaySpaces]);
+
+    const handleAction = async (action: string, space: FormattedSpace) => {
+        const installId = space.install_id;
+        const spaceId = space.space_id;
+        const namespaceKey = space.namespace_key;
+        const packageVersionId = space.package_version_id;
+
+        if (action === "run") {
+            if (!spaceId) {
+                return;
+            }
+            const hostsrc = await deriveHostAndIframeSrc(namespaceKey, String(spaceId));
+            if (!hostsrc) {
+                return;
+            }
+            window.open(hostsrc, '_blank');
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.set("install_id", installId.toString());
+        params.set("space_id", spaceId.toString());
+        params.set("namespace_key", namespaceKey);
+        params.set("nskey", namespaceKey);
+        params.set("package_version_id", packageVersionId.toString());
+
+        if (action === "delete") {
+            gapp.modal.openModal({
+                title: "Delete Space",
+                content: (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                <Trash2Icon className="w-5 h-5 text-red-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    Are you sure you want to delete this space?
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                    This action cannot be undone. All data associated with this space will be permanently removed.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${space.gradient} flex items-center justify-center text-white text-sm font-semibold`}>
+                                    #{space.space_id}
+                                </div>
+                                <div>
+                                    <p className="font-medium text-gray-900">{space.package_name}</p>
+                                    <p className="text-sm text-gray-600">{space.package_info}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => gapp.modal.closeModal()}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        await deletePackage(installId);
+                                        loader.reload();
+                                        gapp.modal.closeModal();
+                                    } catch (error) {
+                                        console.error('Failed to delete space:', error);
+                                    }
+                                }}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors cursor-pointer"
+                            >
+                                Delete Space
+                            </button>
+                        </div>
+                    </div>
+                ),
+                size: "md"
+            });
+        } else if (action === "tools") {
+            router.push(`/portal/admin/spaces/tools/overview?${params.toString()}`);
+        }
+    };
 
     return (
-
         <WithAdminBodyLayout
             Icon={Box}
             name="Spaces"
@@ -79,34 +222,76 @@ const SpacesDirectory = () => {
                 />
             }
         >
-
-
-
-
-
-
             <BigSearchBar
                 searchText={searchTerm}
                 setSearchText={setSearchTerm}
             />
 
-
             <div className="max-w-7xl mx-auto px-6 py-8 w-full">
                 <div className="mb-8">
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                         <div className="flex items-center gap-3">
                             <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                             <h2 className="text-xl font-bold">Installed Spaces</h2>
+                            <span className="text-xs px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded-full font-medium">
+                                {displaySpaces.length}
+                            </span>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 flex-wrap">
+                            {/* Toggle Show Plugins */}
+                            <label className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors cursor-pointer select-none ${
+                                showPlugins
+                                    ? 'bg-purple-50 border-purple-300 text-purple-700'
+                                    : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+                            }`}>
+                                <input
+                                    type="checkbox"
+                                    checked={showPlugins}
+                                    onChange={(e) => setShowPlugins(e.target.checked)}
+                                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 cursor-pointer"
+                                />
+                                <span className="font-medium flex items-center gap-1.5">
+                                    <Plug className="w-4 h-4" />
+                                    Show plugins
+                                </span>
+                            </label>
 
+                            {/* View Switcher: Card vs List */}
+                            <div className="flex items-center border border-gray-300 rounded-lg p-0.5 bg-gray-50">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('cards')}
+                                    className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                                        viewMode === 'cards'
+                                            ? 'bg-white shadow-xs text-blue-600 font-semibold'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                    title="Card View"
+                                >
+                                    <Grid2x2Plus className="w-4 h-4" />
+                                    <span>Cards</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode('list')}
+                                    className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                                        viewMode === 'list'
+                                            ? 'bg-white shadow-xs text-blue-600 font-semibold'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                    title="List View"
+                                >
+                                    <List className="w-4 h-4" />
+                                    <span>List</span>
+                                </button>
+                            </div>
 
-
+                            {/* Sort dropdown */}
                             <div className="relative">
                                 <button
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                                    className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors cursor-pointer"
                                 >
                                     <ArrowUpDown className="w-4 h-4" />
                                     <span>Sort: {selectedFilter}</span>
@@ -121,8 +306,9 @@ const SpacesDirectory = () => {
                                                     setSelectedFilter(option);
                                                     setIsDropdownOpen(false);
                                                 }}
-                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${selectedFilter === option ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-                                                    }`}
+                                                className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg cursor-pointer ${
+                                                    selectedFilter === option ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                                                }`}
                                             >
                                                 {option}
                                             </button>
@@ -137,164 +323,226 @@ const SpacesDirectory = () => {
 
                     {loader.loading && (<><SimpleLoader /></>)}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Empty search/filter state */}
+                    {displaySpaces.length === 0 && loader.data && loader.data.spaces.length > 0 && (
+                        <div className="text-center py-12 bg-white rounded-xl border border-gray-200 p-8">
+                            <p className="text-base text-gray-700 font-medium mb-2">No spaces found matching your current filters.</p>
+                            <p className="text-sm text-gray-500 mb-4">
+                                {searchTerm ? `Try clearing your search "${searchTerm}"` : 'Try enabling "Show plugins"'}
+                            </p>
+                            <div className="flex items-center justify-center gap-3">
+                                {searchTerm && (
+                                    <button
+                                        onClick={() => setSearchTerm('')}
+                                        className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        Clear Search
+                                    </button>
+                                )}
+                                {!showPlugins && (
+                                    <button
+                                        onClick={() => setShowPlugins(true)}
+                                        className="px-3 py-1.5 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        Show Plugins
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
+                    {/* Cards View */}
+                    {viewMode === 'cards' && displaySpaces.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {displaySpaces.map((space) => {
+                                return (
+                                    <SpaceCard
+                                        key={space.space_id}
+                                        isFavorite={favorites.includes(space.space_id)}
+                                        onToggleFavorite={() => {
+                                            if (favorites.includes(space.space_id)) {
+                                                removeFavorite(space.space_id);
+                                            } else {
+                                                addFavorite(space.space_id);
+                                            }
+                                        }}
+                                        actionHandler={(action: string) => handleAction(action, space)}
+                                        space={{
+                                            id: space.space_id,
+                                            title: space.package_name,
+                                            description: space.package_info,
+                                            author: space.package_author,
+                                            gradient: space.gradient,
+                                            nskey: space.namespace_key,
+                                            is_plugin: space.is_plugin,
+                                        }}
+                                    />
+                                );
+                            })}
+                        </div>
+                    )}
 
+                    {/* List View (Grouped in order by package and showing all spaces in that package) */}
+                    {viewMode === 'list' && packageGroups.length > 0 && (
+                        <div className="space-y-6">
+                            {packageGroups.map((group) => {
+                                const packageName = group.pkg?.name || group.spaces[0]?.package_name || `Package #${group.installId}`;
+                                const packageInfo = group.pkg?.info || group.spaces[0]?.package_info;
+                                const packageVersion = group.pkg?.version || group.spaces[0]?.package_version;
+                                const packageAuthor = group.pkg?.author_name || group.spaces[0]?.package_author;
 
-                        {formattedSpaces.map((space) => {
-
-                            return <SpaceCard
-                                key={space.space_id}
-                                isFavorite={favorites.includes(space.space_id)}
-                                onToggleFavorite={() => {
-                                    if (favorites.includes(space.space_id)) {
-                                        removeFavorite(space.space_id);
-                                    } else {
-                                        addFavorite(space.space_id);
-                                    }
-                                }}
-                                actionHandler={async (action: string) => {
-
-                                    const installId = space.install_id;
-                                    const spaceId = space.space_id;
-                                    const namespaceKey = space.namespace_key;
-                                    const packageVersionId = space.package_version_id;
-
-                                    if (action === "run") {
-                                        if (!spaceId) {
-                                            return
-                                        }
-
-                                        const hostsrc = await deriveHostAndIframeSrc(namespaceKey, String(spaceId))
-                                        if (!hostsrc) {
-                                            return
-                                        }
-
-                                        console.log("@hostsrc", hostsrc)
-
-                                        window.open(hostsrc, '_blank');
-                                        return
-                                    }
-
-
-
-                                    const params = new URLSearchParams();
-                                    params.set("install_id", installId.toString());
-                                    params.set("space_id", spaceId.toString());
-                                    params.set("namespace_key", namespaceKey);
-                                    params.set("nskey", namespaceKey);
-                                    params.set("package_version_id", packageVersionId.toString());
-
-                                    console.log("params", params.toString());
-
-
-
-
-                                    if (action === "delete") {
-                                        // Show confirmation modal
-                                        gapp.modal.openModal({
-                                            title: "Delete Space",
-                                            content: (
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                                                            <Trash2Icon className="w-5 h-5 text-red-600" />
-                                                        </div>
-                                                        <div>
-                                                            <h3 className="text-lg font-semibold text-gray-900">
-                                                                Are you sure you want to delete this space?
-                                                            </h3>
-                                                            <p className="text-sm text-gray-600">
-                                                                This action cannot be undone. All data associated with this space will be permanently removed.
-                                                            </p>
-                                                        </div>
+                                return (
+                                    <div
+                                        key={group.installId}
+                                        className="bg-white border border-gray-200 rounded-xl shadow-xs overflow-hidden transition-all hover:shadow-sm"
+                                    >
+                                        {/* Package Header */}
+                                        <div className="bg-gray-50/90 border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                                                    <Box className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                                        <h3 className="text-base font-bold text-gray-900">
+                                                            {packageName}
+                                                        </h3>
+                                                        {packageVersion && (
+                                                            <span className="bg-gray-200/80 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-medium">
+                                                                v{packageVersion}
+                                                            </span>
+                                                        )}
+                                                        <span className="bg-blue-50 text-blue-700 border border-blue-100 text-xs px-2 py-0.5 rounded-full font-medium">
+                                                            {group.spaces.length} {group.spaces.length === 1 ? 'space' : 'spaces'}
+                                                        </span>
                                                     </div>
+                                                    {packageInfo && (
+                                                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                                                            {packageInfo}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
 
-                                                    <div className="bg-gray-50 p-4 rounded-lg">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${space.gradient} flex items-center justify-center text-white text-sm font-semibold`}>
+                                            {packageAuthor && (
+                                                <div className="text-xs text-gray-500 flex items-center gap-1.5 self-start md:self-auto">
+                                                    <Users className="w-3.5 h-3.5 text-gray-400" />
+                                                    <span>{packageAuthor}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Spaces in this package */}
+                                        <div className="divide-y divide-gray-100">
+                                            {group.spaces.map((space) => {
+                                                const isFav = favorites.includes(space.space_id);
+                                                return (
+                                                    <div
+                                                        key={space.space_id}
+                                                        className="px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/60 transition-colors"
+                                                    >
+                                                        <div className="flex items-center gap-3 flex-wrap">
+                                                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${space.gradient} flex items-center justify-center text-white text-xs font-bold shadow-xs`}>
                                                                 #{space.space_id}
                                                             </div>
-                                                            <div>
-                                                                <p className="font-medium text-gray-900">{space.package_name}</p>
-                                                                <p className="text-sm text-gray-600">{space.package_info}</p>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-mono text-sm font-semibold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md">
+                                                                    {space.namespace_key}
+                                                                </span>
+                                                                {space.is_plugin ? (
+                                                                    <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-purple-200">
+                                                                        <Plug className="w-3 h-3" /> Plugin
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-medium border border-emerald-200">
+                                                                        App
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
+
+                                                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (isFav) {
+                                                                        removeFavorite(space.space_id);
+                                                                    } else {
+                                                                        addFavorite(space.space_id);
+                                                                    }
+                                                                }}
+                                                                className="p-2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer rounded-lg hover:bg-gray-100"
+                                                                title={isFav ? "Remove from favorites" : "Add to favorites"}
+                                                            >
+                                                                <Heart className={`w-4 h-4 ${isFav ? 'fill-red-500 text-red-500' : ''}`} />
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    router.push(`/portal/admin/exec?nskey=${space.namespace_key}&space_id=${space.space_id}`);
+                                                                }}
+                                                                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                                                            >
+                                                                <CloudLightning className="w-3.5 h-3.5" />
+                                                                <span>Run</span>
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const params = new URLSearchParams();
+                                                                    params.set("install_id", space.install_id.toString());
+                                                                    params.set("space_id", space.space_id.toString());
+                                                                    params.set("namespace_key", space.namespace_key);
+                                                                    params.set("nskey", space.namespace_key);
+                                                                    params.set("package_version_id", space.package_version_id.toString());
+                                                                    router.push(`/portal/admin/spaces/tools/overview?${params.toString()}`);
+                                                                }}
+                                                                className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                                                title="Tools & Settings"
+                                                            >
+                                                                <Wrench className="w-3.5 h-3.5" />
+                                                                <span className="hidden md:inline">Tools</span>
+                                                            </button>
+
+                                                            <ActionDropdown onClick={(action) => handleAction(action, space)} />
+                                                        </div>
                                                     </div>
-
-                                                    <div className="flex gap-3 justify-end">
-                                                        <button
-                                                            onClick={() => gapp.modal.closeModal()}
-                                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                try {
-                                                                    await deletePackage(installId);
-                                                                    loader.reload();
-                                                                    gapp.modal.closeModal();
-                                                                } catch (error) {
-                                                                    console.error('Failed to delete space:', error);
-                                                                    // You might want to show an error message here
-                                                                }
-                                                            }}
-                                                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-                                                        >
-                                                            Delete Space
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ),
-                                            size: "md"
-                                        });
-                                    } else if (action === "run") {
-                                        router.push(`/portal/admin/exec?${params.toString()}`);
-                                    } else if (action === "tools") {
-                                        router.push(`/portal/admin/spaces/tools/overview?${params.toString()}`);
-                                    }
-
-                                }}
-
-                                space={{
-                                    id: space.space_id,
-                                    title: space.package_name,
-                                    description: space.package_info,
-                                    author: space.package_author,
-                                    // timeAgo: space.package_created_at,
-                                    gradient: space.gradient,
-                                    nskey: space.namespace_key,
-                                }} />
-                        })}
-                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
         </WithAdminBodyLayout>
-
     );
 };
 
 const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { space: any, actionHandler: any, isFavorite: boolean, onToggleFavorite: () => void }) => {
     const router = useRouter();
 
-    console.log("space", space);
-
-
     return (
-
         <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${space.gradient} p-6 text-white min-h-[200px] group hover:scale-105 transition-transform duration-200 `}>
             <div className="flex flex-col h-full justify-between">
                 <div>
-
                     <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-sm flex-wrap">
                             <span className="font-semibold">
                                 #{space.id}
                             </span>
-                            <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm">
+                            <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm font-mono">
                                 {space.nskey}
                             </span>
+                            {space.is_plugin && (
+                                <span className="bg-purple-600/80 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                                    <Plug className="w-3 h-3" /> Plugin
+                                </span>
+                            )}
                             {space.mcp && (
                                 <span className="bg-pink-500/80 px-2 py-1 rounded text-xs">🔥 MCP</span>
                             )}
@@ -313,7 +561,6 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
                                 />
                             </button>
                         </div>
-
                     </div>
 
                     <h3 className="text-xl font-bold mb-2">{space.title}</h3>
@@ -335,15 +582,11 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
                     </div>
 
                     <div className="flex gap-2">
-                        {/* Run Action and other action drop down */}
-
                         <button
-
                             className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
                             onClick={() => {
                                 router.push(`/portal/admin/exec?nskey=${space.nskey}&space_id=${space.id}`);
                             }}
-
                         >
                             <CloudLightning className="w-4 h-4" />
                             <span>Run</span>
@@ -351,13 +594,10 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
 
                         <ActionDropdown onClick={actionHandler} />
                     </div>
-
-
-
                 </div>
             </div>
         </div>
-    )
+    );
 };
 
 

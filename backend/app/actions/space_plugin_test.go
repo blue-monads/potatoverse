@@ -92,16 +92,21 @@ func TestSpacePlugin_CRUDAndFiltering(t *testing.T) {
 		t.Fatalf("failed to install pluginSpace: %v", err)
 	}
 
-	// 3. Test ListInstalledSpaces does not include AppPlugin
+	// 3. Test ListInstalledSpaces includes AppPlugin (filtering is handled in frontend)
 	installedSpaces, err := ctrl.ListInstalledSpaces(userId)
 	if err != nil {
 		t.Fatalf("ListInstalledSpaces failed: %v", err)
 	}
 
+	var foundPluginSpace bool
 	for _, s := range installedSpaces.Spaces {
-		if s.ID == pluginSpaceId || s.SpaceType == "AppPlugin" {
-			t.Fatalf("ListInstalledSpaces should not list AppPlugin space %d", s.ID)
+		if s.ID == pluginSpaceId && s.SpaceType == "AppPlugin" {
+			foundPluginSpace = true
+			break
 		}
+	}
+	if !foundPluginSpace {
+		t.Fatalf("ListInstalledSpaces should include AppPlugin space %d", pluginSpaceId)
 	}
 
 	var foundSpace1 bool
