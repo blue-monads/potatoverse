@@ -146,6 +146,7 @@ export const createUserDirectly = async (data: {
 
 // User Groups API
 export interface UserGroup {
+    id?: number;
     name: string;
     info: string;
     created_at?: string;
@@ -829,6 +830,47 @@ export const updateSpaceUser = async (installId: number, spaceUserId: number, da
 
 export const deleteSpaceUser = async (installId: number, spaceUserId: number) => {
     return iaxios.delete<void>(`/core/space/${installId}/users/${spaceUserId}`);
+}
+
+// Space User Groups API
+export interface SpaceUserGroup {
+    id: number;
+    group_id: number;
+    install_id: number;
+    space_id: number;
+    scope: string;
+    extrameta: string;
+}
+
+export const listSpaceUserGroups = async (installId: number, spaceId?: number, groupId?: number, scope?: string) => {
+    return iaxios.get<SpaceUserGroup[]>(`/core/space/${installId}/user_groups`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+            ...(groupId !== undefined && { group_id: groupId }),
+            ...(scope && { scope }),
+        },
+    });
+}
+
+export const getSpaceUserGroup = async (installId: number, spaceUserGroupId: number) => {
+    return iaxios.get<SpaceUserGroup>(`/core/space/${installId}/user_groups/${spaceUserGroupId}`);
+}
+
+export const createSpaceUserGroup = async (installId: number, data: {
+    group_id: number;
+    space_id?: number; // 0 or omitted for package-level, >0 for space-level
+    scope?: string;
+    extrameta?: string;
+}) => {
+    return iaxios.post<SpaceUserGroup>(`/core/space/${installId}/user_groups`, data);
+}
+
+export const updateSpaceUserGroup = async (installId: number, spaceUserGroupId: number, data: Partial<SpaceUserGroup>) => {
+    return iaxios.put<SpaceUserGroup>(`/core/space/${installId}/user_groups/${spaceUserGroupId}`, data);
+}
+
+export const deleteSpaceUserGroup = async (installId: number, spaceUserGroupId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/user_groups/${spaceUserGroupId}`);
 }
 
 // Signals API

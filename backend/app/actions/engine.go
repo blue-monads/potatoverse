@@ -111,25 +111,23 @@ func (c *Controller) IsUserPackageAdmin(userId, installId int64) error {
 	pkg, err := pkgOps.GetPackage(installId)
 
 	if user.Ugroup != "admin" && pkg.InstalledBy != userId {
+		hasAdminScope := false
 
 		users, err := sops.QuerySpaceUsers(pkg.ID, map[any]any{
 			"user_id": userId,
 		})
-
-		if err != nil {
-			return nil
+		if err == nil {
+			for _, currUser := range users {
+				if currUser.Scope == "core.admin" || currUser.Scope == "*" {
+					hasAdminScope = true
+					break
+				}
+			}
 		}
 
-		if len(users) == 0 {
+		if !hasAdminScope && !c.userHasGroupPackageAdmin(user.Ugroup, pkg.ID) {
 			return ErrUserNotAllowed
 		}
-
-		currUser := users[0]
-
-		if currUser.Scope != "core.admin" && currUser.Scope != "*" {
-			return ErrUserNotAllowed
-		}
-
 	}
 
 	return nil
@@ -155,19 +153,23 @@ func (c *Controller) AuthorizeSpace(userId int64, req SpaceAuth) (string, error)
 	}
 
 	if user.Ugroup != "admin" && space.OwnerID != userId {
+		hasAccess := false
 
 		users, err := sops.QuerySpaceUsers(space.InstalledId, map[any]any{
 			"user_id": userId,
 		})
-
-		if err != nil {
-			return "", nil
+		if err == nil {
+			for _, u := range users {
+				if u.SpaceID == 0 || u.SpaceID == space.ID {
+					hasAccess = true
+					break
+				}
+			}
 		}
 
-		if len(users) == 0 {
+		if !hasAccess && !c.userHasGroupSpaceAccess(user.Ugroup, space.InstalledId, space.ID) {
 			return "", ErrUserNotAllowed
 		}
-
 	}
 
 	return c.signer.SignSpace(&signer.SpaceClaim{
@@ -246,3 +248,48 @@ func (c *Controller) GetSpaceSpec(installedId int64) ([]byte, error) {
 
 	return content, nil
 }
+
+func (c *Controller) userHasGroupPackageAdmin(ugroupName string, installId int64) bool {
+	if ugroupName == "" {
+		return false
+	}
+	ugroup, err := c.database.GetUserOps().GetUserGroup(ugroupName)
+	if err != nil || ugroup == nil {
+		return false
+	}
+	groups, err := c.database.GetSpaceOps().QuerySpaceUserGroups(installId, map[any]any{
+		"group_id": ugroup.ID,
+	})
+	if err != nil {
+		return false
+	}
+	for _, currGroup := range groups {
+		if currGroup.Scope == "core.admin" || currGroup.Scope == "*" {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Controller) userHasGroupSpaceAccess(ugroupName string, installId, spaceId int64) bool {
+	if ugroupName == "" {
+		return false
+	}
+	ugroup, err := c.database.GetUserOps().GetUserGroup(ugroupName)
+	if err != nil || ugroup == nil {
+		return false
+	}
+	groups, err := c.database.GetSpaceOps().QuerySpaceUserGroups(installId, map[any]any{
+		"group_id": ugroup.ID,
+	})
+	if err != nil {
+		return false
+	}
+	for _, g := range groups {
+		if g.SpaceID == 0 || g.SpaceID == spaceId {
+			return true
+		}
+	}
+	return false
+}
+

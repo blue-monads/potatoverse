@@ -3,6 +3,7 @@ package dbmodels
 import "time"
 
 type UserGroup struct {
+	ID        int64      `json:"id" db:"id,omitempty"`
 	Name      string     `json:"name" db:"name"`
 	Info      string     `json:"info" db:"info"`
 	CreatedAt *time.Time `json:"created_at" db:"created_at,omitempty"`

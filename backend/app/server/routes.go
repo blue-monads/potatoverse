@@ -194,6 +194,13 @@ func (a *Server) engineRoutes(zg *gin.RouterGroup, coreApi *gin.RouterGroup) {
 	coreApi.PUT("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.UpdateSpaceUser))
 	coreApi.DELETE("/space/:install_id/users/:spaceUserId", a.withAccessTokenFn(a.DeleteSpaceUser))
 
+	// Space User Groups API
+	coreApi.GET("/space/:install_id/user_groups", a.withAccessTokenFn(a.ListSpaceUserGroups))
+	coreApi.GET("/space/:install_id/user_groups/:spaceUserGroupId", a.withAccessTokenFn(a.GetSpaceUserGroup))
+	coreApi.POST("/space/:install_id/user_groups", a.withAccessTokenFn(a.CreateSpaceUserGroup))
+	coreApi.PUT("/space/:install_id/user_groups/:spaceUserGroupId", a.withAccessTokenFn(a.UpdateSpaceUserGroup))
+	coreApi.DELETE("/space/:install_id/user_groups/:spaceUserGroupId", a.withAccessTokenFn(a.DeleteSpaceUserGroup))
+
 	// Signals API
 	coreApi.GET("/space/:install_id/signals", a.withAccessTokenFn(a.ListSignals))
 	coreApi.GET("/space/:install_id/signals/:signalId", a.withAccessTokenFn(a.GetSignal))

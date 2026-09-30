@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS UserGroups (
   info TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  on_login_redirect TEXT NOT NULL DEFAULT '@admin_portal', --REDIRRECT AFTER LOGIN: @portal/admin, @portal/normal, @package-name, /some_xyz_path
   extrameta JSON NOT NULL DEFAULT '{}',
   UNIQUE(name)
 );
@@ -207,6 +208,16 @@ CREATE TABLE IF NOT EXISTS SpaceUsers (
   extrameta JSON NOT NULL DEFAULT '{}', 
   token TEXT NOT NULL DEFAULT '',
   unique(install_id, space_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS SpaceUserGroups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, 
+  group_id INTEGER NOT NULL,
+  install_id INTEGER NOT NULL,
+  space_id INTEGER NOT NULL DEFAULT 0, 
+  scope TEXT NOT NULL DEFAULT '', 
+  extrameta JSON NOT NULL DEFAULT '{}', 
+  unique(install_id, space_id, group_id)
 );
 
 

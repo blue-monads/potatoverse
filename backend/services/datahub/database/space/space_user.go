@@ -9,7 +9,9 @@ func (d *SpaceOperations) QuerySpaceUsers(installId int64, cond map[any]any) ([]
 	table := d.spaceUserTable()
 	datas := make([]dbmodels.SpaceUser, 0)
 
-	cond["install_id"] = installId
+	if installId != 0 {
+		cond["install_id"] = installId
+	}
 
 	err := table.Find(db.Cond(cond)).All(&datas)
 	if err != nil {

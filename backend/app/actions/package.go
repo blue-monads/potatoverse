@@ -28,23 +28,32 @@ type InstalledSpace struct {
 }
 
 func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
+	sops := c.database.GetSpaceOps()
+	uops := c.database.GetUserOps()
 
-	ownspaces, err := c.database.GetSpaceOps().ListOwnSpaces(userId, "")
+	ownspaces, err := sops.ListOwnSpaces(userId, "")
 	if err != nil {
 		return nil, err
 	}
 
-	tpSpaces, err := c.database.GetSpaceOps().ListThirdPartySpaces(userId, "")
+	tpSpaces, err := sops.ListThirdPartySpaces(userId, "")
 	if err != nil {
 		return nil, err
 	}
 
-	installedIds := make([]int64, 0, len(ownspaces)+len(tpSpaces))
-	for _, space := range ownspaces {
-		installedIds = append(installedIds, space.InstalledId)
+	allCandidateSpaces := make([]dbmodels.Space, 0, len(ownspaces)+len(tpSpaces))
+	allCandidateSpaces = append(allCandidateSpaces, ownspaces...)
+	allCandidateSpaces = append(allCandidateSpaces, tpSpaces...)
+	allCandidateSpaces = append(allCandidateSpaces, c.listPackageLevelUserSpaces(userId)...)
+
+	// Check group access
+	user, err := uops.GetUser(userId)
+	if err == nil && user != nil {
+		allCandidateSpaces = append(allCandidateSpaces, c.listGroupAccessibleSpaces(user.Ugroup)...)
 	}
 
-	for _, space := range tpSpaces {
+	installedIds := make([]int64, 0, len(allCandidateSpaces))
+	for _, space := range allCandidateSpaces {
 		installedIds = append(installedIds, space.InstalledId)
 	}
 
@@ -64,7 +73,7 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		return nil, err
 	}
 
-	finalSpaces := make([]dbmodels.Space, 0, len(ownspaces)+len(tpSpaces))
+	finalSpaces := make([]dbmodels.Space, 0, len(allCandidateSpaces))
 	hasPackageMap := make(map[int64]struct{})
 	hasSpaceMap := make(map[int64]struct{})
 
@@ -72,21 +81,7 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		hasPackageMap[pkg.ID] = struct{}{}
 	}
 
-	for _, space := range ownspaces {
-		if space.SpaceType == "AppPlugin" {
-			continue
-		}
-		if _, ok := hasPackageMap[space.InstalledId]; ok {
-
-			if _, ok := hasSpaceMap[space.ID]; !ok {
-				finalSpaces = append(finalSpaces, space)
-				hasSpaceMap[space.ID] = struct{}{}
-			}
-
-		}
-	}
-
-	for _, space := range tpSpaces {
+	for _, space := range allCandidateSpaces {
 		if space.SpaceType == "AppPlugin" {
 			continue
 		}
@@ -221,3 +216,61 @@ func (c *Controller) UpdateEnvs(packageId int64, envs map[string]string) error {
 		"env_vars": string(raw),
 	})
 }
+
+func (c *Controller) listPackageLevelUserSpaces(userId int64) []dbmodels.Space {
+	sops := c.database.GetSpaceOps()
+	userDirectSpaceEntries, err := sops.QuerySpaceUsers(0, map[any]any{
+		"user_id":  userId,
+		"space_id": 0,
+	})
+	if err != nil {
+		return nil
+	}
+
+	var spaces []dbmodels.Space
+	for _, entry := range userDirectSpaceEntries {
+		pkgSpaces, err := sops.ListSpacesByPackageId(entry.InstallID)
+		if err == nil {
+			spaces = append(spaces, pkgSpaces...)
+		}
+	}
+	return spaces
+}
+
+func (c *Controller) listGroupAccessibleSpaces(ugroupName string) []dbmodels.Space {
+	if ugroupName == "" {
+		return nil
+	}
+	uops := c.database.GetUserOps()
+	sops := c.database.GetSpaceOps()
+
+	ugroup, err := uops.GetUserGroup(ugroupName)
+	if err != nil || ugroup == nil {
+		return nil
+	}
+
+	groupEntries, err := sops.QuerySpaceUserGroups(0, map[any]any{
+		"group_id": ugroup.ID,
+	})
+	if err != nil {
+		return nil
+	}
+
+	var spaces []dbmodels.Space
+	for _, g := range groupEntries {
+		if g.SpaceID > 0 {
+			sp, err := sops.GetSpace(g.SpaceID)
+			if err == nil && sp != nil {
+				spaces = append(spaces, *sp)
+			}
+		} else {
+			// Package-level grant: include all spaces of this install
+			pkgSpaces, err := sops.ListSpacesByPackageId(g.InstallID)
+			if err == nil {
+				spaces = append(spaces, pkgSpaces...)
+			}
+		}
+	}
+	return spaces
+}
+

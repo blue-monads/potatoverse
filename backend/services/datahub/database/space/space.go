@@ -217,6 +217,10 @@ func (d *SpaceOperations) spaceUserTable() db.Collection {
 	return d.db.Collection("SpaceUsers")
 }
 
+func (d *SpaceOperations) spaceUserGroupTable() db.Collection {
+	return d.db.Collection("SpaceUserGroups")
+}
+
 func (d *SpaceOperations) isOwner(ownerid int64, spaceId int64) bool {
 	exist, err := d.spaceTable().Find(db.Cond{"owned_by": ownerid, "id": spaceId}).Exists()
 

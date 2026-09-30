@@ -57,6 +57,7 @@ type GlobalOps interface {
 type UserOps interface {
 	AddUserGroup(name string, info string) error
 	GetUserGroup(name string) (*dbmodels.UserGroup, error)
+	GetUserGroupByID(id int64) (*dbmodels.UserGroup, error)
 	ListUserGroups() ([]dbmodels.UserGroup, error)
 	UpdateUserGroup(name string, info string) error
 	DeleteUserGroup(name string) error
@@ -159,6 +160,13 @@ type SpaceOps interface {
 	GetSpaceUser(installId int64, id int64) (*dbmodels.SpaceUser, error)
 	UpdateSpaceUser(installId int64, id int64, data map[string]any) error
 	RemoveSpaceUser(installId int64, id int64) error
+
+	// Space User Groups
+	QuerySpaceUserGroups(installId int64, cond map[any]any) ([]dbmodels.SpaceUserGroup, error)
+	AddSpaceUserGroup(installId int64, data *dbmodels.SpaceUserGroup) (int64, error)
+	GetSpaceUserGroup(installId int64, id int64) (*dbmodels.SpaceUserGroup, error)
+	UpdateSpaceUserGroup(installId int64, id int64, data map[string]any) error
+	RemoveSpaceUserGroup(installId int64, id int64) error
 
 	// Space Plugins
 	AddSpacePlugin(data *dbmodels.SpacePlugin) (int64, error)

@@ -376,3 +376,137 @@ func (a *Server) DeleteSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (a
 
 	return gin.H{"message": "Space user deleted successfully"}, nil
 }
+
+// ListSpaceUserGroups lists all user groups for a space/package
+func (a *Server) ListSpaceUserGroups(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	// Get query parameters for filtering
+	spaceIdParam := ctx.Query("space_id")
+	groupIdParam := ctx.Query("group_id")
+	scopeParam := ctx.Query("scope")
+
+	// Build condition map
+	cond := make(map[any]any)
+	if spaceIdParam != "" {
+		spaceId, err := strconv.ParseInt(spaceIdParam, 10, 64)
+		if err == nil {
+			cond["space_id"] = spaceId
+		}
+	}
+	if groupIdParam != "" {
+		groupId, err := strconv.ParseInt(groupIdParam, 10, 64)
+		if err == nil {
+			cond["group_id"] = groupId
+		}
+	}
+	if scopeParam != "" {
+		cond["scope"] = scopeParam
+	}
+
+	groups, err := a.ctrl.QuerySpaceUserGroups(installId, cond)
+	if err != nil {
+		return nil, err
+	}
+
+	return groups, nil
+}
+
+// GetSpaceUserGroup gets a specific space user group by ID
+func (a *Server) GetSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceUserGroupId, err := strconv.ParseInt(ctx.Param("spaceUserGroupId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	spaceUserGroup, err := a.ctrl.GetSpaceUserGroupByID(installId, spaceUserGroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaceUserGroup, nil
+}
+
+// CreateSpaceUserGroup creates a new space user group
+func (a *Server) CreateSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	var groupData map[string]any
+	if err := ctx.ShouldBindJSON(&groupData); err != nil {
+		return nil, err
+	}
+
+	spaceUserGroup, err := a.ctrl.CreateSpaceUserGroup(installId, groupData)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaceUserGroup, nil
+}
+
+// UpdateSpaceUserGroup updates an existing space user group
+func (a *Server) UpdateSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceUserGroupId, err := strconv.ParseInt(ctx.Param("spaceUserGroupId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	var updateData map[string]any
+	if err := ctx.ShouldBindJSON(&updateData); err != nil {
+		return nil, err
+	}
+
+	spaceUserGroup, err := a.ctrl.UpdateSpaceUserGroupByID(installId, spaceUserGroupId, updateData)
+	if err != nil {
+		return nil, err
+	}
+
+	return spaceUserGroup, nil
+}
+
+// DeleteSpaceUserGroup deletes a space user group
+func (a *Server) DeleteSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	spaceUserGroupId, err := strconv.ParseInt(ctx.Param("spaceUserGroupId"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// fixme => permission check
+
+	err = a.ctrl.DeleteSpaceUserGroupByID(installId, spaceUserGroupId)
+	if err != nil {
+		return nil, err
+	}
+
+	return gin.H{"message": "Space user group deleted successfully"}, nil
+}
+
