@@ -44,7 +44,6 @@ var (
 
 func init() {
 	registerCapability(Name)
-	registerCapability("easy-ws") // deprecated
 }
 
 func registerCapability(name string) {
