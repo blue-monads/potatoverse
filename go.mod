@@ -6,7 +6,6 @@ require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/alecthomas/repr v0.5.1
 	github.com/aurowora/compress v0.0.0-20230724224640-6512772d482f
-	github.com/brianvoe/gofakeit/v7 v7.14.0
 	github.com/btcsuite/btcd/btcutil v1.1.6
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
@@ -21,6 +20,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/mattn/go-sqlite3 v1.14.42
+	github.com/mochi-mqtt/server/v2 v2.7.9
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/nbd-wtf/go-nostr v0.52.3
 	github.com/ncruces/go-sqlite3 v0.30.4
@@ -31,8 +31,8 @@ require (
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
 	github.com/spf13/afero v1.15.0
 	github.com/tidwall/gjson v1.18.0
-	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/wal v1.2.1
+	github.com/tursodatabase/turso-go-platform-libs v0.6.1
 	github.com/tyler-smith/go-bip39 v1.1.0
 	github.com/upper/db/v4 v4.7.0
 	github.com/yuin/gopher-lua v1.1.1
@@ -76,6 +76,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/google/jsonschema-go v0.3.0 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
@@ -98,14 +99,15 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/rs/cors v1.11.1 // indirect
+	github.com/rs/xid v1.4.0 // indirect
 	github.com/savsgio/gotils v0.0.0-20240704082632-aef3928b8a38 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/studio-b12/gowebdav v0.11.0 // indirect
 	github.com/superfly/ltx v0.5.1 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/tinylru v1.1.0 // indirect
-	github.com/tursodatabase/turso-go-platform-libs v0.6.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/tyler-smith/go-bip32 v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
