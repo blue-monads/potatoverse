@@ -364,9 +364,10 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 	}
 
 	return &SpaceInfo{
-		ID:           space.ID,
-		NamespaceKey: space.NamespaceKey,
-		PackageName:  pkg.Name,
+		ID:            space.ID,
+		NamespaceKey:  space.NamespaceKey,
+		OwnsNamespace: true,
+		PackageName:   pkg.Name,
 	}, nil
 
 }

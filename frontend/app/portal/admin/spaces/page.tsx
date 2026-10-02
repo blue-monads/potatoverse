@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2, BoltIcon, List, Plug, Wrench } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Heart, Users, Zap, Image, Box, Octagon, SquareUserRound, BadgeDollarSign, BookOpenText, BookHeart, BriefcaseBusiness, Drama, Bolt, CloudLightning, ScrollText, Files, Grid2x2Plus, Cog, Trash2Icon, FileCode2, BoltIcon, List, Plug, Wrench, AlertTriangle, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import WithAdminBodyLayout from '@/contain/Layouts/WithAdminBodyLayout';
 import BigSearchBar from '@/contain/compo/BigSearchBar';
 import { AddButton } from '@/contain/AddButton';
 import { GAppStateHandle, ModalHandle, useGApp } from '@/hooks';
 import { Tabs } from '@skeletonlabs/skeleton-react';
-import { deletePackage, formatSpace, FormattedSpace, InstalledSpace, installPackage, installPackageZip, listInstalledSpaces, Package, Space } from '@/lib';
+import { deletePackage, formatSpace, FormattedSpace, InstalledSpace, installPackage, installPackageZip, isWildcardHost, listInstalledSpaces, Package, Space } from '@/lib';
 import useSimpleDataLoader from '@/hooks/useSimpleDataLoader';
 import { staticGradients } from '@/app/utils';
 import { useRouter } from 'next/navigation';
@@ -34,6 +34,7 @@ const SpacesDirectory = () => {
     const router = useRouter();
     const { favorites, addFavorite, removeFavorite } = useFavorites();
     const [formattedSpaces, setFormattedSpaces] = useState<FormattedSpace[]>([]);
+    const [showDomainInfo, setShowDomainInfo] = useState(false);
 
     useEffect(() => {
         try {
@@ -154,6 +155,53 @@ const SpacesDirectory = () => {
         return groups;
     }, [loader.data, displaySpaces]);
 
+    const configuredHosts = useMemo(() => {
+        if (loader.data?.hosts && loader.data.hosts.length > 0) {
+            return loader.data.hosts;
+        }
+        if (typeof window !== 'undefined' && (window as any).__potato_attrs__?.site_hosts) {
+            return ((window as any).__potato_attrs__.site_hosts as string)
+                .split(',')
+                .map((h) => h.trim())
+                .filter(Boolean);
+        }
+        return [];
+    }, [loader.data?.hosts]);
+
+    const isCurrentHostWildcard = useMemo(() => {
+        if (typeof window === 'undefined') return false;
+        return isWildcardHost(configuredHosts, window.location.host);
+    }, [configuredHosts]);
+
+    const spaceConflictMap = useMemo(() => {
+        const result = new Map<number, { isConflict: boolean; winnerSpaceId: number }>();
+        if (isCurrentHostWildcard) {
+            return result;
+        }
+
+        const spacesByNs = new Map<string, number[]>();
+        const allSpaces = loader.data?.spaces || [];
+
+        for (const s of allSpaces) {
+            const list = spacesByNs.get(s.namespace_key) || [];
+            list.push(s.id);
+            spacesByNs.set(s.namespace_key, list);
+        }
+
+        for (const [_, ids] of spacesByNs.entries()) {
+            if (ids.length <= 1) continue;
+            // On non-wildcard domains, lowest space ID wins the namespace
+            const minId = Math.min(...ids);
+            for (const id of ids) {
+                if (id !== minId) {
+                    result.set(id, { isConflict: true, winnerSpaceId: minId });
+                }
+            }
+        }
+
+        return result;
+    }, [isCurrentHostWildcard, loader.data?.spaces]);
+
     const handleAction = async (action: string, space: FormattedSpace) => {
         const installId = space.install_id;
         const spaceId = space.space_id;
@@ -161,6 +209,10 @@ const SpacesDirectory = () => {
         const packageVersionId = space.package_version_id;
 
         if (action === "run") {
+            const conflict = spaceConflictMap.get(spaceId);
+            if (conflict?.isConflict) {
+                return;
+            }
             if (!spaceId) {
                 return;
             }
@@ -269,6 +321,30 @@ const SpacesDirectory = () => {
                             <span className="text-xs px-2.5 py-0.5 bg-gray-100 text-gray-600 rounded-full font-medium">
                                 {displaySpaces.length}
                             </span>
+                            {isCurrentHostWildcard ? (
+                                <span
+                                    className="text-xs px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-medium"
+                                    title="Current domain has wildcard support (*.domain). Spaces run in isolated subdomains."
+                                >
+                                    Wildcard Domain
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDomainInfo((prev) => !prev)}
+                                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                                        showDomainInfo
+                                            ? 'bg-amber-200/90 text-amber-900 border-amber-400 ring-2 ring-amber-300'
+                                            : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                    }`}
+                                    title="Click to view details about non-wildcard domain behavior and namespace collisions"
+                                >
+                                    {spaceConflictMap.size > 0 && (
+                                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                    )}
+                                    <span>Non-wildcard Domain</span>
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-3 flex-wrap">
@@ -352,6 +428,30 @@ const SpacesDirectory = () => {
                         </div>
                     </div>
 
+                    {showDomainInfo && (
+                        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start justify-between gap-3 text-sm text-amber-800 animate-in fade-in duration-150">
+                            <div className="flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-semibold text-amber-900">
+                                        Namespace Collision Detected on Non-Wildcard Domain
+                                    </p>
+                                    <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                                        Under this non-wildcard domain, all apps mount directly under <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">/zz/space/&lt;namespace&gt;</code> without dedicated subdomains. Only the earliest installed space owns the namespace. Conflicting duplicate spaces have their namespace key striked and &ldquo;Run&rdquo; disabled. To run both, configure and access via a wildcard domain (e.g. <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">*.localhost</code> or <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">*.example.com</code>).
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowDomainInfo(false)}
+                                className="text-amber-500 hover:text-amber-800 p-1 rounded-md transition-colors cursor-pointer shrink-0"
+                                title="Close"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+
                     {loader.data?.spaces.length === 0 && <EmptySpacesState />}
 
                     {loader.loading && (<><SimpleLoader /></>)}
@@ -388,6 +488,7 @@ const SpacesDirectory = () => {
                     {viewMode === 'cards' && displaySpaces.length > 0 && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {displaySpaces.map((space) => {
+                                const conflict = spaceConflictMap.get(space.space_id);
                                 return (
                                     <SpaceCard
                                         key={space.space_id}
@@ -408,6 +509,8 @@ const SpacesDirectory = () => {
                                             gradient: space.gradient,
                                             nskey: space.namespace_key,
                                             is_plugin: space.is_plugin,
+                                            isConflict: conflict?.isConflict,
+                                            winnerSpaceId: conflict?.winnerSpaceId,
                                         }}
                                     />
                                 );
@@ -469,6 +572,9 @@ const SpacesDirectory = () => {
                                         <div className="divide-y divide-gray-100">
                                             {group.spaces.map((space) => {
                                                 const isFav = favorites.includes(space.space_id);
+                                                const conflict = spaceConflictMap.get(space.space_id);
+                                                const isConflict = Boolean(conflict?.isConflict);
+                                                const winnerSpaceId = conflict?.winnerSpaceId;
                                                 return (
                                                     <div
                                                         key={space.space_id}
@@ -479,9 +585,28 @@ const SpacesDirectory = () => {
                                                                 #{space.space_id}
                                                             </div>
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="font-mono text-sm font-semibold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md">
+                                                                <span
+                                                                    className={`font-mono text-sm font-semibold px-2.5 py-1 rounded-md transition-colors ${
+                                                                        isConflict
+                                                                            ? 'line-through text-red-600 bg-red-50 decoration-red-500 decoration-2'
+                                                                            : 'text-gray-900 bg-gray-100'
+                                                                    }`}
+                                                                    title={
+                                                                        isConflict
+                                                                            ? `Namespace collision: taken by space #${winnerSpaceId} on non-wildcard domain`
+                                                                            : undefined
+                                                                    }
+                                                                >
                                                                     {space.namespace_key}
                                                                 </span>
+                                                                {isConflict && (
+                                                                    <span
+                                                                        className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium border border-red-200"
+                                                                        title={`Namespace is taken by Space #${winnerSpaceId} on this non-wildcard domain`}
+                                                                    >
+                                                                        Conflict
+                                                                    </span>
+                                                                )}
                                                                 {space.is_plugin ? (
                                                                     <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-purple-200">
                                                                         <Plug className="w-3 h-3" /> Plugin
@@ -512,10 +637,21 @@ const SpacesDirectory = () => {
 
                                                             <button
                                                                 type="button"
+                                                                disabled={isConflict}
                                                                 onClick={() => {
+                                                                    if (isConflict) return;
                                                                     router.push(`/portal/admin/exec?nskey=${space.namespace_key}&space_id=${space.space_id}`);
                                                                 }}
-                                                                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                                                                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                                                                    isConflict
+                                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50'
+                                                                        : 'bg-blue-50 text-blue-600 hover:bg-blue-100 cursor-pointer'
+                                                                }`}
+                                                                title={
+                                                                    isConflict
+                                                                        ? `Run disabled: namespace taken by space #${winnerSpaceId} on non-wildcard domain`
+                                                                        : undefined
+                                                                }
                                                             >
                                                                 <CloudLightning className="w-3.5 h-3.5" />
                                                                 <span>Run</span>
@@ -539,7 +675,10 @@ const SpacesDirectory = () => {
                                                                 <span className="hidden md:inline">Tools</span>
                                                             </button>
 
-                                                            <ActionDropdown onClick={(action) => handleAction(action, space)} />
+                                                            <ActionDropdown
+                                                                disableRun={isConflict}
+                                                                onClick={(action) => handleAction(action, space)}
+                                                            />
                                                         </div>
                                                     </div>
                                                 );
@@ -568,9 +707,26 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
                             <span className="font-semibold">
                                 #{space.id}
                             </span>
-                            <span className="bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm font-mono">
+                            <span
+                                className={`bg-white/20 backdrop-blur-sm px-2 py-1 rounded text-sm font-mono ${
+                                    space.isConflict ? 'line-through text-red-200 decoration-red-400 decoration-2' : ''
+                                }`}
+                                title={
+                                    space.isConflict
+                                        ? `Namespace collision: taken by space #${space.winnerSpaceId} on non-wildcard domain`
+                                        : undefined
+                                }
+                            >
                                 {space.nskey}
                             </span>
+                            {space.isConflict && (
+                                <span
+                                    className="bg-red-500/80 text-white px-2 py-0.5 rounded text-xs font-medium"
+                                    title={`Namespace conflict: taken by space #${space.winnerSpaceId} on this non-wildcard domain`}
+                                >
+                                    Conflict
+                                </span>
+                            )}
                             {space.is_plugin && (
                                 <span className="bg-purple-600/80 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
                                     <Plug className="w-3 h-3" /> Plugin
@@ -616,16 +772,30 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
 
                     <div className="flex gap-2">
                         <button
-                            className="flex items-center gap-1 text-xs bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/40 transition-colors cursor-pointer hover:text-blue-600"
+                            disabled={space.isConflict}
+                            className={`flex items-center gap-1 text-xs px-3 py-2 rounded-lg transition-colors ${
+                                space.isConflict
+                                    ? 'bg-white/10 text-white/40 cursor-not-allowed opacity-50'
+                                    : 'bg-white/20 backdrop-blur-sm hover:bg-white/40 cursor-pointer hover:text-blue-600'
+                            }`}
                             onClick={() => {
+                                if (space.isConflict) return;
                                 router.push(`/portal/admin/exec?nskey=${space.nskey}&space_id=${space.id}`);
                             }}
+                            title={
+                                space.isConflict
+                                    ? `Run disabled: namespace conflict on non-wildcard domain (owned by #${space.winnerSpaceId})`
+                                    : undefined
+                            }
                         >
                             <CloudLightning className="w-4 h-4" />
                             <span>Run</span>
                         </button>
 
-                        <ActionDropdown onClick={actionHandler} />
+                        <ActionDropdown
+                            disableRun={space.isConflict}
+                            onClick={actionHandler}
+                        />
                     </div>
                 </div>
             </div>
@@ -643,6 +813,7 @@ const actionsOptions = [
 
 interface ActionDropdownProps {
     onClick: (action: string) => void;
+    disableRun?: boolean;
 }
 
 const ActionDropdown = (props: ActionDropdownProps) => {
@@ -715,24 +886,34 @@ const ActionDropdown = (props: ActionDropdownProps) => {
                         left: buttonRect.right - 192,
                     }}
                 >
-                    {actionsOptions.map((option) => (
-                        <button
-                            key={option.id}
-                            onClick={async () => {
-                                console.log("clicked", option.id);
-                                props.onClick(option.id);
-                                setTimeout(() => {
-                                    setIsDropdownOpen(false);
-                                }, 100);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg text-gray-700 hover:text-blue-600 transition-colors hover:bg-gray-200 cursor-pointer "
-                        >
-                            <div className="inline-flex items-center gap-2">
-                                {option.icon}
-                                {option.label}
-                            </div>
-                        </button>
-                    ))}
+                    {actionsOptions.map((option) => {
+                        const isRunDisabled = option.id === "run" && props.disableRun;
+                        return (
+                            <button
+                                key={option.id}
+                                disabled={isRunDisabled}
+                                onClick={async () => {
+                                    if (isRunDisabled) return;
+                                    console.log("clicked", option.id);
+                                    props.onClick(option.id);
+                                    setTimeout(() => {
+                                        setIsDropdownOpen(false);
+                                    }, 100);
+                                }}
+                                className={`w-full text-left px-3 py-2 text-sm first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                                    isRunDisabled
+                                        ? 'text-gray-300 cursor-not-allowed line-through'
+                                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-200 cursor-pointer'
+                                }`}
+                                title={isRunDisabled ? "Run disabled: namespace conflict on non-wildcard domain" : undefined}
+                            >
+                                <div className="inline-flex items-center gap-2">
+                                    {option.icon}
+                                    {option.label}
+                                </div>
+                            </button>
+                        );
+                    })}
                 </div>,
                 document.body
             )}

@@ -25,6 +25,7 @@ func (c *Controller) ListRepos() ([]xtypes.RepoOptions, error) {
 type InstalledSpace struct {
 	Spaces   []dbmodels.Space          `json:"spaces"`
 	Packages []dbmodels.PackageVersion `json:"packages"`
+	Hosts    []string                  `json:"hosts,omitempty"`
 }
 
 func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) {
@@ -90,9 +91,18 @@ func (c *Controller) ListInstalledSpaces(userId int64) (*InstalledSpace, error) 
 		}
 	}
 
+	var hosts []string
+	if c.AppOpts != nil {
+		hosts = make([]string, len(c.AppOpts.Hosts))
+		for i, h := range c.AppOpts.Hosts {
+			hosts[i] = h.Name
+		}
+	}
+
 	return &InstalledSpace{
 		Spaces:   finalSpaces,
 		Packages: pversions,
+		Hosts:    hosts,
 	}, nil
 
 }

@@ -368,8 +368,9 @@ export interface Space {
 }
 
 export interface InstalledSpace {
-    spaces: Space[]
-    packages: Package[]
+    spaces: Space[];
+    packages: Package[];
+    hosts?: string[];
 }
 
 export const listInstalledSpaces = async () => {
