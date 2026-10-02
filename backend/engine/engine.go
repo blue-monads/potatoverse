@@ -84,7 +84,7 @@ func NewEngine(opt EngineOption) *Engine {
 		fullReload:       make(chan struct{}, 1),
 		stopEloop:        make(chan struct{}),
 
-		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
+		repoHub: repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
 	e.runtime.parent = e
@@ -247,13 +247,19 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 		return
 	}
 
-	e.runtime.ExecHttpQ(
+	err := e.runtime.ExecHttpQ(
 		sIndex.installedId,
 		sIndex.packageVersionId,
 		sIndex.spaceId,
 		ctx,
 	)
-
+	if err != nil {
+		e.logger.Error("error executing http request", "error", err)
+		ctx.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 }
 
 func (e *Engine) PluginApi(ctx *gin.Context) {
