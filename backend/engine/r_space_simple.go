@@ -8,25 +8,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (e *Engine) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem) {
+func (r *SpaceRouter) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem) {
 	qq.Println("@indexItem", indexItem)
 
 	filePath := ctx.Param("subpath")
 
-	e.processSimpleRoute(ctx, filePath, indexItem)
+	r.processSimpleRoute(ctx, filePath, indexItem)
 }
 
-func (e *Engine) processSimpleRoute(ctx *gin.Context, filePath string, indexItem *SpaceRouteIndexItem) {
+func (r *SpaceRouter) processSimpleRoute(ctx *gin.Context, filePath string, indexItem *SpaceRouteIndexItem) {
 
 	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
 
 	qq.Println("@simple_route/name", name)
 	qq.Println("@simple_route/path", path)
 
-	pFileOps := e.db.GetPackageFileOps()
+	pFileOps := r.engine.db.GetPackageFileOps()
 	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx)
 	if err != nil {
-		if !e.db.IsEmptyRowsError(err) {
+		if !r.engine.db.IsEmptyRowsError(err) {
 			httpx.WriteErr(ctx, err)
 			return
 		}

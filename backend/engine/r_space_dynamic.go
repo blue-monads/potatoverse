@@ -49,7 +49,7 @@ EXAMPLE
 
 */
 
-func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem) {
+func (r *SpaceRouter) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem) {
 
 	// Get the request path and method
 	requestPath := ctx.Param("subpath")
@@ -59,7 +59,7 @@ func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	qq.Println("@requestMethod", requestMethod)
 
 	// Find matching route
-	matchedRoute, pathParams := e.findMatchingRoute(indexItem, requestPath, requestMethod)
+	matchedRoute, pathParams := r.findMatchingRoute(indexItem, requestPath, requestMethod)
 
 	if matchedRoute == nil {
 		httpx.WriteErrString(ctx, "route not found")
@@ -74,28 +74,28 @@ func (e *Engine) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteIndexI
 	// Handle different route types
 	switch matchedRoute.Type {
 	case "static":
-		e.handleStaticRoute(ctx, indexItem, matchedRoute)
+		r.handleStaticRoute(ctx, indexItem, matchedRoute)
 	case "template":
-		e.handleTemplateRoute(ctx, indexItem, matchedRoute, pathParams)
+		r.handleTemplateRoute(ctx, indexItem, matchedRoute, pathParams)
 	case "api":
-		e.handleApiRoute(ctx, indexItem, matchedRoute, pathParams)
+		r.handleApiRoute(ctx, indexItem, matchedRoute, pathParams)
 	default:
 		httpx.WriteErrString(ctx, fmt.Sprintf("unsupported route type: %s", matchedRoute.Type))
 	}
 }
 
 // handleStaticRoute serves static files based on the route configuration
-func (e *Engine) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute) {
+func (r *SpaceRouter) handleStaticRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute) {
 	// Use the file specified in the route, or fall back to the request path
 	filePath := routeMatch.File
 	if filePath == "" {
 		filePath = ctx.Request.URL.Path
 	}
 
-	e.processSimpleRoute(ctx, filePath, indexItem)
+	r.processSimpleRoute(ctx, filePath, indexItem)
 }
 
-func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
+func (r *SpaceRouter) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
 	if routeMatch.Handler == "" {
 		httpx.WriteErrString(ctx, "template handler not specified")
 		return
@@ -105,7 +105,7 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttp(&xtypes.HttpEventOptions{
+	err := r.engine.runtime.ExecHttp(&xtypes.HttpEventOptions{
 		SpaceId:     indexItem.spaceId,
 		Request:     ctx,
 		HandlerName: routeMatch.Handler,
@@ -132,7 +132,7 @@ func (e *Engine) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 }
 
 // handleApiRoute handles API endpoints
-func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
+func (r *SpaceRouter) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem, routeMatch *models.PotatoRoute, pathParams map[string]string) {
 	if routeMatch.Handler == "" {
 		httpx.WriteErrString(ctx, "API handler not specified")
 		return
@@ -143,7 +143,7 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 		ctx.Set(key, value)
 	}
 
-	err := e.runtime.ExecHttp(&xtypes.HttpEventOptions{
+	err := r.engine.runtime.ExecHttp(&xtypes.HttpEventOptions{
 		SpaceId:     indexItem.spaceId,
 		Request:     ctx,
 		HandlerName: routeMatch.Handler,
@@ -157,7 +157,7 @@ func (e *Engine) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteIndexItem
 
 }
 
-func (e *Engine) findMatchingRoute(indexItem *SpaceRouteIndexItem, requestPath, requestMethod string) (*models.PotatoRoute, map[string]string) {
+func (r *SpaceRouter) findMatchingRoute(indexItem *SpaceRouteIndexItem, requestPath, requestMethod string) (*models.PotatoRoute, map[string]string) {
 	for _, route := range indexItem.routeOption.Routes {
 		// Check if method matches
 		if route.Method != requestMethod {

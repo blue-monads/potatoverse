@@ -57,10 +57,11 @@ func TestRoutingIndex_AllPluginLoaderScript(t *testing.T) {
 	defer cleanup()
 
 	eng := &Engine{
-		db:           db,
-		logger:       slog.Default(),
-		RoutingIndex: make(map[string]*SpaceRouteIndexItem),
+		db:     db,
+		logger: slog.Default(),
 	}
+	sr := NewSpaceRouter(eng)
+	eng.spaceRouter = sr
 
 	now := time.Now()
 	// 1. Create Package 1 (Host app: Accounting)
@@ -146,7 +147,7 @@ func TestRoutingIndex_AllPluginLoaderScript(t *testing.T) {
 	hostSpace, _ := db.GetSpaceOps().GetSpace(space1Id)
 	hostPkgVer, _ := db.GetPackageInstallOps().GetPackageVersion(pver1Id)
 
-	indexItem, err := eng.buildIndexItem(hostSpace, hostPkgVer)
+	indexItem, err := sr.buildIndexItem(hostSpace, hostPkgVer)
 	if err != nil {
 		t.Fatalf("buildIndexItem failed: %v", err)
 	}

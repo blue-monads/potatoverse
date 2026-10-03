@@ -3,9 +3,6 @@ package engine
 import (
 	"errors"
 	"log/slog"
-	"maps"
-	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -20,7 +17,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,11 +24,11 @@ var _ xtypes.Engine = (*Engine)(nil)
 
 type Engine struct {
 	db            datahub.Database
-	RoutingIndex  map[string]*SpaceRouteIndexItem
-	riLock        sync.RWMutex
 	workingFolder string
 
-	runtime Runtime
+	runtime     Runtime
+	spaceRouter *SpaceRouter
+	rootRouter  *RootRouter
 
 	logger *slog.Logger
 
@@ -47,11 +43,6 @@ type Engine struct {
 	remoteHub *remotehub.RemoteHub
 
 	HttpPort int
-
-	reloadPackageIds chan int64
-	fullReload       chan struct{}
-	stopEloop        chan struct{}
-	stopOnce         sync.Once
 }
 
 type EngineOption struct {
@@ -69,40 +60,36 @@ func NewEngine(opt EngineOption) *Engine {
 	e := &Engine{
 		db:            opt.DB,
 		workingFolder: opt.WorkingFolder,
-		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
 			activeExecs:     make(map[int64]*RunningExec),
 			activeExecsLock: sync.RWMutex{},
 			builders:        make(map[string]xtypes.ExecutorBuilder),
 		},
-		logger:           elogger,
-		capHub:           caphub.NewCapabilityHub(),
-		remoteHub:        remotehub.NewRemoteHub(),
-		HttpPort:         opt.HttpPort,
-		riLock:           sync.RWMutex{},
-		reloadPackageIds: make(chan int64, 20),
-		fullReload:       make(chan struct{}, 1),
-		stopEloop:        make(chan struct{}),
+		logger:    elogger,
+		capHub:    caphub.NewCapabilityHub(),
+		remoteHub: remotehub.NewRemoteHub(),
+		HttpPort:  opt.HttpPort,
 
 		repoHub: repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
 	e.runtime.parent = e
+	e.spaceRouter = NewSpaceRouter(e)
+	e.rootRouter = NewRootRouter(e)
 
 	return e
 }
 
 func (e *Engine) GetDebugData() map[string]any {
-	indexCopy := make(map[string]*SpaceRouteIndexItem)
-	e.riLock.RLock()
-	maps.Copy(indexCopy, e.RoutingIndex)
-	e.riLock.RUnlock()
+	var routingIndexCopy map[string]*SpaceRouteIndexItem
+	if e.spaceRouter != nil {
+		routingIndexCopy = e.spaceRouter.GetRoutingIndexCopy()
+	}
 
 	return map[string]any{
 		"runtime_data":  e.runtime.GetDebugData(),
-		"routing_index": indexCopy,
+		"routing_index": routingIndexCopy,
 	}
-
 }
 
 func (e *Engine) EmitHttpEvent(opts *xtypes.HttpEventOptions) error {
@@ -147,9 +134,9 @@ func (e *Engine) Start(app xtypes.App) error {
 
 	e.remoteHub.Init(app)
 
-	go e.startEloop()
-
-	e.LoadRoutingIndex()
+	if e.spaceRouter != nil {
+		e.spaceRouter.Start()
+	}
 
 	time.Sleep(2 * time.Second)
 
@@ -157,9 +144,9 @@ func (e *Engine) Start(app xtypes.App) error {
 }
 
 func (e *Engine) Close() {
-	e.stopOnce.Do(func() {
-		close(e.stopEloop)
-	})
+	if e.spaceRouter != nil {
+		e.spaceRouter.Close()
+	}
 	if e.sigHub != nil {
 		e.sigHub.Stop()
 	}
@@ -170,42 +157,48 @@ func (e *Engine) Close() {
 }
 
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
+	e.spaceRouter.ServeSpaceFile(ctx)
+}
 
-	qq.Println("@ServeSpaceFile/1")
+func (e *Engine) GetSpaceRouter() *SpaceRouter {
+	return e.spaceRouter
+}
 
-	spaceKey := ctx.Param("space_key")
-	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
+func (e *Engine) GetRootRouter() *RootRouter {
+	return e.rootRouter
+}
 
-	qq.Println("@ServeSpaceFile/3")
-
-	sIndex := e.getIndexRetry(spaceKey, spaceId)
-
-	if sIndex == nil {
-
-		keys := make([]string, 0)
-		for key := range e.RoutingIndex {
-			keys = append(keys, key)
-		}
-
-		qq.Println("@ServeSpaceFile/4", keys)
-		qq.Println("@ServeSpaceFile/4")
-		httpx.WriteErrString(ctx, "space not found")
-		return
+func (e *Engine) LoadRoutingIndex() {
+	if e.spaceRouter != nil {
+		e.spaceRouter.LoadRoutingIndex()
 	}
+}
 
-	qq.Println("@ServeSpaceFile/5")
-
-	switch sIndex.routeOption.RouterType {
-	case "simple", "":
-		e.serveSimpleRoute(ctx, sIndex)
-	case "dynamic":
-		qq.Println("@ServeSpaceFile/6")
-		e.serveDynamicRoute(ctx, sIndex)
-	default:
-		httpx.WriteErrString(ctx, "router type not supported")
-		return
+func (e *Engine) LoadRoutingIndexForPackages(installedId int64) {
+	if e.spaceRouter != nil {
+		e.spaceRouter.LoadRoutingIndexForPackages(installedId)
 	}
+}
 
+func (e *Engine) GetPluginLoaderScript(spaceKey string) string {
+	if e.spaceRouter != nil {
+		return e.spaceRouter.GetPluginLoaderScript(spaceKey)
+	}
+	return ""
+}
+
+func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
+	if e.spaceRouter != nil {
+		return e.spaceRouter.getIndex(spaceKey, spaceId)
+	}
+	return nil
+}
+
+func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
+	if e.spaceRouter != nil {
+		return e.spaceRouter.getIndexRetry(spaceKey, spaceId)
+	}
+	return nil
 }
 
 func (e *Engine) ServePluginFile(ctx *gin.Context) {
@@ -382,36 +375,6 @@ func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
 	return e.capHub.Definations()
 }
 
-// private
-
-func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
-	nameParts := strings.Split(filePath, "/")
-	name := nameParts[len(nameParts)-1]
-	pathParts := nameParts[:len(nameParts)-1]
-
-	ppath := strings.Join(pathParts, "/")
-	ppath = path.Join(ropt.ServeFolder, ppath)
-
-	ppath = strings.TrimLeft(ppath, "/")
-
-	if ropt.TrimPathPrefix != "" {
-		ppath = strings.TrimPrefix(ppath, ropt.TrimPathPrefix)
-	}
-
-	if ropt.ForceIndexHtmlFile && name == "" {
-		name = "index.html"
-	}
-
-	if ropt.ForceHtmlExtension && !strings.Contains(name, ".") {
-		name = name + ".html"
-	}
-
-	qq.Println("@ropt", ropt)
-	qq.Println("@name", name)
-	qq.Println("@path", ppath)
-
-	return name, ppath
-}
 
 func (e *Engine) GetCapabilityHub() any {
 	return e.capHub
