@@ -25,9 +25,6 @@ type Runtime struct {
 	activeExecs     map[int64]*RunningExec
 	activeExecsLock sync.RWMutex
 
-	// overlayExecutors     map[int64]*RunningExec
-	// overlayExecutorsLock sync.RWMutex
-
 	builders map[string]xtypes.ExecutorBuilder
 
 	parent *Engine
