@@ -23,6 +23,11 @@
           "url": "topics/plugin_system.md"
         },
         {
+          "title": "Testing Framework",
+          "description": "API testing framework and developer shell tooling",
+          "url": "topics/testing_framework.md"
+        },
+        {
           "title": "Examples",
           "description": "Real-world examples and use cases"
         }
