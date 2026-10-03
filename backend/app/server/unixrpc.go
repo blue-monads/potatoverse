@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +69,33 @@ func (s *Server) handleUnixRPC(c net.Conn) {
 			Data: map[string]any{
 				"user":  user,
 				"token": token,
+			},
+		})
+	case "get_space_token":
+		user, _, err := s.ctrl.GetAdminToken()
+		if err != nil {
+			s.writeUnixRPC(c, UNIXRpcResponse{Ok: false, Msg: err.Error()})
+			return
+		}
+		var spaceId int64
+		if sStr := req.GetStringArg("space_id", "spaceId", "id"); sStr != "" {
+			spaceId, _ = strconv.ParseInt(sStr, 10, 64)
+		}
+		namespaceKey := req.GetStringArg("namespace_key", "namespaceKey", "namespace", "space")
+
+		space, token, err := s.ctrl.GetSpaceToken(user.ID, spaceId, namespaceKey)
+		if err != nil {
+			s.writeUnixRPC(c, UNIXRpcResponse{Ok: false, Msg: err.Error()})
+			return
+		}
+		s.writeUnixRPC(c, UNIXRpcResponse{
+			Ok:  true,
+			Msg: "ok",
+			Data: map[string]any{
+				"token":         token,
+				"space_id":      space.ID,
+				"namespace_key": space.NamespaceKey,
+				"install_id":    space.InstalledId,
 			},
 		})
 	case "list_admin_user", "list_admin_users":

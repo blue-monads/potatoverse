@@ -38,3 +38,12 @@ func New(opt Option) *Controller {
 		mailer:   opt.Mailer,
 	}
 }
+
+func (c *Controller) GetSpaceOps() datahub.SpaceOps {
+	return c.database.GetSpaceOps()
+}
+
+func (c *Controller) Database() datahub.Database {
+	return c.database
+}
+

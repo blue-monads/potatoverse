@@ -26,8 +26,12 @@ import (
 )
 
 type DevCmd struct {
-	Run  DevRunCmd  `cmd:"" help:"Start a local development server for the current potato app."`
-	Push DevPushCmd `cmd:"" help:"Push the current potato app to a running local development server."`
+	Run         DevRunCmd         `cmd:"" help:"Start a local development server for the current potato app."`
+	Push        DevPushCmd        `cmd:"" help:"Push the current potato app to a running local development server."`
+	Tests       DevTestsCmd       `cmd:"" help:"Run Lua API tests against a running development server."`
+	Shell       DevShellCmd       `cmd:"" help:"Run a shell command with development environment variables exposed against a running server."`
+	RunAndTests DevRunAndTestsCmd `cmd:"" name:"run-and-tests" help:"Start dev server, wait, and run Lua API tests."`
+	RunAndShell DevRunAndShellCmd `cmd:"" name:"run-and-shell" help:"Start dev server, wait, and run a shell command."`
 }
 
 type DevRunCmd struct {

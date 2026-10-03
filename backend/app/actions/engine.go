@@ -2,6 +2,7 @@ package actions
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
@@ -291,5 +292,56 @@ func (c *Controller) userHasGroupSpaceAccess(ugroupName string, installId, space
 		}
 	}
 	return false
+}
+
+func (c *Controller) GetSpaceToken(userId int64, spaceId int64, namespaceKey string) (*dbmodels.Space, string, error) {
+	sops := c.database.GetSpaceOps()
+	var targetSpace *dbmodels.Space
+
+	if spaceId > 0 {
+		sp, err := sops.GetSpace(spaceId)
+		if err != nil {
+			return nil, "", err
+		}
+		targetSpace = sp
+	} else if namespaceKey != "" {
+		spaces, err := sops.ListSpaces()
+		if err != nil {
+			return nil, "", err
+		}
+		for i := range spaces {
+			if spaces[i].NamespaceKey == namespaceKey {
+				targetSpace = &spaces[i]
+				break
+			}
+		}
+		if targetSpace == nil {
+			return nil, "", fmt.Errorf("space with namespace %q not found", namespaceKey)
+		}
+	} else {
+		spaces, err := sops.ListSpaces()
+		if err != nil {
+			return nil, "", err
+		}
+		for i := range spaces {
+			if spaces[i].SpaceType != "AppPlugin" {
+				targetSpace = &spaces[i]
+				break
+			}
+		}
+		if targetSpace == nil && len(spaces) > 0 {
+			targetSpace = &spaces[0]
+		}
+		if targetSpace == nil {
+			return nil, "", errors.New("no spaces found")
+		}
+	}
+
+	token, err := c.AuthorizeSpace(userId, SpaceAuth{SpaceId: targetSpace.ID})
+	if err != nil {
+		return nil, "", err
+	}
+
+	return targetSpace, token, nil
 }
 

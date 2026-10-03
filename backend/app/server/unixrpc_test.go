@@ -15,6 +15,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
@@ -139,7 +140,7 @@ func callRPC(sockPath, request string) (UNIXRpcResponse, error) {
 }
 
 func TestUnixRPC(t *testing.T) {
-	_, sockPath, cleanup := setupTestServer(t)
+	srv, sockPath, cleanup := setupTestServer(t)
 	defer cleanup()
 
 	t.Run("info command", func(t *testing.T) {
@@ -254,6 +255,40 @@ func TestUnixRPC(t *testing.T) {
 		}
 		if resp.Data["password"] != "id_pass_456" {
 			t.Fatalf("expected id_pass_456, got %v", resp.Data["password"])
+		}
+	})
+
+	t.Run("get_space_token command via UNIXRpcRequest", func(t *testing.T) {
+		spaceId, err := srv.ctrl.GetSpaceOps().AddSpace(&dbmodels.Space{
+			NamespaceKey: "test-space",
+			InstalledId:  1,
+			OwnerID:      1,
+		})
+		if err != nil {
+			t.Fatalf("add space: %v", err)
+		}
+
+		resp, err := callRPCRequest(sockPath, xtypes.UNIXRpcRequest{
+			Method: "/get_space_token",
+			Args: map[string]any{
+				"namespace_key": "test-space",
+			},
+		})
+		if err != nil {
+			t.Fatalf("rpc call: %v", err)
+		}
+		if !resp.Ok {
+			t.Fatalf("expected ok, got: %s", resp.Msg)
+		}
+		token, ok := resp.Data["token"].(string)
+		if !ok || token == "" {
+			t.Fatalf("expected non-empty token")
+		}
+		if resp.Data["namespace_key"] != "test-space" {
+			t.Fatalf("expected test-space, got %v", resp.Data["namespace_key"])
+		}
+		if int64(resp.Data["space_id"].(float64)) != spaceId {
+			t.Fatalf("expected spaceId %d, got %v", spaceId, resp.Data["space_id"])
 		}
 	})
 }
