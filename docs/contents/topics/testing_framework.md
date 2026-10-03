@@ -110,7 +110,7 @@ local ptest = require("potato-test")
 function on_test_run(ctx)
     -- Your tests run here!
     -- Use standard Lua assertions (assert)
-    local res, err = ctx.rootSpace().get("/zz/space/" .. ctx.namespace_key .. "/items")
+    local res, err = ctx.root_space().get("/zz/space/" .. ctx.namespace_key .. "/items")
     assert(err == nil, "Request failed: " .. tostring(err))
     assert(res.status_code == 200, "Expected status 200, got: " .. tostring(res.status_code))
 end
@@ -135,28 +135,28 @@ The `ctx` object passed to `on_test_run(ctx)` provides the following properties 
 
 ### Methods
 
-#### `ctx.rootSpace()` / `ctx.root_space()`
+#### `ctx.root_space()`
 Returns an HTTP client configured with the root space's token and namespace key.
 
 ```lua
-local root = ctx.rootSpace()
+local root = ctx.root_space()
 ```
 
-#### `ctx.createSpaceHttp(options)` / `ctx.create_space_http(options)`
+#### `ctx.create_space_http(options)`
 Dynamically resolves and authorizes another space, returning a space HTTP client configured with that space's token:
 
 ```lua
-local althttp, err = ctx.createSpaceHttp({
+local althttp, err = ctx.create_space_http({
     namespace_key = "another-app-namespace"
 })
 assert(err == nil, tostring(err))
 ```
 
-#### `ctx.getSpaceToken(options)` / `ctx.get_space_token(options)`
+#### `ctx.get_space_token(options)`
 Returns the raw space token string for another space:
 
 ```lua
-local token, err = ctx.getSpaceToken({
+local token, err = ctx.get_space_token({
     namespace_key = "another-app-namespace"
 })
 ```
@@ -165,7 +165,7 @@ local token, err = ctx.getSpaceToken({
 
 ## 6. Space HTTP Client API
 
-The client returned by `ctx.rootSpace()` or `ctx.createSpaceHttp(...)` provides helper methods for making HTTP requests:
+The client returned by `ctx.root_space()` or `ctx.create_space_http(...)` provides helper methods for making HTTP requests:
 
 ### HTTP Methods
 - `client.get(path, [options])`
@@ -223,7 +223,7 @@ Every test runner Lua state comes preloaded with standard libraries and:
 -- tests/app_api_test.lua
 
 function on_test_run(ctx)
-    local root = ctx.rootSpace()
+    local root = ctx.root_space()
 
     -- 1. Test POST request with JSON payload
     local create_res, err = root.post("/zz/space/" .. ctx.namespace_key .. "/api/books", {
@@ -247,7 +247,7 @@ function on_test_run(ctx)
     assert(get_res.data.id == book.id, "Book ID mismatch")
 
     -- 3. Test interacting with a secondary space
-    local auth_client, aerr = ctx.createSpaceHttp({
+    local auth_client, aerr = ctx.create_space_http({
         namespace_key = "auth-space"
     })
     if aerr == nil and auth_client ~= nil then

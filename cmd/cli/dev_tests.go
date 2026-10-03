@@ -276,11 +276,8 @@ func (c *DevTestsCmd) Run(_ *kong.Context) error {
 	L.PreloadModule("potato-test", func(ls *lua.LState) int {
 		mod := ls.NewTable()
 		mod.RawSetString("ctx", ctxTable)
-		mod.RawSetString("rootSpace", ctxTable.RawGetString("rootSpace"))
 		mod.RawSetString("root_space", ctxTable.RawGetString("root_space"))
-		mod.RawSetString("createSpaceHttp", ctxTable.RawGetString("createSpaceHttp"))
 		mod.RawSetString("create_space_http", ctxTable.RawGetString("create_space_http"))
-		mod.RawSetString("getSpaceToken", ctxTable.RawGetString("getSpaceToken"))
 		mod.RawSetString("get_space_token", ctxTable.RawGetString("get_space_token"))
 		mod.RawSetString("token", lua.LString(devEnv.SpaceToken))
 		mod.RawSetString("admin_token", lua.LString(devEnv.AdminToken))
@@ -531,11 +528,10 @@ func buildTestContextTable(L *lua.LState, devEnv *DevEnv) *lua.LTable {
 
 	rootHttpClient := newSpaceHttpClientTable(L, devEnv, devEnv.SpaceToken, devEnv.NamespaceKey, devEnv.SpaceId)
 
-	ctxTable.RawSetString("rootSpace", L.NewFunction(func(ls *lua.LState) int {
+	ctxTable.RawSetString("root_space", L.NewFunction(func(ls *lua.LState) int {
 		ls.Push(rootHttpClient)
 		return 1
 	}))
-	ctxTable.RawSetString("root_space", ctxTable.RawGetString("rootSpace"))
 
 	createSpaceHttpFn := L.NewFunction(func(ls *lua.LState) int {
 		argOffset := 1
@@ -575,7 +571,6 @@ func buildTestContextTable(L *lua.LState, devEnv *DevEnv) *lua.LTable {
 		ls.Push(lua.LNil)
 		return 2
 	})
-	ctxTable.RawSetString("createSpaceHttp", createSpaceHttpFn)
 	ctxTable.RawSetString("create_space_http", createSpaceHttpFn)
 
 	getSpaceTokenFn := L.NewFunction(func(ls *lua.LState) int {
@@ -615,7 +610,6 @@ func buildTestContextTable(L *lua.LState, devEnv *DevEnv) *lua.LTable {
 		ls.Push(lua.LNil)
 		return 2
 	})
-	ctxTable.RawSetString("getSpaceToken", getSpaceTokenFn)
 	ctxTable.RawSetString("get_space_token", getSpaceTokenFn)
 
 	return ctxTable
@@ -636,7 +630,6 @@ func newSpaceHttpClientTable(L *lua.LState, devEnv *DevEnv, spaceToken, namespac
 		return 1
 	})
 	clientTable.RawSetString("get_token", getTokenFn)
-	clientTable.RawSetString("getToken", getTokenFn)
 
 	methods := []string{"get", "post", "put", "delete", "patch", "head", "options"}
 	for _, m := range methods {

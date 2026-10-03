@@ -182,9 +182,9 @@ function on_test_run(ctx)
     assert(ctx.admin_token == "admin-mock-token-xyz", "admin token mismatch")
     assert(ctx.namespace_key == "test-space", "namespace_key mismatch")
 
-    local root = ctx.rootSpace()
-    assert(root ~= nil, "expected rootSpace")
-    assert(root.token == ctx.token, "rootSpace token mismatch")
+    local root = ctx.root_space()
+    assert(root ~= nil, "expected root_space")
+    assert(root.token == ctx.token, "root_space token mismatch")
 
     local res, err = root.post("/zz/space/test-space/echo", {
         payload = { message = "hello potatoverse", num = 123 }
@@ -201,11 +201,11 @@ function on_test_run(ctx)
     assert(data.echo.num == 123, "payload echo num mismatch")
     assert(data.authorization == "Bearer " .. ctx.token, "auth header mismatch: " .. tostring(data.authorization))
 
-    -- Test createSpaceHttp
-    local althttp, aerr = ctx.createSpaceHttp({
+    -- Test create_space_http
+    local althttp, aerr = ctx.create_space_http({
         namespace_key = "other-space"
     })
-    assert(aerr == nil, "createSpaceHttp error: " .. tostring(aerr))
+    assert(aerr == nil, "create_space_http error: " .. tostring(aerr))
     assert(althttp ~= nil, "expected althttp client")
     assert(althttp.namespace_key == "other-space", "expected other-space namespace")
     assert(althttp.token == "mock-space-token-for-other-space", "expected other space token")
