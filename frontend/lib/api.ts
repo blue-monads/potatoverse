@@ -429,6 +429,7 @@ export type FormattedSpace = {
     namespace_key: string;
     space_type?: string;
     is_plugin?: boolean;
+    is_root_app?: boolean;
     package_name: string;
     package_info: string;
     package_version_id: number;
@@ -459,6 +460,7 @@ export const formatSpace = (data: InstalledSpace) => {
             namespace_key: space.namespace_key,
             space_type: space.space_type,
             is_plugin: space.space_type === 'AppPlugin',
+            is_root_app: space.space_type === 'RootApp',
             package_name: pkg.name,
             package_info: pkg.info,
             package_version_id: pkg.id,
