@@ -23,6 +23,11 @@ const tabs = [
         value: 'groups',
         url: '/portal/admin/setting/users/groups',
     },
+    {
+        label: 'Routing',
+        value: 'routing',
+        url: '/portal/admin/setting/routing',
+    },
 ]
 
 
@@ -34,7 +39,8 @@ interface PropsType {
 const WithTabbedUserLayout = (props: PropsType) => {
     const router = useRouter();
     const pathname = usePathname();
-    const activeTab = tabs.find((tab) => pathname?.startsWith(tab.url))?.value ?? tabs[0].value;
+    const matchedTab = [...tabs].sort((a, b) => b.url.length - a.url.length).find((tab) => pathname?.startsWith(tab.url));
+    const activeTab = matchedTab?.value ?? tabs[0].value;
     const [searchTerm, setSearchTerm] = useState('');
     return (
 

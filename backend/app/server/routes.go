@@ -34,6 +34,8 @@ func (a *Server) bindRoutes() {
 	a.selfUserRoutes(coreApi.Group("/self"))
 	a.engineRoutes(zroot, coreApi)
 	a.spaceFileRoutes(coreApi.Group("/space_file"))
+	a.routingRoutes(coreApi.Group("/admin/routing"))
+	a.routingRoutes(coreApi.Group("/routing"))
 
 	a.buddyRoutes.AttachRoutes(zroot)
 

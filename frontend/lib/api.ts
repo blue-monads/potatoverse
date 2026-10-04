@@ -1170,3 +1170,27 @@ export const exportSpaceState = async (installId: number, excludeTables: string[
 export const sqlQuerySpaceData = async (installId: number, query: string) => {
     return iaxios.post<any>(`/core/space/${installId}/data/sqlQuery`, { query });
 }
+
+// Root Routing API
+export interface RootRouteTarget {
+    space_id: number;
+}
+
+export interface RootRoutingData {
+    routes: Record<string, RootRouteTarget>;
+    root_spaces: Space[];
+}
+
+export const getRootRouting = async () => {
+    return iaxios.get<RootRoutingData>("/core/admin/routing/root");
+}
+
+export const updateRootRouting = async (routes: Record<string, RootRouteTarget>) => {
+    return iaxios.post<{ message: string; routes: Record<string, RootRouteTarget> }>("/core/admin/routing/root", { routes });
+}
+
+export const reloadRootRouting = async () => {
+    return iaxios.post<{ message: string }>("/core/admin/routing/root/reload");
+}
+
+

@@ -107,9 +107,9 @@ func TestRootRouter_ReloadIndex_FromDatabase(t *testing.T) {
 	jsonConfig := `{
 		"*": {"space_id": 12},
 		"example.com": {"space_id": 11},
-		"ee.example": 14,
+		"ee.example": {"space_id": 14},
 		"localhost": {"space_id": 15},
-		"*.doomsday.com": 13
+		"*.doomsday.com": {"space_id": 13}
 	}`
 	_, err = db.GetGlobalOps().AddGlobalConfig(&dbmodels.GlobalConfig{
 		Key:       RootRoutingIndexConfigKey,
