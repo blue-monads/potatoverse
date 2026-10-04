@@ -12,6 +12,9 @@ func (r *SpaceRouter) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIn
 	qq.Println("@indexItem", indexItem)
 
 	filePath := ctx.Param("subpath")
+	if filePath == "" {
+		filePath = ctx.Request.URL.Path
+	}
 
 	r.processSimpleRoute(ctx, filePath, indexItem)
 }

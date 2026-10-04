@@ -53,6 +53,9 @@ func (r *SpaceRouter) serveDynamicRoute(ctx *gin.Context, indexItem *SpaceRouteI
 
 	// Get the request path and method
 	requestPath := ctx.Param("subpath")
+	if requestPath == "" {
+		requestPath = ctx.Request.URL.Path
+	}
 	requestMethod := ctx.Request.Method
 
 	qq.Println("@requestPath", requestPath)

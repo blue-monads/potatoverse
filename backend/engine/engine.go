@@ -138,6 +138,10 @@ func (e *Engine) Start(app xtypes.App) error {
 		e.spaceRouter.Start()
 	}
 
+	if e.rootRouter != nil {
+		_ = e.rootRouter.ReloadIndex()
+	}
+
 	time.Sleep(2 * time.Second)
 
 	return nil
@@ -156,8 +160,12 @@ func (e *Engine) Close() {
 	e.runtime.CloseAll()
 }
 
+func (e *Engine) ServeRootSpace(ctx *gin.Context) {
+	e.rootRouter.Serve(ctx)
+}
+
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
-	e.spaceRouter.ServeSpaceFile(ctx)
+	e.spaceRouter.ServeSpaceFile(ctx, 0)
 }
 
 func (e *Engine) GetSpaceRouter() *SpaceRouter {
@@ -166,6 +174,13 @@ func (e *Engine) GetSpaceRouter() *SpaceRouter {
 
 func (e *Engine) GetRootRouter() *RootRouter {
 	return e.rootRouter
+}
+
+func (e *Engine) ReloadRootRoutingIndex() error {
+	if e.rootRouter != nil {
+		return e.rootRouter.ReloadIndex()
+	}
+	return nil
 }
 
 func (e *Engine) LoadRoutingIndex() {
@@ -374,7 +389,6 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
 	return e.capHub.Definations()
 }
-
 
 func (e *Engine) GetCapabilityHub() any {
 	return e.capHub

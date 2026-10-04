@@ -78,6 +78,7 @@ func (r *SpaceRouter) loadRoutingIndex() error {
 		}
 
 		nextRoutingIndex[fmt.Sprintf("%d|_|%s", space.ID, space.NamespaceKey)] = indexItem
+		nextRoutingIndex[fmt.Sprintf("%d", space.ID)] = indexItem
 
 		exist := nextRoutingIndex[fmt.Sprintf("%s", space.NamespaceKey)]
 		if exist == nil {
@@ -179,6 +180,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 		qq.Println("@loadRoutingIndexForPackages/7.1", key)
 
 		nextPartialIndex[key] = indexItem
+		nextPartialIndex[fmt.Sprintf("%d", space.ID)] = indexItem
 
 		qq.Println("@loadRoutingIndexForPackages/7.2", key)
 
@@ -207,7 +209,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 	// Add new entries
 	for key, item := range nextPartialIndex {
 		// Space-specific keys are always updated
-		if strings.HasPrefix(key, fmt.Sprintf("%d|_|", item.spaceId)) {
+		if strings.HasPrefix(key, fmt.Sprintf("%d|_|", item.spaceId)) || key == fmt.Sprintf("%d", item.spaceId) {
 			r.RoutingIndex[key] = item
 		} else {
 			// For namespace keys, only add if they don't already exist
@@ -391,10 +393,26 @@ func (r *SpaceRouter) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexI
 	defer r.riLock.RUnlock()
 
 	if spaceId != 0 {
-		key := fmt.Sprintf("%d|_|%s", spaceId, spaceKey)
-		qq.Println("@getIndex/1", key)
+		if spaceKey != "" {
+			key := fmt.Sprintf("%d|_|%s", spaceId, spaceKey)
+			qq.Println("@getIndex/1", key)
+			if item := r.RoutingIndex[key]; item != nil {
+				return item
+			}
+		}
 
-		return r.RoutingIndex[key]
+		key := fmt.Sprintf("%d", spaceId)
+		if item := r.RoutingIndex[key]; item != nil {
+			return item
+		}
+
+		for _, item := range r.RoutingIndex {
+			if item.spaceId == spaceId {
+				return item
+			}
+		}
+
+		return nil
 	}
 
 	return r.RoutingIndex[spaceKey]

@@ -56,12 +56,16 @@ func (r *SpaceRouter) GetRoutingIndexCopy() map[string]*SpaceRouteIndexItem {
 	return indexCopy
 }
 
-func (r *SpaceRouter) ServeSpaceFile(ctx *gin.Context) {
+func (r *SpaceRouter) ServeSpaceFile(ctx *gin.Context, spaceId int64) {
 
 	qq.Println("@ServeSpaceFile/1")
 
-	spaceKey := ctx.Param("space_key")
-	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
+	var spaceKey string
+
+	if spaceId == 0 {
+		spaceKey = ctx.Param("space_key")
+		spaceId = xutils.ExtractSpaceId(ctx.Request.Host)
+	}
 
 	qq.Println("@ServeSpaceFile/3")
 
@@ -98,7 +102,7 @@ func (r *SpaceRouter) ServeSpaceFile(ctx *gin.Context) {
 }
 
 func (r *SpaceRouter) Serve(ctx *gin.Context) {
-	r.ServeSpaceFile(ctx)
+	r.ServeSpaceFile(ctx, 0)
 }
 
 func (r *SpaceRouter) GetIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
