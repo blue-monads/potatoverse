@@ -136,7 +136,7 @@ const VersionsManager = ({ packageId }: VersionsManagerProps) => {
     if (loader.loading) {
         return (
             <WithAdminBodyLayout Icon={History} name="Versions" description="Loading versions..." variant="none">
-               <SimpleLoader />
+                <SimpleLoader />
             </WithAdminBodyLayout>
         );
     }
@@ -589,7 +589,7 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
         if (!update_page) return;
         const fragment = new URLSearchParams();
         fragment.set('nskey', upgradeResult.key_space);
-        fragment.set('space_id', upgradeResult.root_space_id.toString());
+        fragment.set('space_id', (upgradeResult.main_space_id).toString());
         fragment.set('load_page', update_page);
         router.push(`/portal/admin/exec?${fragment.toString()}`);
         onUpdated();
@@ -723,7 +723,7 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
         if (!update_page) return;
         const fragment = new URLSearchParams();
         fragment.set('nskey', upgradeResult.key_space);
-        fragment.set('space_id', upgradeResult.root_space_id.toString());
+        fragment.set('space_id', (upgradeResult.main_space_id).toString());
         fragment.set('load_page', update_page);
         router.push(`/portal/admin/exec?${fragment.toString()}`);
         onUpdated();

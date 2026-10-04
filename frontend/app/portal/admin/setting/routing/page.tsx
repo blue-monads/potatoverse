@@ -34,7 +34,7 @@ export default function RoutingSettingsPage() {
 
     const [routeEntries, setRouteEntries] = useState<RouteEntry[]>([]);
     const [originalRoutes, setOriginalRoutes] = useState<Record<string, RootRouteTarget>>({});
-    const [rootSpaces, setRootSpaces] = useState<Space[]>([]);
+    const [mainSpaces, setMainSpaces] = useState<Space[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -48,7 +48,7 @@ export default function RoutingSettingsPage() {
             setLoading(true);
             setAlertMessage(null);
             const res = await getRootRouting();
-            const { routes, root_spaces } = res.data;
+            const { routes, main_spaces, } = res.data;
 
             const entries: RouteEntry[] = Object.entries(routes || {}).map(([pattern, target]) => ({
                 id: `${pattern}-${target.space_id}-${Math.random()}`,
@@ -65,7 +65,7 @@ export default function RoutingSettingsPage() {
 
             setRouteEntries(entries);
             setOriginalRoutes(routes || {});
-            setRootSpaces(root_spaces || []);
+            setMainSpaces(main_spaces || []);
         } catch (err: any) {
             console.error('Failed to load routing data:', err);
             const msg = err.response?.data?.message || err.message || 'Failed to load routing settings';
@@ -101,7 +101,7 @@ export default function RoutingSettingsPage() {
     }, [routeEntries, originalRoutes]);
 
     const handleAddRoute = () => {
-        const defaultSpaceId = rootSpaces.length > 0 ? rootSpaces[0].id : 0;
+        const defaultSpaceId = mainSpaces.length > 0 ? mainSpaces[0].id : 0;
         setRouteEntries(prev => [
             ...prev,
             {
@@ -136,13 +136,13 @@ export default function RoutingSettingsPage() {
                 if (!pattern) continue;
 
                 if (!entry.spaceId || entry.spaceId <= 0) {
-                    throw new Error(`Please select a valid RootApp space for domain pattern "${pattern}"`);
+                    throw new Error(`Please select a valid main space for domain pattern "${pattern}"`);
                 }
 
-                // Verify space is in rootSpaces
-                const space = rootSpaces.find(s => s.id === entry.spaceId);
+                // Verify space is in mainSpaces
+                const space = mainSpaces.find(s => s.id === entry.spaceId);
                 if (!space) {
-                    throw new Error(`Space #${entry.spaceId} is not a valid RootApp space. Only spaces of type RootApp are allowed.`);
+                    throw new Error(`Space #${entry.spaceId} is not a valid main space. Only main spaces are allowed in root routing.`);
                 }
 
                 if (routeMap[pattern]) {
@@ -191,11 +191,11 @@ export default function RoutingSettingsPage() {
         if (!searchTerm.trim()) return routeEntries;
         const q = searchTerm.toLowerCase();
         return routeEntries.filter(r => {
-            const space = rootSpaces.find(s => s.id === r.spaceId);
+            const space = mainSpaces.find(s => s.id === r.spaceId);
             const spaceName = space?.namespace_key || '';
             return r.pattern.toLowerCase().includes(q) || spaceName.toLowerCase().includes(q);
         });
-    }, [routeEntries, searchTerm, rootSpaces]);
+    }, [routeEntries, searchTerm, mainSpaces]);
 
     if (loading) {
         return (
@@ -221,8 +221,8 @@ export default function RoutingSettingsPage() {
                             </span>
                         </div>
                         <p className="text-sm text-gray-600 max-w-2xl">
-                            Map incoming domain names and host patterns directly to <code className="px-1.5 py-0.5 bg-gray-100 rounded text-primary-700 font-mono text-xs font-semibold">RootApp</code> spaces.
-                            Only spaces of type <strong className="font-semibold text-gray-800">RootApp</strong> can be selected for root routing.
+                            Map incoming domain names and host patterns directly to <strong className="font-semibold text-gray-800">Main Spaces</strong> (primary package spaces).
+                            Only main spaces can be selected for root domain routing.
                         </p>
                     </div>
 
@@ -250,13 +250,12 @@ export default function RoutingSettingsPage() {
 
                 {/* Alerts */}
                 {alertMessage && (
-                    <div className={`mt-4 p-4 rounded-lg flex items-center gap-3 text-sm ${
-                        alertMessage.type === 'success'
-                            ? 'bg-green-50 text-green-800 border border-green-200'
-                            : alertMessage.type === 'error'
+                    <div className={`mt-4 p-4 rounded-lg flex items-center gap-3 text-sm ${alertMessage.type === 'success'
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : alertMessage.type === 'error'
                             ? 'bg-red-50 text-red-800 border border-red-200'
                             : 'bg-blue-50 text-blue-800 border border-blue-200'
-                    }`}>
+                        }`}>
                         {alertMessage.type === 'success' ? (
                             <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-green-600" />
                         ) : alertMessage.type === 'error' ? (
@@ -278,8 +277,8 @@ export default function RoutingSettingsPage() {
                 <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500">
                     <div className="flex items-center gap-4">
                         <span className="flex items-center gap-1.5">
-                            <span className={`w-2 h-2 rounded-full ${rootSpaces.length > 0 ? 'bg-green-500' : 'bg-amber-500'}`}></span>
-                            Available RootApp Spaces: <strong className="text-gray-700 font-semibold">{rootSpaces.length}</strong>
+                            <span className={`w-2 h-2 rounded-full ${mainSpaces.length > 0 ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+                            Available Main Spaces: <strong className="text-gray-700 font-semibold">{mainSpaces.length}</strong>
                         </span>
                         <span className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -295,16 +294,15 @@ export default function RoutingSettingsPage() {
                 </div>
             </div>
 
-            {/* Zero RootApps Notice */}
-            {rootSpaces.length === 0 && (
+            {/* Zero Main Spaces Notice */}
+            {mainSpaces.length === 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-4">
                     <AlertTriangle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
-                        <h4 className="text-sm font-bold text-amber-900">No spaces of type &ldquo;RootApp&rdquo; found</h4>
+                        <h4 className="text-sm font-bold text-amber-900">No main spaces found</h4>
                         <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                            Root routing rules can only map to spaces of type <code className="font-mono bg-amber-100 px-1 py-0.5 rounded text-amber-900 font-semibold">RootApp</code>.
-                            Currently no installed spaces have <code className="font-mono bg-amber-100 px-1 py-0.5 rounded text-amber-900 font-semibold">space_type = &apos;RootApp&apos;</code>.
-                            Install a RootApp package to configure root domain mappings.
+                            Root routing rules map to main spaces (primary spaces for installed apps).
+                            Install an app package to configure root domain mappings.
                         </p>
                     </div>
                 </div>
@@ -316,7 +314,7 @@ export default function RoutingSettingsPage() {
                     <div>
                         <h3 className="text-lg font-bold text-gray-900">Domain Mapping Rules</h3>
                         <p className="text-xs text-gray-500">
-                            Configure hostnames or wildcards and assign each to a RootApp space.
+                            Configure hostnames or wildcards and assign each to a main space.
                         </p>
                     </div>
 
@@ -334,7 +332,7 @@ export default function RoutingSettingsPage() {
 
                         <button
                             onClick={handleAddRoute}
-                            disabled={rootSpaces.length === 0}
+                            disabled={mainSpaces.length === 0}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-sm transition disabled:opacity-50"
                         >
                             <Plus className="w-4 h-4" />
@@ -352,7 +350,7 @@ export default function RoutingSettingsPage() {
                                 ? 'No rules match your search filter.'
                                 : 'Click "Add Rule" above to create your first root domain routing mapping.'}
                         </p>
-                        {rootSpaces.length > 0 && !searchTerm && (
+                        {mainSpaces.length > 0 && !searchTerm && (
                             <button
                                 onClick={handleAddRoute}
                                 className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-700 text-xs font-semibold hover:bg-primary-100 transition"
@@ -370,7 +368,7 @@ export default function RoutingSettingsPage() {
                                     <th className="py-3 px-4 w-12 text-center">#</th>
                                     <th className="py-3 px-4">Domain / Host Pattern</th>
                                     <th className="py-3 px-4">Match Type</th>
-                                    <th className="py-3 px-4">Target RootApp Space</th>
+                                    <th className="py-3 px-4">Target Main Space</th>
                                     <th className="py-3 px-4 w-20 text-center">Action</th>
                                 </tr>
                             </thead>
@@ -427,10 +425,10 @@ export default function RoutingSettingsPage() {
                                                         onChange={(e) => handleSpaceChange(route.id, parseInt(e.target.value, 10))}
                                                         className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 font-medium"
                                                     >
-                                                        {rootSpaces.length === 0 ? (
-                                                            <option value="0" disabled>No RootApp spaces available</option>
+                                                        {mainSpaces.length === 0 ? (
+                                                            <option value="0" disabled>No main spaces available</option>
                                                         ) : (
-                                                            rootSpaces.map(s => (
+                                                            mainSpaces.map(s => (
                                                                 <option key={s.id} value={s.id}>
                                                                     {s.namespace_key} (Space #{s.id})
                                                                 </option>

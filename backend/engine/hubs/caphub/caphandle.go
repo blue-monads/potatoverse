@@ -76,7 +76,7 @@ func (h *CapabilityHandle) GetSpaceId() (int64, error) {
 		return 0, err
 	}
 
-	// fixme check root space
+	// fixme check main space
 
 	return spaces[0].ID, nil
 }

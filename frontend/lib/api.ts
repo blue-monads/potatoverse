@@ -231,7 +231,7 @@ export const loginWithDeviceToken = async (deviceToken: string) => {
 
 export interface InstallPackageResult {
     installed_id: number;
-    root_space_id: number;
+    main_space_id: number;
     key_space: string;
     special_pages: Record<string, string>;
 }
@@ -241,7 +241,7 @@ export interface UpgradePackageResult {
     package_version_id: number;
     special_pages: Record<string, string>;
     key_space: string;
-    root_space_id: number;
+    main_space_id: number;
 }
 
 
@@ -429,7 +429,7 @@ export type FormattedSpace = {
     namespace_key: string;
     space_type?: string;
     is_plugin?: boolean;
-    is_root_app?: boolean;
+    is_main_space?: boolean;
     package_name: string;
     package_info: string;
     package_version_id: number;
@@ -460,7 +460,7 @@ export const formatSpace = (data: InstalledSpace) => {
             namespace_key: space.namespace_key,
             space_type: space.space_type,
             is_plugin: space.space_type === 'AppPlugin',
-            is_root_app: space.space_type === 'RootApp',
+            is_main_space: space.space_type !== 'AppPlugin' && !space.namespace_key.includes(':'),
             package_name: pkg.name,
             package_info: pkg.info,
             package_version_id: pkg.id,
@@ -1180,7 +1180,7 @@ export interface RootRouteTarget {
 
 export interface RootRoutingData {
     routes: Record<string, RootRouteTarget>;
-    root_spaces: Space[];
+    main_spaces: Space[];
 }
 
 export const getRootRouting = async () => {

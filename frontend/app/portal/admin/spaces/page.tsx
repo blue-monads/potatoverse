@@ -29,7 +29,6 @@ const SpacesDirectory = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('Relevance');
     const [showPlugins, setShowPlugins] = useState(false);
-    const [showRootApps, setShowRootApps] = useState(false);
     const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
     const gapp = useGApp();
     const router = useRouter();
@@ -46,10 +45,6 @@ const SpacesDirectory = () => {
             const savedShowPlugins = localStorage.getItem('spaces_show_plugins');
             if (savedShowPlugins !== null) {
                 setShowPlugins(savedShowPlugins === 'true');
-            }
-            const savedShowRootApps = localStorage.getItem('spaces_show_root_apps');
-            if (savedShowRootApps !== null) {
-                setShowRootApps(savedShowRootApps === 'true');
             }
         } catch (e) {
             // ignore localStorage access errors
@@ -69,15 +64,6 @@ const SpacesDirectory = () => {
         setShowPlugins(val);
         try {
             localStorage.setItem('spaces_show_plugins', String(val));
-        } catch (e) {
-            // ignore localStorage access errors
-        }
-    };
-
-    const changeShowRootApps = (val: boolean) => {
-        setShowRootApps(val);
-        try {
-            localStorage.setItem('spaces_show_root_apps', String(val));
         } catch (e) {
             // ignore localStorage access errors
         }
@@ -112,10 +98,6 @@ const SpacesDirectory = () => {
             spaces = spaces.filter((s) => !s.is_plugin);
         }
 
-        if (!showRootApps) {
-            spaces = spaces.filter((s) => s.space_type !== 'RootApp');
-        }
-
         if (searchTerm.trim()) {
             const term = searchTerm.toLowerCase();
             spaces = spaces.filter((s) => {
@@ -133,7 +115,7 @@ const SpacesDirectory = () => {
         }
 
         return spaces;
-    }, [formattedSpaces, showPlugins, showRootApps, searchTerm, selectedFilter]);
+    }, [formattedSpaces, showPlugins, searchTerm, selectedFilter]);
 
     const packageGroups = useMemo(() => {
         if (!loader.data) return [];
@@ -384,24 +366,6 @@ const SpacesDirectory = () => {
                                 </span>
                             </label>
 
-                            {/* Toggle Show Root Apps */}
-                            <label className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors cursor-pointer select-none ${
-                                showRootApps
-                                    ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                                    : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-                            }`}>
-                                <input
-                                    type="checkbox"
-                                    checked={showRootApps}
-                                    onChange={(e) => changeShowRootApps(e.target.checked)}
-                                    className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 cursor-pointer"
-                                />
-                                <span className="font-medium flex items-center gap-1.5">
-                                    <Globe className="w-4 h-4" />
-                                    Show root apps
-                                </span>
-                            </label>
-
                             {/* View Switcher: Card vs List */}
                             <div className="flex items-center border border-gray-300 rounded-lg p-0.5 bg-gray-50">
                                 <button
@@ -499,8 +463,8 @@ const SpacesDirectory = () => {
                             <p className="text-sm text-gray-500 mb-4">
                                 {searchTerm
                                     ? `Try clearing your search "${searchTerm}"`
-                                    : !showPlugins && !showRootApps
-                                    ? 'Try enabling "Show plugins" or "Show root apps"'
+                                    : !showPlugins
+                                    ? 'Try enabling "Show plugins"'
                                     : 'Try adjusting your filters'}
                             </p>
                             <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -518,14 +482,6 @@ const SpacesDirectory = () => {
                                         className="px-3 py-1.5 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors cursor-pointer"
                                     >
                                         Show Plugins
-                                    </button>
-                                )}
-                                {!showRootApps && (
-                                    <button
-                                        onClick={() => changeShowRootApps(true)}
-                                        className="px-3 py-1.5 text-sm bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors cursor-pointer"
-                                    >
-                                        Show Root Apps
                                     </button>
                                 )}
                             </div>
@@ -660,10 +616,6 @@ const SpacesDirectory = () => {
                                                                     <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium border border-purple-200">
                                                                         <Plug className="w-3 h-3" /> Plugin
                                                                     </span>
-                                                                ) : space.space_type === 'RootApp' ? (
-                                                                    <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full font-medium border border-indigo-200 flex items-center gap-1">
-                                                                        <Globe className="w-3 h-3" /> RootApp
-                                                                    </span>
                                                                 ) : (
                                                                     <span className="bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-medium border border-emerald-200">
                                                                         App
@@ -783,11 +735,6 @@ const SpaceCard = ({ space, actionHandler, isFavorite, onToggleFavorite }: { spa
                             {space.is_plugin && (
                                 <span className="bg-purple-600/80 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
                                     <Plug className="w-3 h-3" /> Plugin
-                                </span>
-                            )}
-                            {space.space_type === 'RootApp' && (
-                                <span className="bg-indigo-600/80 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-                                    <Globe className="w-3 h-3" /> RootApp
                                 </span>
                             )}
                             {space.mcp && (

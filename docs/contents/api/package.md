@@ -11,7 +11,7 @@ Install package from URL.
 
 **Response:**
 - `installed_id` (int64) - Installed package ID
-- `root_space_id` (int64) - Root space ID
+- `main_space_id` (int64) - Root space ID
 - `key_space` (string) - Key space
 - `init_page` (string) - Init page
 

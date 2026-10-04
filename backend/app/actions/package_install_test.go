@@ -1,9 +1,11 @@
 package actions
 
 import (
+	"archive/zip"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -194,3 +196,106 @@ func TestInstallArtifactSpace_UserAlreadyExists_DoesNotDuplicate(t *testing.T) {
 	}
 }
 
+func createTestPkgZip(t *testing.T, potatoJSON string) string {
+	t.Helper()
+	f, err := os.CreateTemp("", "test-pkg-*.zip")
+	if err != nil {
+		t.Fatalf("create temp zip: %v", err)
+	}
+	defer f.Close()
+
+	zw := zip.NewWriter(f)
+	w, err := zw.Create("potato.json")
+	if err != nil {
+		t.Fatalf("create potato.json in zip: %v", err)
+	}
+	if _, err := w.Write([]byte(potatoJSON)); err != nil {
+		t.Fatalf("write potato.json: %v", err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatalf("close zip writer: %v", err)
+	}
+	return f.Name()
+}
+
+func TestInstallPackage_NamespaceValidation(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	logger := slog.Default()
+	userId := int64(1)
+
+	t.Run("valid main space and subkey space", func(t *testing.T) {
+		manifest := `{
+			"name": "My Package",
+			"slug": "my-pkg",
+			"spaces": [
+				{"name": "Main", "namespace": "my-pkg", "executor_type": "core", "server_file": "index.js"},
+				{"name": "Sub", "namespace": "my-pkg:sub-space", "executor_type": "core", "server_file": "sub.js"}
+			]
+		}`
+		zipPath := createTestPkgZip(t, manifest)
+		defer os.Remove(zipPath)
+
+		res, err := installPackageByFile(db, logger, userId, "", zipPath)
+		if err != nil {
+			t.Fatalf("expected install to succeed, got %v", err)
+		}
+		if res.MainSpaceId == 0 {
+			t.Errorf("expected non-zero MainSpaceId")
+		}
+
+	})
+
+	t.Run("multiple main spaces found error", func(t *testing.T) {
+		manifest := `{
+			"name": "My Package Multi",
+			"slug": "my-multi-pkg",
+			"spaces": [
+				{"name": "Main 1", "namespace": "my-multi-pkg", "executor_type": "core"},
+				{"name": "Main 2", "namespace": "my-multi-pkg", "executor_type": "core"}
+			]
+		}`
+		zipPath := createTestPkgZip(t, manifest)
+		defer os.Remove(zipPath)
+
+		_, err := installPackageByFile(db, logger, userId, "", zipPath)
+		if err == nil || !strings.Contains(err.Error(), "multiple main spaces found") {
+			t.Fatalf("expected 'multiple main spaces found' error, got %v", err)
+		}
+	})
+
+	t.Run("invalid namespace prefix error", func(t *testing.T) {
+		manifest := `{
+			"name": "My Package Prefix",
+			"slug": "prefix-pkg",
+			"spaces": [
+				{"name": "Other", "namespace": "other-pkg:space", "executor_type": "core"}
+			]
+		}`
+		zipPath := createTestPkgZip(t, manifest)
+		defer os.Remove(zipPath)
+
+		_, err := installPackageByFile(db, logger, userId, "", zipPath)
+		if err == nil {
+			t.Fatalf("expected error for namespace not matching pkg slug")
+		}
+	})
+
+	t.Run("invalid subkey with multiple colons", func(t *testing.T) {
+		manifest := `{
+			"name": "My Package Subkey Colons",
+			"slug": "colon-pkg",
+			"spaces": [
+				{"name": "Colon", "namespace": "colon-pkg:sub:extra", "executor_type": "core"}
+			]
+		}`
+		zipPath := createTestPkgZip(t, manifest)
+		defer os.Remove(zipPath)
+
+		_, err := installPackageByFile(db, logger, userId, "", zipPath)
+		if err == nil {
+			t.Fatalf("expected error for namespace with multiple colons")
+		}
+	})
+}

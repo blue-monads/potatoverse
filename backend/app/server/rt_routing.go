@@ -41,9 +41,16 @@ func (a *Server) adminGetRootRouting(claim *signer.AccessClaim, ctx *gin.Context
 		return nil, nil
 	}
 
-	rootSpaces, err := a.ctrl.Database().GetSpaceOps().ListSpacesBySpaceType("RootApp")
+	allSpaces, err := a.ctrl.Database().GetSpaceOps().ListSpaces()
 	if err != nil {
 		return nil, err
+	}
+
+	mainSpaces := make([]dbmodels.Space, 0)
+	for _, s := range allSpaces {
+		if s.SpaceType != "AppPlugin" && !strings.Contains(s.NamespaceKey, ":") {
+			mainSpaces = append(mainSpaces, s)
+		}
 	}
 
 	routes := make(map[string]*engine.RootRouteTarget)
@@ -62,7 +69,7 @@ func (a *Server) adminGetRootRouting(claim *signer.AccessClaim, ctx *gin.Context
 
 	return gin.H{
 		"routes":      routes,
-		"root_spaces": rootSpaces,
+		"main_spaces": mainSpaces,
 	}, nil
 }
 
@@ -92,14 +99,14 @@ func (a *Server) adminUpdateRootRouting(claim *signer.AccessClaim, ctx *gin.Cont
 			return nil, fmt.Errorf("invalid space_id for pattern '%s'", pattern)
 		}
 
-		// Ensure space exists and is strictly of type RootApp
+		// Ensure space exists and is a main space (not an AppPlugin and not a subkey space)
 		space, err := a.ctrl.Database().GetSpaceOps().GetSpace(target.SpaceId)
 		if err != nil || space == nil {
 			return nil, fmt.Errorf("space ID %d not found for pattern '%s'", target.SpaceId, pattern)
 		}
 
-		if space.SpaceType != "RootApp" {
-			return nil, fmt.Errorf("space '%s' (ID %d) has type '%s'; only spaces of type 'RootApp' are allowed in root routing", space.NamespaceKey, space.ID, space.SpaceType)
+		if space.SpaceType == "AppPlugin" || strings.Contains(space.NamespaceKey, ":") {
+			return nil, fmt.Errorf("space '%s' (ID %d) is not a main space; only main spaces are allowed in root routing", space.NamespaceKey, space.ID)
 		}
 
 		cleanedRoutes[p] = &engine.RootRouteTarget{
@@ -165,4 +172,3 @@ func (a *Server) adminReloadRootRouting(claim *signer.AccessClaim, ctx *gin.Cont
 		"message": "Root routing index reloaded successfully",
 	}, nil
 }
-

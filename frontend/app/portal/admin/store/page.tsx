@@ -451,7 +451,7 @@ const ImportSpaceModal = (props: ImportSpaceModalProps) => {
                                 } else {
                                     setErrorMessage((error as Error).message || 'Unknown error');
                                 }
-                                
+
                                 setMode('error');
 
                             }
@@ -611,7 +611,7 @@ const PostInstallButtons = (props: PostInstallButtonsProps) => {
 
                         const fragment = new URLSearchParams();
                         fragment.set('nskey', props.installResult.key_space);
-                        fragment.set('space_id', props.installResult.root_space_id.toString());
+                        fragment.set('space_id', (props.installResult.main_space_id).toString());
                         fragment.set('load_page', initpage);
 
                         router.push(`/portal/admin/exec?${fragment.toString()}`);

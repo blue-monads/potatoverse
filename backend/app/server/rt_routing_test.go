@@ -147,7 +147,7 @@ func TestRoutingAPI_AdminOnly(t *testing.T) {
 	}
 }
 
-func TestRoutingAPI_RootAppValidationAndReload(t *testing.T) {
+func TestRoutingAPI_MainSpaceValidationAndReload(t *testing.T) {
 	srv, db, sig, cleanup := setupTestRoutingServer(t)
 	defer cleanup()
 
@@ -164,22 +164,22 @@ func TestRoutingAPI_RootAppValidationAndReload(t *testing.T) {
 	}
 	adminToken, _ := sig.SignAccess(&signer.AccessClaim{UserId: adminId})
 
-	// Create a standard space (type App)
-	appSpace := &dbmodels.Space{
+	// 1. Create a plugin space (type AppPlugin)
+	pluginSpace := &dbmodels.Space{
 		InstalledId:  1,
-		NamespaceKey: "my-app",
-		SpaceType:    "App",
+		NamespaceKey: "my-plugin",
+		SpaceType:    "AppPlugin",
 		OwnerID:      adminId,
 	}
-	appSpaceId, err := db.GetSpaceOps().AddSpace(appSpace)
+	pluginSpaceId, err := db.GetSpaceOps().AddSpace(pluginSpace)
 	if err != nil {
-		t.Fatalf("add app space: %v", err)
+		t.Fatalf("add plugin space: %v", err)
 	}
 
-	// Try to configure root routing with space of type "App" -> Should fail validation
+	// Try to configure root routing with space of type "AppPlugin" -> Should fail validation
 	body, _ := json.Marshal(map[string]any{
 		"routes": map[string]any{
-			"example.com": map[string]any{"space_id": appSpaceId},
+			"example.com": map[string]any{"space_id": pluginSpaceId},
 		},
 	})
 	req, _ := http.NewRequest("POST", "/zz/api/core/admin/routing/root", bytes.NewReader(body))
@@ -189,25 +189,53 @@ func TestRoutingAPI_RootAppValidationAndReload(t *testing.T) {
 	srv.router.ServeHTTP(w, req)
 
 	if w.Code == http.StatusOK {
-		t.Fatalf("expected error when routing non-RootApp space, but got 200 OK: %s", w.Body.String())
+		t.Fatalf("expected error when routing AppPlugin space, but got 200 OK: %s", w.Body.String())
 	}
 
-	// Create a RootApp space
-	rootAppSpace := &dbmodels.Space{
+	// 2. Create a subkey space (contains colon)
+	subkeySpace := &dbmodels.Space{
 		InstalledId:  1,
-		NamespaceKey: "my-root-app",
-		SpaceType:    "RootApp",
+		NamespaceKey: "my-app:subkey",
+		SpaceType:    "App",
 		OwnerID:      adminId,
 	}
-	rootAppSpaceId, err := db.GetSpaceOps().AddSpace(rootAppSpace)
+	subkeySpaceId, err := db.GetSpaceOps().AddSpace(subkeySpace)
 	if err != nil {
-		t.Fatalf("add root app space: %v", err)
+		t.Fatalf("add subkey space: %v", err)
 	}
 
-	// Now configure root routing with the RootApp space -> Should succeed
+	// Try to configure root routing with subkey space -> Should fail validation
+	body, _ = json.Marshal(map[string]any{
+		"routes": map[string]any{
+			"example.com": map[string]any{"space_id": subkeySpaceId},
+		},
+	})
+	req, _ = http.NewRequest("POST", "/zz/api/core/admin/routing/root", bytes.NewReader(body))
+	req.Header.Set("Authorization", adminToken)
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	srv.router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected error when routing subkey space, but got 200 OK: %s", w.Body.String())
+	}
+
+	// 3. Create a valid Main Space (App, no colon in namespace)
+	mainSpace := &dbmodels.Space{
+		InstalledId:  1,
+		NamespaceKey: "my-app",
+		SpaceType:    "App",
+		OwnerID:      adminId,
+	}
+	mainSpaceId, err := db.GetSpaceOps().AddSpace(mainSpace)
+	if err != nil {
+		t.Fatalf("add main space: %v", err)
+	}
+
+	// Now configure root routing with the Main Space -> Should succeed
 	rootBody, _ := json.Marshal(map[string]any{
 		"routes": map[string]any{
-			"example.com": map[string]any{"space_id": rootAppSpaceId},
+			"example.com": map[string]any{"space_id": mainSpaceId},
 		},
 	})
 	req, _ = http.NewRequest("POST", "/zz/api/core/admin/routing/root", bytes.NewReader(rootBody))
@@ -222,8 +250,8 @@ func TestRoutingAPI_RootAppValidationAndReload(t *testing.T) {
 
 	// Verify engine router matches domain immediately
 	matchedSpaceId, found := srv.engine.GetRootRouter().MatchDomain("example.com")
-	if !found || matchedSpaceId != rootAppSpaceId {
-		t.Fatalf("expected engine router to match domain 'example.com' to space %d, got %d (found=%v)", rootAppSpaceId, matchedSpaceId, found)
+	if !found || matchedSpaceId != mainSpaceId {
+		t.Fatalf("expected engine router to match domain 'example.com' to space %d, got %d (found=%v)", mainSpaceId, matchedSpaceId, found)
 	}
 
 	// Test reload endpoint
