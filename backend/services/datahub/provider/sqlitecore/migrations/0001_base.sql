@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS Spaces (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   install_id INTEGER NOT NULL,  
   namespace_key TEXT NOT NULL DEFAULT '',
-  space_type TEXT NOT NULL DEFAULT '', -- App, AppPlugin
+  space_type TEXT NOT NULL DEFAULT 'App', -- App, AppPlugin, RootApp
   executor_type TEXT NOT NULL DEFAULT '', 
   executor_sub_type TEXT NOT NULL DEFAULT '',
   route_options JSON NOT NULL DEFAULT '{}',
