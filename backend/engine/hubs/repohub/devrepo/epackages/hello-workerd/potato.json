@@ -2,7 +2,7 @@
     "name": "Hello Workerd",
     "slug": "hello-workerd",
     "info": "A simple Hello World package using the workerd executor.",
-    "special_pages": {},
+    "special_pages": [],
     "spaces": [
         {
             "namespace": "hello-workerd",

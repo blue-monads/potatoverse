@@ -229,17 +229,23 @@ export const loginWithDeviceToken = async (deviceToken: string) => {
     return iaxios.post<{ access_token: string; user_info: User }>("/core/auth/device-token", { device_token: deviceToken });
 }
 
+export interface SpecialPage {
+    name: string;
+    route: string;
+    target_space?: string;
+}
+
 export interface InstallPackageResult {
     installed_id: number;
     main_space_id: number;
     key_space: string;
-    special_pages: Record<string, string>;
+    special_pages: SpecialPage[];
 }
 
 /** Response from package upgrade (repo or zip). When special_pages contains an update page, show Configure after upgrade. */
 export interface UpgradePackageResult {
     package_version_id: number;
-    special_pages: Record<string, string>;
+    special_pages: SpecialPage[];
     key_space: string;
     main_space_id: number;
 }

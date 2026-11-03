@@ -566,11 +566,11 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
             const res = await upgradePackageZipDirectly(packageId, buffer);
             const result = res.data;
 
-            const update_page = (result?.special_pages || {})["update_page"]
+            const updatePage = Array.isArray(result?.special_pages)
+                ? result.special_pages.find(p => p.name === "update_page")
+                : undefined;
 
-
-
-            if (update_page) {
+            if (updatePage) {
                 setUpgradeResult(result);
             } else {
                 onUpdated();
@@ -585,18 +585,23 @@ const UpgradeFromZipModalContent = ({ packageId, modal, onUpdated }: UpgradeFrom
 
     const handleConfigure = () => {
         if (!upgradeResult) return;
-        const update_page = (upgradeResult.special_pages || {})["update_page"];
-        if (!update_page) return;
+        const updatePage = Array.isArray(upgradeResult.special_pages)
+            ? upgradeResult.special_pages.find(p => p.name === "update_page")
+            : undefined;
+        if (!updatePage) return;
         const fragment = new URLSearchParams();
-        fragment.set('nskey', upgradeResult.key_space);
+        fragment.set('nskey', updatePage.target_space || upgradeResult.key_space);
         fragment.set('space_id', (upgradeResult.main_space_id).toString());
-        fragment.set('load_page', update_page);
+        fragment.set('load_page', updatePage.route);
         router.push(`/portal/admin/exec?${fragment.toString()}`);
         onUpdated();
         modal.closeModal();
     };
 
-    if (upgradeResult && (upgradeResult.special_pages || {})["update_page"]) {
+    const hasUpdatePage = Array.isArray(upgradeResult?.special_pages) &&
+        upgradeResult.special_pages.some(p => p.name === "update_page");
+
+    if (upgradeResult && hasUpdatePage) {
         return (
             <div className="space-y-4">
                 <p className="text-sm text-gray-600">Upgrade completed. You can configure the package or close.</p>
@@ -704,7 +709,10 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
                 version: selectedVersion,
             });
             const result = res.data;
-            if ((result?.special_pages || {})["update_page"]) {
+            const updatePage = Array.isArray(result?.special_pages)
+                ? result.special_pages.find(p => p.name === "update_page")
+                : undefined;
+            if (updatePage) {
                 setUpgradeResult(result);
             } else {
                 onUpdated();
@@ -719,12 +727,14 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
 
     const handleConfigure = () => {
         if (!upgradeResult) return;
-        const update_page = (upgradeResult.special_pages || {})["update_page"];
-        if (!update_page) return;
+        const updatePage = Array.isArray(upgradeResult.special_pages)
+            ? upgradeResult.special_pages.find(p => p.name === "update_page")
+            : undefined;
+        if (!updatePage) return;
         const fragment = new URLSearchParams();
-        fragment.set('nskey', upgradeResult.key_space);
+        fragment.set('nskey', updatePage.target_space || upgradeResult.key_space);
         fragment.set('space_id', (upgradeResult.main_space_id).toString());
-        fragment.set('load_page', update_page);
+        fragment.set('load_page', updatePage.route);
         router.push(`/portal/admin/exec?${fragment.toString()}`);
         onUpdated();
         modal.closeModal();
@@ -762,7 +772,10 @@ const CheckForUpdateModalContent = ({ packageId, packageName, modal, onUpdated }
         );
     }
 
-    if (upgradeResult && (upgradeResult.special_pages || {})["update_page"]) {
+    const hasRepoUpdatePage = Array.isArray(upgradeResult?.special_pages) &&
+        upgradeResult.special_pages.some(p => p.name === "update_page");
+
+    if (upgradeResult && hasRepoUpdatePage) {
         return (
             <div className="space-y-4">
                 <p className="text-sm text-gray-600">Update completed. You can configure the package or close.</p>

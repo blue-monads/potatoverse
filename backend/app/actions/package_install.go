@@ -71,11 +71,14 @@ func (c *Controller) InstallPackageByFile(userId int64, repo, file string) (*Ins
 
 }
 
+type SpecialPage = models.SpecialPage
+type SpecicalPage = SpecialPage
+
 type InstallPackageResult struct {
-	InstalledId  int64             `json:"installed_id"`
-	MainSpaceId  int64             `json:"main_space_id"`
-	KeySpace     string            `json:"key_space"`
-	SpecialPages map[string]string `json:"special_pages"`
+	InstalledId  int64         `json:"installed_id"`
+	MainSpaceId  int64         `json:"main_space_id"`
+	KeySpace     string        `json:"key_space"`
+	SpecialPages []SpecialPage `json:"special_pages"`
 }
 
 func installPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, repo, file string) (*InstallPackageResult, error) {
@@ -196,10 +199,12 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return nil, err
 	}
 
-	specialPages := map[string]string{}
-	err = json.Unmarshal([]byte(vpkg.SpecialPages), &specialPages)
-	if err != nil {
-		return nil, err
+	specialPages := []SpecialPage{}
+	if len(vpkg.SpecialPages) > 0 && vpkg.SpecialPages != "{}" {
+		err = json.Unmarshal([]byte(vpkg.SpecialPages), &specialPages)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &InstallPackageResult{

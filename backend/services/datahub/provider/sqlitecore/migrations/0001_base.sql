@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS PackageVersion (
   source_code TEXT NOT NULL DEFAULT '',
   license TEXT NOT NULL DEFAULT '',
   version TEXT NOT NULL DEFAULT '',
-  special_pages JSON NOT NULL DEFAULT '{}'
+  special_pages JSON NOT NULL DEFAULT '[]'
 );
 
 

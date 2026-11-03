@@ -599,26 +599,24 @@ const PostInstallButtons = (props: PostInstallButtonsProps) => {
     const router = useRouter();
 
 
+    const initPage = Array.isArray(props.installResult.special_pages)
+        ? props.installResult.special_pages.find(p => p.name === "init_page")
+        : undefined;
+
     return (
         <div className="flex gap-2 justify-center">
 
-            {(props.installResult.special_pages || {})["init_page"] ? (
+            {initPage ? (
                 <button
                     onClick={() => {
-
-                        const initpage = (props.installResult.special_pages || {})["init_page"]
-
-
                         const fragment = new URLSearchParams();
-                        fragment.set('nskey', props.installResult.key_space);
+                        fragment.set('nskey', initPage.target_space || props.installResult.key_space);
                         fragment.set('space_id', (props.installResult.main_space_id).toString());
-                        fragment.set('load_page', initpage);
+                        fragment.set('load_page', initPage.route);
 
                         router.push(`/portal/admin/exec?${fragment.toString()}`);
 
                         props.onClose();
-
-
                     }}
 
                     className="bg-primary-600 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors">

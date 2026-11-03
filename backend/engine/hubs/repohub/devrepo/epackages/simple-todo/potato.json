@@ -2,7 +2,7 @@
     "name": "Simple Todo",
     "slug": "simple-todo",
     "info": "Todo list app to manage your tasks.",
-    "special_pages": {},
+    "special_pages": [],
     "spaces": [
         {
             "namespace": "simple-todo",

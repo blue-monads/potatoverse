@@ -52,7 +52,7 @@ func (d *PackageInstallOperations) InstallPackage(userId int64, repo, filePath s
 
 	installId := result.ID().(int64)
 
-	specialPages := "{}"
+	specialPages := "[]"
 
 	if len(pkgManifest.SpecialPages) != 0 {
 		out, err := json.Marshal(pkgManifest.SpecialPages)
@@ -120,7 +120,7 @@ func (d *PackageInstallOperations) UpdatePackage(id int64, filePath string) (int
 		return 0, err
 	}
 
-	specialPages := "{}"
+	specialPages := "[]"
 	if len(pkgManifest.SpecialPages) != 0 {
 		out, err := json.Marshal(pkgManifest.SpecialPages)
 		if err != nil {
