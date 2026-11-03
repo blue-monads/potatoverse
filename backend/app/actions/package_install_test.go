@@ -13,6 +13,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 )
@@ -245,6 +246,75 @@ func TestInstallPackage_NamespaceValidation(t *testing.T) {
 			t.Errorf("expected non-zero MainSpaceId")
 		}
 
+	})
+
+	t.Run("multi-space package with RootApp root space", func(t *testing.T) {
+		manifest := `{
+			"name": "Example Root",
+			"slug": "pexample-root",
+			"spaces": [
+				{
+					"name": "Root Space",
+					"namespace": "pexample-root",
+					"space_type": "RootApp",
+					"executor_type": "luaz",
+					"server_file": "server.lua",
+					"is_default": true
+				},
+				{
+					"name": "Sub Space",
+					"namespace": "pexample-root:sub",
+					"space_type": "App",
+					"executor_type": "luaz",
+					"server_file": "sub/server.lua",
+					"is_default": false
+				}
+			]
+		}`
+		zipPath := createTestPkgZip(t, manifest)
+		defer os.Remove(zipPath)
+
+		res, err := installPackageByFile(db, logger, userId, "", zipPath)
+		if err != nil {
+			t.Fatalf("expected install to succeed, got %v", err)
+		}
+		if res.MainSpaceId == 0 {
+			t.Errorf("expected non-zero MainSpaceId")
+		}
+
+		spaces, err := db.GetSpaceOps().ListSpacesByPackageId(res.InstalledId)
+		if err != nil {
+			t.Fatalf("failed to list spaces: %v", err)
+		}
+		if len(spaces) != 2 {
+			t.Fatalf("expected 2 spaces installed, got %d", len(spaces))
+		}
+
+		var rootSpace, subSpace *dbmodels.Space
+		for i := range spaces {
+			if spaces[i].NamespaceKey == "pexample-root" {
+				rootSpace = &spaces[i]
+			} else if spaces[i].NamespaceKey == "pexample-root:sub" {
+				subSpace = &spaces[i]
+			}
+		}
+
+		if rootSpace == nil {
+			t.Fatalf("root space pexample-root not found")
+		}
+		if rootSpace.ID != res.MainSpaceId {
+			t.Errorf("expected MainSpaceId %d, got %d", rootSpace.ID, res.MainSpaceId)
+		}
+		if rootSpace.SpaceType != "RootApp" {
+			t.Errorf("expected SpaceType RootApp, got %s", rootSpace.SpaceType)
+		}
+
+		if subSpace == nil {
+			t.Fatalf("sub space pexample-root:sub not found")
+		}
+		if subSpace.SpaceType != "App" {
+			t.Errorf("expected sub SpaceType App, got %s", subSpace.SpaceType)
+		}
 	})
 
 	t.Run("multiple main spaces found error", func(t *testing.T) {

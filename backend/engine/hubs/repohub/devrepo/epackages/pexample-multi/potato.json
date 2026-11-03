@@ -1,0 +1,50 @@
+{
+    "name": "Example Multi Space",
+    "slug": "pexample-multi",
+    "info": "Multi-space package demonstrating main space and non-main default space configuration",
+    "spaces": [
+        {
+            "namespace": "pexample-multi",
+            "space_type": "App",
+            "executor_type": "luaz",
+            "server_file": "server.lua",
+            "route_options": {
+                "router_type": "simple",
+                "serve_folder": "public",
+                "force_html_extension": false,
+                "force_index_html_file": true
+            },
+            "dev_serve_port": 0,
+            "is_default": false
+        },
+        {
+            "namespace": "pexample-multi:sub",
+            "space_type": "App",
+            "executor_type": "luaz",
+            "server_file": "sub/server.lua",
+            "route_options": {
+                "router_type": "simple",
+                "serve_folder": "sub/public",
+                "force_html_extension": false,
+                "force_index_html_file": true
+            },
+            "dev_serve_port": 0,
+            "is_default": true
+        }
+    ],
+    "capabilities": [],
+    "canonical_url": "",
+    "format_version": "0.0.2",
+    "author_name": "Potatoverse",
+    "author_email": "dev@potatoverse.io",
+    "author_site": "https://potatoverse.io",
+    "license": "MIT",
+    "version": "0.0.1",
+    "tags": [
+        "example",
+        "multi-space",
+        "main-space",
+        "default-space"
+    ]
+}
+
