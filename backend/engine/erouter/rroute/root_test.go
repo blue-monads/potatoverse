@@ -1,18 +1,75 @@
-package engine
+package rroute
 
 import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
+	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/blue-monads/potatoverse/backend/engine/erouter/rspace"
+	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 
+func setupTestDB(t *testing.T) (datahub.Database, func()) {
+	tmpDir, err := os.MkdirTemp("", "potatoverse_engine_test_*")
+	if err != nil {
+		t.Fatalf("create temp dir: %v", err)
+	}
+
+	opts := &xtypes.AppOptions{
+		Name:         "PotatoTest",
+		Port:         8080,
+		Hosts:        []xtypes.Host{{Name: "example.com"}},
+		MasterSecret: "super_secret_master_key_123456",
+		WorkingDir:   tmpDir,
+	}
+
+	logger := slog.Default()
+	bhub := buddyhub.NewBuddyHub(opts, logger)
+	dbFile := filepath.Join(tmpDir, "test.sqlite")
+	db, err := database.NewDB(dbFile, logger)
+	if err != nil {
+		os.RemoveAll(tmpDir)
+		t.Fatalf("new db: %v", err)
+	}
+	if err := db.Init(bhub); err != nil {
+		os.RemoveAll(tmpDir)
+		t.Fatalf("init db: %v", err)
+	}
+
+	cleanup := func() {
+		os.RemoveAll(tmpDir)
+	}
+
+	return db, cleanup
+}
+
+type testEngine struct {
+	db          datahub.Database
+	spaceRouter *rspace.SpaceRouter
+}
+
+func (t *testEngine) GetDatabase() datahub.Database {
+	return t.db
+}
+
+func (t *testEngine) GetSpaceRouter() *rspace.SpaceRouter {
+	return t.spaceRouter
+}
+
 func TestRootRouter_MatchDomain(t *testing.T) {
-	eng := &Engine{}
-	rr := NewRootRouter(eng)
+	eng := &testEngine{}
+	rr := NewRootRouter(eng, slog.Default())
 
 	routes := map[string]*RootRouteTarget{
 		"*":              {SpaceId: 12},
@@ -55,8 +112,8 @@ func TestRootRouter_MatchDomain(t *testing.T) {
 }
 
 func TestRootRouter_WildcardSpecificity(t *testing.T) {
-	eng := &Engine{}
-	rr := NewRootRouter(eng)
+	eng := &testEngine{}
+	rr := NewRootRouter(eng, slog.Default())
 
 	routes := map[string]*RootRouteTarget{
 		"*.doomsday.com":     {SpaceId: 13},
@@ -88,11 +145,10 @@ func TestRootRouter_ReloadIndex_FromDatabase(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	eng := &Engine{
-		db:     db,
-		logger: slog.Default(),
+	eng := &testEngine{
+		db: db,
 	}
-	rr := NewRootRouter(eng)
+	rr := NewRootRouter(eng, slog.Default())
 
 	// Initially empty
 	err := rr.ReloadIndex()
@@ -145,8 +201,8 @@ func TestRootRouter_ReloadIndex_FromDatabase(t *testing.T) {
 }
 
 func TestRootRouter_Serve_NotFound404(t *testing.T) {
-	eng := &Engine{}
-	rr := NewRootRouter(eng)
+	eng := &testEngine{}
+	rr := NewRootRouter(eng, slog.Default())
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -158,5 +214,43 @@ func TestRootRouter_Serve_NotFound404(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("expected status 404, got %d", w.Code)
+	}
+}
+
+func TestRootRouter_Serve_Matched(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	sr := rspace.NewSpaceRouter(rspace.Options{
+		DB:     db,
+		Logger: slog.Default(),
+	})
+	eng := &testEngine{
+		db:          db,
+		spaceRouter: sr,
+	}
+
+	rr := NewRootRouter(eng, slog.Default())
+	rr.setRoutes(map[string]*RootRouteTarget{
+		"example.com": {SpaceId: 99},
+	})
+	sr.RoutingIndex["99"] = &rspace.SpaceRouteIndexItem{
+		SpaceId: 99,
+		RouteOption: models.PotatoRouteOptions{
+			RouterType: "simple",
+		},
+	}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	req := httptest.NewRequest("GET", "/index.html", nil)
+	req.Host = "example.com"
+	c.Request = req
+
+	rr.Serve(c)
+
+	// Since space 99 has no files in db, simple router returns 404
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status 404 from space router, got %d", w.Code)
 	}
 }

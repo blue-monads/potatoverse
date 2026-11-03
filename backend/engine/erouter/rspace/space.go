@@ -1,21 +1,37 @@
-package engine
+package rspace
 
 import (
+	"log/slog"
 	"maps"
 	"path"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 
+type Runtime interface {
+	ExecHttp(opts *xtypes.HttpEventOptions) error
+	ClearExecs(spaceIds ...int64)
+}
+
+type Options struct {
+	DB      datahub.Database
+	Runtime Runtime
+	Logger  *slog.Logger
+}
+
 type SpaceRouter struct {
-	engine *Engine
+	db      datahub.Database
+	runtime Runtime
+	logger  *slog.Logger
 
 	RoutingIndex map[string]*SpaceRouteIndexItem
 	riLock       sync.RWMutex
@@ -26,9 +42,21 @@ type SpaceRouter struct {
 	stopOnce         sync.Once
 }
 
-func NewSpaceRouter(engine *Engine) *SpaceRouter {
+type Router = SpaceRouter
+
+func New(opts Options) *SpaceRouter {
+	return NewSpaceRouter(opts)
+}
+
+func NewSpaceRouter(opts Options) *SpaceRouter {
+	logger := opts.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &SpaceRouter{
-		engine:           engine,
+		db:               opts.DB,
+		runtime:          opts.Runtime,
+		logger:           logger,
 		RoutingIndex:     make(map[string]*SpaceRouteIndexItem),
 		riLock:           sync.RWMutex{},
 		reloadPackageIds: make(chan int64, 20),
@@ -88,7 +116,7 @@ func (r *SpaceRouter) ServeSpaceFile(ctx *gin.Context, spaceId int64) {
 
 	qq.Println("@ServeSpaceFile/5")
 
-	switch sIndex.routeOption.RouterType {
+	switch sIndex.RouteOption.RouterType {
 	case "simple", "":
 		r.serveSimpleRoute(ctx, sIndex)
 	case "dynamic":
@@ -113,7 +141,7 @@ func (r *SpaceRouter) GetIndexRetry(spaceKey string, spaceId int64) *SpaceRouteI
 	return r.getIndexRetry(spaceKey, spaceId)
 }
 
-func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
+func BuildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
 	nameParts := strings.Split(filePath, "/")
 	name := nameParts[len(nameParts)-1]
 	pathParts := nameParts[:len(nameParts)-1]

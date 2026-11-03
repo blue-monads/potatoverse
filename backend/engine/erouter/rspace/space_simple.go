@@ -1,4 +1,4 @@
-package engine
+package rspace
 
 import (
 	"net/http"
@@ -21,21 +21,21 @@ func (r *SpaceRouter) serveSimpleRoute(ctx *gin.Context, indexItem *SpaceRouteIn
 
 func (r *SpaceRouter) processSimpleRoute(ctx *gin.Context, filePath string, indexItem *SpaceRouteIndexItem) {
 
-	name, path := buildPackageFilePath(filePath, &indexItem.routeOption)
+	name, path := BuildPackageFilePath(filePath, &indexItem.RouteOption)
 
 	qq.Println("@simple_route/name", name)
 	qq.Println("@simple_route/path", path)
 
-	pFileOps := r.engine.db.GetPackageFileOps()
-	err := pFileOps.StreamFileToHTTP(indexItem.packageVersionId, path, name, ctx)
+	pFileOps := r.db.GetPackageFileOps()
+	err := pFileOps.StreamFileToHTTP(indexItem.PackageVersionId, path, name, ctx)
 	if err != nil {
-		if !r.engine.db.IsEmptyRowsError(err) {
+		if !r.db.IsEmptyRowsError(err) {
 			httpx.WriteErr(ctx, err)
 			return
 		}
 
-		nofoundFile := indexItem.routeOption.OnNotFoundFile
-		serveFolder := indexItem.routeOption.ServeFolder
+		nofoundFile := indexItem.RouteOption.OnNotFoundFile
+		serveFolder := indexItem.RouteOption.ServeFolder
 
 		qq.Println("@nofoundFile", nofoundFile)
 		qq.Println("@serveFolder", serveFolder)
@@ -46,7 +46,7 @@ func (r *SpaceRouter) processSimpleRoute(ctx *gin.Context, filePath string, inde
 			return
 		}
 
-		err = pFileOps.StreamFileToHTTP(indexItem.packageVersionId, serveFolder, nofoundFile, ctx)
+		err = pFileOps.StreamFileToHTTP(indexItem.PackageVersionId, serveFolder, nofoundFile, ctx)
 
 		qq.Println("@finish", err)
 

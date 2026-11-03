@@ -6,10 +6,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/engine/erouter/rroute"
+	"github.com/blue-monads/potatoverse/backend/engine/erouter/rspace"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/sighub"
+
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
@@ -22,13 +25,21 @@ import (
 
 var _ xtypes.Engine = (*Engine)(nil)
 
+type RootRouteTarget = rroute.RootRouteTarget
+type RootRouter = rroute.RootRouter
+
+const (
+	RootRoutingIndexConfigKey   = rroute.RootRoutingIndexConfigKey
+	RootRoutingIndexConfigGroup = rroute.RootRoutingIndexConfigGroup
+)
+
 type Engine struct {
 	db            datahub.Database
 	workingFolder string
 
 	runtime     Runtime
-	spaceRouter *SpaceRouter
-	rootRouter  *RootRouter
+	spaceRouter *rspace.SpaceRouter
+	rootRouter  *rroute.RootRouter
 
 	logger *slog.Logger
 
@@ -74,14 +85,26 @@ func NewEngine(opt EngineOption) *Engine {
 	}
 
 	e.runtime.parent = e
-	e.spaceRouter = NewSpaceRouter(e)
-	e.rootRouter = NewRootRouter(e)
+	e.spaceRouter = rspace.NewSpaceRouter(rspace.Options{
+		DB:      e.db,
+		Runtime: &e.runtime,
+		Logger:  elogger.With("service", "rspace"),
+	})
+	e.rootRouter = rroute.NewRootRouter(e, e.logger)
 
 	return e
 }
 
+func (e *Engine) GetDatabase() datahub.Database {
+	return e.db
+}
+
+func (e *Engine) GetSpaceRouter() *rspace.SpaceRouter {
+	return e.spaceRouter
+}
+
 func (e *Engine) GetDebugData() map[string]any {
-	var routingIndexCopy map[string]*SpaceRouteIndexItem
+	var routingIndexCopy map[string]*rspace.SpaceRouteIndexItem
 	if e.spaceRouter != nil {
 		routingIndexCopy = e.spaceRouter.GetRoutingIndexCopy()
 	}
@@ -165,14 +188,18 @@ func (e *Engine) ServeRootSpace(ctx *gin.Context) {
 }
 
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
-	e.spaceRouter.ServeSpaceFile(ctx, 0)
+	if e.spaceRouter != nil {
+		e.spaceRouter.ServeSpaceFile(ctx, 0)
+	}
 }
 
-func (e *Engine) GetSpaceRouter() *SpaceRouter {
-	return e.spaceRouter
+func (e *Engine) ServeSpaceFileWithId(ctx *gin.Context, spaceId int64) {
+	if e.spaceRouter != nil {
+		e.spaceRouter.ServeSpaceFile(ctx, spaceId)
+	}
 }
 
-func (e *Engine) GetRootRouter() *RootRouter {
+func (e *Engine) GetRootRouter() *rroute.RootRouter {
 	return e.rootRouter
 }
 
@@ -202,18 +229,26 @@ func (e *Engine) GetPluginLoaderScript(spaceKey string) string {
 	return ""
 }
 
-func (e *Engine) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
+func (e *Engine) getIndex(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
 	if e.spaceRouter != nil {
-		return e.spaceRouter.getIndex(spaceKey, spaceId)
+		return e.spaceRouter.GetIndex(spaceKey, spaceId)
 	}
 	return nil
 }
 
-func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *SpaceRouteIndexItem {
+func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
 	if e.spaceRouter != nil {
-		return e.spaceRouter.getIndexRetry(spaceKey, spaceId)
+		return e.spaceRouter.GetIndexRetry(spaceKey, spaceId)
 	}
 	return nil
+}
+
+func (e *Engine) GetIndex(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
+	return e.getIndex(spaceKey, spaceId)
+}
+
+func (e *Engine) GetIndexRetry(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
+	return e.getIndexRetry(spaceKey, spaceId)
 }
 
 func (e *Engine) ServePluginFile(ctx *gin.Context) {
@@ -233,7 +268,7 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 		return
 	}
 
-	e.capHub.Handle(index.installedId, spaceId, capabilityName, ctx)
+	e.capHub.Handle(index.InstalledId, spaceId, capabilityName, ctx)
 
 }
 
@@ -256,9 +291,9 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 	}
 
 	err := e.runtime.ExecHttpQ(
-		sIndex.installedId,
-		sIndex.packageVersionId,
-		sIndex.spaceId,
+		sIndex.InstalledId,
+		sIndex.PackageVersionId,
+		sIndex.SpaceId,
 		ctx,
 	)
 	if err != nil {
@@ -283,7 +318,7 @@ func (e *Engine) PluginApi(ctx *gin.Context) {
 		return
 	}
 
-	plugins, err := e.db.GetSpaceOps().ListSpacePlugins(sIndex.installedId, sIndex.spaceId)
+	plugins, err := e.db.GetSpaceOps().ListSpacePlugins(sIndex.InstalledId, sIndex.SpaceId)
 	if err != nil {
 		httpx.WriteErr(ctx, err)
 		return
@@ -316,9 +351,9 @@ func (e *Engine) PluginApi(ctx *gin.Context) {
 
 	reqId, _ := xutils.GenerateRandomString(12)
 	remoteCtxToken, err := e.remoteHub.SignRemoteCtxToken(&remotehub.RemoteCtxClaim{
-		TargetSpaceId:          sIndex.spaceId,
-		TargetPackageId:        sIndex.installedId,
-		TargetPackageVersionId: sIndex.packageVersionId,
+		TargetSpaceId:          sIndex.SpaceId,
+		TargetPackageId:        sIndex.InstalledId,
+		TargetPackageVersionId: sIndex.PackageVersionId,
 		PluginSpaceId:          targetPluginSpace.ID,
 		PluginId:               matchedPluginId,
 		RequestID:              reqId,
@@ -352,7 +387,7 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 
 	qq.Println("@SpaceInfo/1", nsKey, hostName)
 
-	var index *SpaceRouteIndexItem
+	var index *rspace.SpaceRouteIndexItem
 
 	if hostName != "" {
 		spaceId := xutils.ExtractSpaceId(hostName)
@@ -367,7 +402,7 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 		return nil, errors.New("space not found")
 	}
 
-	space, err := e.db.GetSpaceOps().GetSpace(index.spaceId)
+	space, err := e.db.GetSpaceOps().GetSpace(index.SpaceId)
 	if err != nil {
 		return nil, err
 	}

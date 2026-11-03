@@ -1,4 +1,4 @@
-package engine
+package rspace
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ import (
 )
 
 func setupTestDB(t *testing.T) (datahub.Database, func()) {
-	tmpDir, err := os.MkdirTemp("", "potatoverse_engine_test_*")
+	tmpDir, err := os.MkdirTemp("", "potatoverse_srouter_test_*")
 	if err != nil {
 		t.Fatalf("create temp dir: %v", err)
 	}
@@ -56,12 +56,10 @@ func TestRoutingIndex_AllPluginLoaderScript(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
-	eng := &Engine{
-		db:     db,
-		logger: slog.Default(),
-	}
-	sr := NewSpaceRouter(eng)
-	eng.spaceRouter = sr
+	sr := NewSpaceRouter(Options{
+		DB:     db,
+		Logger: slog.Default(),
+	})
 
 	now := time.Now()
 	// 1. Create Package 1 (Host app: Accounting)
@@ -147,15 +145,15 @@ func TestRoutingIndex_AllPluginLoaderScript(t *testing.T) {
 	hostSpace, _ := db.GetSpaceOps().GetSpace(space1Id)
 	hostPkgVer, _ := db.GetPackageInstallOps().GetPackageVersion(pver1Id)
 
-	indexItem, err := sr.buildIndexItem(hostSpace, hostPkgVer)
+	indexItem, err := sr.BuildIndexItem(hostSpace, hostPkgVer)
 	if err != nil {
 		t.Fatalf("buildIndexItem failed: %v", err)
 	}
 
-	if !strings.Contains(indexItem.allPluginLoaderScript, fakeLoaderContent) {
-		t.Fatalf("expected allPluginLoaderScript to contain %q, got %q", fakeLoaderContent, indexItem.allPluginLoaderScript)
+	if !strings.Contains(indexItem.AllPluginLoaderScript, fakeLoaderContent) {
+		t.Fatalf("expected allPluginLoaderScript to contain %q, got %q", fakeLoaderContent, indexItem.AllPluginLoaderScript)
 	}
-	if !strings.Contains(indexItem.allPluginLoaderScript, "super-inventry:acc-integration") {
-		t.Fatalf("expected allPluginLoaderScript to contain plugin namespace, got %q", indexItem.allPluginLoaderScript)
+	if !strings.Contains(indexItem.AllPluginLoaderScript, "super-inventry:acc-integration") {
+		t.Fatalf("expected allPluginLoaderScript to contain plugin namespace, got %q", indexItem.AllPluginLoaderScript)
 	}
 }

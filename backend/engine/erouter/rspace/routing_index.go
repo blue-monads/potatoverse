@@ -1,4 +1,4 @@
-package engine
+package rspace
 
 import (
 	"encoding/json"
@@ -16,14 +16,14 @@ import (
 )
 
 type SpaceRouteIndexItem struct {
-	installedId      int64
-	packageVersionId int64
-	spaceId          int64
-	routeOption      models.PotatoRouteOptions
+	InstalledId      int64
+	PackageVersionId int64
+	SpaceId          int64
+	RouteOption      models.PotatoRouteOptions
 
-	allPluginLoaderScript string // concat of all plugin loader scripts
+	AllPluginLoaderScript string // concat of all plugin loader scripts
 
-	compiledTemplates map[string]*template.Template
+	CompiledTemplates map[string]*template.Template
 }
 
 func (r *SpaceRouter) LoadRoutingIndex() {
@@ -34,12 +34,12 @@ func (r *SpaceRouter) loadRoutingIndex() error {
 
 	nextRoutingIndex := make(map[string]*SpaceRouteIndexItem)
 
-	spaces, err := r.engine.db.GetSpaceOps().ListSpaces()
+	spaces, err := r.db.GetSpaceOps().ListSpaces()
 	if err != nil {
 		return err
 	}
 
-	installs, err := r.engine.db.GetPackageInstallOps().ListPackages()
+	installs, err := r.db.GetPackageInstallOps().ListPackages()
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (r *SpaceRouter) loadRoutingIndex() error {
 
 	qq.Println("@pversionIds", pversionIds)
 
-	packageVersions, err := r.engine.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
+	packageVersions, err := r.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
 	if err != nil {
 		return err
 	}
@@ -67,13 +67,13 @@ func (r *SpaceRouter) loadRoutingIndex() error {
 
 		packageVersion := pversionMap[space.InstalledId]
 		if packageVersion == nil {
-			r.engine.logger.Warn("package version not found, skipping space", "space_id", space.ID, "installed_id", space.InstalledId)
+			r.logger.Warn("package version not found, skipping space", "space_id", space.ID, "installed_id", space.InstalledId)
 			continue
 		}
 
-		indexItem, err := r.buildIndexItem(&space, packageVersion)
+		indexItem, err := r.BuildIndexItem(&space, packageVersion)
 		if err != nil {
-			r.engine.logger.Warn("failed to build index item", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
+			r.logger.Warn("failed to build index item", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
 			continue
 		}
 
@@ -107,9 +107,9 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 	// Get all spaces for the given installedIds
 	allSpaces := make([]dbmodels.Space, 0)
 	for _, installedId := range installedIds {
-		spaces, err := r.engine.db.GetSpaceOps().ListSpacesByPackageId(installedId)
+		spaces, err := r.db.GetSpaceOps().ListSpacesByPackageId(installedId)
 		if err != nil {
-			r.engine.logger.Warn("failed to list spaces for installed package", "installed_id", installedId, "error", err)
+			r.logger.Warn("failed to list spaces for installed package", "installed_id", installedId, "error", err)
 			continue
 		}
 		allSpaces = append(allSpaces, spaces...)
@@ -122,7 +122,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 		r.riLock.Lock()
 		// Remove entries for spaces that no longer exist or were removed
 		for key, item := range r.RoutingIndex {
-			if slices.Contains(installedIds, item.installedId) {
+			if slices.Contains(installedIds, item.InstalledId) {
 				delete(r.RoutingIndex, key)
 			}
 		}
@@ -133,7 +133,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 	qq.Println("@loadRoutingIndexForPackages/3", len(installedIds))
 
 	// Get installed packages to find their ActiveInstallIDs
-	installs, err := r.engine.db.GetPackageInstallOps().ListPackagesByIds(installedIds)
+	installs, err := r.db.GetPackageInstallOps().ListPackagesByIds(installedIds)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 
 	qq.Println("@loadRoutingIndexForPackages/4", len(pversionIds))
 
-	packageVersions, err := r.engine.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
+	packageVersions, err := r.db.GetPackageInstallOps().ListPackageVersionByIds(pversionIds)
 	if err != nil {
 		return err
 	}
@@ -166,13 +166,13 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 
 		packageVersion := pversionMap[space.InstalledId]
 		if packageVersion == nil {
-			r.engine.logger.Warn("package version not found, skipping space", "space_id", space.ID, "installed_id", space.InstalledId)
+			r.logger.Warn("package version not found, skipping space", "space_id", space.ID, "installed_id", space.InstalledId)
 			continue
 		}
 
-		indexItem, err := r.buildIndexItem(&space, packageVersion)
+		indexItem, err := r.BuildIndexItem(&space, packageVersion)
 		if err != nil {
-			r.engine.logger.Warn("failed to build index item", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
+			r.logger.Warn("failed to build index item", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
 			continue
 		}
 
@@ -198,7 +198,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 	keysToRemove := make([]string, 0)
 	for key, item := range r.RoutingIndex {
 		// Remove if it belongs to an affected space
-		if _, isAffected := affectedSpaceIds[item.spaceId]; isAffected {
+		if _, isAffected := affectedSpaceIds[item.SpaceId]; isAffected {
 			keysToRemove = append(keysToRemove, key)
 		}
 	}
@@ -209,7 +209,7 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 	// Add new entries
 	for key, item := range nextPartialIndex {
 		// Space-specific keys are always updated
-		if strings.HasPrefix(key, fmt.Sprintf("%d|_|", item.spaceId)) || key == fmt.Sprintf("%d", item.spaceId) {
+		if strings.HasPrefix(key, fmt.Sprintf("%d|_|", item.SpaceId)) || key == fmt.Sprintf("%d", item.SpaceId) {
 			r.RoutingIndex[key] = item
 		} else {
 			// For namespace keys, only add if they don't already exist
@@ -229,12 +229,14 @@ func (r *SpaceRouter) loadRoutingIndexForPackages(installedIds ...int64) error {
 		spaceIds = append(spaceIds, spaceId)
 	}
 
-	r.engine.runtime.ClearExecs(spaceIds...)
+	if r.runtime != nil {
+		r.runtime.ClearExecs(spaceIds...)
+	}
 
 	return nil
 }
 
-func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.PackageVersion) (*SpaceRouteIndexItem, error) {
+func (r *SpaceRouter) BuildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.PackageVersion) (*SpaceRouteIndexItem, error) {
 
 	routeOptions := models.PotatoRouteOptions{}
 	err := json.Unmarshal([]byte(space.RouteOptions), &routeOptions)
@@ -245,34 +247,34 @@ func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 		routeOptions.ForceIndexHtmlFile = true
 		routeOptions.RouterType = "simple"
 
-		r.engine.logger.Warn("failed to unmarshal route options", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
+		r.logger.Warn("failed to unmarshal route options", "space_id", space.ID, "installed_id", space.InstalledId, "error", err)
 
 	}
 
 	indexItem := &SpaceRouteIndexItem{
-		installedId:      space.InstalledId,
-		spaceId:          space.ID,
-		routeOption:      routeOptions,
-		packageVersionId: packageVersion.ID,
+		InstalledId:      space.InstalledId,
+		SpaceId:          space.ID,
+		RouteOption:      routeOptions,
+		PackageVersionId: packageVersion.ID,
 	}
 
-	if indexItem.routeOption.RouterType == "" {
-		indexItem.routeOption.RouterType = "simple"
-		indexItem.routeOption.ForceHtmlExtension = true
-		indexItem.routeOption.ForceIndexHtmlFile = true
-		indexItem.routeOption.ServeFolder = "public"
+	if indexItem.RouteOption.RouterType == "" {
+		indexItem.RouteOption.RouterType = "simple"
+		indexItem.RouteOption.ForceHtmlExtension = true
+		indexItem.RouteOption.ForceIndexHtmlFile = true
+		indexItem.RouteOption.ServeFolder = "public"
 
-		r.engine.logger.Warn("failed to set default route options", "space_id", space.ID, "installed_id", space.InstalledId)
+		r.logger.Warn("failed to set default route options", "space_id", space.ID, "installed_id", space.InstalledId)
 
 	}
 
 	if routeOptions.RouterType == "dynamic" {
-		indexItem.compiledTemplates = make(map[string]*template.Template)
+		indexItem.CompiledTemplates = make(map[string]*template.Template)
 
 		for _, route := range routeOptions.Routes {
 			if route.Type == "template" && route.File != "" {
 
-				fileOps := r.engine.db.GetPackageFileOps()
+				fileOps := r.db.GetPackageFileOps()
 
 				asFS := fileOps.NewAsFS(packageVersion.ID, routeOptions.TemplateFolder)
 
@@ -282,14 +284,14 @@ func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 					return nil, err
 				}
 
-				indexItem.compiledTemplates[route.File] = tmpl
+				indexItem.CompiledTemplates[route.File] = tmpl
 			}
 		}
 	}
 
 	// Load and concatenate all plugged plugin loader scripts
 	var pluginScripts strings.Builder
-	plugins, err := r.engine.db.GetSpaceOps().ListSpacePlugins(space.InstalledId, space.ID)
+	plugins, err := r.db.GetSpaceOps().ListSpacePlugins(space.InstalledId, space.ID)
 	if err == nil && len(plugins) > 0 {
 
 		const base = `(() => {
@@ -317,7 +319,7 @@ func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 		pluginScripts.WriteString(fmt.Sprintf(base, space.ID, packageVersion.ID, space.InstalledId, space.NamespaceKey))
 
 		for _, plug := range plugins {
-			targetSpace, err := r.engine.db.GetSpaceOps().GetSpace(plug.TargetSpaceID)
+			targetSpace, err := r.db.GetSpaceOps().GetSpace(plug.TargetSpaceID)
 			if err != nil || targetSpace == nil {
 				continue
 			}
@@ -325,7 +327,7 @@ func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 				continue
 			}
 
-			targetPkg, err := r.engine.db.GetPackageInstallOps().GetPackage(targetSpace.InstalledId)
+			targetPkg, err := r.db.GetPackageInstallOps().GetPackage(targetSpace.InstalledId)
 			if err != nil || targetPkg == nil || targetPkg.ActiveInstallID == 0 {
 				continue
 			}
@@ -336,9 +338,9 @@ func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 			}
 			name := path.Base(targetSpace.LoaderScript)
 
-			scriptBytes, err := r.engine.db.GetPackageFileOps().GetFileContentByPath(targetPkg.ActiveInstallID, dir, name)
+			scriptBytes, err := r.db.GetPackageFileOps().GetFileContentByPath(targetPkg.ActiveInstallID, dir, name)
 			if err != nil {
-				r.engine.logger.Warn("failed to read plugin loader script", "target_space_id", targetSpace.ID, "loader_script", targetSpace.LoaderScript, "error", err)
+				r.logger.Warn("failed to read plugin loader script", "target_space_id", targetSpace.ID, "loader_script", targetSpace.LoaderScript, "error", err)
 				continue
 			}
 
@@ -349,9 +351,13 @@ func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 			pluginScripts.Write(scriptBytes)
 		}
 	}
-	indexItem.allPluginLoaderScript = pluginScripts.String()
+	indexItem.AllPluginLoaderScript = pluginScripts.String()
 
 	return indexItem, nil
+}
+
+func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.PackageVersion) (*SpaceRouteIndexItem, error) {
+	return r.BuildIndexItem(space, packageVersion)
 }
 
 func (r *SpaceRouter) GetPluginLoaderScript(spaceKey string) string {
@@ -360,15 +366,15 @@ func (r *SpaceRouter) GetPluginLoaderScript(spaceKey string) string {
 	}
 	index := r.getIndex(spaceKey, 0)
 	if index != nil {
-		return index.allPluginLoaderScript
+		return index.AllPluginLoaderScript
 	}
 
 	if id, err := strconv.ParseInt(spaceKey, 10, 64); err == nil && id > 0 {
 		r.riLock.RLock()
 		defer r.riLock.RUnlock()
 		for _, item := range r.RoutingIndex {
-			if item.installedId == id || item.spaceId == id {
-				return item.allPluginLoaderScript
+			if item.InstalledId == id || item.SpaceId == id {
+				return item.AllPluginLoaderScript
 			}
 		}
 	}
@@ -407,7 +413,7 @@ func (r *SpaceRouter) getIndex(spaceKey string, spaceId int64) *SpaceRouteIndexI
 		}
 
 		for _, item := range r.RoutingIndex {
-			if item.spaceId == spaceId {
+			if item.SpaceId == spaceId {
 				return item
 			}
 		}

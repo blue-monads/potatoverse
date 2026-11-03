@@ -1,6 +1,7 @@
-package engine
+package rspace
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -108,8 +109,13 @@ func (r *SpaceRouter) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRout
 		ctx.Set(key, value)
 	}
 
-	err := r.engine.runtime.ExecHttp(&xtypes.HttpEventOptions{
-		SpaceId:     indexItem.spaceId,
+	if r.runtime == nil {
+		httpx.WriteErr(ctx, errors.New("runtime not configured"))
+		return
+	}
+
+	err := r.runtime.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     indexItem.SpaceId,
 		Request:     ctx,
 		HandlerName: routeMatch.Handler,
 		Params:      pathParams,
@@ -119,7 +125,7 @@ func (r *SpaceRouter) handleTemplateRoute(ctx *gin.Context, indexItem *SpaceRout
 		return
 	}
 
-	tmpl, ok := indexItem.compiledTemplates[routeMatch.File]
+	tmpl, ok := indexItem.CompiledTemplates[routeMatch.File]
 	if !ok {
 		httpx.WriteErrString(ctx, "template not found")
 		return
@@ -146,8 +152,13 @@ func (r *SpaceRouter) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 		ctx.Set(key, value)
 	}
 
-	err := r.engine.runtime.ExecHttp(&xtypes.HttpEventOptions{
-		SpaceId:     indexItem.spaceId,
+	if r.runtime == nil {
+		httpx.WriteErr(ctx, errors.New("runtime not configured"))
+		return
+	}
+
+	err := r.runtime.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     indexItem.SpaceId,
 		Request:     ctx,
 		HandlerName: routeMatch.Handler,
 		Params:      pathParams,
@@ -161,7 +172,7 @@ func (r *SpaceRouter) handleApiRoute(ctx *gin.Context, indexItem *SpaceRouteInde
 }
 
 func (r *SpaceRouter) findMatchingRoute(indexItem *SpaceRouteIndexItem, requestPath, requestMethod string) (*models.PotatoRoute, map[string]string) {
-	for _, route := range indexItem.routeOption.Routes {
+	for _, route := range indexItem.RouteOption.Routes {
 		// Check if method matches
 		if route.Method != requestMethod {
 			continue

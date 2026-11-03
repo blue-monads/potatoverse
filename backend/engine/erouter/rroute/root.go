@@ -1,12 +1,15 @@
-package engine
+package rroute
 
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net"
 	"strings"
 	"sync"
 
+	"github.com/blue-monads/potatoverse/backend/engine/erouter/rspace"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/gin-gonic/gin"
@@ -40,15 +43,21 @@ type RootRouteTarget struct {
 }
 
 type RootRouter struct {
-	engine *Engine
+	engine MyEngine
+	logger *slog.Logger
 
 	indexLock sync.RWMutex
 	routes    map[string]*RootRouteTarget
 }
 
-func NewRootRouter(engine *Engine) *RootRouter {
+type MyEngine interface {
+	GetDatabase() datahub.Database
+	GetSpaceRouter() *rspace.SpaceRouter
+}
+
+func NewRootRouter(e MyEngine, logger *slog.Logger) *RootRouter {
 	return &RootRouter{
-		engine: engine,
+		engine: e,
 		routes: make(map[string]*RootRouteTarget),
 	}
 }
@@ -62,7 +71,9 @@ func (r *RootRouter) Serve(ctx *gin.Context) {
 	}
 
 	qq.Println("@RootRouter/matched", ctx.Request.Host, spaceId)
-	r.engine.spaceRouter.ServeSpaceFile(ctx, spaceId)
+	if sr := r.engine.GetSpaceRouter(); sr != nil {
+		sr.ServeSpaceFile(ctx, spaceId)
+	}
 }
 
 func (r *RootRouter) MatchDomain(rawHost string) (int64, bool) {
@@ -126,18 +137,23 @@ func (r *RootRouter) MatchDomain(rawHost string) (int64, bool) {
 }
 
 func (r *RootRouter) ReloadIndex() error {
-	if r.engine == nil || r.engine.db == nil {
+	if r.engine == nil {
 		return errors.New("engine or database not initialized")
 	}
 
-	globalOps := r.engine.db.GetGlobalOps()
+	db := r.engine.GetDatabase()
+	if db == nil {
+		return errors.New("database not available")
+	}
+
+	globalOps := db.GetGlobalOps()
 	if globalOps == nil {
 		return errors.New("global operations not available")
 	}
 
 	config, err := globalOps.GetGlobalConfig(RootRoutingIndexConfigKey, RootRoutingIndexConfigGroup)
 	if err != nil {
-		if r.engine.db.IsEmptyRowsError(err) {
+		if db.IsEmptyRowsError(err) {
 			r.setRoutes(nil)
 			return nil
 		}
@@ -152,8 +168,8 @@ func (r *RootRouter) ReloadIndex() error {
 	var rawRoutes map[string]*RootRouteTarget
 	err = json.Unmarshal([]byte(config.Value), &rawRoutes)
 	if err != nil {
-		if r.engine.logger != nil {
-			r.engine.logger.Error("failed to unmarshal ROOT_ROUTING_INDEX", "error", err)
+		if r.logger != nil {
+			r.logger.Error("failed to unmarshal ROOT_ROUTING_INDEX", "error", err)
 		}
 		return err
 	}
