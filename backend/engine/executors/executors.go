@@ -13,6 +13,7 @@ type ExecState struct {
 	FsRoot           *os.Root
 	App              xtypes.App
 	Closable         *Closable
+	Executor         xtypes.Executor
 }
 
 func (es *ExecState) Init() {

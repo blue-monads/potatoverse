@@ -367,6 +367,7 @@ func (l *LuaH) registerModules() error {
 		InstalledId:      l.parent.handle.InstalledId,
 		PackageVersionId: l.parent.handle.PackageVersionId,
 		App:              l.parent.parent.app,
+		Executor:         l.parent,
 	}
 
 	es.Init()

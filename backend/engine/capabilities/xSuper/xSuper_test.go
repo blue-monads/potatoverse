@@ -167,7 +167,7 @@ func TestSuperCapability(t *testing.T) {
 	})
 
 	t.Run("get_instance_info", func(t *testing.T) {
-		res, err := cap.Execute("get_instance_info", nil)
+		res, err := cap.Execute(xcapability.CapExecContext{Method: "get_instance_info"})
 		if err != nil {
 			t.Fatalf("get_instance_info failed: %v", err)
 		}
@@ -184,7 +184,7 @@ func TestSuperCapability(t *testing.T) {
 	})
 
 	t.Run("get_admin_token", func(t *testing.T) {
-		res, err := cap.Execute("get_admin_token", nil)
+		res, err := cap.Execute(xcapability.CapExecContext{Method: "get_admin_token"})
 		if err != nil {
 			t.Fatalf("get_admin_token failed: %v", err)
 		}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
@@ -74,7 +75,10 @@ func TestXRemoteExecuteMissingTarget(t *testing.T) {
 	}
 
 	params := lazydata.LazyDataBytes([]byte(`{"query":"SELECT 1"}`))
-	_, err := rc.Execute("run_query", params)
+	_, err := rc.Execute(xcapability.CapExecContext{
+		Method: "run_query",
+		Params: params,
+	})
 	if err == nil {
 		t.Fatal("expected error for missing remote_ctx_token or target configuration")
 	}
@@ -87,7 +91,10 @@ func TestXRemoteExecuteInvalidToken(t *testing.T) {
 	}
 
 	params := lazydata.LazyDataBytes([]byte(`{"remote_ctx_token":"bad-token","query":"SELECT 1"}`))
-	_, err := rc.Execute("run_query", params)
+	_, err := rc.Execute(xcapability.CapExecContext{
+		Method: "run_query",
+		Params: params,
+	})
 	if err == nil {
 		t.Fatal("expected error for invalid remote_ctx_token")
 	}

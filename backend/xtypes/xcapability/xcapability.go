@@ -2,6 +2,7 @@ package xcapability
 
 import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/gin-gonic/gin"
 )
@@ -9,7 +10,7 @@ import (
 type Capability interface {
 	Handle(ctx *gin.Context)
 	ListActions() ([]string, error)
-	Execute(name string, params lazydata.LazyData) (any, error)
+	Execute(ctx CapExecContext) (any, error)
 	Reload(model *dbmodels.SpaceCapability) (Capability, error)
 	Close() error
 }
@@ -41,8 +42,17 @@ type CapabilityBuilder interface {
 	GetDebugData() map[string]any
 }
 
+type CapExecContext struct {
+	Executor  xtypes.Executor
+	InstallId int64
+	SpaceId   int64
+	GName     string
+	Method    string
+	Params    lazydata.LazyData
+}
+
 type CapabilityHub interface {
 	List(spaceId int64) ([]string, error)
 	Methods(installId, spaceId int64, gname string) ([]string, error)
-	Execute(installId, spaceId int64, gname, method string, params lazydata.LazyData) (any, error)
+	Execute(ctx CapExecContext) (any, error)
 }

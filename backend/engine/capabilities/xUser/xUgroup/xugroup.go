@@ -57,7 +57,9 @@ func (c *UgroupCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *UgroupCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *UgroupCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "query_group_users":
 		return c.queryGroupUsers(params)

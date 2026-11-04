@@ -8,7 +8,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
@@ -162,13 +161,13 @@ func (gh *CapabilityHub) Methods(installId, spaceId int64, gname string) ([]stri
 	return gs.ListActions()
 }
 
-func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params lazydata.LazyData) (any, error) {
-	gs, err := gh.get(gname, installId, spaceId)
+func (gh *CapabilityHub) Execute(ctx xcapability.CapExecContext) (any, error) {
+	gs, err := gh.get(ctx.GName, ctx.InstallId, ctx.SpaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gs.Execute(method, params)
+	return gs.Execute(ctx)
 }
 
 func (gh *CapabilityHub) Definations() []CapabilityDefination {

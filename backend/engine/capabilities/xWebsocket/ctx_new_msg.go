@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/easyaction"
 )
 
@@ -40,7 +41,10 @@ func (m *messageCtx) ExecuteAction(name string, params lazydata.LazyData) (any, 
 		return ok, m.cap.sendToConnections(p.ConnIds, m.payload, p.Binary)
 
 	case "broadcast_message", "send_to_connections", "list_connections":
-		return m.cap.Execute(name, params)
+		return m.cap.Execute(xcapability.CapExecContext{
+			Method: name,
+			Params: params,
+		})
 
 	default:
 		resp, err := easyaction.BytelazyDataActions(m.payload, name, params)

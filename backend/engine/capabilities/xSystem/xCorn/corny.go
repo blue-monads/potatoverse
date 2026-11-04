@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 )
 
 type CornJob struct {
@@ -25,7 +26,9 @@ func (c *CornCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *CornCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *CornCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "list_jobs":
 		return c.listJobs()

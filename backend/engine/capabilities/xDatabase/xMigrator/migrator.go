@@ -8,7 +8,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +29,9 @@ func (m *MigratorCapability) ListActions() ([]string, error) {
 	return []string{"run_migrations", "list_migrations"}, nil
 }
 
-func (m *MigratorCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (m *MigratorCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "run_migrations":
 

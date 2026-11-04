@@ -13,7 +13,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/emtyctx"
 	"github.com/gin-gonic/gin"
@@ -368,7 +367,9 @@ func (c *WebsocketCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *WebsocketCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *WebsocketCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	qq.Println("@ws/execute", name)
 
 	switch name {

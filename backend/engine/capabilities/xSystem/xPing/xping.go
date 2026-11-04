@@ -4,7 +4,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
@@ -156,8 +155,8 @@ func (p *PingCapability) ListActions() ([]string, error) {
 	return []string{"ping"}, nil
 }
 
-func (p *PingCapability) Execute(name string, params lazydata.LazyData) (any, error) {
-	if name == "ping" {
+func (p *PingCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	if ctx.Method == "ping" {
 		return map[string]any{
 			"result":   "pong",
 			"space_id": p.spaceId,

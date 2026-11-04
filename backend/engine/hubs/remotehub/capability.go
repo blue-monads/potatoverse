@@ -4,6 +4,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/engine/executors/core"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 )
 
 func (b *RemoteHub) CapTokenSign(ctx RContext) (any, error) {
@@ -64,7 +65,13 @@ func (b *RemoteHub) CapExecute(ctx RContext) (any, error) {
 
 	var lh lazydata.LazyData = lazydata.LazyDataBytes(data)
 
-	res, err := b.caphub.Execute(ctx.GetPackageId(), ctx.GetSpaceId(), capName, method, lh)
+	res, err := b.caphub.Execute(xcapability.CapExecContext{
+		InstallId: ctx.GetPackageId(),
+		SpaceId:   ctx.GetSpaceId(),
+		GName:     capName,
+		Method:    method,
+		Params:    lh,
+	})
 	if err != nil {
 		return nil, err
 	}

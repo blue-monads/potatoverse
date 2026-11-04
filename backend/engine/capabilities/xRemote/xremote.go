@@ -91,7 +91,10 @@ func (r *RemoteCapability) Handle(ctx *gin.Context) {
 		action = action[1:]
 	}
 
-	result, err := r.Execute(action, lazydata.NewLazyHTTP(ctx))
+	result, err := r.Execute(xcapability.CapExecContext{
+		Method: action,
+		Params: lazydata.NewLazyHTTP(ctx),
+	})
 	httpx.WriteJSON(ctx, result, err)
 }
 
@@ -128,7 +131,9 @@ func normalizeAction(name string) string {
 	return name
 }
 
-func (r *RemoteCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (r *RemoteCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	if r.remoteHub == nil {
 		return nil, errors.New("remotehub is not available")
 	}

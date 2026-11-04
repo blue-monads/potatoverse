@@ -70,13 +70,19 @@ func (c *Context) ExecuteAction(name string, params lazydata.LazyData) (any, err
 			return c.Handler(name, params)
 		}
 
-		return c.Capability.Execute(name, params)
+		return c.Capability.Execute(xcapability.CapExecContext{
+			Method: name,
+			Params: params,
+		})
 	}
 
 	resp, err := BytelazyDataActions(c.Payload, name, params)
 	if err != nil {
 		if errors.Is(err, ErrUnknownAction) {
-			return c.Capability.Execute(name, params)
+			return c.Capability.Execute(xcapability.CapExecContext{
+				Method: name,
+				Params: params,
+			})
 		}
 		return nil, err
 	}

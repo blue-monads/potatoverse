@@ -110,7 +110,9 @@ func (c *SuperCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *SuperCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *SuperCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "get_admin_token":
 		return c.getAdminToken(params)

@@ -3,6 +3,7 @@ package xremotedb
 import (
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +26,10 @@ func (r *RemoteDbCapability) Handle(ctx *gin.Context) {
 		return
 	}
 
-	result, err := r.Execute(action, lazydata.NewLazyHTTP(ctx))
+	result, err := r.Execute(xcapability.CapExecContext{
+		Method: action,
+		Params: lazydata.NewLazyHTTP(ctx),
+	})
 	httpx.WriteJSON(ctx, result, err)
 
 }

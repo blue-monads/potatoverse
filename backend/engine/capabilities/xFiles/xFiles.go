@@ -63,7 +63,10 @@ func (c *FilesCapability) Handle(ctx *gin.Context) {
 			return
 		}
 
-		result, err := c.Execute(action, lazydata.NewLazyHTTP(ctx))
+		result, err := c.Execute(xcapability.CapExecContext{
+			Method: action,
+			Params: lazydata.NewLazyHTTP(ctx),
+		})
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -89,7 +92,9 @@ func (c *FilesCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *FilesCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *FilesCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "create_file":
 		return c.createFile(params)

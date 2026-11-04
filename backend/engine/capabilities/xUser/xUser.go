@@ -85,7 +85,9 @@ func (c *CurrUserCapability) ListActions() ([]string, error) {
 	return []string{"send_user_message", "get_user_info", "get_user_config"}, nil
 }
 
-func (c *CurrUserCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *CurrUserCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "send_user_message":
 		return c.sendUserMessage(params)
