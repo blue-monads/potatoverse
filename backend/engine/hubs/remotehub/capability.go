@@ -1,6 +1,7 @@
 package remotehub
 
 import (
+	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/core"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
@@ -66,11 +67,13 @@ func (b *RemoteHub) CapExecute(ctx RContext) (any, error) {
 	var lh lazydata.LazyData = lazydata.LazyDataBytes(data)
 
 	res, err := b.caphub.Execute(xcapability.CapExecContext{
-		InstallId: ctx.GetPackageId(),
-		SpaceId:   ctx.GetSpaceId(),
-		GName:     capName,
-		Method:    method,
-		Params:    lh,
+		State: &executors.ExecState{
+			InstalledId: ctx.GetPackageId(),
+			SpaceId:     ctx.GetSpaceId(),
+		},
+		CapabilityName: capName,
+		Method:         method,
+		Params:         lh,
 	})
 	if err != nil {
 		return nil, err

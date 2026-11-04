@@ -57,12 +57,10 @@ func capExecute(chub xcapability.CapabilityHub, L *lua.LState) int {
 
 	paramsLazyData := lazylua.NewLuaLazyData(L, params)
 	result, err := chub.Execute(xcapability.CapExecContext{
-		Executor:  execState.Executor,
-		InstallId: execState.InstalledId,
-		SpaceId:   execState.SpaceId,
-		GName:     capabilityName,
-		Method:    method,
-		Params:    paramsLazyData,
+		State:          execState,
+		CapabilityName: capabilityName,
+		Method:         method,
+		Params:         paramsLazyData,
 	})
 	if err != nil {
 		return luaplus.PushError(L, err)

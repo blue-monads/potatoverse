@@ -1,8 +1,8 @@
 package xcapability
 
 import (
+	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/gin-gonic/gin"
 )
@@ -43,12 +43,10 @@ type CapabilityBuilder interface {
 }
 
 type CapExecContext struct {
-	Executor  xtypes.Executor
-	InstallId int64
-	SpaceId   int64
-	GName     string
-	Method    string
-	Params    lazydata.LazyData
+	State          *executors.ExecState
+	CapabilityName string
+	Method         string
+	Params         lazydata.LazyData
 }
 
 type CapabilityHub interface {

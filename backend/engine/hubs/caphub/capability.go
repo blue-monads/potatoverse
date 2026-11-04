@@ -162,7 +162,12 @@ func (gh *CapabilityHub) Methods(installId, spaceId int64, gname string) ([]stri
 }
 
 func (gh *CapabilityHub) Execute(ctx xcapability.CapExecContext) (any, error) {
-	gs, err := gh.get(ctx.GName, ctx.InstallId, ctx.SpaceId)
+	var installId, spaceId int64
+	if ctx.State != nil {
+		installId = ctx.State.InstalledId
+		spaceId = ctx.State.SpaceId
+	}
+	gs, err := gh.get(ctx.CapabilityName, installId, spaceId)
 	if err != nil {
 		return nil, err
 	}
