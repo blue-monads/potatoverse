@@ -356,10 +356,6 @@ func (r *SpaceRouter) BuildIndexItem(space *dbmodels.Space, packageVersion *dbmo
 	return indexItem, nil
 }
 
-func (r *SpaceRouter) buildIndexItem(space *dbmodels.Space, packageVersion *dbmodels.PackageVersion) (*SpaceRouteIndexItem, error) {
-	return r.BuildIndexItem(space, packageVersion)
-}
-
 func (r *SpaceRouter) GetPluginLoaderScript(spaceKey string) string {
 	if r == nil {
 		return ""
