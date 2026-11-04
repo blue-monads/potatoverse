@@ -64,8 +64,9 @@ func (c *FilesCapability) Handle(ctx *gin.Context) {
 		}
 
 		result, err := c.Execute(xcapability.CapExecContext{
-			Method: action,
-			Params: lazydata.NewLazyHTTP(ctx),
+			HttpRequest: ctx,
+			Method:      action,
+			Params:      lazydata.NewLazyHTTP(ctx),
 		})
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})

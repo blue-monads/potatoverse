@@ -43,7 +43,9 @@ type CapabilityBuilder interface {
 }
 
 type CapExecContext struct {
-	State          *executors.ExecState
+	State       *executors.ExecState
+	HttpRequest *gin.Context
+
 	CapabilityName string
 	Method         string
 	Params         lazydata.LazyData

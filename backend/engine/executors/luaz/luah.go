@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"path"
+	"strings"
+
 	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
@@ -16,8 +19,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/cjoudrey/gluahttp"
 	"github.com/gin-gonic/gin"
-	"path"
-	"strings"
 
 	lua "github.com/yuin/gopher-lua"
 	luaJson "layeh.com/gopher-json"
@@ -42,6 +43,7 @@ type LuaH struct {
 	parent  *LuazExecutor
 	closers []CloseItem
 	L       *lua.LState
+	es      *executors.ExecState
 }
 
 func (l *LuaH) AddCloser(closer func() error) uint16 {
@@ -80,6 +82,13 @@ type LuaContextOptions struct {
 }
 
 func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[string]string) error {
+	if l.es != nil {
+		l.es.HttpRequest = ctx
+		defer func() {
+			l.es.HttpRequest = nil
+		}()
+	}
+
 	ctxt := l.L.NewTable()
 
 	lh := l
@@ -347,7 +356,6 @@ func (l *LuaH) relativeLoader(L *lua.LState) int {
 	return 1
 }
 
-
 func (l *LuaH) registerModules() error {
 
 	/*
@@ -371,6 +379,7 @@ func (l *LuaH) registerModules() error {
 	}
 
 	es.Init()
+	l.es = es
 
 	sharedBinds := l.parent.parent.binds
 

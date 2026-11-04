@@ -27,8 +27,9 @@ func (r *RemoteDbCapability) Handle(ctx *gin.Context) {
 	}
 
 	result, err := r.Execute(xcapability.CapExecContext{
-		Method: action,
-		Params: lazydata.NewLazyHTTP(ctx),
+		HttpRequest: ctx,
+		Method:      action,
+		Params:      lazydata.NewLazyHTTP(ctx),
 	})
 	httpx.WriteJSON(ctx, result, err)
 

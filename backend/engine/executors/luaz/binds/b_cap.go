@@ -8,6 +8,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
+	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -55,9 +56,15 @@ func capExecute(chub xcapability.CapabilityHub, L *lua.LState) int {
 	method := L.CheckString(2)
 	params := L.CheckTable(3)
 
+	var req *gin.Context
+	if execState != nil {
+		req = execState.HttpRequest
+	}
+
 	paramsLazyData := lazylua.NewLuaLazyData(L, params)
 	result, err := chub.Execute(xcapability.CapExecContext{
 		State:          execState,
+		HttpRequest:    req,
 		CapabilityName: capabilityName,
 		Method:         method,
 		Params:         paramsLazyData,
