@@ -123,7 +123,7 @@ func (c *SuperCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
 	}
 }
 
-func (c *SuperCapability) getAdminToken(params lazydata.LazyData) (any, error) {
+func (c *SuperCapability) getAdminToken(_ lazydata.LazyData) (any, error) {
 	ctrl, ok := c.app.Controller().(*actions.Controller)
 	if !ok || ctrl == nil {
 		return nil, errors.New("controller not available")
@@ -140,7 +140,7 @@ func (c *SuperCapability) getAdminToken(params lazydata.LazyData) (any, error) {
 	}, nil
 }
 
-func (c *SuperCapability) getInstanceInfo(params lazydata.LazyData) (any, error) {
+func (c *SuperCapability) getInstanceInfo(_ lazydata.LazyData) (any, error) {
 	opts, ok := c.app.Config().(*xtypes.AppOptions)
 	if !ok || opts == nil {
 		return nil, errors.New("app config not available")
