@@ -73,6 +73,12 @@ func (c *Controller) ActivateUser(id int64) error {
 	})
 }
 
+func (c *Controller) SetUserPassword(id int64, passwordHash string) error {
+	return c.database.GetUserOps().UpdateUser(id, map[string]any{
+		"password": passwordHash,
+	})
+}
+
 func (c *Controller) DeleteUser(id int64) error {
 	return c.database.GetUserOps().DeleteUser(id)
 }
@@ -266,7 +272,7 @@ func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password s
 		OwnerUserId: invite.InvitedBy,
 	}
 
-	userId, err := c.database.GetUserOps().AddUser(user)
+	_, err = c.database.GetUserOps().AddUser(user)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +285,7 @@ func (c *Controller) AcceptUserInvite(inviteId int64, name, username, password s
 		return nil, err
 	}
 
-	return c.database.GetUserOps().GetUser(userId)
+	return c.database.GetUserOps().GetUserByEmail(invite.Email)
 }
 
 // Create User Directly
@@ -313,13 +319,13 @@ func (c *Controller) CreateUserDirectly(name, email, username, utype, ugroup str
 		IsDeleted:   false,
 	}
 
-	id, err := c.database.GetUserOps().AddUser(user)
+	_, err = c.database.GetUserOps().AddUser(user)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the created user
-	createdUser, err := c.database.GetUserOps().GetUser(id)
+	createdUser, err := c.database.GetUserOps().GetUserByEmail(email)
 	if err != nil {
 		return nil, err
 	}

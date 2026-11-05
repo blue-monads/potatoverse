@@ -1,0 +1,13 @@
+set dotenv-load := true
+
+hello:
+    echo "Hello, world!"
+
+run_cloudy:
+    mkdir -p tmp
+    cd tmp && go run ../main.go
+
+migrate:
+    mkdir -p tmp
+    cd tmp && go run ../main.go migrate
+

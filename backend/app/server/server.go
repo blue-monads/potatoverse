@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"log/slog"
@@ -22,16 +21,16 @@ import (
 )
 
 type Server struct {
-	ctrl   *actions.Controller
-	router *gin.Engine
-	signer *signer.Signer
-	engine *engine.Engine
-	opt    Option
-
+	ctrl        *actions.Controller
+	router      *gin.Engine
+	signer      *signer.Signer
+	engine      *engine.Engine
+	opt         Option
 	buddyRoutes *rtbuddy.BuddyRouteServer
 }
 
 type Option struct {
+	ExecId      string
 	Port        int
 	Ctrl        *actions.Controller
 	Signer      *signer.Signer
@@ -40,10 +39,16 @@ type Option struct {
 	GlobalJS    string
 	SiteName    string
 	LocalSocket string
+	BaseRouter  *gin.Engine
 
-	BuddyHub *buddyhub.BuddyHub
+	RunPortNoBind bool
+
+	BuddyHub buddyhub.IBuddyHub
 	CoreHub  *corehub.CoreHub
-	Logger   *slog.Logger
+
+	Logger *slog.Logger
+
+	OnStart func()
 }
 
 func NewServer(opt Option) *Server {
@@ -65,7 +70,11 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	s.router = gin.Default()
+	if s.opt.BaseRouter != nil {
+		s.router = s.opt.BaseRouter
+	} else {
+		s.router = gin.Default()
+	}
 
 	enableCOmpression :=
 		os.Getenv("FRONTEND_DEV_SERVER") == "" &&
@@ -103,6 +112,7 @@ func (s *Server) Start() error {
 		if !existed {
 			pubkey := s.opt.BuddyHub.GetPubkey()
 			fmt.Println("Server started:")
+			fmt.Println("ExecId:\t\t", s.opt.ExecId)
 			fmt.Println("Listening on:\t\t", fmt.Sprintf("http://localhost:%d/zz/pages", s.opt.Port))
 			fmt.Println("Node Pubkey:\t\t", pubkey)
 
@@ -121,7 +131,15 @@ func (s *Server) Start() error {
 			panic(err)
 		}
 
+		if s.opt.OnStart != nil {
+			s.opt.OnStart()
+		}
+
 	}()
+
+	if s.opt.RunPortNoBind {
+		return nil
+	}
 
 	return s.router.Run(fmt.Sprintf(":%d", s.opt.Port))
 
@@ -135,8 +153,6 @@ func (s *Server) listenUnixSocket() error {
 		return nil
 	}
 
-	// delete old socket
-
 	os.Remove(s.opt.LocalSocket)
 
 	l, err := net.Listen("unix", s.opt.LocalSocket)
@@ -149,32 +165,12 @@ func (s *Server) listenUnixSocket() error {
 		for {
 			c, err := l.Accept()
 			if err != nil {
-				log.Fatal("accept error:", err.Error())
+				log.Println("unix socket accept error:", err.Error())
 				return
 			}
 
-			func(c net.Conn) {
-				defer c.Close()
-
-				out, err := json.Marshal(map[string]any{
-					"port": s.opt.Port,
-					"host": s.opt.Hosts,
-				})
-
-				if err != nil {
-					log.Fatal("json marshal error:", err.Error())
-					return
-				}
-
-				_, err = c.Write(out)
-				if err != nil {
-					log.Fatal("Write: ", err)
-				}
-
-			}(c)
-
+			go s.handleUnixRPC(c)
 		}
-
 	}()
 
 	return nil

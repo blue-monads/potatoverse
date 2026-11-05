@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/provider/sqlitecore"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -37,7 +37,7 @@ func getDatabase() db.Session {
 
 	sqlconn := db.Driver().(*sql.DB)
 
-	schemaTxt := schema.Get()
+	schemaTxt := sqlitecore.Get()
 	_, err = sqlconn.Exec(schemaTxt)
 	if err != nil {
 		panic(fmt.Errorf("failed to execute schema: %w", err))

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign up · Cloudy</title>
+  <link rel="stylesheet" href="cloudy.css">
+</head>
+<body>
+  <div class="shell">
+    <div class="brand">Cloudy</div>
+    <div class="card">
+      <h1>Create an account</h1>
+      <p class="lede">Enter your details and team name. We’ll email you a verification link before you can sign in.</p>
+      <form id="form">
+        <label>Name
+          <input name="name" autocomplete="name" required>
+        </label>
+        <label>Team Name
+          <input name="team_name" autocomplete="off" placeholder="Acme Team">
+        </label>
+        <label>Email
+          <input name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>Password
+          <input name="password" type="password" autocomplete="new-password" required minlength="8">
+        </label>
+        <button type="submit">Sign up</button>
+      </form>
+      <p id="msg" class="msg"></p>
+      <p class="foot">Already have an account? <a href="login.html">Sign in</a></p>
+    </div>
+  </div>
+  <script>
+    const form = document.getElementById("form");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.className = "msg";
+      msg.textContent = "";
+      const btn = form.querySelector("button");
+      btn.disabled = true;
+      const body = {
+        name: form.name.value.trim(),
+        team_name: form.team_name.value.trim(),
+        email: form.email.value.trim(),
+        password: form.password.value,
+      };
+      try {
+        const res = await fetch("/zz/cloudy/sign-up", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Sign up failed");
+        msg.className = "msg ok";
+        msg.textContent = data.message || "Check your email to verify before logging in.";
+        form.reset();
+      } catch (err) {
+        msg.className = "msg err";
+        msg.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

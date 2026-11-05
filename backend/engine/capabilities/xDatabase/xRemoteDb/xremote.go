@@ -39,7 +39,9 @@ func (r *RemoteDbCapability) ListActions() ([]string, error) {
 	return actions, nil
 }
 
-func (r *RemoteDbCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (r *RemoteDbCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "run_ddl":
 		return r.execRunDDL(params)

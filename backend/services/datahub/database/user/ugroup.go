@@ -32,6 +32,17 @@ func (d *UserOperations) GetUserGroup(name string) (*dbmodels.UserGroup, error) 
 	return data, nil
 }
 
+func (d *UserOperations) GetUserGroupByID(id int64) (*dbmodels.UserGroup, error) {
+	data := &dbmodels.UserGroup{}
+
+	err := d.userGroupTable().Find(db.Cond{"id": id}).One(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
 func (d *UserOperations) ListUserGroups() ([]dbmodels.UserGroup, error) {
 	userGroups := make([]dbmodels.UserGroup, 0)
 

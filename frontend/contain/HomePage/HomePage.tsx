@@ -41,7 +41,7 @@ export default function HomePage() {
 
             const nextFormattedSpaces = formatSpace(resp.data);
 
-            const nextfavs = nextFormattedSpaces.filter((space) => favorites.favorites.includes(space.space_id));
+            const nextfavs = nextFormattedSpaces.filter((space) => !space.is_plugin && favorites.favorites.includes(space.space_id));
             setFavSpaces(nextfavs);
 
         } catch (error) {

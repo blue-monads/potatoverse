@@ -62,7 +62,6 @@ potatoverse server init-and-start
 - [ ] Buddy backup (WIP)
 - [ ] Http Tunnel (WIP, http://buddy-<nodeid>.tubersalltheway.top/zz/pages )
 - [ ] WASM executor (current lua runtime is much easier for testing APIs and ideas)
-- [ ] Postgres support. (technically possible cz undelying orm supports it but sqlite is just easier for now)
 
 
 ## Terminologies

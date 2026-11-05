@@ -1,12 +1,14 @@
 package binds
 
 import (
+	"github.com/blue-monads/potatoverse/backend/engine/executors/core"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/luaplus"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
+	"github.com/gin-gonic/gin"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -54,8 +56,19 @@ func capExecute(chub xcapability.CapabilityHub, L *lua.LState) int {
 	method := L.CheckString(2)
 	params := L.CheckTable(3)
 
+	var req *gin.Context
+	if execState != nil {
+		req = execState.HttpRequest
+	}
+
 	paramsLazyData := lazylua.NewLuaLazyData(L, params)
-	result, err := chub.Execute(execState.InstalledId, execState.SpaceId, capabilityName, method, paramsLazyData)
+	result, err := chub.Execute(xcapability.CapExecContext{
+		State:          execState,
+		HttpRequest:    req,
+		CapabilityName: capabilityName,
+		Method:         method,
+		Params:         paramsLazyData,
+	})
 	if err != nil {
 		return luaplus.PushError(L, err)
 	}
@@ -79,17 +92,10 @@ func capMethods(chub xcapability.CapabilityHub, L *lua.LState) int {
 	return 1
 }
 
-type SignCapabilityTokenOptions struct {
-	ResourceId string         `json:"resource_id"`
-	ExtraMeta  map[string]any `json:"extrameta"`
-	UserId     int64          `json:"user_id"`
-	SubType    string         `json:"sub_type"`
-}
-
 func capSignToken(sdb datahub.SpaceOps, s *signer.Signer, L *lua.LState) int {
 	execState := GetExecState(L)
 	capName := L.CheckString(1)
-	opts := &SignCapabilityTokenOptions{}
+	opts := &core.CapTokenSignOptions{}
 	err := luaplus.MapToStruct(L, L.CheckTable(2), opts)
 
 	capability, err := sdb.GetSpaceCapability(execState.InstalledId, capName)

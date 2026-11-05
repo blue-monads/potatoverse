@@ -8,6 +8,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/utils/libx/dbutils"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 )
 
 var txnCounter atomic.Int64
@@ -18,7 +19,9 @@ var okResult = struct {
 	Success: true,
 }
 
-func (c *SqliteCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *SqliteCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "execute":
 		return c.execSQL(params)

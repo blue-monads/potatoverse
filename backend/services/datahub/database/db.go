@@ -9,17 +9,16 @@ import (
 	"log/slog"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/database/event"
 	fileops "github.com/blue-monads/potatoverse/backend/services/datahub/database/file"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/global"
 	ppackage "github.com/blue-monads/potatoverse/backend/services/datahub/database/ppackage"
-	"github.com/blue-monads/potatoverse/backend/services/datahub/database/schema"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/database/signal"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/space"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/database/user"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/lazysyncer"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/provider/sqlitecore"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/upper/db/v4"
 	upperdb "github.com/upper/db/v4"
@@ -36,7 +35,7 @@ type DB struct {
 	fileOps           *fileops.FileOperations
 	packageFileOps    *fileops.FileOperations
 	packageInstallOps *ppackage.PackageInstallOperations
-	eventOps          *event.EventOperations
+	signalOps         *signal.SignalOperations
 
 	lazySyncer *lazysyncer.LazySyncer
 }
@@ -79,23 +78,21 @@ func NewDB(file string, logger *slog.Logger) (*DB, error) {
 
 func AutoMigrate(sess upperdb.Session) error {
 
-	exists, _ := sess.Collection("Users").Exists()
+	exists, err := sess.Collection("Users").Exists()
+
+	qq.Println("@table_exists_err", err)
 
 	if !exists {
+
+		qq.Println("@migrating_tables")
+
 		driver := sess.Driver().(*sql.DB)
 
 		buf := bytes.Buffer{}
 
-		pschema := strings.Replace(fileops.FileSchemaSQL, "FileMeta", "PFileMeta", 1)
-		pschema = strings.Replace(pschema, "FileBlob", "PFileBlob", 1)
-
-		schema := schema.Get()
+		schema := sqlitecore.Get()
 
 		buf.WriteString(schema)
-		buf.WriteString("\n")
-		buf.WriteString(fileops.FileSchemaSQL)
-		buf.WriteString("\n")
-		buf.WriteString(pschema)
 
 		fileSchema := buf.String()
 
@@ -151,7 +148,7 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 	})
 
 	packageInstallOps := ppackage.NewPackageInstallOperations(sess, packageFileOps)
-	eventOps := event.NewEventOperations(sess)
+	signalOps := signal.NewSignalOperations(sess)
 
 	if err := AutoMigrate(sess); err != nil {
 		return nil, err
@@ -178,7 +175,7 @@ func fromSqlHandle(sess upperdb.Session, logger *slog.Logger) (*DB, error) {
 		fileOps:              fileOps,
 		packageFileOps:       packageFileOps,
 		packageInstallOps:    packageInstallOps,
-		eventOps:             eventOps,
+		signalOps:            signalOps,
 		lazySyncer:           lazySyncer,
 	}, nil
 }
@@ -192,7 +189,7 @@ func (db *DB) Init(transport datahub.BuddyTransport) error {
 
 	qq.Println("@db_debug_info", debugInfo)
 
-	if db.lazySyncer != nil {
+	if db.lazySyncer != nil && transport != nil {
 		if err := db.lazySyncer.Start(transport); err != nil {
 			return err
 		}

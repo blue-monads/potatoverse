@@ -7,7 +7,9 @@ import (
 
 	_ "github.com/blue-monads/potatoverse/cmd/cli/extra/funnel-hq"
 
-	//_ "github.com/blue-monads/potatoverse/backend/services/datahub/provider/mattn"
+	_ "github.com/blue-monads/potatoverse/cmd/cli/extra/lua"
+
+	_ "github.com/blue-monads/potatoverse/backend/services/datahub/provider/mattn"
 
 	_ "github.com/blue-monads/potatoverse/backend/distro"
 )

@@ -62,8 +62,9 @@ export default function InSpacePostPage() {
         const actual_page = params.get('actual_page')
 
         console.log("@actual_page", actual_page);
+        console.log("@redirect_back_url", redirect_back_url);
 
-        if (actual_page) {
+        if (actual_page && actual_page !== "undefined") {
             const finalRedirectBackUrl = new URL(redirect_back_url, window.location.origin);
             finalRedirectBackUrl.pathname = finalRedirectBackUrl.pathname + "/" + actual_page;
 

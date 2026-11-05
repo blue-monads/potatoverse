@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/engine/executors"
+	"github.com/blue-monads/potatoverse/backend/engine/executors/core"
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
@@ -69,6 +70,11 @@ func CoreBindable(app xtypes.App) map[string]lua.LGFunction {
 		"get_env": func(L *lua.LState) int {
 			return getEnv(app, L)
 		},
+
+		"app_exec_id": func(L *lua.LState) int {
+			L.Push(lua.LString(app.ExecId()))
+			return 1
+		},
 	}
 
 }
@@ -122,15 +128,8 @@ func getEnv(app xtypes.App, L *lua.LState) int {
 	return 2
 }
 
-type PublishEventOptions struct {
-	Name        string `json:"name"`
-	Payload     any    `json:"payload"`
-	ResourceId  string `json:"resource_id"`
-	CollapseKey string `json:"collapse_key"`
-}
-
 func corePublishEvent(engine xtypes.Engine, es *executors.ExecState, L *lua.LState) int {
-	opts := &PublishEventOptions{}
+	opts := &core.PublishEventOptions{}
 	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
@@ -180,14 +179,8 @@ func corePublishEvent(engine xtypes.Engine, es *executors.ExecState, L *lua.LSta
 	return 1
 }
 
-type SignFsPresignedTokenOptions struct {
-	Path     string `json:"path"`
-	FileName string `json:"file_name"`
-	UserId   int64  `json:"user_id"`
-}
-
 func coreSignFsPresignedToken(sig *signer.Signer, es *executors.ExecState, L *lua.LState) int {
-	opts := &SignFsPresignedTokenOptions{}
+	opts := &core.SignFsPresignedTokenOptions{}
 	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
@@ -208,14 +201,8 @@ func coreSignFsPresignedToken(sig *signer.Signer, es *executors.ExecState, L *lu
 	return 2
 }
 
-type SignAdviseryTokenOptions struct {
-	TokenSubType string         `json:"token_sub_type"`
-	UserId       int64          `json:"user_id"`
-	Data         map[string]any `json:"data"`
-}
-
 func coreSignAdviseryToken(sig *signer.Signer, es *executors.ExecState, L *lua.LState) int {
-	opts := &SignAdviseryTokenOptions{}
+	opts := &core.SignAdviseryTokenOptions{}
 	err := luaplus.MapToStruct(L, L.CheckTable(1), opts)
 	if err != nil {
 		L.Push(lua.LString(err.Error()))
@@ -225,7 +212,7 @@ func coreSignAdviseryToken(sig *signer.Signer, es *executors.ExecState, L *lua.L
 	signature, err := sig.SignSpaceAdvisiery(&signer.SpaceAdvisieryClaim{
 		InstallId:    es.InstalledId,
 		UserId:       opts.UserId,
-		TokenSubType: opts.TokenSubType,
+		TokenSubType: opts.SubType,
 		Data:         opts.Data,
 		SpaceId:      es.SpaceId,
 	})
@@ -254,9 +241,9 @@ func coreParseAdviseryToken(sig *signer.Signer, es *executors.ExecState, L *lua.
 
 	resultTable := L.NewTable()
 
-	resultTable.RawSetString("token_sub_type", lua.LString(claim.TokenSubType))
+	resultTable.RawSetString("sub_type", lua.LString(claim.TokenSubType))
 	resultTable.RawSetString("user_id", lua.LNumber(claim.UserId))
-	resultTable.RawSetString("data", luaplus.MapToTable(L, claim.Data))
+	resultTable.RawSetString("data", lua.LString(claim.Data))
 
 	L.Push(resultTable)
 	L.Push(lua.LNil)

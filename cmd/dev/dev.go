@@ -7,6 +7,8 @@ import (
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 
 	_ "github.com/blue-monads/potatoverse/backend/distro"
+		_ "github.com/blue-monads/potatoverse/backend/services/datahub/provider/mattn"
+
 )
 
 func main() {

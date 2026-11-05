@@ -6,9 +6,12 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/engine/capabilities/xWebsocket/xEasyWS/room"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 )
 
-func (c *EasyWsCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *EasyWsCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "broadcast":
 		return c.executeBroadcast(params)

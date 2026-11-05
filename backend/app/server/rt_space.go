@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/gin-gonic/gin"
 )
@@ -220,6 +219,31 @@ func (a *Server) QuerySpaceDataTable(claim *signer.AccessClaim, ctx *gin.Context
 	return a.ctrl.QuerySpaceDataTable(installId, tableName, offsetInt, limitInt)
 }
 
+func (a *Server) QuerySQLDataTable(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+
+	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	// get post body
+
+	var requestData struct {
+		Query string `json:"query"`
+	}
+
+	if err := ctx.ShouldBindJSON(&requestData); err != nil {
+		return nil, err
+	}
+
+	if requestData.Query == "" {
+		return nil, errors.New("query is required")
+	}
+
+	return a.ctrl.QuerySQLDataTable(installId, requestData.Query)
+
+}
+
 // ListSpaceUsers lists all users for a space/package
 func (a *Server) ListSpaceUsers(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
@@ -353,8 +377,8 @@ func (a *Server) DeleteSpaceUser(claim *signer.AccessClaim, ctx *gin.Context) (a
 	return gin.H{"message": "Space user deleted successfully"}, nil
 }
 
-// ListEventSubscriptions lists all event subscriptions for a space/package
-func (a *Server) ListEventSubscriptions(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+// ListSpaceUserGroups lists all user groups for a space/package
+func (a *Server) ListSpaceUserGroups(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -364,7 +388,8 @@ func (a *Server) ListEventSubscriptions(claim *signer.AccessClaim, ctx *gin.Cont
 
 	// Get query parameters for filtering
 	spaceIdParam := ctx.Query("space_id")
-	eventKeyParam := ctx.Query("event_key")
+	groupIdParam := ctx.Query("group_id")
+	scopeParam := ctx.Query("scope")
 
 	// Build condition map
 	cond := make(map[any]any)
@@ -374,42 +399,48 @@ func (a *Server) ListEventSubscriptions(claim *signer.AccessClaim, ctx *gin.Cont
 			cond["space_id"] = spaceId
 		}
 	}
-	if eventKeyParam != "" {
-		cond["event_key"] = eventKeyParam
+	if groupIdParam != "" {
+		groupId, err := strconv.ParseInt(groupIdParam, 10, 64)
+		if err == nil {
+			cond["group_id"] = groupId
+		}
+	}
+	if scopeParam != "" {
+		cond["scope"] = scopeParam
 	}
 
-	subscriptions, err := a.ctrl.QueryEventSubscriptions(installId, cond)
+	groups, err := a.ctrl.QuerySpaceUserGroups(installId, cond)
 	if err != nil {
 		return nil, err
 	}
 
-	return subscriptions, nil
+	return groups, nil
 }
 
-// GetEventSubscription gets a specific event subscription by ID
-func (a *Server) GetEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+// GetSpaceUserGroup gets a specific space user group by ID
+func (a *Server) GetSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	subscriptionId, err := strconv.ParseInt(ctx.Param("subscriptionId"), 10, 64)
+	spaceUserGroupId, err := strconv.ParseInt(ctx.Param("spaceUserGroupId"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
 	// fixme => permission check
 
-	subscription, err := a.ctrl.GetEventSubscriptionByID(installId, subscriptionId)
+	spaceUserGroup, err := a.ctrl.GetSpaceUserGroupByID(installId, spaceUserGroupId)
 	if err != nil {
 		return nil, err
 	}
 
-	return subscription, nil
+	return spaceUserGroup, nil
 }
 
-// CreateEventSubscription creates a new event subscription
-func (a *Server) CreateEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+// CreateSpaceUserGroup creates a new space user group
+func (a *Server) CreateSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
@@ -417,30 +448,27 @@ func (a *Server) CreateEventSubscription(claim *signer.AccessClaim, ctx *gin.Con
 
 	// fixme => permission check
 
-	var subscriptionData *dbmodels.MQSubscription
-	if err := ctx.ShouldBindJSON(&subscriptionData); err != nil {
+	var groupData map[string]any
+	if err := ctx.ShouldBindJSON(&groupData); err != nil {
 		return nil, err
 	}
 
-	subscriptionData.InstallID = installId
-	subscriptionData.CreatedBy = claim.UserId
-
-	subscription, err := a.ctrl.CreateEventSubscription(installId, subscriptionData)
+	spaceUserGroup, err := a.ctrl.CreateSpaceUserGroup(installId, groupData)
 	if err != nil {
 		return nil, err
 	}
 
-	return subscription, nil
+	return spaceUserGroup, nil
 }
 
-// UpdateEventSubscription updates an existing event subscription
-func (a *Server) UpdateEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+// UpdateSpaceUserGroup updates an existing space user group
+func (a *Server) UpdateSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	subscriptionId, err := strconv.ParseInt(ctx.Param("subscriptionId"), 10, 64)
+	spaceUserGroupId, err := strconv.ParseInt(ctx.Param("spaceUserGroupId"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -452,32 +480,33 @@ func (a *Server) UpdateEventSubscription(claim *signer.AccessClaim, ctx *gin.Con
 		return nil, err
 	}
 
-	subscription, err := a.ctrl.UpdateEventSubscriptionByID(installId, subscriptionId, updateData)
+	spaceUserGroup, err := a.ctrl.UpdateSpaceUserGroupByID(installId, spaceUserGroupId, updateData)
 	if err != nil {
 		return nil, err
 	}
 
-	return subscription, nil
+	return spaceUserGroup, nil
 }
 
-// DeleteEventSubscription deletes an event subscription
-func (a *Server) DeleteEventSubscription(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
+// DeleteSpaceUserGroup deletes a space user group
+func (a *Server) DeleteSpaceUserGroup(claim *signer.AccessClaim, ctx *gin.Context) (any, error) {
 	installId, err := strconv.ParseInt(ctx.Param("install_id"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	subscriptionId, err := strconv.ParseInt(ctx.Param("subscriptionId"), 10, 64)
+	spaceUserGroupId, err := strconv.ParseInt(ctx.Param("spaceUserGroupId"), 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
 	// fixme => permission check
 
-	err = a.ctrl.DeleteEventSubscriptionByID(installId, subscriptionId)
+	err = a.ctrl.DeleteSpaceUserGroupByID(installId, spaceUserGroupId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gin.H{"message": "Event subscription deleted successfully"}, nil
+	return gin.H{"message": "Space user group deleted successfully"}, nil
 }
+

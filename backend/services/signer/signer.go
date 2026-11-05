@@ -49,13 +49,13 @@ type SpaceClaim struct {
 }
 
 type SpaceAdvisieryClaim struct {
-	Typeid       uint16         `json:"t,omitempty"`
-	TokenSubType string         `json:"z,omitempty"`
-	InstallId    int64          `json:"i,omitempty"`
-	SpaceId      int64          `json:"s,omitempty"`
-	UserId       int64          `json:"u,omitempty"`
-	ResourceId   string         `json:"r,omitempty"`
-	Data         map[string]any `json:"d,omitempty"`
+	Typeid       uint16 `json:"t,omitempty"`
+	TokenSubType string `json:"z,omitempty"`
+	InstallId    int64  `json:"i,omitempty"`
+	SpaceId      int64  `json:"s,omitempty"`
+	UserId       int64  `json:"u,omitempty"`
+	ResourceId   string `json:"r,omitempty"`
+	Data         string `json:"d,omitempty"`
 }
 
 type SpaceFilePresignedClaim struct {

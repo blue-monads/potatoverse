@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in · Cloudy</title>
+  <link rel="stylesheet" href="cloudy.css">
+  <script src="cloudy.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <div class="brand">Cloudy</div>
+    <div class="card">
+      <h1>Sign in</h1>
+      <p class="lede">Use the email you signed up with. Accounts must be verified first.</p>
+      <form id="form">
+        <label>Email
+          <input name="email" type="email" autocomplete="email" required>
+        </label>
+        <label>Password
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="msg" class="msg"></p>
+      <p class="foot">Need an account? <a href="signup.html">Create one</a></p>
+    </div>
+  </div>
+  <script>
+    const form = document.getElementById("form");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.className = "msg";
+      msg.textContent = "";
+      const btn = form.querySelector("button");
+      btn.disabled = true;
+      try {
+        const res = await fetch("/zz/cloudy/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email.value.trim(),
+            password: form.password.value,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || "Sign in failed");
+        if (!data.token) throw new Error("No token returned");
+        Cloudy.afterLogin(data.user, data.token);
+      } catch (err) {
+        msg.className = "msg err";
+        msg.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

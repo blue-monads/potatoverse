@@ -215,9 +215,14 @@ func transformQuery(ownerType string, ownerID string, input string) (string, err
 func collectAliases(node sql.Node) map[string]bool {
 	aliases := make(map[string]bool)
 	_, _ = sql.Walk(sql.VisitEndFunc(func(n sql.Node) (sql.Node, error) {
-		if qtn, ok := n.(*sql.QualifiedTableName); ok {
-			if qtn.Alias != nil && qtn.Alias.Name != "" {
-				aliases[qtn.Alias.Name] = true
+		switch node := n.(type) {
+		case *sql.QualifiedTableName:
+			if node.Alias != nil && node.Alias.Name != "" {
+				aliases[node.Alias.Name] = true
+			}
+		case *sql.ParenSource:
+			if node.Alias != nil && node.Alias.Name != "" {
+				aliases[node.Alias.Name] = true
 			}
 		}
 		return n, nil

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 )
 
@@ -21,7 +22,12 @@ func (c *Controller) AddNormalUserDirect(name, password, email string) (*dbmodel
 
 func (c *Controller) AddUserDirect(name, password, email, utype string) (*dbmodels.User, error) {
 
-	uid, err := c.database.GetUserOps().AddUser(&dbmodels.User{
+	hashedPassword, err := xutils.HashPassword(password)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.database.GetUserOps().AddUser(&dbmodels.User{
 		ID:         0,
 		Name:       name,
 		Bio:        "This is a normal user.",
@@ -30,13 +36,15 @@ func (c *Controller) AddUserDirect(name, password, email, utype string) (*dbmode
 		Username:   &name,
 		Email:      email,
 		IsVerified: true,
-		Password:   password,
+		Password:   hashedPassword,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return c.database.GetUserOps().GetUser(uid)
+	// email, not the insert rowid: turso reassigns rowids when it rebases local
+	// writes onto changes pulled from the remote.
+	return c.database.GetUserOps().GetUserByEmail(email)
 }
 
 // app fingerprint

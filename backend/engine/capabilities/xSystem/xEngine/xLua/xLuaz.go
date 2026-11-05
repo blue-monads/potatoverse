@@ -108,7 +108,9 @@ func (c *LuaCapability) ListActions() ([]string, error) {
 	return []string{"run_oneoff_script", "build_vm", "execute_vm", "destroy_vm", "list_vms"}, nil
 }
 
-func (c *LuaCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *LuaCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "run_oneoff_script":
 		return c.runOneoffScript(params)

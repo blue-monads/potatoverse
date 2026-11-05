@@ -17,6 +17,14 @@ type EventOptions struct {
 	CollapseKey string
 }
 
+type SignalOptions struct {
+	SignalKey        string
+	EmitterInstallId int64
+	EmitterSpaceId   int64
+	Payload          []byte
+	Metadata         map[string]any
+}
+
 // Engine types
 
 type HttpEventOptions struct {
@@ -29,7 +37,7 @@ type HttpEventOptions struct {
 
 type ActionEventOptions struct {
 	SpaceId    int64
-	EventType  string // ws, ws_callback, event_target, mcp_call
+	EventType  string // ws, ws_callback, event_target, mcp_call, signal
 	ActionName string
 	Params     map[string]string
 	Request    ActionRequest
@@ -51,6 +59,9 @@ type Engine interface {
 
 	PublishEvent(opts *EventOptions) error
 	RefreshEventIndex()
+
+	PublishSignal(opts *SignalOptions) error
+	RefreshSignalIndex()
 
 	EmitHttpEvent(opts *HttpEventOptions) error
 	EmitActionEvent(opts *ActionEventOptions) error

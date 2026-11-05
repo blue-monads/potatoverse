@@ -13,9 +13,8 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
-	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/easyaction"
+	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability/emtyctx"
 	"github.com/gin-gonic/gin"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
@@ -52,9 +51,14 @@ type WebsocketBuilder struct {
 
 func (b *WebsocketBuilder) Build(handle xcapability.XCapabilityHandle) (xcapability.Capability, error) {
 	model := handle.GetModel()
+	spaceId, err := handle.GetSpaceId()
+	if err != nil {
+		return nil, err
+	}
+
 	return &WebsocketCapability{
 		builder:      b,
-		spaceId:      model.SpaceID,
+		spaceId:      spaceId,
 		installId:    model.InstallID,
 		capabilityId: model.ID,
 		connections:  make(map[string]*wsConn),
@@ -96,9 +100,9 @@ func (wc *wsConn) teardown() {
 
 type WebsocketCapability struct {
 	builder      *WebsocketBuilder
-	spaceId      int64
 	installId    int64
 	capabilityId int64
+	spaceId      int64
 
 	connections map[string]*wsConn
 	mu          sync.RWMutex
@@ -131,7 +135,7 @@ func (c *WebsocketCapability) Handle(ctx *gin.Context) {
 	err = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
 		SpaceId:    c.spaceId,
 		EventType:  "capability",
-		ActionName: "handle_websocket_connect",
+		ActionName: "on_websocket_connect",
 		Params: map[string]string{
 			"conn_id":       claim.ResourceId,
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
@@ -160,19 +164,15 @@ func (c *WebsocketCapability) parseToken(token string) (*signer.CapabilityClaim,
 		return nil, err
 	}
 
-	if claim.SpaceId != c.spaceId {
-		return nil, ErrInvalidToken
-	}
+	qq.Println("@ws/claim", claim)
 
 	if claim.InstallId != c.installId {
+		qq.Println("@wrong_install_id", claim.InstallId, c.installId)
 		return nil, ErrInvalidToken
 	}
 
 	if claim.CapabilityId != c.capabilityId {
-		return nil, ErrInvalidToken
-	}
-
-	if claim.SubType != "websocket" {
+		qq.Println("@wrong_capability_id", claim.CapabilityId, c.capabilityId)
 		return nil, ErrInvalidToken
 	}
 
@@ -247,7 +247,7 @@ func (c *WebsocketCapability) handleMessage(wc *wsConn, data []byte) {
 	err := c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
 		SpaceId:    c.spaceId,
 		EventType:  "capability",
-		ActionName: "handle_websocket_message",
+		ActionName: "on_websocket_message",
 		Params: map[string]string{
 			"conn_id":       wc.connId,
 			"capability_id": fmt.Sprintf("%d", c.capabilityId),
@@ -272,6 +272,19 @@ func (c *WebsocketCapability) removeConn(connId string) {
 
 	if exists && wc != nil {
 		wc.teardown()
+
+		_ = c.builder.engine.EmitActionEvent(&xtypes.ActionEventOptions{
+			SpaceId:    c.spaceId,
+			EventType:  "capability",
+			ActionName: "on_websocket_disconnect",
+			Params: map[string]string{
+				"conn_id":       connId,
+				"capability_id": fmt.Sprintf("%d", c.capabilityId),
+				"capability":    "websocket",
+				"user_id":       fmt.Sprintf("%d", wc.userId),
+			},
+			Request: emtyctx.Instance,
+		})
 	}
 }
 
@@ -281,9 +294,14 @@ func (c *WebsocketCapability) sendToConnections(connIds []string, message []byte
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	qq.Println("@ws/send_to_connections", len(connIds))
+
 	msg := &wsMsg{data: message, binary: binary}
 
 	for _, connId := range connIds {
+
+		qq.Println("@ws/send_message", connId)
+
 		wc, exists := c.connections[connId]
 		if !exists || wc.closed {
 			continue
@@ -349,21 +367,36 @@ func (c *WebsocketCapability) ListActions() ([]string, error) {
 	}, nil
 }
 
-func (c *WebsocketCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *WebsocketCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
+	qq.Println("@ws/execute", name)
+
 	switch name {
 	case "send_to_connections":
 		var p struct {
-			ConnIds []string        `json:"conns"`
-			Message json.RawMessage `json:"message"`
-			Binary  bool            `json:"binary"`
+			ConnIds []string `json:"conns"`
+			Message any      `json:"message"`
+			Binary  bool     `json:"binary"`
 		}
 		if err := params.AsJson(&p); err != nil {
+			qq.Println("@ws/send_to_connections asjson error", err)
 			return nil, err
 		}
+
+		qq.Println("@ws/send_to_connections params", p.ConnIds)
+
+		anyBytes, err := json.Marshal(p.Message)
+		if err != nil {
+			qq.Println("@ws/send_to_connections marshal error", err)
+			return nil, err
+		}
+
 		if len(p.ConnIds) == 0 {
+			qq.Println("@ws/send_to_connections conns is required")
 			return nil, errors.New("conns is required")
 		}
-		return ok, c.sendToConnections(p.ConnIds, p.Message, p.Binary)
+		return ok, c.sendToConnections(p.ConnIds, anyBytes, p.Binary)
 
 	case "broadcast_message":
 		var p struct {
@@ -400,102 +433,3 @@ func (c *WebsocketCapability) Close() error {
 }
 
 var ok = map[string]any{"success": true}
-
-// connectCtx is the ActionRequest for handle_websocket_connect.
-// The handler must call finish_upgrade to accept and upgrade the connection.
-type connectCtx struct {
-	cap    *WebsocketCapability
-	ginCtx *gin.Context
-	claim  *signer.CapabilityClaim
-	wc     *wsConn
-}
-
-func (cc *connectCtx) ListActions() ([]string, error) {
-	return []string{"finish_upgrade", "list_connections"}, nil
-}
-
-func (cc *connectCtx) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
-	switch name {
-	case "finish_upgrade":
-		if cc.wc != nil {
-			return map[string]any{"success": true, "conn_id": cc.wc.connId}, nil
-		}
-
-		conn, _, _, err := ws.UpgradeHTTP(cc.ginCtx.Request, cc.ginCtx.Writer)
-		if err != nil {
-			return nil, fmt.Errorf("failed to upgrade: %w", err)
-		}
-
-		wc := &wsConn{
-			connId: cc.claim.ResourceId,
-			userId: cc.claim.UserId,
-			conn:   conn,
-			send:   make(chan *wsMsg, 16),
-		}
-
-		cc.cap.mu.Lock()
-		existing := cc.cap.connections[wc.connId]
-		cc.cap.connections[wc.connId] = wc
-		cc.cap.mu.Unlock()
-
-		if existing != nil {
-			existing.teardown()
-		}
-
-		cc.wc = wc
-		return map[string]any{"success": true, "conn_id": wc.connId}, nil
-
-	case "list_connections":
-		return cc.cap.listConnections(), nil
-
-	default:
-		return nil, errors.New("unknown action: " + name)
-	}
-}
-
-// messageCtx is the ActionRequest for handle_websocket_message.
-// Provides easyaction methods on the payload plus websocket-specific actions.
-type messageCtx struct {
-	cap     *WebsocketCapability
-	payload []byte
-}
-
-func (m *messageCtx) ListActions() ([]string, error) {
-	return append(easyaction.Methods,
-		"broadcast_current_message",
-		"broadcast_message",
-		"send_to_connections",
-		"list_connections",
-	), nil
-}
-
-func (m *messageCtx) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
-	switch name {
-	case "broadcast_current_message":
-		var p struct {
-			ConnIds []string `json:"conns"`
-			Binary  bool     `json:"binary"`
-		}
-		if err := params.AsJson(&p); err != nil {
-			return nil, err
-		}
-
-		if len(p.ConnIds) == 0 {
-			return ok, m.cap.broadcastAll(m.payload, p.Binary)
-		}
-		return ok, m.cap.sendToConnections(p.ConnIds, m.payload, p.Binary)
-
-	case "broadcast_message", "send_to_connections", "list_connections":
-		return m.cap.Execute(name, params)
-
-	default:
-		resp, err := easyaction.BytelazyDataActions(m.payload, name, params)
-		if err != nil {
-			if errors.Is(err, easyaction.ErrUnknownAction) {
-				return nil, errors.New("unknown action: " + name)
-			}
-			return nil, err
-		}
-		return resp, nil
-	}
-}

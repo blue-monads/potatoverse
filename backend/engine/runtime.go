@@ -25,9 +25,6 @@ type Runtime struct {
 	activeExecs     map[int64]*RunningExec
 	activeExecsLock sync.RWMutex
 
-	// overlayExecutors     map[int64]*RunningExec
-	// overlayExecutorsLock sync.RWMutex
-
 	builders map[string]xtypes.ExecutorBuilder
 
 	parent *Engine
@@ -53,6 +50,17 @@ func (r *Runtime) ClearExecs(spaceIds ...int64) {
 	defer r.activeExecsLock.Unlock()
 	for _, spaceId := range spaceIds {
 		delete(r.activeExecs, spaceId)
+	}
+}
+
+func (r *Runtime) CloseAll() {
+	r.activeExecsLock.Lock()
+	defer r.activeExecsLock.Unlock()
+	for id, exec := range r.activeExecs {
+		if exec != nil && exec.Executor != nil {
+			exec.Executor.Cleanup()
+		}
+		delete(r.activeExecs, id)
 	}
 }
 
@@ -125,6 +133,18 @@ func (r *Runtime) ExecHttpQ(installedId, packageVersionId, spaceId int64, ctx *g
 		Request:     ctx,
 		HandlerName: "",
 		Params:      make(map[string]string),
+	})
+}
+
+func (r *Runtime) ExecHttpWithParams(installedId, packageVersionId, spaceId int64, params map[string]string, ctx *gin.Context) error {
+	if params == nil {
+		params = make(map[string]string)
+	}
+	return r.ExecHttp(&xtypes.HttpEventOptions{
+		SpaceId:     spaceId,
+		Request:     ctx,
+		HandlerName: "",
+		Params:      params,
 	})
 }
 

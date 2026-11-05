@@ -1,9 +1,11 @@
 package startup
 
 import (
+	_ "embed"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/blue-monads/potatoverse/backend/app"
 	"github.com/blue-monads/potatoverse/backend/app/actions"
@@ -15,6 +17,12 @@ import (
 	"github.com/blue-monads/potatoverse/backend/services/signer"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 )
+
+//go:embed demo_creds.js
+var demoCredsJS string
+
+const demoUsername = "demo@example.com"
+const demoPassword = "demogodTheGreat_123"
 
 func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 
@@ -55,10 +63,14 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 		options.Repos = repohub.Default
 	}
 
+	demoCredsJS = strings.ReplaceAll(demoCredsJS, "{username}", demoUsername)
+	demoCredsJS = strings.ReplaceAll(demoCredsJS, "{password}", demoPassword)
+
 	happ := app.New(app.Option{
-		Database: db,
-		Logger:   logger,
-		Signer:   signer.New([]byte(options.MasterSecret)),
+		Database:     db,
+		BaseGlobalJS: demoCredsJS,
+		Logger:       logger,
+		Signer:       signer.New([]byte(options.MasterSecret)),
 		AppOpts: &xtypes.AppOptions{
 			Port:         options.Port,
 			Hosts:        options.Hosts,
@@ -94,7 +106,7 @@ func BuildApp(options *xtypes.AppOptions, seedDB bool) (*app.App, error) {
 				return nil, err
 			}
 
-			_, err = ctrl.AddAdminUserDirect("demo", "demogodTheGreat_123", "demo@example.com")
+			_, err = ctrl.AddAdminUserDirect("demo", demoPassword, demoUsername)
 			if err != nil {
 				return nil, err
 			}

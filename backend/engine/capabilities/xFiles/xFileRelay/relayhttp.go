@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
@@ -219,7 +218,7 @@ func (c *RelayHttpCapability) ListActions() ([]string, error) {
 	return []string{}, nil
 }
 
-func (c *RelayHttpCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *RelayHttpCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
 	return nil, errors.New("relay-http does not support actions")
 }
 

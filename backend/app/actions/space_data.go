@@ -50,3 +50,8 @@ func (c *Controller) QuerySpaceDataTable(installId int64, table string, offset i
 
 	return data, nil
 }
+
+func (c *Controller) QuerySQLDataTable(installId int64, query string) ([]map[string]any, error) {
+	db := c.database.GetLowPackageDBOps(installId)
+	return db.RunQuery(query)
+}

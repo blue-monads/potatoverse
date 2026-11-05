@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}} · Cloudy</title>
+  <link rel="stylesheet" href="/zz/cloudy/pages/cloudy.css">
+</head>
+<body>
+  <div class="shell">
+    <div class="brand">Cloudy</div>
+    <div class="card">
+      <h1>{{.Title}}</h1>
+      <p class="lede">{{.Message}}</p>
+      {{if .OK}}
+      {{if .Tenant}}
+      <p class="meta">Tenant <code>{{.Tenant}}</code>{{if .Host}} · {{.Host}}{{end}}</p>
+      {{end}}
+      {{if .AdminPassword}}
+      <p>Admin user: <code>{{.AdminName}}</code><br>
+         Admin password: <code>{{.AdminPassword}}</code></p>
+      {{end}}
+      <p class="foot">
+        <a class="btn" href="{{.LoginURL}}">Sign in</a>
+        {{if .URL}}<a class="btn secondary" href="{{.URL}}">Open tenant</a>{{end}}
+      </p>
+      {{else}}
+      <p class="foot">
+        <a href="{{.LoginURL}}">Sign in</a>
+        <a href="/zz/cloudy/pages/signup.html">Create an account</a>
+      </p>
+      {{end}}
+    </div>
+  </div>
+</body>
+</html>

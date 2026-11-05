@@ -20,9 +20,6 @@ import (
 	"github.com/upper/db/v4"
 )
 
-//go:embed file_schema.sql
-var FileSchemaSQL string
-
 var refIdGen, _ = nanoid.ASCII(16)
 
 const BlobSizeLimit = 1024 * 1024 * 5 // 5MB
@@ -158,10 +155,6 @@ func (f *FileOperations) ApplyZipToFile(ownerID int64, zipPath string) error {
 }
 
 func (f *FileOperations) CreateFile(ownerID int64, req *datahub.CreateFileRequest, stream io.Reader) (int64, error) {
-
-	if req.RefID == "" && f.refIdGen != nil {
-		req.RefID = f.refIdGen()
-	}
 
 	exists, err := f.fileExists(ownerID, req.Path, req.Name)
 	if err != nil {

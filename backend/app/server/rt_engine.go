@@ -310,7 +310,9 @@ func (a *Server) handlePluginFile() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {}
 }
 
-func (a *Server) handlePluginApi(ctx *gin.Context) {}
+func (a *Server) handlePluginApi(ctx *gin.Context) {
+	a.engine.PluginApi(ctx)
+}
 
 func (a *Server) handleDeriveHost(ctx *gin.Context) {
 	nskey := ctx.Param("nskey")

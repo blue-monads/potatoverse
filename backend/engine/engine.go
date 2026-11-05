@@ -3,34 +3,43 @@ package engine
 import (
 	"errors"
 	"log/slog"
-	"maps"
-	"path"
-	"strings"
 	"sync"
 	"time"
 
+	"github.com/blue-monads/potatoverse/backend/engine/erouter/rroute"
+	"github.com/blue-monads/potatoverse/backend/engine/erouter/rspace"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
-	"github.com/blue-monads/potatoverse/backend/engine/hubs/eventhub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/remotehub"
 	"github.com/blue-monads/potatoverse/backend/engine/hubs/repohub"
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/sighub"
+
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/models"
 	"github.com/gin-gonic/gin"
 )
 
 var _ xtypes.Engine = (*Engine)(nil)
 
+type RootRouteTarget = rroute.RootRouteTarget
+type RootRouter = rroute.RootRouter
+
+const (
+	RootRoutingIndexConfigKey   = rroute.RootRoutingIndexConfigKey
+	RootRoutingIndexConfigGroup = rroute.RootRoutingIndexConfigGroup
+)
+
 type Engine struct {
 	db            datahub.Database
-	RoutingIndex  map[string]*SpaceRouteIndexItem
-	riLock        sync.RWMutex
 	workingFolder string
 
-	runtime Runtime
+	runtime     Runtime
+	spaceRouter *rspace.SpaceRouter
+	rootRouter  *rroute.RootRouter
 
 	logger *slog.Logger
 
@@ -38,12 +47,13 @@ type Engine struct {
 
 	repoHub *repohub.RepoHub
 
-	eventHub *eventhub.EventHub
+	sigHub *sighub.SigHub
 
 	capHub *caphub.CapabilityHub
 
-	reloadPackageIds chan int64
-	fullReload       chan struct{}
+	remoteHub *remotehub.RemoteHub
+
+	HttpPort int
 }
 
 type EngineOption struct {
@@ -61,38 +71,48 @@ func NewEngine(opt EngineOption) *Engine {
 	e := &Engine{
 		db:            opt.DB,
 		workingFolder: opt.WorkingFolder,
-		RoutingIndex:  make(map[string]*SpaceRouteIndexItem),
 		runtime: Runtime{
 			activeExecs:     make(map[int64]*RunningExec),
 			activeExecsLock: sync.RWMutex{},
 			builders:        make(map[string]xtypes.ExecutorBuilder),
 		},
-		logger:           elogger,
-		capHub:           caphub.NewCapabilityHub(),
-		riLock:           sync.RWMutex{},
-		reloadPackageIds: make(chan int64, 20),
-		fullReload:       make(chan struct{}, 1),
+		logger:    elogger,
+		capHub:    caphub.NewCapabilityHub(),
+		remoteHub: remotehub.NewRemoteHub(),
+		HttpPort:  opt.HttpPort,
 
-		eventHub: nil,
-		repoHub:  repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
+		repoHub: repohub.NewRepoHub(opt.Repos, elogger.With("service", "repo_hub"), opt.HttpPort),
 	}
 
 	e.runtime.parent = e
+	e.spaceRouter = rspace.NewSpaceRouter(rspace.Options{
+		DB:      e.db,
+		Runtime: &e.runtime,
+		Logger:  elogger.With("service", "rspace"),
+	})
+	e.rootRouter = rroute.NewRootRouter(e, e.logger)
 
 	return e
 }
 
+func (e *Engine) GetDatabase() datahub.Database {
+	return e.db
+}
+
+func (e *Engine) GetSpaceRouter() *rspace.SpaceRouter {
+	return e.spaceRouter
+}
+
 func (e *Engine) GetDebugData() map[string]any {
-	indexCopy := make(map[string]*SpaceRouteIndexItem)
-	e.riLock.RLock()
-	maps.Copy(indexCopy, e.RoutingIndex)
-	e.riLock.RUnlock()
+	var routingIndexCopy map[string]*rspace.SpaceRouteIndexItem
+	if e.spaceRouter != nil {
+		routingIndexCopy = e.spaceRouter.GetRoutingIndexCopy()
+	}
 
 	return map[string]any{
 		"runtime_data":  e.runtime.GetDebugData(),
-		"routing_index": indexCopy,
+		"routing_index": routingIndexCopy,
 	}
-
 }
 
 func (e *Engine) EmitHttpEvent(opts *xtypes.HttpEventOptions) error {
@@ -107,8 +127,6 @@ func (e *Engine) Start(app xtypes.App) error {
 	e.app = app
 	e.runtime.parent = e
 	e.logger = app.Logger().With("module", "engine")
-
-	e.eventHub = eventhub.NewEventHub(app)
 
 	bfactories := registry.GetExecutorBuilderFactories()
 
@@ -126,7 +144,8 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
-	err = e.eventHub.Start()
+	e.sigHub = sighub.NewSigHub(app)
+	err = e.sigHub.Start()
 	if err != nil {
 		return err
 	}
@@ -136,52 +155,100 @@ func (e *Engine) Start(app xtypes.App) error {
 		return err
 	}
 
-	go e.startEloop()
+	e.remoteHub.Init(app)
 
-	e.LoadRoutingIndex()
+	if e.spaceRouter != nil {
+		e.spaceRouter.Start()
+	}
+
+	if e.rootRouter != nil {
+		_ = e.rootRouter.ReloadIndex()
+	}
 
 	time.Sleep(2 * time.Second)
 
 	return nil
 }
 
+func (e *Engine) Close() {
+	if e.spaceRouter != nil {
+		e.spaceRouter.Close()
+	}
+	if e.sigHub != nil {
+		e.sigHub.Stop()
+	}
+	if e.capHub != nil {
+		e.capHub.Close()
+	}
+	e.runtime.CloseAll()
+}
+
+func (e *Engine) ServeRootSpace(ctx *gin.Context) {
+	e.rootRouter.Serve(ctx)
+}
+
 func (e *Engine) ServeSpaceFile(ctx *gin.Context) {
-
-	qq.Println("@ServeSpaceFile/1")
-
-	spaceKey := ctx.Param("space_key")
-	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
-
-	qq.Println("@ServeSpaceFile/3")
-
-	sIndex := e.getIndexRetry(spaceKey, spaceId)
-
-	if sIndex == nil {
-
-		keys := make([]string, 0)
-		for key := range e.RoutingIndex {
-			keys = append(keys, key)
-		}
-
-		qq.Println("@ServeSpaceFile/4", keys)
-		qq.Println("@ServeSpaceFile/4")
-		httpx.WriteErrString(ctx, "space not found")
-		return
+	if e.spaceRouter != nil {
+		e.spaceRouter.ServeSpaceFile(ctx, 0)
 	}
+}
 
-	qq.Println("@ServeSpaceFile/5")
-
-	switch sIndex.routeOption.RouterType {
-	case "simple", "":
-		e.serveSimpleRoute(ctx, sIndex)
-	case "dynamic":
-		qq.Println("@ServeSpaceFile/6")
-		e.serveDynamicRoute(ctx, sIndex)
-	default:
-		httpx.WriteErrString(ctx, "router type not supported")
-		return
+func (e *Engine) ServeSpaceFileWithId(ctx *gin.Context, spaceId int64) {
+	if e.spaceRouter != nil {
+		e.spaceRouter.ServeSpaceFile(ctx, spaceId)
 	}
+}
 
+func (e *Engine) GetRootRouter() *rroute.RootRouter {
+	return e.rootRouter
+}
+
+func (e *Engine) ReloadRootRoutingIndex() error {
+	if e.rootRouter != nil {
+		return e.rootRouter.ReloadIndex()
+	}
+	return nil
+}
+
+func (e *Engine) LoadRoutingIndex() {
+	if e.spaceRouter != nil {
+		e.spaceRouter.LoadRoutingIndex()
+	}
+}
+
+func (e *Engine) LoadRoutingIndexForPackages(installedId int64) {
+	if e.spaceRouter != nil {
+		e.spaceRouter.LoadRoutingIndexForPackages(installedId)
+	}
+}
+
+func (e *Engine) GetPluginLoaderScript(spaceKey string) string {
+	if e.spaceRouter != nil {
+		return e.spaceRouter.GetPluginLoaderScript(spaceKey)
+	}
+	return ""
+}
+
+func (e *Engine) getIndex(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
+	if e.spaceRouter != nil {
+		return e.spaceRouter.GetIndex(spaceKey, spaceId)
+	}
+	return nil
+}
+
+func (e *Engine) getIndexRetry(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
+	if e.spaceRouter != nil {
+		return e.spaceRouter.GetIndexRetry(spaceKey, spaceId)
+	}
+	return nil
+}
+
+func (e *Engine) GetIndex(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
+	return e.getIndex(spaceKey, spaceId)
+}
+
+func (e *Engine) GetIndexRetry(spaceKey string, spaceId int64) *rspace.SpaceRouteIndexItem {
+	return e.getIndexRetry(spaceKey, spaceId)
 }
 
 func (e *Engine) ServePluginFile(ctx *gin.Context) {
@@ -201,7 +268,7 @@ func (e *Engine) ServeCapability(ctx *gin.Context) {
 		return
 	}
 
-	e.capHub.Handle(index.installedId, spaceId, capabilityName, ctx)
+	e.capHub.Handle(index.InstalledId, spaceId, capabilityName, ctx)
 
 }
 
@@ -223,17 +290,90 @@ func (e *Engine) SpaceApi(ctx *gin.Context) {
 		return
 	}
 
-	e.runtime.ExecHttpQ(
-		sIndex.installedId,
-		sIndex.packageVersionId,
-		sIndex.spaceId,
+	err := e.runtime.ExecHttpQ(
+		sIndex.InstalledId,
+		sIndex.PackageVersionId,
+		sIndex.SpaceId,
 		ctx,
 	)
-
+	if err != nil {
+		e.logger.Error("error executing http request", "error", err)
+		ctx.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
 }
 
 func (e *Engine) PluginApi(ctx *gin.Context) {
+	spaceKey := ctx.Param("space_key")
+	pluginKey := ctx.Param("plugin_key")
+	spaceId := xutils.ExtractSpaceId(ctx.Request.Host)
 
+	qq.Println("@PluginApi/1", spaceKey, pluginKey, spaceId)
+
+	sIndex := e.getIndex(spaceKey, spaceId)
+	if sIndex == nil {
+		httpx.WriteErrString(ctx, "host space not found")
+		return
+	}
+
+	plugins, err := e.db.GetSpaceOps().ListSpacePlugins(sIndex.InstalledId, sIndex.SpaceId)
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	var targetPluginSpace *dbmodels.Space
+	var matchedPluginId int64
+	for _, plug := range plugins {
+		pspace, err := e.db.GetSpaceOps().GetSpace(plug.TargetSpaceID)
+		if err != nil || pspace == nil {
+			continue
+		}
+		if pspace.NamespaceKey == pluginKey {
+			targetPluginSpace = pspace
+			matchedPluginId = plug.ID
+			break
+		}
+	}
+
+	if targetPluginSpace == nil {
+		httpx.WriteErrString(ctx, "plugin not found")
+		return
+	}
+
+	pluginPkg, err := e.db.GetPackageInstallOps().GetPackage(targetPluginSpace.InstalledId)
+	if err != nil || pluginPkg == nil {
+		httpx.WriteErrString(ctx, "plugin package not found")
+		return
+	}
+
+	reqId, _ := xutils.GenerateRandomString(12)
+	remoteCtxToken, err := e.remoteHub.SignRemoteCtxToken(&remotehub.RemoteCtxClaim{
+		TargetSpaceId:          sIndex.SpaceId,
+		TargetPackageId:        sIndex.InstalledId,
+		TargetPackageVersionId: sIndex.PackageVersionId,
+		PluginSpaceId:          targetPluginSpace.ID,
+		PluginId:               matchedPluginId,
+		RequestID:              reqId,
+	})
+	if err != nil {
+		httpx.WriteErr(ctx, err)
+		return
+	}
+
+	params := map[string]string{
+		"remote_ctx_token": remoteCtxToken,
+	}
+
+	e.runtime.ExecHttpWithParams(
+		pluginPkg.ID,
+		pluginPkg.ActiveInstallID,
+		targetPluginSpace.ID,
+		params,
+		ctx,
+	)
 }
 
 type SpaceInfo struct {
@@ -247,7 +387,7 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 
 	qq.Println("@SpaceInfo/1", nsKey, hostName)
 
-	var index *SpaceRouteIndexItem
+	var index *rspace.SpaceRouteIndexItem
 
 	if hostName != "" {
 		spaceId := xutils.ExtractSpaceId(hostName)
@@ -262,7 +402,7 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 		return nil, errors.New("space not found")
 	}
 
-	space, err := e.db.GetSpaceOps().GetSpace(index.spaceId)
+	space, err := e.db.GetSpaceOps().GetSpace(index.SpaceId)
 	if err != nil {
 		return nil, err
 	}
@@ -273,46 +413,16 @@ func (e *Engine) SpaceInfo(nsKey string, hostName string) (*SpaceInfo, error) {
 	}
 
 	return &SpaceInfo{
-		ID:           space.ID,
-		NamespaceKey: space.NamespaceKey,
-		PackageName:  pkg.Name,
+		ID:            space.ID,
+		NamespaceKey:  space.NamespaceKey,
+		OwnsNamespace: true,
+		PackageName:   pkg.Name,
 	}, nil
 
 }
 
 func (e *Engine) GetCapabilityDefinitions() []caphub.CapabilityDefination {
 	return e.capHub.Definations()
-}
-
-// private
-
-func buildPackageFilePath(filePath string, ropt *models.PotatoRouteOptions) (string, string) {
-	nameParts := strings.Split(filePath, "/")
-	name := nameParts[len(nameParts)-1]
-	pathParts := nameParts[:len(nameParts)-1]
-
-	ppath := strings.Join(pathParts, "/")
-	ppath = path.Join(ropt.ServeFolder, ppath)
-
-	ppath = strings.TrimLeft(ppath, "/")
-
-	if ropt.TrimPathPrefix != "" {
-		ppath = strings.TrimPrefix(ppath, ropt.TrimPathPrefix)
-	}
-
-	if ropt.ForceIndexHtmlFile && name == "" {
-		name = "index.html"
-	}
-
-	if ropt.ForceHtmlExtension && !strings.Contains(name, ".") {
-		name = name + ".html"
-	}
-
-	qq.Println("@ropt", ropt)
-	qq.Println("@name", name)
-	qq.Println("@path", ppath)
-
-	return name, ppath
 }
 
 func (e *Engine) GetCapabilityHub() any {
@@ -323,13 +433,32 @@ func (e *Engine) GetRepoHub() *repohub.RepoHub {
 	return e.repoHub
 }
 
+func (e *Engine) GetRemoteHub() *remotehub.RemoteHub {
+	return e.remoteHub
+}
+
 func (e *Engine) PublishEvent(opts *xtypes.EventOptions) error {
-
-	qq.Println("@PublishEvent/1", opts.Name, opts.ResourceId, opts.CollapseKey, opts.InstallId, opts.SpaceId)
-
-	return e.eventHub.Publish(opts)
+	return e.PublishSignal(&xtypes.SignalOptions{
+		SignalKey:        opts.Name,
+		EmitterInstallId: opts.InstallId,
+		EmitterSpaceId:   opts.SpaceId,
+		Payload:          opts.Payload,
+	})
 }
 
 func (e *Engine) RefreshEventIndex() {
-	e.eventHub.RefreshFullIndex()
+	e.RefreshSignalIndex()
+}
+
+func (e *Engine) PublishSignal(opts *xtypes.SignalOptions) error {
+	if e.sigHub == nil {
+		return nil
+	}
+	return e.sigHub.Publish(opts)
+}
+
+func (e *Engine) RefreshSignalIndex() {
+	if e.sigHub != nil {
+		e.sigHub.RefreshFullIndex()
+	}
 }

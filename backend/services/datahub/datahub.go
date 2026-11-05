@@ -23,7 +23,7 @@ type Database interface {
 	GetPackageInstallOps() PackageInstallOps
 	GetFileOps() FileOps
 	GetPackageFileOps() FileOps
-	GetMQSynk() MQSynk
+	GetSignalOps() SignalOps
 
 	// ownerType: P -> Package, C -> Capability
 	GetLowDBOps(ownerType string, ownerID string) DBLowOps
@@ -57,6 +57,7 @@ type GlobalOps interface {
 type UserOps interface {
 	AddUserGroup(name string, info string) error
 	GetUserGroup(name string) (*dbmodels.UserGroup, error)
+	GetUserGroupByID(id int64) (*dbmodels.UserGroup, error)
 	ListUserGroups() ([]dbmodels.UserGroup, error)
 	UpdateUserGroup(name string, info string) error
 	DeleteUserGroup(name string) error
@@ -66,6 +67,7 @@ type UserOps interface {
 	GetUserByEmail(email string) (*dbmodels.User, error)
 	GetUserByUsername(username string) (*dbmodels.User, error)
 	ListUser(offset int, limit int) ([]dbmodels.User, error)
+	ListUsersByIds(ids []int64) ([]dbmodels.User, error)
 	ListUserByCond(cond map[any]any, offset int, limit int) ([]dbmodels.User, error)
 	ListUserByOwner(owner int64) ([]dbmodels.User, error)
 	UpdateUser(id int64, data map[string]any) error
@@ -159,14 +161,21 @@ type SpaceOps interface {
 	UpdateSpaceUser(installId int64, id int64, data map[string]any) error
 	RemoveSpaceUser(installId int64, id int64) error
 
-	// Event Subscriptions
+	// Space User Groups
+	QuerySpaceUserGroups(installId int64, cond map[any]any) ([]dbmodels.SpaceUserGroup, error)
+	AddSpaceUserGroup(installId int64, data *dbmodels.SpaceUserGroup) (int64, error)
+	GetSpaceUserGroup(installId int64, id int64) (*dbmodels.SpaceUserGroup, error)
+	UpdateSpaceUserGroup(installId int64, id int64, data map[string]any) error
+	RemoveSpaceUserGroup(installId int64, id int64) error
 
-	QueryAllEventSubscriptions(includeDisabled bool) ([]dbmodels.MQSubscriptionLite, error)
-	QueryEventSubscriptions(installId int64, cond map[any]any) ([]dbmodels.MQSubscription, error)
-	AddEventSubscription(installId int64, data *dbmodels.MQSubscription) (int64, error)
-	GetEventSubscription(installId int64, id int64) (*dbmodels.MQSubscription, error)
-	UpdateEventSubscription(installId int64, id int64, data map[string]any) error
-	RemoveEventSubscription(installId int64, id int64) error
+	// Space Plugins
+	AddSpacePlugin(data *dbmodels.SpacePlugin) (int64, error)
+	GetSpacePlugin(id int64) (*dbmodels.SpacePlugin, error)
+	ListSpacePlugins(sourceInstallId, sourceSpaceId int64) ([]dbmodels.SpacePlugin, error)
+	QuerySpacePlugins(cond map[any]any) ([]dbmodels.SpacePlugin, error)
+	UpdateSpacePlugin(id int64, data map[string]any) error
+	RemoveSpacePlugin(id int64) error
+	ListSpacesBySpaceType(spaceType string) ([]dbmodels.Space, error)
 }
 
 type SpaceKVOps interface {
@@ -182,7 +191,6 @@ type SpaceKVOps interface {
 }
 
 type CreateFileRequest struct {
-	RefID     string `json:"ref_id"`
 	Name      string `json:"name"`
 	Path      string `json:"path"`
 	CreatedBy int64  `json:"created_by"`
@@ -298,21 +306,32 @@ type DBLowCoreOps interface {
 	FindTyped(query *FindTypedQuery) error
 }
 
-type MQSynk interface {
-	AddEvent(installId int64, name string, payload []byte) (int64, error)
-	GetEvent(id int64) (*dbmodels.MQEvent, error)
-	UpdateEvent(id int64, data map[string]any) error
+type SignalOps interface {
+	AddSignal(data *dbmodels.Signal) (int64, error)
+	GetSignal(id int64) (*dbmodels.Signal, error)
+	UpdateSignal(id int64, data map[string]any) error
+	RemoveSignal(id int64) error
+	QuerySignals(installId int64, spaceId int64, cond map[any]any) ([]dbmodels.Signal, error)
+	QueryAllActiveSignals() ([]dbmodels.SignalLite, error)
+	GetSignalsForEmitter(emitterInstallId, emitterSpaceId int64, signalKey string) ([]dbmodels.SignalLite, error)
 
-	QueryNewEvents() ([]int64, error)
-	CreateEventTargets(eventId int64) ([]int64, error)
-	QueryNewEventTargets() ([]int64, error)
-	QueryDelayExpiredTargets() ([]int64, error)
-	QueryEventTargetsByEventId(eventId int64) ([]int64, error)
-	UpdateEventTarget(id int64, data map[string]any) error
+	AddSignalEvent(signalEventKey string, payload []byte, metadata map[string]any) (int64, error)
+	GetSignalEvent(id int64) (*dbmodels.SignalEvent, error)
+	DeleteSignalEvent(id int64) error
 
-	TransitionTargetStart(targetId int64) (*dbmodels.MQEventTarget, error)
-	TransitionTargetStartDelayed(targetId int64, eventId, delay int64) error
-	TransitionTargetDelay(targetId int64, eventId, delay, retryCount int64) error
-	TransitionTargetComplete(eventId, targetId int64) error
-	TransitionTargetFail(eventId, targetId int64, error string) error
+	AddSignalTarget(signalEventId, signalId int64, metadata map[string]any) (int64, error)
+	GetSignalTarget(id int64) (*dbmodels.SignalTarget, error)
+	UpdateSignalTarget(id int64, data map[string]any) error
+	QuerySignalTargets(installId int64, signalId int64, status string, limit, offset int64) ([]dbmodels.SignalTargetWithDetails, error)
+	QueryNewSignalTargets() ([]int64, error)
+	QueryDelayExpiredSignalTargets() ([]int64, error)
+	CheckAndCleanupSignalEvent(signalEventId int64) (bool, error)
+
+	TransitionSignalTargetStart(id int64) (*dbmodels.SignalTarget, error)
+	TransitionSignalTargetComplete(id int64) error
+	TransitionSignalTargetDelay(id int64, delayUntil int64, retryCount int64, errorMsg string) error
+	TransitionSignalTargetBlocked(id int64, reason string) error
+	TransitionSignalTargetUnblock(id int64) error
+	TransitionSignalTargetFail(id int64, errorMsg string) error
+	TransitionSignalTargetExpired(id int64) error
 }

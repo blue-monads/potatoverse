@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Cloudy</title>
+  <link rel="stylesheet" href="../cloudy.css">
+</head>
+<body class="page">
+  <div class="shell wide">
+    <div class="top">
+      <div class="brand">Cloudy · Admin</div>
+      <div class="meta" id="who"></div>
+    </div>
+    <div class="stack">
+      <!-- Teams Table -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h1>Teams</h1>
+            <p class="lede" id="teamsCount">Loading…</p>
+          </div>
+          <button type="button" class="secondary" id="refreshTeams">Refresh</button>
+        </div>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Team Name</th>
+                <th>Description</th>
+                <th>Owner ID</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="teamRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h1>Users</h1>
+            <p class="lede" id="health">Loading…</p>
+          </div>
+          <button type="button" class="secondary" id="refreshUsers">Refresh</button>
+        </div>
+        <p id="msg" class="msg"></p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Primary Slug</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add User & Instance -->
+      <div class="card">
+        <h1>Add User & Team Instance</h1>
+        <p class="lede">Creates a Cloudy account, personal team, and potato instance slug.</p>
+        <form id="add">
+          <div class="form-row">
+            <label>Name <input name="name" required></label>
+            <label>Instance Slug <input name="slug" required pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"></label>
+          </div>
+          <div class="form-row">
+            <label>Email <input name="email" type="email" required></label>
+            <label>Password <input name="password" type="password" required minlength="8"></label>
+          </div>
+          <div class="form-row">
+            <label>Role
+              <select name="utype">
+                <option value="normal">normal</option>
+                <option value="admin">admin</option>
+              </select>
+            </label>
+          </div>
+          <label class="check"><input name="verified" type="checkbox"> Mark verified now</label>
+          <button type="submit">Add user</button>
+        </form>
+      </div>
+    </div>
+
+    <p class="foot">
+      <a href="../portal.html">User portal</a>
+      <a href="#" id="out">Sign out</a>
+    </p>
+  </div>
+  <script src="../cloudy.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const teamRows = document.getElementById("teamRows");
+    const userRows = document.getElementById("userRows");
+    let session = null;
+
+    document.getElementById("out").addEventListener("click", (e) => {
+      e.preventDefault();
+      Cloudy.signOut();
+    });
+
+    function setMsg(text, ok) {
+      msg.className = "msg " + (ok ? "ok" : "err");
+      msg.textContent = text || "";
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function actionBtn(label, fn, cls) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = cls || "secondary";
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    async function loadTeams() {
+      try {
+        const data = await Cloudy.api("/zz/cloudy/teams", { headers: Cloudy.headers() });
+        const teams = data.teams || [];
+        document.getElementById("teamsCount").textContent = teams.length + " team(s)";
+        teamRows.innerHTML = "";
+        teams.forEach((t) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML =
+            "<td>" + esc(t.id) + "</td>" +
+            "<td><strong>" + esc(t.name) + "</strong></td>" +
+            "<td>" + esc(t.description) + "</td>" +
+            "<td>" + esc(t.owner_id) + "</td>" +
+            "<td class='actions'></td>";
+          const cell = tr.querySelector("td:last-child");
+          cell.append(
+            actionBtn("Browse", () => { location.href = "../teams.html?id=" + encodeURIComponent(t.id); }, "primary")
+          );
+          teamRows.appendChild(tr);
+        });
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const data = await Cloudy.api("/zz/cloudy/users", { headers: Cloudy.headers() });
+        const users = data.users || [];
+        document.getElementById("health").textContent = users.length + " user(s)";
+        userRows.innerHTML = "";
+        users.forEach((u) => {
+          const tr = document.createElement("tr");
+          const status = [];
+          if (u.is_verified) status.push("verified");
+          else status.push("unverified");
+          if (u.is_disabled) status.push("disabled");
+
+          tr.innerHTML =
+            "<td>" + esc(u.id) + "</td>" +
+            "<td>" + esc(u.slug) + "</td>" +
+            "<td>" + esc(u.fullname) + "</td>" +
+            "<td>" + esc(u.email) + "</td>" +
+            "<td><span class='badge'>" + esc(u.utype) + "</span></td>" +
+            "<td>" + esc(status.join(" · ")) + "</td>" +
+            "<td class='actions'></td>";
+          const cell = tr.querySelector("td:last-child");
+          cell.append(
+            actionBtn(u.is_disabled ? "Enable" : "Disable", () => setDisabled(u.id, !u.is_disabled)),
+            actionBtn("Reset pw", () => resetPassword(u.id, u.email))
+          );
+          userRows.appendChild(tr);
+        });
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function setDisabled(id, disabled) {
+      try {
+        await Cloudy.api("/zz/cloudy/users/" + id + "/disable", {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify({ is_disabled: disabled }),
+        });
+        setMsg((disabled ? "Disabled" : "Enabled") + " user " + id, true);
+        await loadUsers();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function resetPassword(id, email) {
+      const password = prompt("New password for " + email);
+      if (!password) return;
+      try {
+        await Cloudy.api("/zz/cloudy/users/" + id + "/reset-password", {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify({ password }),
+        });
+        setMsg("Password reset for " + email, true);
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    Cloudy.requireSession({ admin: true }).then(async (data) => {
+      if (!data) return;
+      session = data;
+      const user = data.user || {};
+      document.getElementById("who").textContent = (user.email || "") + " · admin";
+      await loadTeams();
+      await loadUsers();
+    });
+
+    document.getElementById("refreshTeams").addEventListener("click", loadTeams);
+    document.getElementById("refreshUsers").addEventListener("click", loadUsers);
+
+    document.getElementById("add").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const body = {
+        name: form.name.value.trim(),
+        slug: form.slug.value.trim().toLowerCase(),
+        email: form.email.value.trim(),
+        password: form.password.value,
+        utype: form.utype.value,
+        verified: form.verified.checked,
+      };
+      try {
+        await Cloudy.api("/zz/cloudy/users", {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify(body),
+        });
+        form.reset();
+        setMsg("User & instance created", true);
+        await loadTeams();
+        await loadUsers();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

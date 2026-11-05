@@ -10,6 +10,7 @@ import (
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
 	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 )
 
 type LoginOpts struct {
@@ -44,8 +45,7 @@ func (c *Controller) Login(opts *LoginOpts) (*LoginResponse, error) {
 		return nil, errors.New("implement login by username")
 	}
 
-	// fixme => hash it
-	if user.Password != opts.Password {
+	if !xutils.VerifyPassword(user.Password, opts.Password) {
 		return nil, errors.New("invalid password")
 	}
 

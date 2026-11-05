@@ -3,6 +3,8 @@ package luaz
 import (
 	"errors"
 	"fmt"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
@@ -51,8 +53,20 @@ func (b *LuazExecutorBuilder) Build(opt *xtypes.ExecutorBuilderOption) (xtypes.E
 				s.ServerFile = "server.lua"
 			}
 
+			serverDir, serverFile := path.Split(s.ServerFile)
+			serverDir = strings.Trim(serverDir, "/")
+
 			pfops := b.app.Database().GetPackageFileOps()
-			packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, "", s.ServerFile)
+			packageFile, err := pfops.GetFileContentByPath(opt.PackageVersionId, serverDir, serverFile)
+			if err != nil {
+				if serverDir == "" && serverFile == "server.lua" {
+					if f, err2 := pfops.GetFileContentByPath(opt.PackageVersionId, "server", "server.lua"); err2 == nil {
+						packageFile = f
+						err = nil
+					}
+				}
+
+			}
 
 			if err != nil {
 				qq.Println("@script file load error", err)

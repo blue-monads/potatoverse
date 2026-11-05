@@ -49,7 +49,12 @@ func (a *BuddyRouteServer) registerBuddyNode(ctx *gin.Context) {
 func (a *BuddyRouteServer) BuddyAutoRouteMW() gin.HandlerFunc {
 	pubkey1 := a.buddyhub.GetPubkey()
 
-	nodeId := nostrutils.PubKeyToNodeId(pubkey1)
+	nodeId, ok := nostrutils.TryPubKeyToNodeId(pubkey1)
+	if !ok {
+		// no usable node identity, so there is nothing to route to
+		qq.Println("@BuddyAutoRouteMW/disabled", pubkey1)
+		return func(ctx *gin.Context) { ctx.Next() }
+	}
 
 	routeToBuddy := func(subdomain string, ctx *gin.Context) {
 

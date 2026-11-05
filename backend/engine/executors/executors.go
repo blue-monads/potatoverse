@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/gin-gonic/gin"
 )
 
 type ExecState struct {
@@ -13,6 +14,8 @@ type ExecState struct {
 	FsRoot           *os.Root
 	App              xtypes.App
 	Closable         *Closable
+	Executor         xtypes.Executor
+	HttpRequest      *gin.Context
 }
 
 func (es *ExecState) Init() {

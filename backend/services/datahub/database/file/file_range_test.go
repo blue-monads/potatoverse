@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub/provider/sqlitecore"
 	"github.com/gin-gonic/gin"
 	"github.com/upper/db/v4/adapter/sqlite"
 )
@@ -23,9 +24,11 @@ func TestStreamFileToHTTP_Range(t *testing.T) {
 	}
 	defer sess.Close()
 
+	fsql := sqlitecore.GetFileSchema()
+
 	// Create tables
 	driver := sess.Driver().(*sql.DB)
-	_, err = driver.Exec(FileSchemaSQL)
+	_, err = driver.Exec(fsql)
 	if err != nil {
 		t.Fatalf("Failed to create tables: %v", err)
 	}
@@ -93,7 +96,8 @@ func TestStreamFileToHTTP_Range_External(t *testing.T) {
 
 	// Create tables
 	driver := sess.Driver().(*sql.DB)
-	_, err = driver.Exec(FileSchemaSQL)
+	fsql := sqlitecore.GetFileSchema()
+	_, err = driver.Exec(fsql)
 	if err != nil {
 		t.Fatalf("Failed to create tables: %v", err)
 	}
@@ -155,7 +159,8 @@ func TestStreamFileToHTTP_Range_Multipart(t *testing.T) {
 
 	// Create tables
 	driver := sess.Driver().(*sql.DB)
-	_, err = driver.Exec(FileSchemaSQL)
+	fsql := sqlitecore.GetFileSchema()
+	_, err = driver.Exec(fsql)
 	if err != nil {
 		t.Fatalf("Failed to create tables: %v", err)
 	}
@@ -216,7 +221,8 @@ func TestStreamFileToHTTP_Range_Multipart_Large(t *testing.T) {
 
 	// Create tables
 	driver := sess.Driver().(*sql.DB)
-	_, err = driver.Exec(FileSchemaSQL)
+	fsql := sqlitecore.GetFileSchema()
+	_, err = driver.Exec(fsql)
 	if err != nil {
 		t.Fatalf("Failed to create tables: %v", err)
 	}

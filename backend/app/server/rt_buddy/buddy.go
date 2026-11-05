@@ -16,7 +16,7 @@ const (
 )
 
 type BuddyRouteServer struct {
-	buddyhub *buddyhub.BuddyHub
+	buddyhub buddyhub.IBuddyHub
 	port     int
 
 	// lazy cdc
@@ -28,7 +28,7 @@ type BuddyRouteServer struct {
 	rLock                  sync.RWMutex
 }
 
-func New(buddyhub *buddyhub.BuddyHub, port int) *BuddyRouteServer {
+func New(buddyhub buddyhub.IBuddyHub, port int) *BuddyRouteServer {
 	s := &BuddyRouteServer{
 		buddyhub: buddyhub,
 		port:     port,

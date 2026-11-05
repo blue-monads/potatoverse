@@ -10,3 +10,4 @@ dist/*
 backend/labs/vfsync/data/*
 backend/labs/vfsync/vfs
 contrib/demo/demo_data
+cmd/cloudy/.env

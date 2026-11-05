@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"sort"
+	"strings"
 
 	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/xtypes/models"
@@ -12,10 +13,10 @@ import (
 
 // UpgradePackageResult is returned from upgrade operations, similar to InstallPackageResult for new installs.
 type UpgradePackageResult struct {
-	PackageVersionId int64             `json:"package_version_id"`
-	SpecialPages     map[string]string `json:"special_pages"`
-	KeySpace         string            `json:"key_space"`
-	RootSpaceId      int64             `json:"root_space_id"`
+	PackageVersionId int64         `json:"package_version_id"`
+	SpecialPages     []SpecialPage `json:"special_pages"`
+	KeySpace         string        `json:"key_space"`
+	MainSpaceId      int64         `json:"main_space_id"`
 }
 
 func (c *Controller) UpgradePackageRepo(userId int64, repoSlug, version string, installedId int64) (*UpgradePackageResult, error) {
@@ -57,6 +58,51 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return nil, err
 	}
 
+	err = checkSlug(pkg.Slug)
+	if err != nil {
+		return nil, err
+	}
+
+	foundMainSpace := false
+	for _, space := range pkg.Spaces {
+		if space.Namespace == "" {
+			return nil, errors.New("space namespace is required")
+		}
+
+		if space.Namespace == pkg.Slug {
+			if foundMainSpace {
+				return nil, errors.New("multiple main spaces found")
+			}
+			foundMainSpace = true
+		} else {
+			if !strings.HasPrefix(space.Namespace, pkg.Slug+":") {
+				return nil, errors.New("space namespace must be package namespace or package namespace:subkey (i.e. '" + pkg.Slug + "' or '" + pkg.Slug + ":my-space')")
+			}
+			subkey := strings.TrimPrefix(space.Namespace, pkg.Slug+":")
+			if subkey == "" || strings.Contains(subkey, ":") {
+				return nil, errors.New("space namespace subkey must not be empty or contain additional colons")
+			}
+			if !validSubkeyRegex.MatchString(subkey) {
+				return nil, errors.New("space namespace subkey is invalid, it can only contain letters, numbers, underscores and hyphens")
+			}
+			if strings.HasPrefix(subkey, "-") || strings.HasSuffix(subkey, "-") || strings.HasPrefix(subkey, "_") || strings.HasSuffix(subkey, "_") {
+				return nil, errors.New("space namespace subkey must not start or end with a hyphen or underscore")
+			}
+		}
+
+		if !validNamespaceRegex.MatchString(space.Namespace) {
+			return nil, errors.New("space namespace is invalid, it can only contain letters, numbers, underscores and hyphens")
+		}
+
+		if strings.HasSuffix(space.Namespace, ":") {
+			return nil, errors.New("space namespace must not end with a colon")
+		}
+
+		if strings.HasPrefix(space.Namespace, ":") {
+			return nil, errors.New("space namespace must not start with a colon")
+		}
+	}
+
 	oldSpaces, err := c.database.GetSpaceOps().ListSpacesByPackageId(installedId)
 	if err != nil {
 		return nil, err
@@ -70,10 +116,6 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 				currentArtifactIndex = i
 				break
 			}
-		}
-
-		if space.Namespace == "" {
-			return nil, errors.New("space namespace is required")
 		}
 
 		if currentArtifactIndex == -1 {
@@ -94,18 +136,42 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 					return nil, err
 				}
 
+				spaceType := space.SpaceType
+				if spaceType == "" {
+					spaceType = space.Type
+				}
+				if spaceType == "" {
+					spaceType = "App"
+				}
+
 				c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
 					"namespace_key":     space.Namespace,
 					"executor_type":     space.ExecutorType,
 					"executor_sub_type": space.ExecutorSubType,
-					"space_type":        "App",
+					"space_type":        spaceType,
+					"loader_script":     space.LoaderScript,
 					"route_options":     string(routeOptions),
+					"server_file":       space.ServerFile,
 				})
 
 			} else {
-				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, map[string]any{
+				updateMap := map[string]any{
 					"install_id": installedId,
-				})
+				}
+				if space.ServerFile != "" {
+					updateMap["server_file"] = space.ServerFile
+				}
+				if space.LoaderScript != "" {
+					updateMap["loader_script"] = space.LoaderScript
+				}
+				spaceType := space.SpaceType
+				if spaceType == "" {
+					spaceType = space.Type
+				}
+				if spaceType != "" {
+					updateMap["space_type"] = spaceType
+				}
+				err = c.database.GetSpaceOps().UpdateSpace(oldSpace.ID, updateMap)
 				if err != nil {
 					return nil, err
 				}
@@ -145,10 +211,10 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 
 	c.engine.LoadRoutingIndexForPackages(installedId)
 
-	rootSpaceId := int64(0)
+	mainSpaceId := int64(0)
 	for _, s := range oldSpaces {
 		if s.NamespaceKey == pkg.Slug {
-			rootSpaceId = s.ID
+			mainSpaceId = s.ID
 			break
 		}
 	}
@@ -158,17 +224,19 @@ func (c *Controller) UpgradePackage(userId int64, file string, installedId int64
 		return nil, err
 	}
 
-	specialPages := map[string]string{}
-	err = json.Unmarshal([]byte(pversion.SpecialPages), &specialPages)
-	if err != nil {
-		return nil, err
+	specialPages := []SpecialPage{}
+	if len(pversion.SpecialPages) > 0 && pversion.SpecialPages != "{}" {
+		err = json.Unmarshal([]byte(pversion.SpecialPages), &specialPages)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &UpgradePackageResult{
 		PackageVersionId: pvid,
 		SpecialPages:     specialPages,
 		KeySpace:         pkg.Slug,
-		RootSpaceId:      rootSpaceId,
+		MainSpaceId:      mainSpaceId,
 	}, nil
 
 }

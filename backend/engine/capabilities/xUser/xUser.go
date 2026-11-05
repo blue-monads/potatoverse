@@ -6,6 +6,7 @@ import (
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
 	"github.com/blue-monads/potatoverse/backend/services/datahub/dbmodels"
+	"github.com/blue-monads/potatoverse/backend/utils/qq"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
 	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
@@ -84,12 +85,16 @@ func (c *CurrUserCapability) ListActions() ([]string, error) {
 	return []string{"send_user_message", "get_user_info", "get_user_config"}, nil
 }
 
-func (c *CurrUserCapability) Execute(name string, params lazydata.LazyData) (any, error) {
+func (c *CurrUserCapability) Execute(ctx xcapability.CapExecContext) (any, error) {
+	name := ctx.Method
+	params := ctx.Params
 	switch name {
 	case "send_user_message":
 		return c.sendUserMessage(params)
 	case "get_user_info":
 		return c.getUserInfo(params)
+	case "get_space_users":
+		return c.getSpaceUsers(params)
 	default:
 		return nil, errors.New("unknown action: " + name)
 	}
@@ -136,6 +141,30 @@ func (c *CurrUserCapability) sendUserMessage(params lazydata.LazyData) (any, err
 	}
 
 	return id, nil
+}
+
+func (c *CurrUserCapability) getSpaceUsers(_ lazydata.LazyData) (any, error) {
+
+	susers, err := c.app.Database().GetSpaceOps().QuerySpaceUsers(c.installId, map[any]any{})
+	if err != nil {
+		return nil, err
+	}
+
+	qq.Println("@users/1", susers)
+
+	userIds := make([]int64, 0, len(susers))
+	for _, user := range susers {
+		userIds = append(userIds, user.UserID)
+	}
+
+	users, err := c.app.Database().GetUserOps().ListUsersByIds(userIds)
+	if err != nil {
+		return nil, err
+	}
+
+	qq.Println("@users/2", users)
+
+	return users, nil
 }
 
 func (c *CurrUserCapability) getUserInfo(params lazydata.LazyData) (any, error) {

@@ -8,7 +8,6 @@ import (
 	"github.com/blue-monads/potatoverse/backend/registry"
 	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
 	"github.com/blue-monads/potatoverse/backend/xtypes"
-	"github.com/blue-monads/potatoverse/backend/xtypes/lazydata"
 	"github.com/blue-monads/potatoverse/backend/xtypes/xcapability"
 	"github.com/gin-gonic/gin"
 )
@@ -75,6 +74,20 @@ func (gh *CapabilityHub) Init(app xtypes.App) error {
 	app.Logger().Info("CapabilityHub initialized")
 
 	return nil
+}
+
+func (gh *CapabilityHub) Close() {
+	if gh == nil {
+		return
+	}
+	gh.glock.Lock()
+	defer gh.glock.Unlock()
+	for _, cap := range gh.goodies {
+		if cap != nil {
+			_ = cap.Close()
+		}
+	}
+	gh.goodies = make(map[string]xcapability.Capability)
 }
 
 func (gh *CapabilityHub) GetDebugData(name string) map[string]any {
@@ -148,13 +161,18 @@ func (gh *CapabilityHub) Methods(installId, spaceId int64, gname string) ([]stri
 	return gs.ListActions()
 }
 
-func (gh *CapabilityHub) Execute(installId, spaceId int64, gname, method string, params lazydata.LazyData) (any, error) {
-	gs, err := gh.get(gname, installId, spaceId)
+func (gh *CapabilityHub) Execute(ctx xcapability.CapExecContext) (any, error) {
+	var installId, spaceId int64
+	if ctx.State != nil {
+		installId = ctx.State.InstalledId
+		spaceId = ctx.State.SpaceId
+	}
+	gs, err := gh.get(ctx.CapabilityName, installId, spaceId)
 	if err != nil {
 		return nil, err
 	}
 
-	return gs.Execute(method, params)
+	return gs.Execute(ctx)
 }
 
 func (gh *CapabilityHub) Definations() []CapabilityDefination {

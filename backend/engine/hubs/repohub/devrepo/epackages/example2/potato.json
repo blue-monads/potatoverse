@@ -2,7 +2,7 @@
     "name": "Example 2",
     "slug": "example2",
     "info": "Example e-package for testing dynamic router",
-    "special_pages": {},
+    "special_pages": [],
     "spaces": [
         {
             "namespace": "example2",

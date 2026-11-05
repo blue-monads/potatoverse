@@ -2,6 +2,8 @@ package luaplus
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -19,7 +21,14 @@ func LuaTypeToGoType(l *lua.LState, lvalue lua.LValue) any {
 	case lua.LTNumber:
 		return float64(lvalue.(lua.LNumber))
 	case lua.LTTable:
-		return tableToMap(lvalue.(*lua.LTable))
+		tbl := lvalue.(*lua.LTable)
+		if isTableEmpty(tbl) {
+			return nil
+		}
+		if isArray(tbl) {
+			return tableToArray(tbl)
+		}
+		return tableToMap(tbl)
 	default:
 		return nil
 	}
@@ -62,26 +71,68 @@ func GoTypeToLuaType(l *lua.LState, goValue any) lua.LValue {
 		return lua.LNumber(v)
 	case []byte:
 		return lua.LString(v)
+	case time.Time:
+		return lua.LString(v.UTC().Format(time.RFC3339))
+	case *time.Time:
+		if v == nil {
+			return lua.LNil
+		}
+		return lua.LString(v.UTC().Format(time.RFC3339))
 	case []any:
 		return arrayToTable(l, v)
 	case map[string]any:
 		return MapToTable(l, v)
 	case map[any]any:
-		panic("map[any]any not implemented")
+		table := l.NewTable()
+		for k, val := range v {
+			table.RawSet(GoTypeToLuaType(l, k), GoTypeToLuaType(l, val))
+		}
+		return table
 	default:
+		rv := reflect.ValueOf(v)
+		rk := rv.Kind()
+
+		// Check if it's a struct type
+		if rk == reflect.Struct {
+			return MapToTable(l, StructToMap(v))
+		}
+		if rk == reflect.Ptr && !rv.IsNil() && rv.Elem().Kind() == reflect.Struct {
+			return MapToTable(l, StructToMap(rv.Elem().Interface()))
+		}
+
+		// Check if it's a slice or array (including []Struct, []*Struct)
+		if rk == reflect.Slice || rk == reflect.Array {
+			table := l.NewTable()
+			for i := 0; i < rv.Len(); i++ {
+				elem := rv.Index(i).Interface()
+				table.RawSetInt(i+1, GoTypeToLuaType(l, elem))
+			}
+			return table
+		}
+
 		// For other types, try to convert to string
 		return lua.LString(fmt.Sprintf("%v", v))
 	}
+}
+
+func isTableEmpty(table *lua.LTable) bool {
+	empty := true
+	table.ForEach(func(_, _ lua.LValue) {
+		empty = false
+	})
+	return empty
 }
 
 // Helper function to check if a Lua table is an array (consecutive integer keys starting from 1)
 func isArray(table *lua.LTable) bool {
 	maxKey := 0
 	keyCount := 0
+	totalKeys := 0
 
 	table.ForEach(func(key, value lua.LValue) {
+		totalKeys++
 		if num, ok := key.(lua.LNumber); ok {
-			if int(num) > 0 {
+			if float64(num) == float64(int(num)) && int(num) > 0 {
 				keyCount++
 				if int(num) > maxKey {
 					maxKey = int(num)
@@ -90,8 +141,8 @@ func isArray(table *lua.LTable) bool {
 		}
 	})
 
-	// Array if we have consecutive keys from 1 to maxKey
-	return keyCount == maxKey && keyCount > 0
+	// Array if all keys are consecutive positive integers from 1 to maxKey
+	return totalKeys == keyCount && keyCount == maxKey && keyCount > 0
 }
 
 // Convert Lua table to Go array

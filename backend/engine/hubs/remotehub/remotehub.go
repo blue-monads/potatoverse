@@ -1,0 +1,161 @@
+package remotehub
+
+import (
+	"crypto/sha256"
+	"encoding/json"
+	"errors"
+
+	"golang.org/x/crypto/pbkdf2"
+
+	"github.com/blue-monads/potatoverse/backend/engine/hubs/caphub"
+	"github.com/blue-monads/potatoverse/backend/services/corehub"
+	"github.com/blue-monads/potatoverse/backend/services/datahub"
+	"github.com/blue-monads/potatoverse/backend/services/signer"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
+	"github.com/blue-monads/potatoverse/backend/utils/libx/httpx"
+	"github.com/blue-monads/potatoverse/backend/xtypes"
+	"github.com/gin-gonic/gin"
+	"github.com/hako/branca"
+)
+
+type RemoteHub struct {
+	tokenSigner *branca.Branca
+	app         xtypes.App
+	engine      xtypes.Engine
+	caphub      *caphub.CapabilityHub
+	corehub     *corehub.CoreHub
+	signer      *signer.Signer
+	db          datahub.Database
+}
+
+type RBindFn func(ctx RContext) (any, error)
+type HttpBindFn = RBindFn
+
+func NewRemoteHub() *RemoteHub {
+
+	randomkey, err := xutils.GenerateRandomString(32)
+	if err != nil {
+		return nil
+	}
+
+	altKey := pbkdf2.Key([]byte(randomkey), []byte("EXE_UMAMI_POTATO"), 4, 32, sha256.New)
+
+	return &RemoteHub{
+		tokenSigner: branca.NewBranca(string(altKey)),
+	}
+}
+
+const (
+	XExecHeader           = "X-Exec-Header"
+	XRemoteCtxTokenHeader = "X-Remote-Ctx-Token"
+)
+
+type XExecClaim struct {
+	PackageId        int64  `json:"p"`
+	PackageVersionId int64  `json:"v"`
+	SpaceId          int64  `json:"s"`
+	RequestID        string `json:"r"`
+}
+
+type RemoteCtxClaim struct {
+	TargetSpaceId          int64  `json:"ts"`
+	TargetPackageId        int64  `json:"tp"`
+	TargetPackageVersionId int64  `json:"tv"`
+	PluginSpaceId          int64  `json:"ps,omitempty"`
+	PluginId               int64  `json:"pi,omitempty"`
+	RequestID              string `json:"r,omitempty"`
+}
+
+func (b *RemoteHub) Init(app xtypes.App) {
+
+	engine := app.Engine().(xtypes.Engine)
+	corehub := app.CoreHub().(*corehub.CoreHub)
+	signer := app.Signer()
+	db := app.Database()
+	caphub := engine.GetCapabilityHub().(*caphub.CapabilityHub)
+
+	b.engine = engine
+	b.corehub = corehub
+	b.signer = signer
+	b.db = db
+	b.caphub = caphub
+
+}
+
+func (b *RemoteHub) GetExecToken(pkgId, pkgverId, spaceId int64, reqId string) (string, error) {
+
+	claim := &XExecClaim{
+		PackageId:        pkgId,
+		PackageVersionId: pkgverId,
+		SpaceId:          spaceId,
+		RequestID:        reqId,
+	}
+
+	json, err := json.Marshal(claim)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := b.tokenSigner.EncodeToString(string(json))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+
+}
+
+func (b *RemoteHub) SignRemoteCtxToken(claim *RemoteCtxClaim) (string, error) {
+	data, err := json.Marshal(claim)
+	if err != nil {
+		return "", err
+	}
+	return b.tokenSigner.EncodeToString(string(data))
+}
+
+func (b *RemoteHub) ParseRemoteCtxToken(token string) (*RemoteCtxClaim, error) {
+	data, err := b.tokenSigner.DecodeToString(token)
+	if err != nil {
+		return nil, err
+	}
+	claim := &RemoteCtxClaim{}
+	if err := json.Unmarshal([]byte(data), claim); err != nil {
+		return nil, err
+	}
+	return claim, nil
+}
+
+func (b *RemoteHub) Authed(h RBindFn) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		token := ctx.GetHeader(XExecHeader)
+		if token == "" {
+			httpx.WriteErr(ctx, errors.New("missing token"))
+			return
+		}
+
+		payload, err := b.tokenSigner.DecodeToString(token)
+		if err != nil {
+			httpx.WriteErr(ctx, errors.New("invalid token"))
+			return
+		}
+
+		claim := &XExecClaim{}
+
+		err = json.Unmarshal([]byte(payload), claim)
+
+		if err != nil {
+			httpx.WriteErr(ctx, errors.New("invalid token"))
+			return
+		}
+
+		resp, err := h(&HttpBindContext{
+			Http:           ctx,
+			PackageId:      claim.PackageId,
+			PackageVersion: claim.PackageVersionId,
+			SpaceId:        claim.SpaceId,
+			RequestId:      claim.RequestID,
+		})
+
+		httpx.WriteJSON(ctx, resp, err)
+	}
+}

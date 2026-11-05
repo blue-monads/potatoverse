@@ -63,11 +63,18 @@ func GenerateNostrAuthToken(privkey string, serverURL, method string) (string, e
 }
 
 func PubKeyToNodeId(pubkey string) string {
-	if len(pubkey) < 20 || !strings.HasPrefix(pubkey, "npub1") {
+	nodeId, ok := TryPubKeyToNodeId(pubkey)
+	if !ok {
 		panic("Invalid pubkey")
 	}
 
-	firstId := pubkey[5:20]
+	return nodeId
+}
 
-	return firstId
+func TryPubKeyToNodeId(pubkey string) (string, bool) {
+	if len(pubkey) < 20 || !strings.HasPrefix(pubkey, "npub1") {
+		return "", false
+	}
+
+	return pubkey[5:20], true
 }

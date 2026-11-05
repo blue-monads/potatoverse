@@ -1,0 +1,42 @@
+{
+    "name": "Example Beta",
+    "slug": "pexample-beta",
+    "info": "AppPlugin demonstrating plugin loader script and remote context execution",
+    "spaces": [
+        {
+            "namespace": "pexample-beta",
+            "space_type": "AppPlugin",
+            "loader_script": "loader.js",
+            "executor_type": "luaz",
+            "server_file": "server.lua",
+            "route_options": {
+                "router_type": "simple",
+                "serve_folder": "public",
+                "force_html_extension": false,
+                "force_index_html_file": true
+            },
+            "dev_serve_port": 0,
+            "is_default": true
+        }
+    ],
+    "capabilities": [
+        {
+            "name": "xRemote",
+            "type": "xRemote",
+            "options": {},
+            "spaces": null
+        }
+    ],
+    "canonical_url": "",
+    "format_version": "0.0.2",
+    "author_name": "Potatoverse",
+    "author_email": "dev@potatoverse.io",
+    "author_site": "https://potatoverse.io",
+    "license": "MIT",
+    "version": "0.0.1",
+    "tags": [
+        "example",
+        "plugin",
+        "app-plugin"
+    ]
+}

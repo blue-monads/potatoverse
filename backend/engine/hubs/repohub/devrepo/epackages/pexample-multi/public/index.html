@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Example Multi Space - Main Space Showcase</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      padding: 32px 16px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-main {
+      background: #e0e7ff;
+      color: #3730a3;
+      border: 1px solid #c7d2fe;
+    }
+
+    .badge-multi {
+      background: #fdf2f8;
+      color: #9d174d;
+      border: 1px solid #fbcfe8;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .lead {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    pre, code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--primary);
+    }
+
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      margin-left: 8px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg);
+    }
+
+    .output-box {
+      margin-top: 16px;
+      background: #0f172a;
+      color: #38bdf8;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 48px;
+      display: none;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg);
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badges">
+        <span class="badge badge-main">🏛️ Main Space (Non-Default)</span>
+        <span class="badge badge-multi">📦 Multi-Space Package</span>
+      </div>
+      <h1>Example Multi Space Package</h1>
+      <p class="lead">
+        This package demonstrates multi-space organization in Potatoverse: a primary <strong>Main Space</strong> (non-default) and a secondary <strong>Sub-Space</strong> designated as the <strong>Default Space</strong>.
+      </p>
+      <div>
+        <button class="btn" onclick="fetchInfo()">Test Main Space API (/api/info)</button>
+        <button class="btn btn-secondary" onclick="fetchStatus()">Check Status (/api/status)</button>
+      </div>
+      <div id="apiOutput" class="output-box"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1. Main Space Concept</h2>
+        <p>
+          Every package has exactly one <strong>Main Space</strong> whose namespace matches the package slug (<code>pexample-multi</code>).
+        </p>
+        <p>
+          The package installer identifies this via <code>MainSpaceId</code>.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>2. Default Space Flag</h2>
+        <p>
+          The default space is determined by <code>is_default: true</code>.
+        </p>
+        <p>
+          The default space does <em>not</em> need to be the main space. Here, the sub-space (<code>pexample-multi:sub</code>) is the default entrypoint.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>3. Sub-Space Isolation</h2>
+        <p>
+          Sub-spaces use colon notation: <code>pexample-multi:sub</code>.
+        </p>
+        <p>
+          Each space retains its own server logic, execution sandbox, and assets directory.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 24px;">
+      <h2>Spaces in this Package</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Namespace</th>
+              <th>Space Role</th>
+              <th>Default (is_default)</th>
+              <th>Server File</th>
+              <th>Serve Folder</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>pexample-multi</code></td>
+              <td><span class="badge badge-main">Main Space</span></td>
+              <td>No (<code>false</code>)</td>
+              <td><code>server.lua</code></td>
+              <td><code>public/</code></td>
+            </tr>
+            <tr>
+              <td><code>pexample-multi:sub</code></td>
+              <td><span class="badge" style="background:#e0f2fe;color:#0369a1;">Sub Space</span></td>
+              <td><span class="status-dot"></span>Yes (<code>true</code>)</td>
+              <td><code>sub/server.lua</code></td>
+              <td><code>sub/public/</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Manifest Configuration (potato.json)</h2>
+      <pre><code>{
+  "name": "Example Multi Space",
+  "slug": "pexample-multi",
+  "spaces": [
+    {
+      "namespace": "pexample-multi",
+      "space_type": "App",
+      "executor_type": "luaz",
+      "server_file": "server.lua",
+      "route_options": { "serve_folder": "public" },
+      "is_default": false
+    },
+    {
+      "namespace": "pexample-multi:sub",
+      "space_type": "App",
+      "executor_type": "luaz",
+      "server_file": "sub/server.lua",
+      "route_options": { "serve_folder": "sub/public" },
+      "is_default": true
+    }
+  ]
+}</code></pre>
+    </div>
+  </div>
+
+  <script>
+    async function fetchInfo() {
+      showOutput('Fetching /api/info ...');
+      try {
+        const res = await fetch('api/info');
+        const data = await res.json();
+        showOutput(JSON.stringify(data, null, 2));
+      } catch (err) {
+        showOutput('Error: ' + err.message);
+      }
+    }
+
+    async function fetchStatus() {
+      showOutput('Fetching /api/status ...');
+      try {
+        const res = await fetch('api/status');
+        const data = await res.json();
+        showOutput(JSON.stringify(data, null, 2));
+      } catch (err) {
+        showOutput('Error: ' + err.message);
+      }
+    }
+
+    function showOutput(text) {
+      const el = document.getElementById('apiOutput');
+      el.style.display = 'block';
+      el.textContent = text;
+    }
+  </script>
+</body>
+</html>
+

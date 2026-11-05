@@ -2,13 +2,17 @@ package app
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"log/slog"
 	"path"
+	"time"
 
 	"github.com/blue-monads/potatoverse/backend/app/actions"
 	"github.com/blue-monads/potatoverse/backend/app/server"
 	"github.com/blue-monads/potatoverse/backend/engine"
+	xutils "github.com/blue-monads/potatoverse/backend/utils"
 	"github.com/blue-monads/potatoverse/backend/utils/qq"
+	"github.com/gin-gonic/gin"
 
 	"github.com/blue-monads/potatoverse/backend/services/buddyhub"
 	"github.com/blue-monads/potatoverse/backend/services/corehub"
@@ -20,19 +24,26 @@ import (
 )
 
 type Option struct {
-	Database datahub.Database
-	Logger   *slog.Logger
-	Signer   *signer.Signer
-	AppOpts  *xtypes.AppOptions
-	Mailer   mailer.Mailer
-	BuddyHub *buddyhub.BuddyHub
+	Database   datahub.Database
+	Logger     *slog.Logger
+	Signer     *signer.Signer
+	AppOpts    *xtypes.AppOptions
+	Mailer     mailer.Mailer
+	BuddyHub   buddyhub.IBuddyHub
+	BaseRouter *gin.Engine
+	OnStart    func()
+
+	BaseGlobalJS string
 
 	WorkingFolderBase string
+	RunPortNoBind     bool
 }
 
 var _ xtypes.App = (*App)(nil)
 
 type App struct {
+	execId string
+
 	db      datahub.Database
 	signer  *signer.Signer
 	logger  *slog.Logger
@@ -57,7 +68,12 @@ func New(opt Option) *App {
 
 	sockd := sockd.NewSockd()
 
+	ut := time.Now().Unix()
+	randstr, _ := xutils.GenerateRandomString(8)
+	execId := fmt.Sprintf("%d-%s", ut, randstr)
+
 	happ := &App{
+		execId: execId,
 		db:     opt.Database,
 		signer: opt.Signer,
 		logger: opt.Logger,
@@ -82,16 +98,21 @@ func New(opt Option) *App {
 	happ.coreHub = corehub.NewCoreHub(happ)
 
 	server := server.NewServer(server.Option{
-		Port:        opt.AppOpts.Port,
-		Ctrl:        happ.ctrl,
-		Signer:      opt.Signer,
-		Engine:      engine,
-		Hosts:       hosts,
-		LocalSocket: opt.AppOpts.SocketFile,
-		SiteName:    opt.AppOpts.Name,
-		CoreHub:     happ.coreHub,
-		BuddyHub:    opt.BuddyHub,
-		Logger:      opt.Logger,
+		Port:          opt.AppOpts.Port,
+		GlobalJS:      opt.BaseGlobalJS,
+		Ctrl:          happ.ctrl,
+		Signer:        opt.Signer,
+		Engine:        engine,
+		Hosts:         hosts,
+		LocalSocket:   opt.AppOpts.SocketFile,
+		SiteName:      opt.AppOpts.Name,
+		CoreHub:       happ.coreHub,
+		BuddyHub:      opt.BuddyHub,
+		Logger:        opt.Logger,
+		ExecId:        execId,
+		OnStart:       opt.OnStart,
+		BaseRouter:    opt.BaseRouter,
+		RunPortNoBind: opt.RunPortNoBind,
 	})
 
 	happ.server = server
@@ -104,6 +125,10 @@ func (h *App) Init() error {
 	h.logger.Info("Initializing HeadLess application")
 
 	return nil
+}
+
+func (h *App) ExecId() string {
+	return h.execId
 }
 
 func (h *App) Start() error {
@@ -163,6 +188,27 @@ func (h *App) Start() error {
 
 }
 
+func (h *App) Close() error {
+	if h.engine != nil {
+		h.engine.Close()
+	}
+	if h.db != nil {
+		return h.db.Close()
+	}
+
+	h.coreHub = nil
+	h.engine = nil
+	h.db = nil
+	h.signer = nil
+	h.logger = nil
+	h.ctrl = nil
+	h.AppOpts = nil
+	h.sockd = nil
+	h.server = nil
+
+	return nil
+}
+
 // shared methods for App
 
 func (h *App) Database() datahub.Database {
@@ -194,7 +240,7 @@ func (h *App) Sockd() any {
 }
 
 func (h *App) CoreHub() any {
-	return nil
+	return h.coreHub
 }
 
 // private

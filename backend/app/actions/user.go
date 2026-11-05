@@ -14,6 +14,10 @@ func (c *Controller) GetUserGroup(name string) (*dbmodels.UserGroup, error) {
 	return c.database.GetUserOps().GetUserGroup(name)
 }
 
+func (c *Controller) GetUserGroupByID(id int64) (*dbmodels.UserGroup, error) {
+	return c.database.GetUserOps().GetUserGroupByID(id)
+}
+
 func (c *Controller) AddUserGroup(name string, info string) error {
 	return c.database.GetUserOps().AddUserGroup(name, info)
 }

@@ -9,7 +9,9 @@ author_name: {{AUTHOR_NAME}}
 version: '0.0.1'
 
 special_pages:
-  init_page: init.html
+  - name: init_page
+    route: init.html
+    target_space: "{{APP_SLUG}}"
 
 spaces:
   - namespace: {{APP_SLUG}}

@@ -146,6 +146,7 @@ export const createUserDirectly = async (data: {
 
 // User Groups API
 export interface UserGroup {
+    id?: number;
     name: string;
     info: string;
     created_at?: string;
@@ -228,19 +229,25 @@ export const loginWithDeviceToken = async (deviceToken: string) => {
     return iaxios.post<{ access_token: string; user_info: User }>("/core/auth/device-token", { device_token: deviceToken });
 }
 
+export interface SpecialPage {
+    name: string;
+    route: string;
+    target_space?: string;
+}
+
 export interface InstallPackageResult {
     installed_id: number;
-    root_space_id: number;
+    main_space_id: number;
     key_space: string;
-    special_pages: Record<string, string>;
+    special_pages: SpecialPage[];
 }
 
 /** Response from package upgrade (repo or zip). When special_pages contains an update page, show Configure after upgrade. */
 export interface UpgradePackageResult {
     package_version_id: number;
-    special_pages: Record<string, string>;
+    special_pages: SpecialPage[];
     key_space: string;
-    root_space_id: number;
+    main_space_id: number;
 }
 
 
@@ -358,6 +365,8 @@ export interface Space {
     install_id: number;
     executor_type: string;
     sub_type: string;
+    space_type?: string;
+    loader_script?: string;
     owned_by: number;
     extrameta: string;
     is_initilized: boolean;
@@ -365,8 +374,9 @@ export interface Space {
 }
 
 export interface InstalledSpace {
-    spaces: Space[]
-    packages: Package[]
+    spaces: Space[];
+    packages: Package[];
+    hosts?: string[];
 }
 
 export const listInstalledSpaces = async () => {
@@ -423,6 +433,9 @@ export type FormattedSpace = {
     space_id: number;
     install_id: number;
     namespace_key: string;
+    space_type?: string;
+    is_plugin?: boolean;
+    is_main_space?: boolean;
     package_name: string;
     package_info: string;
     package_version_id: number;
@@ -451,6 +464,9 @@ export const formatSpace = (data: InstalledSpace) => {
             space_id: space.id,
             install_id: space.install_id,
             namespace_key: space.namespace_key,
+            space_type: space.space_type,
+            is_plugin: space.space_type === 'AppPlugin',
+            is_main_space: space.space_type !== 'AppPlugin' && !space.namespace_key.includes(':'),
             package_name: pkg.name,
             package_info: pkg.info,
             package_version_id: pkg.id,
@@ -828,102 +844,215 @@ export const deleteSpaceUser = async (installId: number, spaceUserId: number) =>
     return iaxios.delete<void>(`/core/space/${installId}/users/${spaceUserId}`);
 }
 
-// Event Subscriptions API
-export interface EventSubscription {
+// Space User Groups API
+export interface SpaceUserGroup {
     id: number;
+    group_id: number;
     install_id: number;
     space_id: number;
-    event_key: string;
-    target_type: string; // push, email, sms, webhook, script
-    target_space_id: number;
-    target_endpoint: string;
-    target_options: string; // JSON string
-    target_code: string;
-    rules: string; // JSON string
-    transform: string; // JSON string
-    delay_start: number;
-    retry_delay: number;
+    scope: string;
+    extrameta: string;
+}
+
+export const listSpaceUserGroups = async (installId: number, spaceId?: number, groupId?: number, scope?: string) => {
+    return iaxios.get<SpaceUserGroup[]>(`/core/space/${installId}/user_groups`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+            ...(groupId !== undefined && { group_id: groupId }),
+            ...(scope && { scope }),
+        },
+    });
+}
+
+export const getSpaceUserGroup = async (installId: number, spaceUserGroupId: number) => {
+    return iaxios.get<SpaceUserGroup>(`/core/space/${installId}/user_groups/${spaceUserGroupId}`);
+}
+
+export const createSpaceUserGroup = async (installId: number, data: {
+    group_id: number;
+    space_id?: number; // 0 or omitted for package-level, >0 for space-level
+    scope?: string;
+    extrameta?: string;
+}) => {
+    return iaxios.post<SpaceUserGroup>(`/core/space/${installId}/user_groups`, data);
+}
+
+export const updateSpaceUserGroup = async (installId: number, spaceUserGroupId: number, data: Partial<SpaceUserGroup>) => {
+    return iaxios.put<SpaceUserGroup>(`/core/space/${installId}/user_groups/${spaceUserGroupId}`, data);
+}
+
+export const deleteSpaceUserGroup = async (installId: number, spaceUserGroupId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/user_groups/${spaceUserGroupId}`);
+}
+
+// Signals API
+export interface Signal {
+    id: number;
+    signal_key: string;
+    emitter_install_id: number;
+    emitter_space_id: number;
+    receiver_install_id: number;
+    receiver_space_id: number;
+    receiver_handler: string;
+    managed_by: 'emitter' | 'receiver' | 'both';
+    expires_on: number;
     max_retries: number;
-    extrameta: string; // JSON string
+    retry_delay: number;
     created_by: number;
     disabled: boolean;
     created_at?: string;
     updated_at?: string;
 }
 
-export const listEventSubscriptions = async (installId: number, spaceId?: number, eventKey?: string) => {
-    return iaxios.get<EventSubscription[]>(`/core/space/${installId}/events`, {
+export interface SignalEvent {
+    id: number;
+    signal_event_key: string;
+    payload: string;
+    metadata: string;
+    extrameta: string;
+    created_at?: string;
+}
+
+export interface SignalTarget {
+    id: number;
+    signal_event_id: number;
+    signal_id: number;
+    status: 'new' | 'scheduled' | 'delayed' | 'blocked' | 'processed' | 'failed' | 'expired';
+    metadata: string;
+    delayed_until: number;
+    retry_count: number;
+    last_retried_at: number;
+    error: string;
+    extrameta: string;
+    signal_key?: string;
+    emitter_install_id?: number;
+    emitter_space_id?: number;
+    receiver_install_id?: number;
+    receiver_space_id?: number;
+    receiver_handler?: string;
+    payload?: string;
+    created_at?: string;
+}
+
+export const listSignals = async (installId: number, spaceId?: number, role?: string, signalKey?: string) => {
+    return iaxios.get<Signal[]>(`/core/space/${installId}/signals`, {
         params: {
             ...(spaceId !== undefined && { space_id: spaceId }),
-            ...(eventKey && { event_key: eventKey }),
+            ...(role && { role }),
+            ...(signalKey && { signal_key: signalKey }),
         },
     });
+};
+
+export const getSignal = async (installId: number, signalId: number) => {
+    return iaxios.get<Signal>(`/core/space/${installId}/signals/${signalId}`);
+};
+
+export const createSignal = async (installId: number, data: Partial<Signal>) => {
+    return iaxios.post<Signal>(`/core/space/${installId}/signals`, data);
+};
+
+export const updateSignal = async (installId: number, signalId: number, data: Partial<Signal>) => {
+    return iaxios.put<Signal>(`/core/space/${installId}/signals/${signalId}`, data);
+};
+
+export const deleteSignal = async (installId: number, signalId: number) => {
+    return iaxios.delete<void>(`/core/space/${installId}/signals/${signalId}`);
+};
+
+export const listSignalEvents = async (installId: number, signalId?: number, status?: string, offset: number = 0, limit: number = 100) => {
+    return iaxios.get<SignalTarget[]>(`/core/space/${installId}/signal_events`, {
+        params: {
+            ...(signalId !== undefined && { signal_id: signalId }),
+            ...(status && { status }),
+            offset,
+            limit,
+        },
+    });
+};
+
+export const listSignalTargets = listSignalEvents;
+
+export const updateSignalTargetStatus = async (installId: number, targetId: number, status: string, reason?: string) => {
+    return iaxios.post<{ message: string }>(`/core/space/${installId}/signals/targets/${targetId}/status`, {
+        status,
+        reason,
+    });
+};
+
+export const emitSignal = async (installId: number, data: { signal_key: string; emitter_space_id?: number; payload?: any; metadata?: any }) => {
+    return iaxios.post<{ message: string }>(`/core/space/${installId}/signals/emit`, data);
+};
+
+// Space Plugins API
+export interface SpacePlugin {
+    id: number;
+    source_install_id: number;
+    source_space_id: number;
+    target_install_id: number;
+    target_space_id: number;
+    extrameta: string;
+    target_namespace_key?: string;
+    target_package_name?: string;
+    target_package_version?: string;
+    target_loader_script?: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
-export const getEventSubscription = async (installId: number, subscriptionId: number) => {
-    return iaxios.get<EventSubscription>(`/core/space/${installId}/events/${subscriptionId}`);
+export interface AvailablePlugin {
+    space_id: number;
+    install_id: number;
+    namespace_key: string;
+    loader_script: string;
+    package_name: string;
+    package_info: string;
+    package_version: string;
+    package_author: string;
+    is_already_plugged: boolean;
+    current_plugin_id?: number;
 }
 
-export const createEventSubscription = async (installId: number, data: {
-    event_key: string;
-    target_type: string;
-    space_id?: number; // 0 or omitted for package-level, >0 for space-level
-    target_endpoint?: string;
-    target_options?: any; // Will be JSON stringified
-    target_code?: string;
-    target_space_id?: number;
-    rules?: any; // Will be JSON stringified
-    transform?: any; // Will be JSON stringified
-    delay_start?: number;
-    retry_delay?: number;
-    max_retries?: number;
-    extrameta?: any; // Will be JSON stringified
-    disabled?: boolean;
+export const listSpacePlugins = async (installId: number, spaceId?: number) => {
+    return iaxios.get<SpacePlugin[]>(`/core/space/${installId}/plugins`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+        },
+    });
+};
+
+export const listAvailablePlugins = async (installId: number, spaceId?: number) => {
+    return iaxios.get<AvailablePlugin[]>(`/core/space/${installId}/plugins/available`, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+        },
+    });
+};
+
+export const getSpacePlugin = async (installId: number, pluginId: number) => {
+    return iaxios.get<SpacePlugin>(`/core/space/${installId}/plugins/${pluginId}`);
+};
+
+export const createSpacePlugin = async (installId: number, spaceId: number | undefined, data: {
+    target_install_id?: number;
+    target_space_id: number;
+    source_space_id?: number;
+    extrameta?: string;
 }) => {
-    // Stringify JSON fields
-    const payload: any = {
-        event_key: data.event_key,
-        target_type: data.target_type,
-        ...(data.space_id !== undefined && { space_id: data.space_id }),
-        ...(data.target_endpoint && { target_endpoint: data.target_endpoint }),
-        ...(data.target_options && { target_options: typeof data.target_options === 'string' ? data.target_options : JSON.stringify(data.target_options) }),
-        ...(data.target_code && { target_code: data.target_code }),
-        ...(data.target_space_id !== undefined && { target_space_id: data.target_space_id }),
-        ...(data.rules && { rules: typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules) }),
-        ...(data.transform && { transform: typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform) }),
-        ...(data.delay_start !== undefined && { delay_start: data.delay_start }),
-        ...(data.retry_delay !== undefined && { retry_delay: data.retry_delay }),
-        ...(data.max_retries !== undefined && { max_retries: data.max_retries }),
-        ...(data.extrameta && { extrameta: typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta) }),
-        ...(data.disabled !== undefined && { disabled: data.disabled }),
-    };
+    return iaxios.post<SpacePlugin>(`/core/space/${installId}/plugins`, data, {
+        params: {
+            ...(spaceId !== undefined && { space_id: spaceId }),
+        },
+    });
+};
 
-    return iaxios.post<EventSubscription>(`/core/space/${installId}/events`, payload);
-}
+export const updateSpacePlugin = async (installId: number, pluginId: number, data: { extrameta?: string }) => {
+    return iaxios.put<SpacePlugin>(`/core/space/${installId}/plugins/${pluginId}`, data);
+};
 
-export const updateEventSubscription = async (installId: number, subscriptionId: number, data: Partial<EventSubscription>) => {
-    // Stringify JSON fields if they're objects
-    const payload: any = {};
-    if (data.event_key !== undefined) payload.event_key = data.event_key;
-    if (data.target_type !== undefined) payload.target_type = data.target_type;
-    if (data.space_id !== undefined) payload.space_id = data.space_id;
-    if (data.target_endpoint !== undefined) payload.target_endpoint = data.target_endpoint;
-    if (data.target_options !== undefined) payload.target_options = typeof data.target_options === 'string' ? data.target_options : JSON.stringify(data.target_options);
-    if (data.target_code !== undefined) payload.target_code = data.target_code;
-    if (data.rules !== undefined) payload.rules = typeof data.rules === 'string' ? data.rules : JSON.stringify(data.rules);
-    if (data.transform !== undefined) payload.transform = typeof data.transform === 'string' ? data.transform : JSON.stringify(data.transform);
-    if (data.delay_start !== undefined) payload.delay_start = data.delay_start;
-    if (data.retry_delay !== undefined) payload.retry_delay = data.retry_delay;
-    if (data.max_retries !== undefined) payload.max_retries = data.max_retries;
-    if (data.extrameta !== undefined) payload.extrameta = typeof data.extrameta === 'string' ? data.extrameta : JSON.stringify(data.extrameta);
-    if (data.disabled !== undefined) payload.disabled = data.disabled;
-
-    return iaxios.put<EventSubscription>(`/core/space/${installId}/events/${subscriptionId}`, payload);
-}
-
-export const deleteEventSubscription = async (installId: number, subscriptionId: number) => {
-    return iaxios.delete<void>(`/core/space/${installId}/events/${subscriptionId}`);
-}
+export const deleteSpacePlugin = async (installId: number, pluginId: number) => {
+    return iaxios.delete<{ status: string }>(`/core/space/${installId}/plugins/${pluginId}`);
+};
 
 // User Messages API
 export interface UserMessage {
@@ -1044,3 +1173,32 @@ export const querySpaceDataTable = async (installId: number, tableName: string, 
 export const exportSpaceState = async (installId: number, excludeTables: string[] = []) => {
     return iaxios.post(`/core/space/${installId}/export`, { exclude_tables: excludeTables }, { responseType: 'blob' });
 }
+
+
+export const sqlQuerySpaceData = async (installId: number, query: string) => {
+    return iaxios.post<any>(`/core/space/${installId}/data/sqlQuery`, { query });
+}
+
+// Root Routing API
+export interface RootRouteTarget {
+    space_id: number;
+}
+
+export interface RootRoutingData {
+    routes: Record<string, RootRouteTarget>;
+    main_spaces: Space[];
+}
+
+export const getRootRouting = async () => {
+    return iaxios.get<RootRoutingData>("/core/admin/routing/root");
+}
+
+export const updateRootRouting = async (routes: Record<string, RootRouteTarget>) => {
+    return iaxios.post<{ message: string; routes: Record<string, RootRouteTarget> }>("/core/admin/routing/root", { routes });
+}
+
+export const reloadRootRouting = async () => {
+    return iaxios.post<{ message: string }>("/core/admin/routing/root/reload");
+}
+
+

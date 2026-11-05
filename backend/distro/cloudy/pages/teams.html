@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Instances · Cloudy</title>
+  <link rel="stylesheet" href="cloudy.css">
+</head>
+<body class="page">
+  <div class="shell wide">
+    <div class="top">
+      <div class="brand">Cloudy · Team Instances</div>
+      <div class="meta" id="who"></div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h1 id="title">Team Instances</h1>
+            <p class="lede" id="lede">Loading…</p>
+          </div>
+          <button type="button" class="secondary" id="refresh">Refresh</button>
+        </div>
+        <p id="msg" class="msg"></p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Slug</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h1>Create SubApp Instance</h1>
+        <p class="lede">Create a new subapp instance for this team.</p>
+        <form id="createInstForm">
+          <div class="form-row">
+            <label>Instance Slug
+              <input name="slug" required pattern="[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?" placeholder="my-app">
+            </label>
+            <label>Description
+              <input name="description" placeholder="Main application instance">
+            </label>
+          </div>
+          <button type="submit">Create Instance</button>
+        </form>
+      </div>
+    </div>
+    <p class="foot">
+      <a href="portal.html">← Back to Teams</a>
+      <a id="adminLink" href="admin/portal.html" hidden>Admin portal</a>
+      <a href="#" id="out">Sign out</a>
+    </p>
+  </div>
+  <script src="cloudy.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const rows = document.getElementById("rows");
+    const createForm = document.getElementById("createInstForm");
+    const params = new URLSearchParams(location.search);
+    const teamId = params.get("id");
+    let session = null;
+
+    document.getElementById("out").addEventListener("click", (e) => {
+      e.preventDefault();
+      Cloudy.signOut();
+    });
+
+    function setMsg(text, ok) {
+      msg.className = "msg " + (ok ? "ok" : "err");
+      msg.textContent = text || "";
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function actionBtn(label, fn, cls) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = cls || "secondary";
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    async function loadInstances() {
+      if (!teamId) {
+        setMsg("No team ID provided");
+        return;
+      }
+      try {
+        const data = await Cloudy.api("/zz/cloudy/teams/" + encodeURIComponent(teamId), { headers: Cloudy.headers() });
+        const team = data.team || {};
+        const instances = data.instances || [];
+        document.getElementById("title").textContent = "Team: " + (team.name || "Team #" + teamId);
+        document.getElementById("lede").textContent = (team.description || "") + " · " + instances.length + " instance(s)";
+
+        rows.innerHTML = "";
+        if (instances.length === 0) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = "<td colspan='4'><em>No instances created yet for this team. Use the form below to create one.</em></td>";
+          rows.appendChild(tr);
+          return;
+        }
+
+        instances.forEach((inst) => {
+          const tr = document.createElement("tr");
+          const status = [];
+          if (inst.loaded) status.push("loaded");
+          else status.push("unloaded");
+          if (inst.ready) status.push("ready");
+
+          tr.innerHTML =
+            "<td><strong>" + esc(inst.slug) + "</strong></td>" +
+            "<td>" + esc(inst.description) + "</td>" +
+            "<td>" + esc(status.join(" · ")) + "</td>" +
+            "<td class='actions'></td>";
+          const cell = tr.querySelector("td:last-child");
+
+          if (inst.loaded) {
+            cell.append(actionBtn("Unload", () => unloadApp(inst.slug)));
+          } else {
+            cell.append(actionBtn("Load", () => loadApp(inst.slug)));
+          }
+
+          cell.append(
+            actionBtn("Open", () => window.open(Cloudy.tenantURL(session, inst.slug), "_blank")),
+            actionBtn("Users", () => { location.href = "sub-users.html?for_slug=" + encodeURIComponent(inst.slug); }),
+            actionBtn("Export DB", () => exportDB(inst.slug))
+          );
+          rows.appendChild(tr);
+        });
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function loadApp(name) {
+      try {
+        await Cloudy.api("/zz/cloudy/apps/" + encodeURIComponent(name) + "/load", {
+          method: "POST",
+          headers: Cloudy.headers(),
+        });
+        setMsg("Loaded " + name, true);
+        await loadInstances();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function unloadApp(name) {
+      try {
+        await Cloudy.api("/zz/cloudy/apps/" + encodeURIComponent(name) + "/unload", {
+          method: "POST",
+          headers: Cloudy.headers(),
+        });
+        setMsg("Unloaded " + name, true);
+        await loadInstances();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function exportDB(name) {
+      try {
+        const filename = Cloudy.exportFilename(name);
+        await Cloudy.download(
+          "/zz/cloudy/apps/" + encodeURIComponent(name) + "/export",
+          filename,
+        );
+        setMsg("Exported " + filename, true);
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    createForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!teamId) return;
+      setMsg("");
+      const body = {
+        slug: createForm.slug.value.trim().toLowerCase(),
+        description: createForm.description.value.trim(),
+      };
+      try {
+        await Cloudy.api("/zz/cloudy/teams/" + encodeURIComponent(teamId) + "/instances", {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify(body),
+        });
+        createForm.reset();
+        setMsg("Instance " + body.slug + " created", true);
+        await loadInstances();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    });
+
+    Cloudy.requireSession().then(async (data) => {
+      if (!data) return;
+      session = data;
+      const user = data.user || {};
+      document.getElementById("who").textContent = (user.email || "") + " · " + (user.utype || "");
+      if (user.utype === "admin") document.getElementById("adminLink").hidden = false;
+      await loadInstances();
+    });
+
+    document.getElementById("refresh").addEventListener("click", async () => {
+      await loadInstances();
+    });
+  </script>
+</body>
+</html>

@@ -20,12 +20,24 @@ var Methods = []string{
 	"get_field_as_float",
 	"get_field_as_string",
 	"get_field_as_bool",
+	"block",
 }
 
 type Context struct {
-	Capability xcapability.Capability
-	Payload    []byte
-	Handler    func(name string, params lazydata.LazyData) (any, error)
+	Capability  xcapability.Capability
+	Payload     []byte
+	Handler     func(name string, params lazydata.LazyData) (any, error)
+	Blocked     bool
+	BlockReason string
+}
+
+func (c *Context) Block(reason string) {
+	c.Blocked = true
+	c.BlockReason = reason
+}
+
+func (c *Context) IsBlocked() bool {
+	return c.Blocked
 }
 
 func (c *Context) ListActions() ([]string, error) {
@@ -44,19 +56,33 @@ func (c *Context) ListActions() ([]string, error) {
 }
 
 func (c *Context) ExecuteAction(name string, params lazydata.LazyData) (any, error) {
+	if name == "block" {
+		reason := ""
+		if params != nil {
+			reason = params.GetFieldAsString("reason")
+		}
+		c.Block(reason)
+		return true, nil
+	}
 
 	if c.Payload == nil {
 		if c.Handler != nil {
 			return c.Handler(name, params)
 		}
 
-		return c.Capability.Execute(name, params)
+		return c.Capability.Execute(xcapability.CapExecContext{
+			Method: name,
+			Params: params,
+		})
 	}
 
 	resp, err := BytelazyDataActions(c.Payload, name, params)
 	if err != nil {
 		if errors.Is(err, ErrUnknownAction) {
-			return c.Capability.Execute(name, params)
+			return c.Capability.Execute(xcapability.CapExecContext{
+				Method: name,
+				Params: params,
+			})
 		}
 		return nil, err
 	}

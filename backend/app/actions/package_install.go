@@ -71,11 +71,14 @@ func (c *Controller) InstallPackageByFile(userId int64, repo, file string) (*Ins
 
 }
 
+type SpecialPage = models.SpecialPage
+type SpecicalPage = SpecialPage
+
 type InstallPackageResult struct {
-	InstalledId  int64             `json:"installed_id"`
-	RootSpaceId  int64             `json:"root_space_id"`
-	KeySpace     string            `json:"key_space"`
-	SpecialPages map[string]string `json:"special_pages"`
+	InstalledId  int64         `json:"installed_id"`
+	MainSpaceId  int64         `json:"main_space_id"`
+	KeySpace     string        `json:"key_space"`
+	SpecialPages []SpecialPage `json:"special_pages"`
 }
 
 func installPackageByFile(database datahub.Database, logger *slog.Logger, userId int64, repo, file string) (*InstallPackageResult, error) {
@@ -103,11 +106,11 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return nil, err
 	}
 
-	rootSpaceId := int64(0)
+	mainSpaceId := int64(0)
 	keySpace := pkg.Slug
 
 	spaceMap := make(map[string]int64)
-	foundRootSpace := false
+	foundMainSpace := false
 
 	for _, space := range pkg.Spaces {
 		if space.Namespace == "" {
@@ -115,15 +118,23 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		}
 
 		if space.Namespace == pkg.Slug {
-			if foundRootSpace {
-				return nil, errors.New("multiple root spaces found")
+			if foundMainSpace {
+				return nil, errors.New("multiple main spaces found")
 			}
-			foundRootSpace = true
+			foundMainSpace = true
 		} else {
-			if !strings.HasPrefix(space.Namespace, pkg.Slug) {
-				return nil, errors.New("space namespace must start with package slug (i.e. 'my-package:my-space')")
-			} else if !strings.HasPrefix(space.Namespace, pkg.Slug+":") {
-				return nil, errors.New("space namespace must start with package slug (i.e. 'my-package:my-space')")
+			if !strings.HasPrefix(space.Namespace, pkg.Slug+":") {
+				return nil, errors.New("space namespace must be package namespace or package namespace:subkey (i.e. '" + pkg.Slug + "' or '" + pkg.Slug + ":my-space')")
+			}
+			subkey := strings.TrimPrefix(space.Namespace, pkg.Slug+":")
+			if subkey == "" || strings.Contains(subkey, ":") {
+				return nil, errors.New("space namespace subkey must not be empty or contain additional colons")
+			}
+			if !validSubkeyRegex.MatchString(subkey) {
+				return nil, errors.New("space namespace subkey is invalid, it can only contain letters, numbers, underscores and hyphens")
+			}
+			if strings.HasPrefix(subkey, "-") || strings.HasSuffix(subkey, "-") || strings.HasPrefix(subkey, "_") || strings.HasSuffix(subkey, "_") {
+				return nil, errors.New("space namespace subkey must not start or end with a hyphen or underscore")
 			}
 		}
 
@@ -147,7 +158,7 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		spaceMap[space.Namespace] = spaceId
 
 		if pkg.Slug == space.Namespace {
-			rootSpaceId = spaceId
+			mainSpaceId = spaceId
 		}
 
 		logger.Info("space installed", "space_id", spaceId)
@@ -188,15 +199,17 @@ func installPackageByFile(database datahub.Database, logger *slog.Logger, userId
 		return nil, err
 	}
 
-	specialPages := map[string]string{}
-	err = json.Unmarshal([]byte(vpkg.SpecialPages), &specialPages)
-	if err != nil {
-		return nil, err
+	specialPages := []SpecialPage{}
+	if len(vpkg.SpecialPages) > 0 && vpkg.SpecialPages != "{}" {
+		err = json.Unmarshal([]byte(vpkg.SpecialPages), &specialPages)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &InstallPackageResult{
 		InstalledId:  installedId,
-		RootSpaceId:  rootSpaceId,
+		MainSpaceId:  mainSpaceId,
 		KeySpace:     keySpace,
 		SpecialPages: specialPages,
 	}, nil
@@ -227,18 +240,55 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 		return 0, err
 	}
 
-	return database.GetSpaceOps().AddSpace(&dbmodels.Space{
+	spaceType := artifact.SpaceType
+	if spaceType == "" {
+		spaceType = artifact.Type
+	}
+	if spaceType == "" {
+		spaceType = "App"
+	}
+
+	spaceId, err := database.GetSpaceOps().AddSpace(&dbmodels.Space{
 		InstalledId:     installedId,
 		NamespaceKey:    artifact.Namespace,
 		ExecutorType:    artifact.ExecutorType,
 		ExecutorSubType: artifact.ExecutorSubType,
-		SpaceType:       "App",
+		SpaceType:       spaceType,
+		LoaderScript:    artifact.LoaderScript,
 		RouteOptions:    string(routeOptions),
 		DevServePort:    int64(artifact.DevServePort),
 		OwnerID:         userId,
 		IsInitilized:    false,
 		IsPublic:        true,
+		ServerFile:      artifact.ServerFile,
 	})
+	if err != nil {
+		return 0, err
+	}
+
+	if userId != 0 {
+		existingUsers, err := database.GetSpaceOps().QuerySpaceUsers(installedId, map[any]any{
+			"user_id":  userId,
+			"space_id": spaceId,
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		if len(existingUsers) == 0 {
+			_, err = database.GetSpaceOps().AddSpaceUser(installedId, &dbmodels.SpaceUser{
+				UserID:    userId,
+				SpaceID:   spaceId,
+				InstallID: installedId,
+				ExtraMeta: "{}",
+			})
+			if err != nil {
+				return 0, err
+			}
+		}
+	}
+
+	return spaceId, nil
 }
 
 // private
@@ -246,6 +296,7 @@ func installArtifactSpace(database datahub.Database, userId, installedId int64, 
 // valid namespace should only contain letters, numbers, underscores and hyphens
 var validNamespaceRegex = regexp.MustCompile(`^[a-zA-Z0-9_:-]+$`)
 var validPkgSlugRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+var validSubkeyRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
 func checkSlug(slug string) error {
 	if !validPkgSlugRegex.MatchString(slug) {

@@ -1,10 +1,18 @@
 package models
 
+type SpecialPage struct {
+	Name        string `json:"name" yaml:"name"`
+	Route       string `json:"route" yaml:"route"`
+	TargetSpace string `json:"target_space" yaml:"target_space"`
+}
+
+type SpecicalPage = SpecialPage
+
 type PotatoPackage struct {
 	Name         string             `json:"name" yaml:"name"`
 	Slug         string             `json:"slug" yaml:"slug"`
 	Info         string             `json:"info" yaml:"info"`
-	SpecialPages map[string]string  `json:"special_pages" yaml:"special_pages,omitempty"`
+	SpecialPages []SpecialPage      `json:"special_pages" yaml:"special_pages,omitempty"`
 	Spaces       []PotatoSpace      `json:"spaces" yaml:"spaces,omitempty"`
 	Capabilities []PotatoCapability `json:"capabilities" yaml:"capabilities,omitempty"`
 	CanonicalUrl string             `json:"canonical_url" yaml:"canonical_url"`
@@ -43,6 +51,9 @@ type PotatoCapability struct {
 
 type PotatoSpace struct {
 	Namespace       string             `json:"namespace" yaml:"namespace"`
+	Type            string             `json:"type" yaml:"type"`
+	SpaceType       string             `json:"space_type" yaml:"space_type"`
+	LoaderScript    string             `json:"loader_script" yaml:"loader_script"`
 	ExecutorType    string             `json:"executor_type" yaml:"executor_type"`
 	ExecutorSubType string             `json:"executor_sub_type" yaml:"executor_sub_type"`
 	ServerFile      string             `json:"server_file" yaml:"server_file"`

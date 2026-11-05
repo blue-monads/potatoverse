@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App users · Cloudy</title>
+  <link rel="stylesheet" href="cloudy.css">
+</head>
+<body class="page">
+  <div class="shell wide">
+    <div class="top">
+      <div class="brand">Cloudy · App users</div>
+      <div class="meta" id="who"></div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h1 id="title">App users</h1>
+            <p class="lede" id="lede">Loading…</p>
+          </div>
+          <button type="button" class="secondary" id="refresh">Refresh</button>
+        </div>
+        <p id="msg" class="msg"></p>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Group</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h1>Add app user</h1>
+        <p class="lede">Creates a user inside this tenant app, not a Cloudy account.</p>
+        <form id="add">
+          <div class="form-row">
+            <label>Name <input name="name" required></label>
+            <label>Email <input name="email" type="email" required></label>
+          </div>
+          <div class="form-row">
+            <label>Password <input name="password" type="password" required minlength="8"></label>
+            <label>Group
+              <select name="ugroup">
+                <option value="normal">normal</option>
+                <option value="admin">admin</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit">Add user</button>
+        </form>
+      </div>
+    </div>
+    <p class="foot">
+      <a id="back" href="portal.html">Back</a>
+      <a href="#" id="out">Sign out</a>
+    </p>
+  </div>
+  <script src="cloudy.js"></script>
+  <script>
+    const msg = document.getElementById("msg");
+    const rows = document.getElementById("rows");
+    const tenantId = new URLSearchParams(location.search).get("for_tenant_id");
+    const qs = tenantId ? "?for_tenant_id=" + encodeURIComponent(tenantId) : "";
+    let session = null;
+
+    document.getElementById("out").addEventListener("click", (e) => {
+      e.preventDefault();
+      Cloudy.signOut();
+    });
+
+    function setMsg(text, ok) {
+      msg.className = "msg " + (ok ? "ok" : "err");
+      msg.textContent = text || "";
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function actionBtn(label, fn) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "secondary";
+      b.textContent = label;
+      b.addEventListener("click", fn);
+      return b;
+    }
+
+    async function loadUsers() {
+      const data = await Cloudy.api("/zz/cloudy/sub-users" + qs, { headers: Cloudy.headers() });
+      document.getElementById("title").textContent = "Users · " + (data.tenant || "");
+      document.getElementById("lede").textContent =
+        (data.users || []).length + " users in tenant app " + (data.tenant || "");
+      rows.innerHTML = "";
+      (data.users || []).forEach((u) => {
+        const tr = document.createElement("tr");
+        const status = [];
+        if (u.is_verified) status.push("verified");
+        if (u.disabled) status.push("disabled");
+        else status.push("active");
+        tr.innerHTML =
+          "<td>" + esc(u.name) + "</td>" +
+          "<td>" + esc(u.email) + "</td>" +
+          "<td><span class='badge'>" + esc(u.ugroup || u.utype || "") + "</span></td>" +
+          "<td>" + esc(status.join(" · ")) + "</td>" +
+          "<td class='actions'></td>";
+        const cell = tr.querySelector("td:last-child");
+        cell.append(
+          actionBtn(u.disabled ? "Enable" : "Disable", () => setDisabled(u.id, u.email, !u.disabled)),
+          actionBtn("Reset pw", () => resetPassword(u.id, u.email)),
+        );
+        rows.appendChild(tr);
+      });
+    }
+
+    async function setDisabled(id, email, disabled) {
+      try {
+        await Cloudy.api("/zz/cloudy/sub-users/" + id + "/disable" + qs, {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify({ disabled: disabled }),
+        });
+        setMsg((disabled ? "Disabled" : "Enabled") + " " + email, true);
+        await loadUsers();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    async function resetPassword(id, email) {
+      const password = prompt("New password for " + email);
+      if (!password) return;
+      try {
+        await Cloudy.api("/zz/cloudy/sub-users/" + id + "/reset-password" + qs, {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify({ password }),
+        });
+        setMsg("Password reset for " + email, true);
+      } catch (err) {
+        setMsg(err.message);
+      }
+    }
+
+    Cloudy.requireSession().then(async (data) => {
+      if (!data) return;
+      session = data;
+      const user = data.user || {};
+      if (tenantId && user.utype !== "admin") {
+        location.href = Cloudy.page("sub-users.html");
+        return;
+      }
+      document.getElementById("who").textContent = (user.email || "") + " · " + (user.utype || "");
+      document.getElementById("back").href = tenantId ? "admin-portal.html" : "portal.html";
+      try {
+        await loadUsers();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    });
+
+    document.getElementById("refresh").addEventListener("click", async () => {
+      try {
+        await loadUsers();
+        setMsg("Refreshed", true);
+      } catch (err) {
+        setMsg(err.message);
+      }
+    });
+
+    document.getElementById("add").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const body = {
+        name: form.name.value.trim(),
+        email: form.email.value.trim(),
+        password: form.password.value,
+        ugroup: form.ugroup.value,
+      };
+      try {
+        await Cloudy.api("/zz/cloudy/sub-users" + qs, {
+          method: "POST",
+          headers: Cloudy.headers(true),
+          body: JSON.stringify(body),
+        });
+        form.reset();
+        setMsg("User created", true);
+        await loadUsers();
+      } catch (err) {
+        setMsg(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

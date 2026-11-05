@@ -96,17 +96,23 @@ func processJSONFile(filePath string) error {
 		SourceCode:    getStringValue(oldData, "source_code"),
 		License:       getStringValue(oldData, "license"),
 		Version:       getStringValue(oldData, "version"),
-		SpecialPages:  make(map[string]string),
+		SpecialPages:  []models.SpecialPage{},
 		Spaces:        []models.PotatoSpace{},
 		Capabilities:  []models.PotatoCapability{},
 	}
 
 	// Handle special pages
 	if initPage := getStringValue(oldData, "init_page"); initPage != "" {
-		pkg.SpecialPages["init_page"] = initPage
+		pkg.SpecialPages = append(pkg.SpecialPages, models.SpecialPage{
+			Name:  "init_page",
+			Route: initPage,
+		})
 	}
 	if updatePage := getStringValue(oldData, "update_page"); updatePage != "" {
-		pkg.SpecialPages["update_page"] = updatePage
+		pkg.SpecialPages = append(pkg.SpecialPages, models.SpecialPage{
+			Name:  "update_page",
+			Route: updatePage,
+		})
 	}
 
 	// Handle artifacts (convert to spaces and capabilities)
@@ -236,17 +242,23 @@ func processYAMLFile(filePath string) error {
 		SourceCode:    getStringValue(oldData, "source_code"),
 		License:       getStringValue(oldData, "license"),
 		Version:       getStringValue(oldData, "version"),
-		SpecialPages:  make(map[string]string),
+		SpecialPages:  []models.SpecialPage{},
 		Spaces:        []models.PotatoSpace{},
 		Capabilities:  []models.PotatoCapability{},
 	}
 
 	// Handle special pages
 	if initPage := getStringValue(oldData, "init_page"); initPage != "" {
-		pkg.SpecialPages["init_page"] = initPage
+		pkg.SpecialPages = append(pkg.SpecialPages, models.SpecialPage{
+			Name:  "init_page",
+			Route: initPage,
+		})
 	}
 	if updatePage := getStringValue(oldData, "update_page"); updatePage != "" {
-		pkg.SpecialPages["update_page"] = updatePage
+		pkg.SpecialPages = append(pkg.SpecialPages, models.SpecialPage{
+			Name:  "update_page",
+			Route: updatePage,
+		})
 	}
 
 	// Handle artifacts (convert to spaces and capabilities)

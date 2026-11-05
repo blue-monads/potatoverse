@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"path"
+	"strings"
+
 	"github.com/blue-monads/potatoverse/backend/engine/executors"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/binds"
 	"github.com/blue-monads/potatoverse/backend/engine/executors/luaz/lazylua"
@@ -40,6 +43,7 @@ type LuaH struct {
 	parent  *LuazExecutor
 	closers []CloseItem
 	L       *lua.LState
+	es      *executors.ExecState
 }
 
 func (l *LuaH) AddCloser(closer func() error) uint16 {
@@ -78,6 +82,13 @@ type LuaContextOptions struct {
 }
 
 func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[string]string) error {
+	if l.es != nil {
+		l.es.HttpRequest = ctx
+		defer func() {
+			l.es.HttpRequest = nil
+		}()
+	}
+
 	ctxt := l.L.NewTable()
 
 	lh := l
@@ -165,8 +176,8 @@ func (l *LuaH) HandleHTTP(ctx *gin.Context, handlerName string, params map[strin
 		"set_json": func(l *lua.LState) int {
 			code := l.CheckInt(1)
 			target := l.CheckTable(2)
-			targetMap := luaplus.TableToMap(l, target)
-			ctx.JSON(code, targetMap)
+			targetObj := luaplus.LuaToAny(l, target)
+			ctx.JSON(code, targetObj)
 			return 0
 		},
 	})
@@ -239,6 +250,17 @@ func (l *LuaH) HandleAction(event *xtypes.ActionEvent) error {
 			return 2
 		},
 
+		"block": func(L *lua.LState) int {
+			reason := ""
+			if L.GetTop() >= 1 {
+				reason = L.OptString(1, "")
+			}
+			paramPayload := fmt.Sprintf(`{"reason": %q}`, reason)
+			paramLazyData := lazydata.LazyDataBytes(kosher.Byte(paramPayload))
+			_, _ = event.Request.ExecuteAction("block", paramLazyData)
+			return 0
+		},
+
 		"list_methods": func(L *lua.LState) int {
 			actions, err := event.Request.ListActions()
 			if err != nil {
@@ -297,6 +319,43 @@ func callHandler(l *LuaH, ctable *lua.LTable, handlerName string) error {
 
 }
 
+func (l *LuaH) relativeLoader(L *lua.LState) int {
+	name := L.CheckString(1)
+	if !strings.HasPrefix(name, "./") {
+		L.Push(lua.LString("\n\tno relative path prefix"))
+		return 1
+	}
+
+	// Resolve name to path
+	// e.g. ./foo.bar -> foo/bar.lua
+	pathName := name[2:]
+	pathName = strings.ReplaceAll(pathName, ".", "/")
+	if !strings.HasSuffix(pathName, ".lua") {
+		pathName += ".lua"
+	}
+
+	dir, file := path.Split(pathName)
+	if dir != "" {
+		dir = strings.TrimSuffix(dir, "/")
+	}
+
+	pfops := l.parent.parent.app.Database().GetPackageFileOps()
+	content, err := pfops.GetFileContentByPath(l.parent.handle.PackageVersionId, dir, file)
+	if err != nil {
+		L.Push(lua.LString(fmt.Sprintf("\n\tfile not found in package: %s (dir: %s, file: %s)", pathName, dir, file)))
+		return 1
+	}
+
+	fn, err := L.LoadString(string(content))
+	if err != nil {
+		L.Push(lua.LString(fmt.Sprintf("\n\terror loading module '%s' from package: %s", name, err.Error())))
+		return 1
+	}
+
+	L.Push(fn)
+	return 1
+}
+
 func (l *LuaH) registerModules() error {
 
 	/*
@@ -316,15 +375,33 @@ func (l *LuaH) registerModules() error {
 		InstalledId:      l.parent.handle.InstalledId,
 		PackageVersionId: l.parent.handle.PackageVersionId,
 		App:              l.parent.parent.app,
+		Executor:         l.parent,
 	}
 
 	es.Init()
+	l.es = es
 
 	sharedBinds := l.parent.parent.binds
 
 	l.L.PreloadModule("potato", binds.PotatoModule(es, sharedBinds))
 	l.L.PreloadModule("phttp", gluahttp.NewHttpModule(luaHttpClient).Loader)
 	l.L.PreloadModule("json", luaJson.Loader)
+
+	// Add relative searcher
+	packageTable := l.L.GetGlobal("package").(*lua.LTable)
+	searchersValue := l.L.GetField(packageTable, "searchers")
+	if searchersValue.Type() == lua.LTNil {
+		searchersValue = l.L.GetField(packageTable, "loaders")
+	}
+
+	if searchers, ok := searchersValue.(*lua.LTable); ok {
+		// Shift existing searchers to make room at index 1
+		n := searchers.Len()
+		for i := n; i >= 1; i-- {
+			searchers.RawSetInt(i+1, searchers.RawGetInt(i))
+		}
+		searchers.RawSetInt(1, l.L.NewFunction(l.relativeLoader))
+	}
 
 	return nil
 }
